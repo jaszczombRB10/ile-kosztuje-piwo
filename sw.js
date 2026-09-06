@@ -1,4 +1,4 @@
-const CACHE_NAME = "ile-kosztuje-piwo-v1";
+const CACHE_NAME = "ile-kosztuje-piwo-v3";
 
 const STATIC_ASSETS = [
   "./",
@@ -48,8 +48,8 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
-  // Do not cache Supabase API calls or external dynamic endpoints in Service Worker
-  if (url.origin.includes("supabase.co") || url.pathname.startsWith("/rest/v1")) {
+  // Do not cache Supabase API calls, map tiles, or external dynamic endpoints in Service Worker
+  if (url.origin.includes("supabase.co") || url.origin.includes("cartocdn.com") || url.pathname.startsWith("/rest/v1")) {
     return;
   }
 
