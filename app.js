@@ -105,7 +105,7 @@
     L.control.zoom({ position: "bottomright" }).addTo(map);
 
     // CartoDB Dark Matter Tiles (matching VadKostarOlen)
-    const cartoKey = (typeof MAP_CONFIG !== "undefined" && MAP_CONFIG.cartoApiKey) ? `?key=${MAP_CONFIG.cartoApiKey}` : "";
+    const cartoKey = (typeof MAP_CONFIG !== "undefined" && MAP_CONFIG.cartoApiKey) ? `?api_key=${MAP_CONFIG.cartoApiKey}` : "";
     L.tileLayer(`https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png${cartoKey}`, {
       attribution: '&copy; <a href="https://carto.com/">CARTO</a> | &copy; OpenStreetMap',
       maxZoom: 19,

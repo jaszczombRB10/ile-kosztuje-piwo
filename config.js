@@ -21,5 +21,5 @@ function isSupabaseConfigured() {
 // Od sierpnia 2024 CARTO wymaga darmowego klucza API na domenach zewnętrznych.
 // Darmowy klucz (5 mln odsłon/mc, bez karty): https://carto.com/basemaps/apikey/
 const MAP_CONFIG = {
-  cartoApiKey: ""
+  cartoApiKey: "cb1_2zfc_1_475ac10cb6f273993fced4db"
 };
