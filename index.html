@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Ile Kosztuje Piwo? - Mapa Cen Piwa w Warszawie</title>
+  <meta name="description" content="Sprawdź aktualne ceny piwa z nalewaka w barach i pubach w Warszawie. Znajdź najtańsze piwo, happy hours i multitapy na żywo.">
+  <meta name="theme-color" content="#0d1615">
+  
+  <!-- PWA & Mobile Web App Meta Tags -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="IleZaPiwo">
+  
+  <!-- Leaflet CSS (Local) -->
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css" />
+  
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- App Header -->
+  <header>
+    <div class="header-top">
+      <a href="#" class="logo-wrap">
+        <span class="logo-icon">🍺</span>
+        <div class="logo-title">
+          <span>Ile Kosztuje</span><span class="glow">Piwo?</span>
+          <span class="city-badge">Warszawa</span>
+        </div>
+      </a>
+      
+      <div class="header-actions">
+        <button id="btn-locate-me" class="btn-secondary" title="Znajdź bary blisko mnie">
+          <span>📍</span>
+          <span>Blisko mnie</span>
+        </button>
+        <button id="btn-ranking-toggle" class="btn-secondary">
+          <span>🏆</span>
+          <span>Ranking</span>
+        </button>
+        <button id="btn-open-report" class="btn-report">
+          <span>➕</span>
+          <span>Zgłoś cenę</span>
+        </button>
+      </div>
+    </div>
+    
+    <!-- Live Ticker (Inspired by VadKostarOlen) -->
+    <div class="ticker-bar" aria-hidden="true">
+      <div class="ticker-track" id="ticker-track">
+        <!-- Will be populated dynamically -->
+        <span class="ticker-item">🔥 Pawilony: <strong>od 10 zł</strong> <span class="tag-down">▼</span></span>
+        <span class="ticker-item">📍 Śródmieście: Śr. <strong>15.50 zł</strong></span>
+        <span class="ticker-item">⚡ Happy Hour w Klaps: <strong>9 zł</strong> <span class="tag-special">HAPPY HOUR</span></span>
+        <span class="ticker-item">💎 Kraft (Nowogrodzka): <strong>od 18 zł</strong> <span class="tag-up">▲</span></span>
+        <span class="ticker-item">🍻 Pijalnia Wódki i Piwa: <strong>10 zł</strong> <span class="tag-down">▼</span></span>
+        <!-- Duplicated for loop -->
+        <span class="ticker-item">🔥 Pawilony: <strong>od 10 zł</strong> <span class="tag-down">▼</span></span>
+        <span class="ticker-item">📍 Śródmieście: Śr. <strong>15.50 zł</strong></span>
+        <span class="ticker-item">⚡ Happy Hour w Klaps: <strong>9 zł</strong> <span class="tag-special">HAPPY HOUR</span></span>
+        <span class="ticker-item">💎 Kraft (Nowogrodzka): <strong>od 18 zł</strong> <span class="tag-up">▲</span></span>
+        <span class="ticker-item">🍻 Pijalnia Wódki i Piwa: <strong>10 zł</strong> <span class="tag-down">▼</span></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- App Body: Map & Controls -->
+  <div class="app-body">
+    
+    <!-- Floating Map Search & Filters -->
+    <div class="map-overlay">
+      <div class="overlay-panel">
+        <div class="search-row">
+          <div class="search-input-wrap">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="search-input" class="search-input" placeholder="Szukaj baru, ulicy lub piwa (np. Pawilony, Namysłów)..." autocomplete="off" />
+            <button id="search-clear-btn" style="display:none;position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:#9ca3af;cursor:pointer;font-size:16px;line-height:1;" title="Wyczyść szukanie">✕</button>
+          </div>
+          <div id="results-count" style="font-size:0.75rem;color:#9ca3af;white-space:nowrap;font-weight:600;"></div>
+        </div>
+        
+        <div class="filter-row">
+          <span class="filter-chip active" data-filter="all">Wszystkie</span>
+          <span class="filter-chip" data-filter="pawilony">Pawilony</span>
+          <span class="filter-chip" data-filter="srodmiescie">Śródmieście</span>
+          <span class="filter-chip" data-filter="praga">Praga</span>
+          <span class="filter-chip" data-filter="bulwary">Bulwary</span>
+          <span class="filter-chip chip-green" data-filter="tier-low">🟢 ≤ 12 zł</span>
+          <span class="filter-chip chip-amber" data-filter="tier-mid">🟡 13-18 zł</span>
+          <span class="filter-chip chip-red" data-filter="tier-high">🔴 19+ zł</span>
+          <span class="filter-chip" data-filter="craft">⭐ Krafty</span>
+          <span class="filter-chip" data-filter="happy-hour">⚡ Happy Hour</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Map Canvas -->
+    <div id="map"></div>
+
+    <!-- Bottom Left Legend -->
+    <div class="legend-pill">
+      <div class="legend-item">
+        <span class="legend-dot green"></span>
+        <span>≤ 12 zł</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-dot amber"></span>
+        <span>13–18 zł</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-dot red"></span>
+        <span>19+ zł</span>
+      </div>
+    </div>
+
+    <!-- Top 10 Ranked Drawer (Slide-out from Right) -->
+    <div class="sidebar-drawer" id="ranking-drawer">
+      <div class="drawer-header">
+        <h2>🏆 Najtańsze Piwo w Warszawie</h2>
+        <button id="btn-close-drawer" class="btn-close-drawer">✕</button>
+      </div>
+      <div class="drawer-list" id="ranking-list">
+        <!-- Injected via JavaScript -->
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Crowdsource Price Modal ("Zgłoś Cenę") -->
+  <div class="modal-backdrop" id="report-modal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>🍻 Zgłoś lub Zaktualizuj Cenę</h3>
+        <button id="btn-close-modal" class="btn-close-drawer">✕</button>
+      </div>
+      
+      <form id="report-form">
+        <div class="form-group">
+          <label class="form-label">Wybierz bar lub wpisz nowy</label>
+          <input type="text" id="report-name" class="form-input" placeholder="np. Bar Pacyfik, Pijalnia, Klaps..." required list="venues-datalist" />
+          <datalist id="venues-datalist"></datalist>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Dzielnica</label>
+            <select id="report-district" class="form-select">
+              <option value="Śródmieście">Śródmieście</option>
+              <option value="Pawilony">Pawilony</option>
+              <option value="Praga Północ">Praga Północ</option>
+              <option value="Mokotów">Mokotów</option>
+              <option value="Wola">Wola</option>
+              <option value="Bulwary">Bulwary</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Ulica i numer</label>
+            <input type="text" id="report-address" class="form-input" placeholder="np. Nowogrodzka 12" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Najtańsze piwo (0.5L)</label>
+            <input type="text" id="report-beer-name" class="form-input" placeholder="np. Namysłów, Kozel" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cena piwa (PLN)</label>
+            <input type="number" id="report-price" class="form-input" step="0.5" min="5" max="60" placeholder="12.00" required />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Cena shota (PLN)</label>
+            <input type="number" id="report-shot" class="form-input" step="0.5" placeholder="6.00" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Czy to multitap kraftowy?</label>
+            <select id="report-craft" class="form-select">
+              <option value="false">Nie (standardowy pub)</option>
+              <option value="true">Tak (craft / multitap)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Happy Hour (opcjonalnie)</label>
+          <input type="text" id="report-happy-hour" class="form-input" placeholder="np. Pn-Śr 16:00-18:00 piwo 9 zł" />
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" id="btn-cancel-modal" class="btn-cancel">Anuluj</button>
+          <button type="submit" class="btn-submit">Zapisz i opublikuj 🍺</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Leaflet JS (Local) -->
+  <script src="vendor/leaflet/leaflet.js"></script>
+  
+  <!-- Supabase JS Client (Local) -->
+  <script src="vendor/supabase/supabase.min.js"></script>
+  <script src="config.js"></script>
+  
+  <!-- Main Application Logic -->
+  <script src="app.js"></script>
+</body>
+</html>

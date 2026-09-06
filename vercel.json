@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "name": "ile-kosztuje-piwo",
+  "cleanUrls": true,
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    }
+  ]
+}

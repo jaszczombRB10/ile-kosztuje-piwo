@@ -1,0 +1,13 @@
+{
+  "name": "ile-kosztuje-piwo",
+  "version": "1.0.0",
+  "description": "Interactive Warsaw Beer Price Map and PWA tracker",
+  "main": "index.html",
+  "scripts": {
+    "start": "python3 server.py",
+    "deploy:vercel": "npx vercel --prod"
+  },
+  "keywords": ["warsaw", "beer", "map", "pwa", "supabase", "leaflet"],
+  "author": "Krystian",
+  "license": "MIT"
+}
