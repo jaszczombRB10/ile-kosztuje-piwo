@@ -58,13 +58,17 @@
         <span class="ticker-item">📍 Śródmieście: Śr. <strong>15.50 zł</strong></span>
         <span class="ticker-item">⚡ Happy Hour w Klaps: <strong>9 zł</strong> <span class="tag-special">HAPPY HOUR</span></span>
         <span class="ticker-item">💎 Kraft (Nowogrodzka): <strong>od 18 zł</strong> <span class="tag-up">▲</span></span>
-        <span class="ticker-item">🍻 Pijalnia Wódki i Piwa: <strong>10 zł</strong> <span class="tag-down">▼</span></span>
+        <span class="ticker-item">🍻 Bemowo & Bielany: <strong>od 12 zł</strong></span>
+        <span class="ticker-item">🌲 Wawer, Rembertów & Ursus: <strong>od 12 zł</strong></span>
+        <span class="ticker-item">🌊 Bulwary: Śr. <strong>16 zł</strong></span>
         <!-- Duplicated for loop -->
         <span class="ticker-item">🔥 Pawilony: <strong>od 10 zł</strong> <span class="tag-down">▼</span></span>
         <span class="ticker-item">📍 Śródmieście: Śr. <strong>15.50 zł</strong></span>
         <span class="ticker-item">⚡ Happy Hour w Klaps: <strong>9 zł</strong> <span class="tag-special">HAPPY HOUR</span></span>
         <span class="ticker-item">💎 Kraft (Nowogrodzka): <strong>od 18 zł</strong> <span class="tag-up">▲</span></span>
-        <span class="ticker-item">🍻 Pijalnia Wódki i Piwa: <strong>10 zł</strong> <span class="tag-down">▼</span></span>
+        <span class="ticker-item">🍻 Bemowo & Bielany: <strong>od 12 zł</strong></span>
+        <span class="ticker-item">🌲 Wawer, Rembertów & Ursus: <strong>od 12 zł</strong></span>
+        <span class="ticker-item">🌊 Bulwary: Śr. <strong>16 zł</strong></span>
       </div>
     </div>
   </header>
@@ -87,16 +91,45 @@
           <div id="results-count" style="font-size:0.75rem;color:#9ca3af;white-space:nowrap;font-weight:600;"></div>
         </div>
         
+        <div class="district-row">
+          <div class="district-select-wrap">
+            <span class="district-icon">📍</span>
+            <select id="district-select" class="district-select" aria-label="Wybierz dzielnicę Warszawy">
+              <option value="all">🏙️ Cała Warszawa (Wszystkie dzielnice)</option>
+              <optgroup label="🔥 Zagłębia Imprezowe">
+                <option value="Pawilony">🔥 Pawilony Nowy Świat</option>
+                <option value="Bulwary">🌊 Bulwary Wiślane</option>
+              </optgroup>
+              <optgroup label="🏙️ 18 Dzielnic Warszawy">
+                <option value="Śródmieście">Śródmieście</option>
+                <option value="Mokotów">Mokotów</option>
+                <option value="Wola">Wola</option>
+                <option value="Ochota">Ochota</option>
+                <option value="Żoliborz">Żoliborz</option>
+                <option value="Praga Północ">Praga-Północ</option>
+                <option value="Praga Południe">Praga-Południe</option>
+                <option value="Bielany">Bielany</option>
+                <option value="Bemowo">Bemowo</option>
+                <option value="Ursynów">Ursynów</option>
+                <option value="Targówek">Targówek</option>
+                <option value="Białołęka">Białołęka</option>
+                <option value="Wawer">Wawer</option>
+                <option value="Wilanów">Wilanów</option>
+                <option value="Ursus">Ursus</option>
+                <option value="Włochy">Włochy</option>
+                <option value="Rembertów">Rembertów</option>
+                <option value="Wesoła">Wesoła</option>
+              </optgroup>
+            </select>
+          </div>
+        </div>
+
         <div class="filter-row">
-          <span class="filter-chip active" data-filter="all">Wszystkie</span>
-          <span class="filter-chip" data-filter="pawilony">Pawilony</span>
-          <span class="filter-chip" data-filter="srodmiescie">Śródmieście</span>
-          <span class="filter-chip" data-filter="praga">Praga</span>
-          <span class="filter-chip" data-filter="bulwary">Bulwary</span>
+          <span class="filter-chip active" data-filter="all">Wszystkie ceny</span>
           <span class="filter-chip chip-green" data-filter="tier-low">🟢 ≤ 12 zł</span>
           <span class="filter-chip chip-amber" data-filter="tier-mid">🟡 13-18 zł</span>
           <span class="filter-chip chip-red" data-filter="tier-high">🔴 19+ zł</span>
-          <span class="filter-chip" data-filter="craft">⭐ Krafty</span>
+          <span class="filter-chip" data-filter="craft">⭐ Tylko Kraft</span>
           <span class="filter-chip" data-filter="happy-hour">⚡ Happy Hour</span>
         </div>
       </div>
@@ -152,13 +185,27 @@
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Dzielnica</label>
-            <select id="report-district" class="form-select">
+            <select id="report-district" class="form-select" required>
               <option value="Śródmieście">Śródmieście</option>
-              <option value="Pawilony">Pawilony</option>
-              <option value="Praga Północ">Praga Północ</option>
+              <option value="Pawilony">Pawilony Nowy Świat</option>
+              <option value="Bulwary">Bulwary Wiślane</option>
               <option value="Mokotów">Mokotów</option>
               <option value="Wola">Wola</option>
-              <option value="Bulwary">Bulwary</option>
+              <option value="Ochota">Ochota</option>
+              <option value="Żoliborz">Żoliborz</option>
+              <option value="Praga Północ">Praga-Północ</option>
+              <option value="Praga Południe">Praga-Południe</option>
+              <option value="Bielany">Bielany</option>
+              <option value="Bemowo">Bemowo</option>
+              <option value="Ursynów">Ursynów</option>
+              <option value="Targówek">Targówek</option>
+              <option value="Białołęka">Białołęka</option>
+              <option value="Wawer">Wawer</option>
+              <option value="Wilanów">Wilanów</option>
+              <option value="Ursus">Ursus</option>
+              <option value="Włochy">Włochy</option>
+              <option value="Rembertów">Rembertów</option>
+              <option value="Wesoła">Wesoła</option>
             </select>
           </div>
           <div class="form-group">

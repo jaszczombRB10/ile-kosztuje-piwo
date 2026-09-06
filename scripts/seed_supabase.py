@@ -7,14 +7,12 @@ import urllib.error
 
 # Usage: python3 scripts/seed_supabase.py <SUPABASE_URL> <SUPABASE_SERVICE_ROLE_KEY>
 
-def main():
-    if len(sys.argv) < 3:
-        print("Usage: python3 scripts/seed_supabase.py <SUPABASE_URL> <SUPABASE_KEY>")
-        print("Example: python3 scripts/seed_supabase.py https://xyz.supabase.co eyJhbGci...")
-        sys.exit(1)
+DEFAULT_URL = "https://agsodpzkytdgicpmphxz.supabase.co"
+DEFAULT_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFnc29kcHpreXRkZ2ljcG1waHh6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4ODcxODI3MywiZXhwIjoyMTA0Mjk0MjczfQ.nXVSigEdTUqxVcIOAic59j47lUNn_qI61NQRxs3Deho"
 
-    supabase_url = sys.argv[1].rstrip("/")
-    supabase_key = sys.argv[2]
+def main():
+    supabase_url = sys.argv[1].rstrip("/") if len(sys.argv) > 1 else DEFAULT_URL
+    supabase_key = sys.argv[2] if len(sys.argv) > 2 else DEFAULT_KEY
 
     venues_file = "/Users/krystian/.gemini/antigravity/scratch/ile-kosztuje-piwo/data/venues.json"
     with open(venues_file, "r", encoding="utf-8") as f:
@@ -22,12 +20,25 @@ def main():
 
     print(f"Uploading {len(venues)} venues to Supabase ({supabase_url})...")
 
+    # Clean existing venues first to prevent duplicate key conflicts across multiple unique constraints (slug + osm_id)
+    try:
+        del_endpoint = f"{supabase_url}/rest/v1/venues?id=neq.00000000-0000-0000-0000-000000000000"
+        del_headers = {
+            "apikey": supabase_key,
+            "Authorization": f"Bearer {supabase_key}"
+        }
+        del_req = urllib.request.Request(del_endpoint, headers=del_headers, method="DELETE")
+        ctx = ssl._create_unverified_context()
+        with urllib.request.urlopen(del_req, context=ctx) as r:
+            print("Reset existing venues in Supabase table.")
+    except Exception as e:
+        print("Note on reset:", e)
+
     endpoint = f"{supabase_url}/rest/v1/venues"
     headers = {
         "apikey": supabase_key,
         "Authorization": f"Bearer {supabase_key}",
-        "Content-Type": "application/json",
-        "Prefer": "resolution=merge-duplicates"
+        "Content-Type": "application/json"
     }
     ctx = ssl._create_unverified_context()
 
