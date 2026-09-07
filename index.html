@@ -37,15 +37,19 @@
       <div class="header-actions">
         <button id="btn-locate-me" class="btn-secondary" title="Znajdź bary blisko mnie">
           <span>📍</span>
-          <span>Blisko mnie</span>
+          <span class="btn-text">Blisko mnie</span>
+        </button>
+        <button id="btn-barometer-toggle" class="btn-secondary" title="Barometr cenowy Warszawy">
+          <span>📊</span>
+          <span class="btn-text">Barometr</span>
         </button>
         <button id="btn-ranking-toggle" class="btn-secondary">
           <span>🏆</span>
-          <span>Ranking</span>
+          <span class="btn-text">Ranking</span>
         </button>
-        <button id="btn-open-report" class="btn-report">
+        <button id="btn-open-report" class="btn-report" title="Dodaj nowy lokal lub zaktualizuj cenę">
           <span>➕</span>
-          <span>Zgłoś cenę</span>
+          <span class="btn-text-report">Dodaj bar</span>
         </button>
       </div>
     </div>
@@ -157,8 +161,14 @@
     <!-- Top 10 Ranked Drawer (Slide-out from Right) -->
     <div class="sidebar-drawer" id="ranking-drawer">
       <div class="drawer-header">
-        <h2>🏆 Najtańsze Piwo w Warszawie</h2>
-        <button id="btn-close-drawer" class="btn-close-drawer">✕</button>
+        <div class="drawer-header-top">
+          <h2>🏆 Ranking Piwa</h2>
+          <button id="btn-close-drawer" class="btn-close-drawer">✕</button>
+        </div>
+        <div class="ranking-tabs">
+          <button type="button" class="ranking-tab active" id="tab-rank-cheapest">💰 Najtańsze</button>
+          <button type="button" class="ranking-tab" id="tab-rank-nearest">🧭 Najbliżej mnie</button>
+        </div>
       </div>
       <div class="drawer-list" id="ranking-list">
         <!-- Injected via JavaScript -->
@@ -167,17 +177,89 @@
 
   </div>
 
+  <!-- Warsaw Beer Price Barometer Modal -->
+  <div class="modal-backdrop" id="barometer-modal">
+    <div class="modal-card modal-card-wide">
+      <div class="modal-head">
+        <h3>📊 Barometr Cenowy Warszawy</h3>
+        <button id="btn-close-barometer" class="btn-close-drawer">✕</button>
+      </div>
+
+      <div class="barometer-body">
+        <!-- Top Metrics Cards -->
+        <div class="baro-kpis">
+          <div class="baro-card">
+            <div class="baro-label">Średnia w Warszawie</div>
+            <div class="baro-val" id="baro-avg-price">-- zł</div>
+            <div class="baro-sub">lane jasne (0.5L)</div>
+          </div>
+          <div class="baro-card baro-green">
+            <div class="baro-label">Najtańszy rejon</div>
+            <div class="baro-val" id="baro-cheapest-district">Pawilony</div>
+            <div class="baro-sub" id="baro-cheapest-sub">od 10 zł</div>
+          </div>
+          <div class="baro-card baro-amber">
+            <div class="baro-label">Najdroższa dzielnica</div>
+            <div class="baro-val" id="baro-priciest-district">Wilanów</div>
+            <div class="baro-sub" id="baro-priciest-sub">śr. 16.20 zł</div>
+          </div>
+          <div class="baro-card">
+            <div class="baro-label">Baza lokali</div>
+            <div class="baro-val" id="baro-total-venues">524</div>
+            <div class="baro-sub" id="baro-craft-count">w 18 dzielnicach</div>
+          </div>
+          <div class="baro-card baro-blue">
+            <div class="baro-label">Potwierdzenia cen</div>
+            <div class="baro-val" id="baro-total-votes">2 131</div>
+            <div class="baro-sub">głosów społeczności 👍</div>
+          </div>
+        </div>
+
+        <!-- Wisła Comparison Banner (Lewobrzeżna vs Prawobrzeżna) -->
+        <div class="baro-compare-box">
+          <div class="compare-side">
+            <div class="compare-tag">🏙️ Lewy Brzeg</div>
+            <div class="compare-name">Śródmieście, Mokotów, Wola...</div>
+            <div class="compare-val" id="baro-left-bank">śr. -- zł</div>
+          </div>
+          <div class="compare-vs">VS</div>
+          <div class="compare-side">
+            <div class="compare-tag">🌊 Prawy Brzeg</div>
+            <div class="compare-name">Praga, Targówek, Wawer...</div>
+            <div class="compare-val" id="baro-right-bank">śr. -- zł</div>
+          </div>
+        </div>
+
+        <!-- District Breakdown Chart -->
+        <div class="baro-list-title">
+          <span>Ranking dzielnic (kliknij, by przelecieć na mapie):</span>
+          <span class="baro-sort-hint">od najtańszej ➔</span>
+        </div>
+        <div class="district-bars-list" id="baro-district-list">
+          <!-- Populated dynamically via JS -->
+        </div>
+
+        <!-- Fun Facts -->
+        <div class="baro-fun-facts">
+          <div class="fun-fact">🔥 <strong>Pawilony Nowy Świat</strong> to najgęstsze skupisko taniego piwa w Polsce (~40 barów na małym dziedzińcu).</div>
+          <div class="fun-fact">💎 Za cenę 1 kraftowego IPA w multitapie w Śródmieściu (20 zł) kupisz <strong>2 pełne piwa</strong> w pijalni studenckiej.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Crowdsource Price Modal ("Zgłoś Cenę") -->
   <div class="modal-backdrop" id="report-modal">
     <div class="modal-card">
       <div class="modal-head">
-        <h3>🍻 Zgłoś lub Zaktualizuj Cenę</h3>
+        <h3>🍻 Dodaj Nowy Bar lub Zaktualizuj Cenę</h3>
         <button id="btn-close-modal" class="btn-close-drawer">✕</button>
       </div>
       
       <form id="report-form">
         <div class="form-group">
-          <label class="form-label">Wybierz bar lub wpisz nowy</label>
+          <label class="form-label">Nazwa lokalu / baru</label>
+          <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:6px;">Wpisz nazwę nowego baru (dodamy go na mapę) lub wybierz istniejący:</div>
           <input type="text" id="report-name" class="form-input" placeholder="np. Bar Pacyfik, Pijalnia, Klaps..." required list="venues-datalist" />
           <datalist id="venues-datalist"></datalist>
         </div>
@@ -244,11 +326,40 @@
           <input type="text" id="report-happy-hour" class="form-input" placeholder="np. Pn-Śr 16:00-18:00 piwo 9 zł" />
         </div>
 
+        <div class="form-group">
+          <label class="form-label">📸 Zdjęcie menu / paragonu (opcjonalnie)</label>
+          <div class="photo-upload-container">
+            <input type="file" id="report-photo-input" accept="image/*" class="photo-file-input" />
+            <label for="report-photo-input" class="photo-upload-label" id="photo-upload-btn-label">
+              <span class="upload-icon">📷</span>
+              <span id="photo-upload-text">Wybierz zdjęcie karty, tablicy lub paragonu</span>
+            </label>
+            <div id="photo-preview-box" class="photo-preview-box" style="display:none;">
+              <img id="photo-preview-img" src="" alt="Podgląd zdjęcia" />
+              <button type="button" id="btn-remove-photo" class="btn-remove-photo" title="Usuń zdjęcie">✕</button>
+            </div>
+          </div>
+        </div>
+
         <div class="modal-footer">
           <button type="button" id="btn-cancel-modal" class="btn-cancel">Anuluj</button>
           <button type="submit" class="btn-submit">Zapisz i opublikuj 🍺</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Floating Action Button: Add bar on mobile & desktop -->
+  <button type="button" id="btn-fab-add" class="fab-add-bar" title="Dodaj nowy bar na mapę">
+    <span>➕ Dodaj bar</span>
+  </button>
+
+  <!-- Lightbox Modal for Photo Proofs -->
+  <div id="lightbox-modal" class="lightbox-backdrop" style="display:none;">
+    <div class="lightbox-container">
+      <button type="button" class="lightbox-close" id="btn-close-lightbox">✕</button>
+      <img id="lightbox-img" src="" alt="Zdjęcie menu / paragonu" />
+      <div id="lightbox-caption" class="lightbox-caption"></div>
     </div>
   </div>
 

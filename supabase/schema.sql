@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS public.venues (
     hours TEXT DEFAULT '16:00 - 02:00',
     is_verified BOOLEAN DEFAULT FALSE,
     votes_confirm INT DEFAULT 1,
+    photo_url TEXT,
     
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     last_updated TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL

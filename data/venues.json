@@ -16,7 +16,8 @@
     "hours": "16:00 - 02:00",
     "is_verified": true,
     "last_updated": "2026-09-05",
-    "votes_confirm": 42
+    "votes_confirm": 42,
+    "photo_url": "https://agsodpzkytdgicpmphxz.supabase.co/storage/v1/object/public/proofs/sample-menu-klaps.jpg"
   },
   {
     "id": "pawilony-shot-gun",

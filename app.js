@@ -42,6 +42,9 @@
   let supabaseClient = null;
   let userLocation = null;
   let userMarker = null;
+  let rankingMode = "cheapest"; // "cheapest" | "nearest"
+  let currentPhotoBase64 = null;
+  let currentPhotoContentType = "image/jpeg";
 
   // Initialize Supabase client if configured in config.js
   function initSupabase() {
@@ -154,12 +157,23 @@
     const tier = getPriceTier(price);
     const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${venue.latitude},${venue.longitude}`;
 
+    let walkInfo = "";
+    if (userLocation) {
+      const distKm = calculateDistanceKm(userLocation[0], userLocation[1], venue.latitude, venue.longitude);
+      const distM = Math.round(distKm * 1000);
+      const walkMin = Math.max(1, Math.round(distKm / 4.8 * 60));
+      walkInfo = `<div style="font-size:0.75rem;color:#38bdf8;margin-top:4px;font-weight:600;">🚶 ${distM < 1000 ? distM + ' m' : distKm.toFixed(1) + ' km'} (${walkMin} min spacerem stąd)</div>`;
+    }
+
+    const proofUrl = venue.photo_url || venue.proof_image_url;
+
     return `
       <div class="venue-card">
         <div class="venue-header">
           <div>
             <div class="venue-name">${escapeHtml(venue.name)}</div>
             <div class="venue-district">📍 ${escapeHtml(venue.district)} · ${escapeHtml(venue.address)}</div>
+            ${walkInfo}
           </div>
           ${venue.is_verified ? '<span title="Zweryfikowany lokal" style="color:#22c55e;font-size:16px;">✓</span>' : ''}
         </div>
@@ -186,6 +200,14 @@
             👍 Potwierdź (${venue.votes_confirm || 1})
           </button>
         </div>
+
+        ${proofUrl ? `
+          <div style="margin-top: 8px; text-align: center;">
+            <button type="button" class="venue-proof-badge" onclick="window.__openLightbox('${escapeHtml(proofUrl)}', '${escapeHtml(venue.name)} - menu / paragon')">
+              📸 Zobacz menu / paragon
+            </button>
+          </div>
+        ` : ''}
       </div>
     `;
   }
@@ -308,34 +330,274 @@
     });
   }
 
-  // Render Top 10 Ranking Leaderboard
+  // Lightbox Modal Handlers
+  window.__openLightbox = function (url, caption) {
+    const lbModal = document.getElementById("lightbox-modal");
+    const lbImg = document.getElementById("lightbox-img");
+    const lbCap = document.getElementById("lightbox-caption");
+    if (!lbModal || !lbImg) return;
+
+    lbImg.src = url;
+    if (lbCap) lbCap.textContent = caption || "";
+    lbModal.style.display = "flex";
+  };
+
+  window.__closeLightbox = function () {
+    const lbModal = document.getElementById("lightbox-modal");
+    const lbImg = document.getElementById("lightbox-img");
+    if (lbModal) lbModal.style.display = "none";
+    if (lbImg) lbImg.src = "";
+  };
+
+  // Client-Side Image Compression using HTML Canvas
+  function compressImage(file, maxWidth = 1200, quality = 0.82) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const img = new Image();
+        img.onload = function () {
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxWidth || height > maxWidth) {
+            if (width > height) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            } else {
+              width = Math.round((width * maxWidth) / height);
+              height = maxWidth;
+            }
+          }
+
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const dataUrl = canvas.toDataURL("image/jpeg", quality);
+          resolve(dataUrl);
+        };
+        img.onerror = reject;
+        img.src = e.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // Warsaw Districts Division for Left vs Right Bank
+  const LEFT_BANK_DISTRICTS = new Set([
+    "Śródmieście", "Mokotów", "Wola", "Ochota", "Żoliborz", "Bielany", "Bemowo", "Ursynów", "Włochy", "Ursus", "Wilanów", "Pawilony", "Bulwary"
+  ]);
+  const RIGHT_BANK_DISTRICTS = new Set([
+    "Praga Północ", "Praga Południe", "Targówek", "Białołęka", "Wawer", "Rembertów", "Wesoła"
+  ]);
+
+  // Update Warsaw Beer Barometer Statistics
+  function updateBarometerStats() {
+    if (!allVenues || allVenues.length === 0) return;
+
+    const validVenues = allVenues.filter(v => typeof v.beer_price_pln === "number" && v.beer_price_pln > 0);
+    if (validVenues.length === 0) return;
+
+    // Total venues count
+    const totalEl = document.getElementById("baro-total-venues");
+    if (totalEl) totalEl.textContent = allVenues.length;
+
+    // Craft count
+    const craftCount = allVenues.filter(v => v.is_craft).length;
+    const craftEl = document.getElementById("baro-craft-count");
+    if (craftEl) craftEl.textContent = `w 18 dzielnicach (${craftCount} kraft)`;
+
+    // Community confirmations count
+    const totalVotes = allVenues.reduce((acc, v) => acc + (v.votes_confirm || 1), 0);
+    const votesEl = document.getElementById("baro-total-votes");
+    if (votesEl) votesEl.textContent = totalVotes.toLocaleString("pl-PL");
+
+    // Warsaw average
+    const sumWarsaw = validVenues.reduce((acc, v) => acc + v.beer_price_pln, 0);
+    const avgWarsaw = sumWarsaw / validVenues.length;
+    const avgWarsawEl = document.getElementById("baro-avg-price");
+    if (avgWarsawEl) avgWarsawEl.textContent = `${avgWarsaw.toFixed(2)} zł`;
+
+    // Group stats by district
+    const districtData = {};
+    validVenues.forEach(v => {
+      const d = v.district || "Inne";
+      if (!districtData[d]) {
+        districtData[d] = { count: 0, sum: 0, min: Infinity, max: -Infinity };
+      }
+      districtData[d].count += 1;
+      districtData[d].sum += v.beer_price_pln;
+      if (v.beer_price_pln < districtData[d].min) districtData[d].min = v.beer_price_pln;
+      if (v.beer_price_pln > districtData[d].max) districtData[d].max = v.beer_price_pln;
+    });
+
+    const districtList = Object.entries(districtData).map(([name, data]) => ({
+      name,
+      avg: data.sum / data.count,
+      min: data.min,
+      max: data.max,
+      count: data.count
+    })).sort((a, b) => a.avg - b.avg);
+
+    // Cheapest and Priciest District KPI
+    if (districtList.length > 0) {
+      const cheapest = districtList[0];
+      const priciest = districtList[districtList.length - 1];
+
+      const cheapEl = document.getElementById("baro-cheapest-district");
+      const cheapSub = document.getElementById("baro-cheapest-sub");
+      if (cheapEl) cheapEl.textContent = cheapest.name;
+      if (cheapSub) cheapSub.textContent = `śr. ${cheapest.avg.toFixed(2)} zł (od ${cheapest.min.toFixed(0)} zł)`;
+
+      const priceEl = document.getElementById("baro-priciest-district");
+      const priceSub = document.getElementById("baro-priciest-sub");
+      if (priceEl) priceEl.textContent = priciest.name;
+      if (priceSub) priceSub.textContent = `śr. ${priciest.avg.toFixed(2)} zł`;
+    }
+
+    // Left vs Right Bank
+    let leftSum = 0, leftCount = 0;
+    let rightSum = 0, rightCount = 0;
+    validVenues.forEach(v => {
+      if (LEFT_BANK_DISTRICTS.has(v.district)) {
+        leftSum += v.beer_price_pln;
+        leftCount++;
+      } else if (RIGHT_BANK_DISTRICTS.has(v.district)) {
+        rightSum += v.beer_price_pln;
+        rightCount++;
+      }
+    });
+
+    const leftBankEl = document.getElementById("baro-left-bank");
+    if (leftBankEl) {
+      const leftAvg = leftCount > 0 ? (leftSum / leftCount).toFixed(2) : "--";
+      leftBankEl.textContent = `śr. ${leftAvg} zł (${leftCount} barów)`;
+    }
+
+    const rightBankEl = document.getElementById("baro-right-bank");
+    if (rightBankEl) {
+      const rightAvg = rightCount > 0 ? (rightSum / rightCount).toFixed(2) : "--";
+      rightBankEl.textContent = `śr. ${rightAvg} zł (${rightCount} barów)`;
+    }
+
+    // District Bars Breakdown
+    const baroListEl = document.getElementById("baro-district-list");
+    if (baroListEl && districtList.length > 0) {
+      const maxAvg = districtList[districtList.length - 1].avg || 1;
+      baroListEl.innerHTML = districtList.map(item => {
+        const pct = Math.min(100, Math.max(25, (item.avg / maxAvg) * 100));
+        const tier = getPriceTier(item.avg);
+        return `
+          <div class="district-bar-row" onclick="window.__selectDistrictFromBaro('${escapeHtml(item.name)}')">
+            <span class="d-row-name" title="${escapeHtml(item.name)} (${item.count} lokali)">${escapeHtml(item.name)}</span>
+            <div class="d-row-bar-wrap">
+              <div class="d-row-bar-fill" style="width:${pct}%;background:${tier.color};"></div>
+            </div>
+            <span class="d-row-price">${item.avg.toFixed(2)} zł</span>
+          </div>
+        `;
+      }).join("");
+    }
+  }
+
+  // Handle District Selection from Barometer Chart
+  window.__selectDistrictFromBaro = function (districtName) {
+    const modal = document.getElementById("barometer-modal");
+    if (modal) modal.classList.remove("active");
+
+    const select = document.getElementById("district-select");
+    if (select) {
+      select.value = districtName;
+    }
+    currentDistrict = districtName;
+    const target = DISTRICT_CENTERS[districtName] || DISTRICT_CENTERS["all"];
+    if (map && target) {
+      map.flyTo(target.coords, target.zoom, { duration: 1.2 });
+    }
+    renderMarkers();
+  };
+
+  // Render Ranking Leaderboard (Feature A: Piwny Kompas or Najtańsze)
   function renderRankingList(venuesToRank) {
     const listEl = document.getElementById("ranking-list");
     if (!listEl) return;
 
-    const sorted = [...venuesToRank]
-      .filter(v => typeof v.beer_price_pln === "number" && v.beer_price_pln > 0)
-      .sort((a, b) => a.beer_price_pln - b.beer_price_pln)
-      .slice(0, 10);
+    let sorted = [...venuesToRank].filter(v => typeof v.beer_price_pln === "number" && v.beer_price_pln > 0);
+
+    if (rankingMode === "nearest") {
+      if (!userLocation) {
+        listEl.innerHTML = `
+          <div style="text-align:center;padding:32px 20px;display:flex;flex-direction:column;align-items:center;gap:12px;">
+            <div style="font-size:36px;">🧭</div>
+            <div style="font-weight:700;font-size:1rem;color:#fff;">Włącz Piwny Kompas</div>
+            <div style="font-size:0.8rem;color:var(--text-muted);line-height:1.4;max-width:260px;">
+              Udostępnij lokalizację GPS, aby posortować bary od najbliższego wraz z czasem spaceru.
+            </div>
+            <button type="button" class="btn-primary" id="btn-enable-gps" style="padding:10px 18px;font-size:0.84rem;margin-top:6px;">
+              📍 Włącz GPS
+            </button>
+          </div>
+        `;
+        const btnEnable = document.getElementById("btn-enable-gps");
+        if (btnEnable) {
+          btnEnable.addEventListener("click", () => {
+            const btnLocate = document.getElementById("btn-locate-me");
+            if (btnLocate) btnLocate.click();
+          });
+        }
+        return;
+      }
+
+      // Sort by distance ascending
+      sorted = sorted.map(v => {
+        const distKm = calculateDistanceKm(userLocation[0], userLocation[1], v.latitude, v.longitude);
+        const distM = Math.round(distKm * 1000);
+        const walkMin = Math.max(1, Math.round(distKm / 4.8 * 60));
+        return Object.assign({}, v, { _distKm: distKm, _distM: distM, _walkMin: walkMin });
+      }).sort((a, b) => a._distKm - b._distKm).slice(0, 10);
+
+    } else {
+      // Sort by price ascending
+      sorted = sorted.sort((a, b) => a.beer_price_pln - b.beer_price_pln).slice(0, 10);
+    }
 
     if (sorted.length === 0) {
       listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:24px;">Brak lokali spełniających kryteria.</div>';
       return;
     }
 
-    listEl.innerHTML = sorted.map((venue, idx) => `
-      <div class="ranked-card" onclick="window.__zoomToVenue('${venue.id}')">
-        <div class="ranked-pos">#${idx + 1}</div>
-        <div class="ranked-info">
-          <div class="ranked-name">${escapeHtml(venue.name)}</div>
-          <div class="ranked-sub">
-            ${escapeHtml(venue.beer_name || "Piwo z kija")} · ${escapeHtml(venue.district)}
-            ${userLocation ? ` · 📍 ${(calculateDistanceKm(userLocation[0], userLocation[1], venue.latitude, venue.longitude) * 1000).toFixed(0)}m stąd` : ''}
+    listEl.innerHTML = sorted.map((venue, idx) => {
+      let distanceBadge = "";
+      if (userLocation) {
+        const distKm = venue._distKm !== undefined ? venue._distKm : calculateDistanceKm(userLocation[0], userLocation[1], venue.latitude, venue.longitude);
+        const distM = venue._distM !== undefined ? venue._distM : Math.round(distKm * 1000);
+        const walkMin = venue._walkMin !== undefined ? venue._walkMin : Math.max(1, Math.round(distKm / 4.8 * 60));
+        const formattedDist = distM < 1000 ? `${distM}m` : `${distKm.toFixed(1)}km`;
+        distanceBadge = `<span style="color:#38bdf8;font-weight:600;"> · 🚶 ${formattedDist} (~${walkMin} min)</span>`;
+      }
+
+      const hasProof = !!(venue.photo_url || venue.proof_image_url);
+
+      return `
+        <div class="ranked-card" onclick="window.__zoomToVenue('${venue.id}')">
+          <div class="ranked-pos">#${idx + 1}</div>
+          <div class="ranked-info">
+            <div class="ranked-name">
+              ${escapeHtml(venue.name)}
+              ${hasProof ? '<span title="Posiada zdjęcie menu/paragonu" style="font-size:12px;margin-left:4px;">📸</span>' : ''}
+            </div>
+            <div class="ranked-sub">
+              ${escapeHtml(venue.beer_name || "Piwo z kija")} · ${escapeHtml(venue.district)}
+              ${distanceBadge}
+            </div>
           </div>
+          <div class="ranked-price">${venue.beer_price_pln.toFixed(2)} zł</div>
         </div>
-        <div class="ranked-price">${venue.beer_price_pln.toFixed(2)} zł</div>
-      </div>
-    `).join("");
+      `;
+    }).join("");
   }
 
   // Zoom & Pan to a specific venue from Ranking Drawer
@@ -498,6 +760,113 @@
     btnRanking.addEventListener("click", () => drawer.classList.toggle("open"));
     btnCloseDrawer.addEventListener("click", () => drawer.classList.remove("open"));
 
+    // Feature A: Ranking Tabs (Najtańsze vs Najbliżej mnie / Piwny Kompas)
+    const tabCheapest = document.getElementById("tab-rank-cheapest");
+    const tabNearest = document.getElementById("tab-rank-nearest");
+    if (tabCheapest && tabNearest) {
+      tabCheapest.addEventListener("click", () => {
+        rankingMode = "cheapest";
+        tabCheapest.classList.add("active");
+        tabNearest.classList.remove("active");
+        renderRankingList(getFilteredVenues());
+      });
+      tabNearest.addEventListener("click", () => {
+        rankingMode = "nearest";
+        tabNearest.classList.add("active");
+        tabCheapest.classList.remove("active");
+        if (!userLocation) {
+          const btnLocate = document.getElementById("btn-locate-me");
+          if (btnLocate) btnLocate.click();
+        }
+        renderRankingList(getFilteredVenues());
+      });
+    }
+
+    // Feature B: Barometer Modal Events
+    const btnBarometer = document.getElementById("btn-barometer-toggle");
+    const baroModal = document.getElementById("barometer-modal");
+    const btnCloseBaro = document.getElementById("btn-close-barometer");
+
+    if (btnBarometer && baroModal) {
+      btnBarometer.addEventListener("click", () => {
+        updateBarometerStats();
+        baroModal.classList.add("active");
+      });
+    }
+    if (btnCloseBaro && baroModal) {
+      btnCloseBaro.addEventListener("click", () => baroModal.classList.remove("active"));
+    }
+    if (baroModal) {
+      baroModal.addEventListener("click", (e) => {
+        if (e.target === baroModal) baroModal.classList.remove("active");
+      });
+    }
+
+    // Feature C: Lightbox Modal Events
+    const btnCloseLightbox = document.getElementById("btn-close-lightbox");
+    const lightboxModal = document.getElementById("lightbox-modal");
+    if (btnCloseLightbox) {
+      btnCloseLightbox.addEventListener("click", window.__closeLightbox);
+    }
+    if (lightboxModal) {
+      lightboxModal.addEventListener("click", (e) => {
+        if (e.target === lightboxModal) window.__closeLightbox();
+      });
+    }
+
+    // Close Modals on ESC Key
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        window.__closeLightbox();
+        if (baroModal) baroModal.classList.remove("active");
+      }
+    });
+
+    // Feature C: Photo Upload & Compression Handlers
+    const photoInput = document.getElementById("report-photo-input");
+    const photoPreviewBox = document.getElementById("photo-preview-box");
+    const photoPreviewImg = document.getElementById("photo-preview-img");
+    const photoUploadText = document.getElementById("photo-upload-text");
+    const btnRemovePhoto = document.getElementById("btn-remove-photo");
+
+    function resetPhotoUpload() {
+      currentPhotoBase64 = null;
+      if (photoInput) photoInput.value = "";
+      if (photoPreviewImg) photoPreviewImg.src = "";
+      if (photoPreviewBox) photoPreviewBox.style.display = "none";
+      if (photoUploadText) photoUploadText.textContent = "Wybierz zdjęcie karty, tablicy lub paragonu";
+    }
+
+    if (photoInput) {
+      photoInput.addEventListener("change", async (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+
+        try {
+          if (photoUploadText) photoUploadText.textContent = "Kompresowanie zdjęcia...";
+          const compressed = await compressImage(file, 1200, 0.82);
+          currentPhotoBase64 = compressed;
+          currentPhotoContentType = file.type || "image/jpeg";
+
+          if (photoPreviewImg) photoPreviewImg.src = compressed;
+          if (photoPreviewBox) photoPreviewBox.style.display = "inline-block";
+          if (photoUploadText) photoUploadText.textContent = file.name || "Zdjęcie wybrane ✓";
+        } catch (err) {
+          console.error("Błąd przetwarzania zdjęcia:", err);
+          alert("Nie udało się skompresować wybranego pliku.");
+          resetPhotoUpload();
+        }
+      });
+    }
+
+    if (btnRemovePhoto) {
+      btnRemovePhoto.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        resetPhotoUpload();
+      });
+    }
+
     // Crowdsource Modal ("Zgłoś cenę")
     const btnOpenReport = document.getElementById("btn-open-report");
     const modal = document.getElementById("report-modal");
@@ -511,9 +880,13 @@
     }
     function closeModal() {
       modal.classList.remove("active");
+      resetPhotoUpload();
     }
 
     btnOpenReport.addEventListener("click", openModal);
+    const btnFabAdd = document.getElementById("btn-fab-add");
+    if (btnFabAdd) btnFabAdd.addEventListener("click", openModal);
+
     btnCloseModal.addEventListener("click", closeModal);
     btnCancelModal.addEventListener("click", closeModal);
     modal.addEventListener("click", (e) => {
@@ -521,7 +894,7 @@
     });
 
     // Handle Report Form Submit
-    reportForm.addEventListener("submit", (e) => {
+    reportForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       const name = document.getElementById("report-name").value.trim();
       const district = document.getElementById("report-district").value;
@@ -532,6 +905,47 @@
       const isCraft = document.getElementById("report-craft").value === "true";
       const happyHour = document.getElementById("report-happy-hour").value.trim() || null;
 
+      // Check if user attached a photo proof
+      let uploadedPhotoUrl = null;
+      if (currentPhotoBase64) {
+        const submitBtn = reportForm.querySelector('button[type="submit"]');
+        const originalBtnHtml = submitBtn ? submitBtn.innerHTML : "";
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = "Wysyłanie zdjęcia...";
+        }
+
+        try {
+          const uploadResp = await fetch("/api/upload", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              imageBase64: currentPhotoBase64,
+              contentType: currentPhotoContentType,
+              fileName: name.toLowerCase().replace(/[^a-z0-9]/g, "-")
+            })
+          });
+
+          if (uploadResp.ok) {
+            const uploadResJson = await uploadResp.json();
+            if (uploadResJson && uploadResJson.url) {
+              uploadedPhotoUrl = uploadResJson.url;
+            }
+          } else {
+            console.warn("Upload API non-OK, using local base64 fallback:", uploadResp.status);
+            uploadedPhotoUrl = currentPhotoBase64;
+          }
+        } catch (uploadErr) {
+          console.warn("Upload network error, fallback to base64:", uploadErr);
+          uploadedPhotoUrl = currentPhotoBase64;
+        } finally {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnHtml;
+          }
+        }
+      }
+
       // Check if existing venue
       let existing = allVenues.find(v => v.name.toLowerCase() === name.toLowerCase());
 
@@ -540,6 +954,7 @@
         existing.beer_price_pln = price;
         if (shotPrice) existing.shot_price_pln = shotPrice;
         if (happyHour) existing.happy_hour = happyHour;
+        if (uploadedPhotoUrl) existing.photo_url = uploadedPhotoUrl;
         existing.last_updated = new Date().toISOString().split("T")[0];
         existing.votes_confirm = (existing.votes_confirm || 1) + 1;
         saveLocalVenue(existing);
@@ -559,6 +974,7 @@
           shot_price_pln: shotPrice,
           is_craft: isCraft,
           happy_hour: happyHour,
+          photo_url: uploadedPhotoUrl,
           hours: "16:00 - 02:00",
           is_verified: false,
           last_updated: new Date().toISOString().split("T")[0],
@@ -571,46 +987,55 @@
 
       // Sync to Supabase if connected
       if (supabaseClient) {
+        const venuePayload = {
+          osm_id: existing.id,
+          name: existing.name,
+          slug: existing.slug,
+          district: existing.district,
+          address: existing.address,
+          latitude: existing.latitude,
+          longitude: existing.longitude,
+          beer_name: existing.beer_name,
+          beer_price_pln: existing.beer_price_pln,
+          shot_price_pln: existing.shot_price_pln,
+          is_craft: existing.is_craft,
+          happy_hour: existing.happy_hour,
+          hours: existing.hours,
+          is_verified: existing.is_verified,
+          votes_confirm: existing.votes_confirm,
+          last_updated: new Date().toISOString()
+        };
+
         supabaseClient
           .from("venues")
-          .upsert({
-            osm_id: existing.id,
-            name: existing.name,
-            slug: existing.slug,
-            district: existing.district,
-            address: existing.address,
-            latitude: existing.latitude,
-            longitude: existing.longitude,
-            beer_name: existing.beer_name,
-            beer_price_pln: existing.beer_price_pln,
-            shot_price_pln: existing.shot_price_pln,
-            is_craft: existing.is_craft,
-            happy_hour: existing.happy_hour,
-            hours: existing.hours,
-            is_verified: existing.is_verified,
-            votes_confirm: existing.votes_confirm,
-            last_updated: new Date().toISOString()
-          })
+          .upsert(venuePayload)
           .then(({ error }) => {
             if (error) console.error("Supabase upsert error:", error);
             else console.log("Venue updated in Supabase cloud!");
           });
 
+        const reportPayload = {
+          reported_beer_name: beerName,
+          reported_price_pln: price,
+          reported_shot_pln: shotPrice,
+          happy_hour_info: happyHour
+        };
+        if (uploadedPhotoUrl) {
+          reportPayload.proof_image_url = uploadedPhotoUrl;
+        }
+
         supabaseClient
           .from("price_reports")
-          .insert({
-            reported_beer_name: beerName,
-            reported_price_pln: price,
-            reported_shot_pln: shotPrice,
-            happy_hour_info: happyHour
-          })
+          .insert(reportPayload)
           .then(({ error }) => {
             if (error) console.error("Supabase report log error:", error);
           });
       }
 
+      resetPhotoUpload();
       closeModal();
       reportForm.reset();
+      updateBarometerStats();
       renderMarkers();
 
       // Pan to updated or new venue
@@ -655,7 +1080,8 @@
     "hours": "16:00 - 02:00",
     "is_verified": true,
     "last_updated": "2026-09-05",
-    "votes_confirm": 42
+    "votes_confirm": 42,
+    "photo_url": "https://agsodpzkytdgicpmphxz.supabase.co/storage/v1/object/public/proofs/sample-menu-klaps.jpg"
   },
   {
     "id": "pawilony-shot-gun",
@@ -10614,6 +11040,7 @@
           console.log(`Loaded ${allVenues.length} venues directly from Supabase!`);
           applyLocalVotes();
           updateDistrictCounts();
+          updateBarometerStats();
           renderMarkers();
           return;
         }
@@ -10644,6 +11071,7 @@
 
     applyLocalVotes();
     updateDistrictCounts();
+    updateBarometerStats();
     renderMarkers();
   }
 

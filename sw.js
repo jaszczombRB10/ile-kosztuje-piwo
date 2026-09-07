@@ -1,4 +1,4 @@
-const CACHE_NAME = "ile-kosztuje-piwo-v3";
+const CACHE_NAME = "ile-kosztuje-piwo-v4";
 
 const STATIC_ASSETS = [
   "./",
