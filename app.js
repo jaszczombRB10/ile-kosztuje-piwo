@@ -128,9 +128,9 @@
     // Zoom control at bottom-right
     L.control.zoom({ position: "bottomright" }).addTo(map);
 
-    // CartoDB Dark Matter Tiles (matching VadKostarOlen)
+    // CartoDB Dark Matter Tiles without text labels (clean Vad Kostar Ölen style, no voivodeship clutter)
     const cartoKey = (typeof MAP_CONFIG !== "undefined" && MAP_CONFIG.cartoApiKey) ? `?key=${MAP_CONFIG.cartoApiKey}` : "";
-    L.tileLayer(`https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png${cartoKey}`, {
+    L.tileLayer(`https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png${cartoKey}`, {
       attribution: '&copy; <a href="https://carto.com/">CARTO</a> | &copy; OpenStreetMap',
       minZoom: 6,
       maxZoom: 19,
