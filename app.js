@@ -197,7 +197,7 @@
         <div class="venue-actions">
           <a href="${mapsUrl}" target="_blank" rel="noopener" class="venue-btn-map">Prowadź (Nawiguj) →</a>
           <button class="venue-btn-confirm" onclick="window.__confirmPrice('${venue.id}')">
-            👍 Potwierdź (${venue.votes_confirm || 1})
+            ${venue.votes_confirm > 0 ? `👍 Potwierdź (${venue.votes_confirm})` : `👍 Potwierdź cenę`}
           </button>
         </div>
 
@@ -212,16 +212,39 @@
     `;
   }
 
-  // Confirm Price Click Handler
+  // Confirm Price Click Handler (Real Community Confirmation)
   window.__confirmPrice = function (venueId) {
     const venue = allVenues.find(v => v.id === venueId);
     if (!venue) return;
-    venue.votes_confirm = (venue.votes_confirm || 1) + 1;
+    venue.votes_confirm = (venue.votes_confirm || 0) + 1;
     saveLocalVotes(venueId, venue.votes_confirm);
-    
-    // Refresh Popup
+
+    // Sync confirmation to Supabase in real time
+    if (supabaseClient) {
+      supabaseClient
+        .from("venues")
+        .update({ votes_confirm: venue.votes_confirm })
+        .or(`osm_id.eq.${venue.id},id.eq.${venue.id}`)
+        .then(({ error }) => {
+          if (error) console.warn("Supabase vote update note:", error);
+        });
+
+      supabaseClient
+        .from("price_reports")
+        .insert({
+          reported_beer_name: venue.beer_name || "Piwo z kranu",
+          reported_price_pln: venue.beer_price_pln,
+          happy_hour_info: `Potwierdzenie ceny przez użytkownika (głos #${venue.votes_confirm})`
+        })
+        .then(({ error }) => {
+          if (error) console.warn("Supabase report log note:", error);
+        });
+    }
+
+    // Refresh UI & Barometer
+    updateBarometerStats();
     renderMarkers();
-    alert(`Dziękujemy! Potwierdziłeś aktualność ceny dla baru: ${venue.name} (${venue.votes_confirm} potwierdzeń).`);
+    alert(`Dziękujemy! Potwierdziłeś aktualność ceny dla baru: ${venue.name}. Ten lokal ma teraz ${venue.votes_confirm} ${venue.votes_confirm === 1 ? 'potwierdzenie' : 'potwierdzenia'}.`);
   };
 
   // Render Markers on Map based on filters
@@ -411,9 +434,19 @@
     if (craftEl) craftEl.textContent = `w 18 dzielnicach (${craftCount} kraft)`;
 
     // Community confirmations count
-    const totalVotes = allVenues.reduce((acc, v) => acc + (v.votes_confirm || 1), 0);
+    const totalVotes = allVenues.reduce((acc, v) => acc + (v.votes_confirm || 0), 0);
     const votesEl = document.getElementById("baro-total-votes");
+    const votesSubEl = document.getElementById("baro-total-votes-sub");
     if (votesEl) votesEl.textContent = totalVotes.toLocaleString("pl-PL");
+    if (votesSubEl) {
+      if (totalVotes === 0) {
+        votesSubEl.textContent = "bądź pierwszym! ✨";
+      } else if (totalVotes === 1) {
+        votesSubEl.textContent = "1 potwierdzenie od ludzi 👍";
+      } else {
+        votesSubEl.textContent = `${totalVotes} potwierdzeń od ludzi 👍`;
+      }
+    }
 
     // Warsaw average
     const sumWarsaw = validVenues.reduce((acc, v) => acc + v.beer_price_pln, 0);
@@ -1080,7 +1113,7 @@
     "hours": "16:00 - 02:00",
     "is_verified": true,
     "last_updated": "2026-09-05",
-    "votes_confirm": 42,
+    "votes_confirm": 0,
     "photo_url": "https://agsodpzkytdgicpmphxz.supabase.co/storage/v1/object/public/proofs/sample-menu-klaps.jpg"
   },
   {
@@ -1100,7 +1133,7 @@
     "hours": "15:00 - 03:00",
     "is_verified": true,
     "last_updated": "2026-09-04",
-    "votes_confirm": 58
+    "votes_confirm": 0
   },
   {
     "id": "pawilony-pewex",
@@ -1119,7 +1152,7 @@
     "hours": "16:00 - 03:00",
     "is_verified": false,
     "last_updated": "2026-09-02",
-    "votes_confirm": 27
+    "votes_confirm": 0
   },
   {
     "id": "pawilony-peron",
@@ -1138,7 +1171,7 @@
     "hours": "16:00 - 02:00",
     "is_verified": false,
     "last_updated": "2026-09-01",
-    "votes_confirm": 19
+    "votes_confirm": 0
   },
   {
     "id": "pijalnia-nowy-swiat",
@@ -1157,7 +1190,7 @@
     "hours": "09:00 - 04:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 114
+    "votes_confirm": 0
   },
   {
     "id": "pijalnia-foksal",
@@ -1176,7 +1209,7 @@
     "hours": "12:00 - 05:00",
     "is_verified": true,
     "last_updated": "2026-09-05",
-    "votes_confirm": 83
+    "votes_confirm": 0
   },
   {
     "id": "pijalnia-mazowiecka",
@@ -1195,7 +1228,7 @@
     "hours": "14:00 - 04:00",
     "is_verified": false,
     "last_updated": "2026-08-30",
-    "votes_confirm": 39
+    "votes_confirm": 0
   },
   {
     "id": "banialuka",
@@ -1214,7 +1247,7 @@
     "hours": "12:00 - 04:00",
     "is_verified": true,
     "last_updated": "2026-09-04",
-    "votes_confirm": 76
+    "votes_confirm": 0
   },
   {
     "id": "ambasada",
@@ -1233,7 +1266,7 @@
     "hours": "15:00 - 02:00",
     "is_verified": false,
     "last_updated": "2026-08-28",
-    "votes_confirm": 21
+    "votes_confirm": 0
   },
   {
     "id": "kultowa-nowy-swiat",
@@ -1252,7 +1285,7 @@
     "hours": "14:00 - 02:00",
     "is_verified": false,
     "last_updated": "2026-09-01",
-    "votes_confirm": 31
+    "votes_confirm": 0
   },
   {
     "id": "plan-b",
@@ -1271,7 +1304,7 @@
     "hours": "16:00 - 04:00",
     "is_verified": true,
     "last_updated": "2026-09-05",
-    "votes_confirm": 64
+    "votes_confirm": 0
   },
   {
     "id": "cuda-na-kiju",
@@ -1290,7 +1323,7 @@
     "hours": "14:00 - 01:00",
     "is_verified": true,
     "last_updated": "2026-09-05",
-    "votes_confirm": 95
+    "votes_confirm": 0
   },
   {
     "id": "jabeerwocky",
@@ -1309,7 +1342,7 @@
     "hours": "14:00 - 02:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 88
+    "votes_confirm": 0
   },
   {
     "id": "kufle-i-kapsle",
@@ -1328,7 +1361,7 @@
     "hours": "14:00 - 01:00",
     "is_verified": true,
     "last_updated": "2026-09-05",
-    "votes_confirm": 102
+    "votes_confirm": 0
   },
   {
     "id": "drugie-dno",
@@ -1347,7 +1380,7 @@
     "hours": "15:00 - 01:00",
     "is_verified": true,
     "last_updated": "2026-09-03",
-    "votes_confirm": 45
+    "votes_confirm": 0
   },
   {
     "id": "same-krafty",
@@ -1366,7 +1399,7 @@
     "hours": "14:00 - 23:00",
     "is_verified": true,
     "last_updated": "2026-09-04",
-    "votes_confirm": 61
+    "votes_confirm": 0
   },
   {
     "id": "bar-studio",
@@ -1385,7 +1418,7 @@
     "hours": "10:00 - 02:00",
     "is_verified": true,
     "last_updated": "2026-09-05",
-    "votes_confirm": 72
+    "votes_confirm": 0
   },
   {
     "id": "cafe-kulturalna",
@@ -1404,7 +1437,7 @@
     "hours": "12:00 - 02:00",
     "is_verified": false,
     "last_updated": "2026-08-29",
-    "votes_confirm": 38
+    "votes_confirm": 0
   },
   {
     "id": "kraken-rum-bar",
@@ -1423,7 +1456,7 @@
     "hours": "15:00 - 02:00",
     "is_verified": true,
     "last_updated": "2026-09-02",
-    "votes_confirm": 54
+    "votes_confirm": 0
   },
   {
     "id": "goraczka-zlota",
@@ -1442,7 +1475,7 @@
     "hours": "16:00 - 00:00",
     "is_verified": false,
     "last_updated": "2026-08-25",
-    "votes_confirm": 29
+    "votes_confirm": 0
   },
   {
     "id": "chmielnik",
@@ -1461,7 +1494,7 @@
     "hours": "14:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-03",
-    "votes_confirm": 35
+    "votes_confirm": 0
   },
   {
     "id": "w-oparach-absurdu",
@@ -1480,7 +1513,7 @@
     "hours": "14:00 - 03:00",
     "is_verified": true,
     "last_updated": "2026-09-04",
-    "votes_confirm": 67
+    "votes_confirm": 0
   },
   {
     "id": "lysy-pingwin",
@@ -1499,7 +1532,7 @@
     "hours": "16:00 - 02:00",
     "is_verified": false,
     "last_updated": "2026-08-31",
-    "votes_confirm": 24
+    "votes_confirm": 0
   },
   {
     "id": "bazar-klub",
@@ -1518,7 +1551,7 @@
     "hours": "17:00 - 02:00",
     "is_verified": false,
     "last_updated": "2026-08-27",
-    "votes_confirm": 16
+    "votes_confirm": 0
   },
   {
     "id": "grunt-i-woda",
@@ -1537,7 +1570,7 @@
     "hours": "12:00 - 02:00 (Sezon letni)",
     "is_verified": true,
     "last_updated": "2026-09-02",
-    "votes_confirm": 49
+    "votes_confirm": 0
   },
   {
     "id": "hocki-klocki",
@@ -1556,7 +1589,7 @@
     "hours": "14:00 - 04:00",
     "is_verified": false,
     "last_updated": "2026-09-01",
-    "votes_confirm": 34
+    "votes_confirm": 0
   },
   {
     "id": "solec-powisle",
@@ -1575,7 +1608,7 @@
     "hours": "12:00 - 02:00",
     "is_verified": true,
     "last_updated": "2026-09-05",
-    "votes_confirm": 51
+    "votes_confirm": 0
   },
   {
     "id": "moko-tuff",
@@ -1594,7 +1627,7 @@
     "hours": "15:00 - 01:00",
     "is_verified": true,
     "last_updated": "2026-09-03",
-    "votes_confirm": 41
+    "votes_confirm": 0
   },
   {
     "id": "pub-lolek",
@@ -1613,7 +1646,7 @@
     "hours": "11:00 - 01:00",
     "is_verified": true,
     "last_updated": "2026-09-04",
-    "votes_confirm": 79
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-248197975",
@@ -1632,7 +1665,7 @@
     "hours": "Mo-We, Su 15:00-00:00; Th 15:00-01:00; Fr, Sa 15:00-03:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-248569875",
@@ -1651,7 +1684,7 @@
     "hours": "12:00+",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-261659066",
@@ -1670,7 +1703,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-280333661",
@@ -1689,7 +1722,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-286630380",
@@ -1708,7 +1741,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-302711831",
@@ -1727,7 +1760,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-306550336",
@@ -1746,7 +1779,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-311852591",
@@ -1765,7 +1798,7 @@
     "hours": "Tu-Th 16:00-01:00; Fr 16:00-02:00; Sa 14:00-02:00; Su 14:00-22:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-311852670",
@@ -1784,7 +1817,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-312011094",
@@ -1803,7 +1836,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-312054609",
@@ -1822,7 +1855,7 @@
     "hours": "24/7",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-315119739",
@@ -1841,7 +1874,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-315119742",
@@ -1860,7 +1893,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-316892296",
@@ -1879,7 +1912,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-333136529",
@@ -1898,7 +1931,7 @@
     "hours": "11:30-22:30",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-334010752",
@@ -1917,7 +1950,7 @@
     "hours": "11:00+",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-378233265",
@@ -1936,7 +1969,7 @@
     "hours": "Mo-Th 12:00-01:00; Fr 12:00-04:00; Sa 14:00-04:00; Su 14:00-01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-385151338",
@@ -1955,7 +1988,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-396294339",
@@ -1974,7 +2007,7 @@
     "hours": "Mo-Fr 12:00-23:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-398459182",
@@ -1993,7 +2026,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-416569730",
@@ -2012,7 +2045,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-416569739",
@@ -2031,7 +2064,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-416591075",
@@ -2050,7 +2083,7 @@
     "hours": "Mo-Th 16:00-24:00; Fr-Sa 16:00-02:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-416622148",
@@ -2069,7 +2102,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-473159293",
@@ -2088,7 +2121,7 @@
     "hours": "Mo-Fr 05:00-22:00; Sa,Su 11:00-20:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-549651031",
@@ -2107,7 +2140,7 @@
     "hours": "Mo-Th,Su 16:00-24:00; Fr-Sa 16:00-02:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-583392465",
@@ -2126,7 +2159,7 @@
     "hours": "16:00+",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-595400047",
@@ -2145,7 +2178,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-602277145",
@@ -2164,7 +2197,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-735237605",
@@ -2183,7 +2216,7 @@
     "hours": "Mo-Sa 16:00-23:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-764747553",
@@ -2202,7 +2235,7 @@
     "hours": "Su-Th 16:00-12:00, Fr-Sa 16:00-02:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-899125182",
@@ -2221,7 +2254,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-907512396",
@@ -2240,7 +2273,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-940184474",
@@ -2259,7 +2292,7 @@
     "hours": "Su-Th 11:00-02:00, Fr,Sa 12:00-05:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-952192677",
@@ -2278,7 +2311,7 @@
     "hours": "Mo-Th 12:00-17:00; Fr 08:00-13:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-983414813",
@@ -2297,7 +2330,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-1111952597",
@@ -2316,7 +2349,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-1115233646",
@@ -2335,7 +2368,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-1268253997",
@@ -2354,7 +2387,7 @@
     "hours": "Tu-Fr 15+;Sa-Su 12+",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-1271246250",
@@ -2373,7 +2406,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-1325674909",
@@ -2392,7 +2425,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-1361402136",
@@ -2411,7 +2444,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-1437931262",
@@ -2430,7 +2463,7 @@
     "hours": "Mo-Th 12:00-20:00; Fr-Sa 12:00-22:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-1533131151",
@@ -2449,7 +2482,7 @@
     "hours": "Mo,Tu 12:00-24:00; We-Fr 00:00-01:00,12:00-24:00; Sa,Su 00:00-02:00,12:00-24:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-1656239912",
@@ -2468,7 +2501,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-1691364506",
@@ -2487,7 +2520,7 @@
     "hours": "Mo-Sa 14:00+; Su 13:00+",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-1710670259",
@@ -2506,7 +2539,7 @@
     "hours": "Mo-Tu,Su 12:00-22:00; We-Sa 11:00-23:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-1713261561",
@@ -2525,7 +2558,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-1740039326",
@@ -2544,7 +2577,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-1773814891",
@@ -2563,7 +2596,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-1809403498",
@@ -2582,7 +2615,7 @@
     "hours": "Mo-Fr 15:00-22:00; Sa 15:00-24:00; Su 17:00-22:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-1847148405",
@@ -2601,7 +2634,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-2119972546",
@@ -2620,7 +2653,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-2203276440",
@@ -2639,7 +2672,7 @@
     "hours": "Mo-Sa 11:00-24:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-2293362601",
@@ -2658,7 +2691,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-2302367450",
@@ -2677,7 +2710,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-2347499317",
@@ -2696,7 +2729,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-2354068039",
@@ -2715,7 +2748,7 @@
     "hours": "Mo 10:00-22:00; Tu-Th 10:00-23:00; Fr-Su 10:00-24:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-2445802260",
@@ -2734,7 +2767,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-2532756230",
@@ -2753,7 +2786,7 @@
     "hours": "Mo 13:30-22:00; Tu-Fr 10:00-22:00; Sa 14:00-22:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-2546190772",
@@ -2772,7 +2805,7 @@
     "hours": "Mo-Th 13:00-23:00; Fr-Sa 13:00-24:00; Su 12:00-22:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-2548029779",
@@ -2791,7 +2824,7 @@
     "hours": "Mo-Su 15:00-01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-2564697715",
@@ -2810,7 +2843,7 @@
     "hours": "24/7",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-2597555926",
@@ -2829,7 +2862,7 @@
     "hours": "Tu-Th 16:00-24:00; Fr-Sa 16:00-02:00; Su 16:00-23:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-2606848980",
@@ -2848,7 +2881,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-2713290382",
@@ -2867,7 +2900,7 @@
     "hours": "Tu-Su 16:00-23:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-2752716695",
@@ -2886,7 +2919,7 @@
     "hours": "Mo-Th 14:00-02:00; Fr-Su 14:00+",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-3185261443",
@@ -2905,7 +2938,7 @@
     "hours": "Mo-Th 12:00-24:00; Fr 12:00-02:00; Sa 14:00-02:00; Su 14:00-24:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-3337131003",
@@ -2924,7 +2957,7 @@
     "hours": "Mo-We,Su 16:00-24:00; Th 16:00-01:00; Fr-Sa 16:00-02:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-3341972893",
@@ -2943,7 +2976,7 @@
     "hours": "Mo-We 17:00-00:00; Th 17:00-01:00; Fr 17:30-01:00; Sa-Su off",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-3406234375",
@@ -2962,7 +2995,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-3530319133",
@@ -2981,7 +3014,7 @@
     "hours": "Th-Su 18:00+",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-3542063714",
@@ -3000,7 +3033,7 @@
     "hours": "Mo-Su 11:00-22:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-3563939893",
@@ -3019,7 +3052,7 @@
     "hours": "Mo 14:00-22:00; Tu-Th,Su 12:00-22:00; Fr-Sa 12:00-24:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-3572606695",
@@ -3038,7 +3071,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-3627931805",
@@ -3057,7 +3090,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-3696194021",
@@ -3076,7 +3109,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-3799423705",
@@ -3095,7 +3128,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-3863718484",
@@ -3114,7 +3147,7 @@
     "hours": "Mo-Sa 17:00-24:00; Su 16:00-22:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-3886060258",
@@ -3133,7 +3166,7 @@
     "hours": "Mo-Th 18:00-24:00; Fr-Sa 18:00-06:00; Su 16:00-24:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-3974278627",
@@ -3152,7 +3185,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-3983135018",
@@ -3171,7 +3204,7 @@
     "hours": "Mo-Tu 17:00-03:00; We-Th 15:00-03:00; Fr-Sa 15:00-05:00; Su 16:00-03:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-3983135022",
@@ -3190,7 +3223,7 @@
     "hours": "24/7",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-3985025972",
@@ -3209,7 +3242,7 @@
     "hours": "Tu-We,Su 17:00-24:00; Th 17:00-02:00; Fr-Sa 17:00-03:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-3996017040",
@@ -3228,7 +3261,7 @@
     "hours": "Mo-Fr 15:00-02:00; Sa-Su 13:00-02:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-4018492376",
@@ -3247,7 +3280,7 @@
     "hours": "Mo-Tu off; We-Th 16:00-23:00; Fr 16:00-01:00; Sa 13:00-01:00; Su 13:00-19:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-4110437615",
@@ -3266,7 +3299,7 @@
     "hours": "Mo-Sa 09:00-21:00; Su 10:00-20:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-4155667903",
@@ -3285,7 +3318,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-4223827127",
@@ -3304,7 +3337,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-4227972404",
@@ -3323,7 +3356,7 @@
     "hours": "Mo-Tu 14:00-24:00; We-Th 14:00-01:00; Fr-Sa 14:00-02:00; Su 15:00-24:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-4233519776",
@@ -3342,7 +3375,7 @@
     "hours": "Mo-Th 14:00-23:00; Fr 14:00-00:00; Sa 13:00-00:00; Su 13:00-22:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-4244306639",
@@ -3361,7 +3394,7 @@
     "hours": "Mo,Su 16:00-24:00; Tu-Th 16:00-01:00; Fr-Sa 16:00-04:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-4338845889",
@@ -3380,7 +3413,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-4339407690",
@@ -3399,7 +3432,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-4368290589",
@@ -3418,7 +3451,7 @@
     "hours": "Mo-Th,Su 16:00-24:00; Fr-Sa 16:00-02:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-4375857798",
@@ -3437,7 +3470,7 @@
     "hours": "Mo-Th 16:00-22:00; Fr-Sa 16:00-24:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-4387127794",
@@ -3456,7 +3489,7 @@
     "hours": "Tu-Th 17:00-22:00; Sa 14:00-22:00; Su 12:00-22:00; Fr 17:00-22:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-4396887189",
@@ -3475,7 +3508,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-4460884032",
@@ -3494,7 +3527,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-4533745995",
@@ -3513,7 +3546,7 @@
     "hours": "Mo-Sa 14:00-02:00; Su 13:00-00:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-4547235849",
@@ -3532,7 +3565,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-4547274110",
@@ -3551,7 +3584,7 @@
     "hours": "10:30-24:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-4551437542",
@@ -3570,7 +3603,7 @@
     "hours": "Mo-Su 15:00-01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-4591418211",
@@ -3589,7 +3622,7 @@
     "hours": "Mo 13:00-24:00; Tu-Fr 11:00-24:00; Sa-Su 10:00-24:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-4610359292",
@@ -3608,7 +3641,7 @@
     "hours": "17+",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-4709081765",
@@ -3627,7 +3660,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-4835481023",
@@ -3646,7 +3679,7 @@
     "hours": "Tu-Th 16:00-24:00; Fr-Sa 13:00-02:00; Su 13:00-23:00; Mo 16:00-23:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-4871708185",
@@ -3665,7 +3698,7 @@
     "hours": "We-Fr 18:00-24:00; Sa 12:00-24:00; Su 12+",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-4871708186",
@@ -3684,7 +3717,7 @@
     "hours": "Fr-Sa 15:00-24:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-4934955870",
@@ -3703,7 +3736,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-4935336421",
@@ -3722,7 +3755,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-4936250322",
@@ -3741,7 +3774,7 @@
     "hours": "Mo-Th,Su 17:00-02:00; Fr-Sa 17:00-03:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-4945646301",
@@ -3760,7 +3793,7 @@
     "hours": "Mo-Fr 11:00+; Sa-Su 16:00+",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-5038320569",
@@ -3779,7 +3812,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-5054386942",
@@ -3798,7 +3831,7 @@
     "hours": "12:00-02:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-5074631721",
@@ -3817,7 +3850,7 @@
     "hours": "We-Th 18:00-24:00; Fr-Sa 18+",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-5075294073",
@@ -3836,7 +3869,7 @@
     "hours": "Su-Th 16:00-23:00, Fr,Sa 16:00-03:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-5076967399",
@@ -3855,7 +3888,7 @@
     "hours": "Mo-Th 14:00-02:00; Fr 13:00-02:00; Sa,Su 12:00-02:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-5108599558",
@@ -3874,7 +3907,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-5108599559",
@@ -3893,7 +3926,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-5140309518",
@@ -3912,7 +3945,7 @@
     "hours": "Mo off; Tu-We 16:00-24:00; Th 16:00-01:00; Fr-Sa 12:00-02:00; Su 12:00-23:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-5140313264",
@@ -3931,7 +3964,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-5262194021",
@@ -3950,7 +3983,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-5343148942",
@@ -3969,7 +4002,7 @@
     "hours": "Mo-Su 20:00-03:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-5406007155",
@@ -3988,7 +4021,7 @@
     "hours": "Mo-Su 16:00-02:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-5602510246",
@@ -4007,7 +4040,7 @@
     "hours": "Tu-Sa 18:00-00:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-5615776721",
@@ -4026,7 +4059,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-5637695421",
@@ -4045,7 +4078,7 @@
     "hours": "Mo-Su 18:00-03:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-5726560422",
@@ -4064,7 +4097,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-5846679642",
@@ -4083,7 +4116,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-5900410004",
@@ -4102,7 +4135,7 @@
     "hours": "Mo-Sa 12:00-21:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-5941277348",
@@ -4121,7 +4154,7 @@
     "hours": "Mo-Th,Su 16:00-24:00+; Fr-Sa 16:00-02:00+",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-6085723350",
@@ -4140,7 +4173,7 @@
     "hours": "Mo 14:00-01:00; Tu-Sa 12:00-01:00; Su 12:00-21:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-6400251685",
@@ -4159,7 +4192,7 @@
     "hours": "We-Th,Su 16:00-23:00; Fr-Sa 16:00-01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-6400749331",
@@ -4178,7 +4211,7 @@
     "hours": "Mo-Th,Su 18:00+; Fr-Sa 17:00+",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-6445628688",
@@ -4197,7 +4230,7 @@
     "hours": "Mo-Fr 16:00+; Sa-Su 12:00+",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-6492811807",
@@ -4216,7 +4249,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-6515177393",
@@ -4235,7 +4268,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-6578340642",
@@ -4254,7 +4287,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-6593922336",
@@ -4273,7 +4306,7 @@
     "hours": "Mo-Th 16:00-04:00; Fr-Su 14:00-04:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-6652921701",
@@ -4292,7 +4325,7 @@
     "hours": "15+",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-6693592385",
@@ -4311,7 +4344,7 @@
     "hours": "Mo-We,Su 12:00-24:00; Th 12:00-01:00; Fr-Sa 12:00-02:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-6700831010",
@@ -4330,7 +4363,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-6910530285",
@@ -4349,7 +4382,7 @@
     "hours": "Mo 12:00-00:00; Tu-Th 10:00-00:00; Fr-Sa 10:00-01:00; Su 10:00-00:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-6974057285",
@@ -4368,7 +4401,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-7016923616",
@@ -4387,7 +4420,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-7124302273",
@@ -4406,7 +4439,7 @@
     "hours": "16:00-02:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-7132977885",
@@ -4425,7 +4458,7 @@
     "hours": "Mo-Th 17:00-23:00; Fr-Sa 17:00-24:00; Su off",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-7140847375",
@@ -4444,7 +4477,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-7206040390",
@@ -4463,7 +4496,7 @@
     "hours": "Mo-Th 15:30-22:00; Fr 15:30-24:00; Sa 14:00-24:00; Su 14:00-22:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-7235319285",
@@ -4482,7 +4515,7 @@
     "hours": "Tu-Th,Su 17:00-22:00; Fr-Sa 17:00-24:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-7485855594",
@@ -4501,7 +4534,7 @@
     "hours": "24/7",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-7508648585",
@@ -4520,7 +4553,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-7510465786",
@@ -4539,7 +4572,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-7700156485",
@@ -4558,7 +4591,7 @@
     "hours": "Mo-We 16:00-24:00; Th-Sa 16:00-01:00; Su 11:00-23:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-7707985587",
@@ -4577,7 +4610,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-7707985589",
@@ -4596,7 +4629,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-7707985590",
@@ -4615,7 +4648,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-7707985592",
@@ -4634,7 +4667,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-7707985593",
@@ -4653,7 +4686,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-7707985594",
@@ -4672,7 +4705,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-7707985595",
@@ -4691,7 +4724,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-7707985596",
@@ -4710,7 +4743,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-7708049066",
@@ -4729,7 +4762,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-7708204564",
@@ -4748,7 +4781,7 @@
     "hours": "Mo-We,Su 16:00-23:00; Th 16:00-24:00; Fr-Sa 16:00-02:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-7761484320",
@@ -4767,7 +4800,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-7761484321",
@@ -4786,7 +4819,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-7761484324",
@@ -4805,7 +4838,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-7782366091",
@@ -4824,7 +4857,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-7796863374",
@@ -4843,7 +4876,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-7799467785",
@@ -4862,7 +4895,7 @@
     "hours": "Mo-Th,Su 12:00-23:45; Fr-Sa 12:00-02:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-7809195424",
@@ -4881,7 +4914,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-7956420256",
@@ -4900,7 +4933,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-8162315777",
@@ -4919,7 +4952,7 @@
     "hours": "24/7",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-8366928847",
@@ -4938,7 +4971,7 @@
     "hours": "10:00-22:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-8567961291",
@@ -4957,7 +4990,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-8567986993",
@@ -4976,7 +5009,7 @@
     "hours": "Mo-Su 17:00-21:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-8568010071",
@@ -4995,7 +5028,7 @@
     "hours": "Mo-Th 16:00-01:00; Fr 16:00-03:00; Sa 12:00-03:00; Su 12:00-01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-8761530991",
@@ -5014,7 +5047,7 @@
     "hours": "Mo-Th,Su 16:00-01:00; Fr-Sa 16:00-03:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-8848582896",
@@ -5033,7 +5066,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-8884067349",
@@ -5052,7 +5085,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-8929307025",
@@ -5071,7 +5104,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-8931060017",
@@ -5090,7 +5123,7 @@
     "hours": "Mo-Th 12:00-22:00; Fr-Sa 12:00-23:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-8951859657",
@@ -5109,7 +5142,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-8981030460",
@@ -5128,7 +5161,7 @@
     "hours": "Mo-Fr 16:00-24:00; Sa 14:00-24:00; Su 14:00-22:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-8981030462",
@@ -5147,7 +5180,7 @@
     "hours": "Su-Tu 16:00-24:00; We-Th 12:00-24:00; Fr-Sa 12:00-02:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-8988384717",
@@ -5166,7 +5199,7 @@
     "hours": "Tu-Th 12:00-23:00; Fr-Sa 12:00-24:00; Su 14:00-22:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9028264713",
@@ -5185,7 +5218,7 @@
     "hours": "Mo-Th 19:00-00:00; Fr, Sa 19:00-02:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9043701129",
@@ -5204,7 +5237,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9045185565",
@@ -5223,7 +5256,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9241881654",
@@ -5242,7 +5275,7 @@
     "hours": "Tu-Th 19:00-01:00; Fr 17:00-02:00; Sa 19:00-02:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9283827962",
@@ -5261,7 +5294,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9327944756",
@@ -5280,7 +5313,7 @@
     "hours": "Mo-Th 12:00-22:00; Fr-Sa 12:00-24:00; Su 12:00-21:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9349808652",
@@ -5299,7 +5332,7 @@
     "hours": "Su-Th 14:00-01:00; Fr-Sa 14:00-03:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9408767898",
@@ -5318,7 +5351,7 @@
     "hours": "Mo-Th,Su 12:00-24:00; Fr-Sa 12:00+",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9519232403",
@@ -5337,7 +5370,7 @@
     "hours": "24/7",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9708342960",
@@ -5356,7 +5389,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9708355606",
@@ -5375,7 +5408,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9761236273",
@@ -5394,7 +5427,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9790895194",
@@ -5413,7 +5446,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9790895196",
@@ -5432,7 +5465,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9790895198",
@@ -5451,7 +5484,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9790895199",
@@ -5470,7 +5503,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9790899517",
@@ -5489,7 +5522,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9790929334",
@@ -5508,7 +5541,7 @@
     "hours": "16+",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9790933803",
@@ -5527,7 +5560,7 @@
     "hours": "Mo-Th 20:00-03:00; Fr-Sa 20:00-04:30; Su 20:00-03:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9790936055",
@@ -5546,7 +5579,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9796966783",
@@ -5565,7 +5598,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9796966791",
@@ -5584,7 +5617,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9796966804",
@@ -5603,7 +5636,7 @@
     "hours": "Mo-Su 12:00-24:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9822169418",
@@ -5622,7 +5655,7 @@
     "hours": "09:00-01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9828683919",
@@ -5641,7 +5674,7 @@
     "hours": "Mo-Fr 16:00+; Sa-Su 13:00+",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9836773218",
@@ -5660,7 +5693,7 @@
     "hours": "Mo-Th,Su 16:00-01:00; Fr 16:00-03:00; Sa 16:00-04:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9858657819",
@@ -5679,7 +5712,7 @@
     "hours": "Mo-Th,Su 10:00-22:00; Fr-Sa 10:00-23:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9860947308",
@@ -5698,7 +5731,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9862659410",
@@ -5717,7 +5750,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9864232295",
@@ -5736,7 +5769,7 @@
     "hours": "Mo-We,Su 16:00-02:00; Th-Sa 16:00-04:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9904534971",
@@ -5755,7 +5788,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9904534980",
@@ -5774,7 +5807,7 @@
     "hours": "We-Th 17:00-23:00; Fr-Sa 17:00-02:00; Su 15:00-22:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9904534982",
@@ -5793,7 +5826,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9904534988",
@@ -5812,7 +5845,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9919628154",
@@ -5831,7 +5864,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9937530277",
@@ -5850,7 +5883,7 @@
     "hours": "Mo-We,Su off; Th 18:00-23:00; Fr-Sa 18:00-01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9952896533",
@@ -5869,7 +5902,7 @@
     "hours": "Mo-Th,Su 14:00-22:00; Fr-Sa 14:00-23:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9955564802",
@@ -5888,7 +5921,7 @@
     "hours": "Mo-Th 15:00-24:00; Fr 15:00-02:00; Sa 18:00-02:00; Su 18:00-24:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9972944146",
@@ -5907,7 +5940,7 @@
     "hours": "Mo-Th 16:00-24:00, Fr,Sa 14:00-02:00, Su 14:00-24:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9980221388",
@@ -5926,7 +5959,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-10011990148",
@@ -5945,7 +5978,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-10012092843",
@@ -5964,7 +5997,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-10075368441",
@@ -5983,7 +6016,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-10103149471",
@@ -6002,7 +6035,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-10103180403",
@@ -6021,7 +6054,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-10311427306",
@@ -6040,7 +6073,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-10540133837",
@@ -6059,7 +6092,7 @@
     "hours": "11:00-01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-10555453052",
@@ -6078,7 +6111,7 @@
     "hours": "Mo-Th 15:00-24:00; Fr-Sa 15:00-02:00; Su 15:00-22:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-10590006389",
@@ -6097,7 +6130,7 @@
     "hours": "Fr-Sa 19:00-03:00; Su,We,Th 19:00-01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-10702462224",
@@ -6116,7 +6149,7 @@
     "hours": "Th 18:00-23:00; Fr 18:00-01:00; Sa 15:00-01:00; Su 15:00-21:00; Mo-We \"varies\"",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-10704874615",
@@ -6135,7 +6168,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-10704942665",
@@ -6154,7 +6187,7 @@
     "hours": "Mo-Th 14:00-23:00; Fr-Sa 14:00-01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-10721807266",
@@ -6173,7 +6206,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-10753856739",
@@ -6192,7 +6225,7 @@
     "hours": "Th-Sa 17:00-02:00; Mo-We 17:00-01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-10761295246",
@@ -6211,7 +6244,7 @@
     "hours": "Mo-Fr 14:00-01:00; Sa-Su 12:00-01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-10768135061",
@@ -6230,7 +6263,7 @@
     "hours": "Mo-Tu,Th 18:00-23:00; We,Fr 18:00-02:00; Sa 20:00-01:00; Su 19:00-23:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-10775974948",
@@ -6249,7 +6282,7 @@
     "hours": "Tu-Th,Su 16:00-23:00; Fr-Sa 16:00-24:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-10816033026",
@@ -6268,7 +6301,7 @@
     "hours": "Mo-Th 15:00-22:00; Fr 15:00-23:00; Sa 12:00-23:00; Su 12:00-22:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-10830352301",
@@ -6287,7 +6320,7 @@
     "hours": "18:00-02:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-10881607457",
@@ -6306,7 +6339,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-10884187146",
@@ -6325,7 +6358,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-10887737090",
@@ -6344,7 +6377,7 @@
     "hours": "Mo-We 16:00-23:00; Th 18:00-00:00; Fr 16:00-23:00; Sa 11:00-00:00; Su 11:00-23:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-10912104602",
@@ -6363,7 +6396,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-10921005448",
@@ -6382,7 +6415,7 @@
     "hours": "Mo-Su 09:00-00:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-10963230633",
@@ -6401,7 +6434,7 @@
     "hours": "Tu-Su 12:00+",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-10979328071",
@@ -6420,7 +6453,7 @@
     "hours": "Mo 16:00-20:00; Tu-Th 16:00-22:00; Fr-Sa 16:00-24:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-10998218192",
@@ -6439,7 +6472,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11018644077",
@@ -6458,7 +6491,7 @@
     "hours": "Mo 12:00-21:00; Tu-Sa 12:00-22:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11018644090",
@@ -6477,7 +6510,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11018644094",
@@ -6496,7 +6529,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11019858492",
@@ -6515,7 +6548,7 @@
     "hours": "Mo,Tu 17:00-23:00; We-Fr 16:00-24:00; Su 15:00-23:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11019898108",
@@ -6534,7 +6567,7 @@
     "hours": "Mo-Sa 10:00-21:00; Su 11:00-20:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11022418052",
@@ -6553,7 +6586,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11022418064",
@@ -6572,7 +6605,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11022418066",
@@ -6591,7 +6624,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11025479951",
@@ -6610,7 +6643,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11027612216",
@@ -6629,7 +6662,7 @@
     "hours": "24/7",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11028291410",
@@ -6648,7 +6681,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11029954964",
@@ -6667,7 +6700,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11029954968",
@@ -6686,7 +6719,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11029954978",
@@ -6705,7 +6738,7 @@
     "hours": "Mo-Th 19:00-24:00; Fr-Sa 20:00+; Su off",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11029954979",
@@ -6724,7 +6757,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11029954981",
@@ -6743,7 +6776,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11032188575",
@@ -6762,7 +6795,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11032913566",
@@ -6781,7 +6814,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11033970864",
@@ -6800,7 +6833,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11033970870",
@@ -6819,7 +6852,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11035383256",
@@ -6838,7 +6871,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11035383263",
@@ -6857,7 +6890,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11035383268",
@@ -6876,7 +6909,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11037058403",
@@ -6895,7 +6928,7 @@
     "hours": "Tu-Fr 13:00-24:00, Fr,Sa 13:00-01:00, Su 13:00-23:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11037101306",
@@ -6914,7 +6947,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11037101308",
@@ -6933,7 +6966,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11037101311",
@@ -6952,7 +6985,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11039353443",
@@ -6971,7 +7004,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11042003800",
@@ -6990,7 +7023,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11042029410",
@@ -7009,7 +7042,7 @@
     "hours": "Mo-Th 16:00-24:00; Fr-Sa 14:00-24:00,00:00-02:00; Su 14:00-00:00;  PH closed",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11042029412",
@@ -7028,7 +7061,7 @@
     "hours": "Mo-Th,Su 12:00-22:00; Fr-Sa 12:00-23:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11043802505",
@@ -7047,7 +7080,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11043802515",
@@ -7066,7 +7099,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11043802516",
@@ -7085,7 +7118,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11046179213",
@@ -7104,7 +7137,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11047945470",
@@ -7123,7 +7156,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11047945484",
@@ -7142,7 +7175,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11052560526",
@@ -7161,7 +7194,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11052560527",
@@ -7180,7 +7213,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11052560530",
@@ -7199,7 +7232,7 @@
     "hours": "Mo-Fr 18:00-00:00; Fr 18:00-02:00; Sa-Su 16:00-02:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11054525915",
@@ -7218,7 +7251,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11055281467",
@@ -7237,7 +7270,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11055301000",
@@ -7256,7 +7289,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11056488612",
@@ -7275,7 +7308,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11056488621",
@@ -7294,7 +7327,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11059061718",
@@ -7313,7 +7346,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11061363265",
@@ -7332,7 +7365,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11061363268",
@@ -7351,7 +7384,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11061363272",
@@ -7370,7 +7403,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11062935171",
@@ -7389,7 +7422,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11064591212",
@@ -7408,7 +7441,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11064591224",
@@ -7427,7 +7460,7 @@
     "hours": "13+",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11066691067",
@@ -7446,7 +7479,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11068725461",
@@ -7465,7 +7498,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11068725463",
@@ -7484,7 +7517,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11068725464",
@@ -7503,7 +7536,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11077331348",
@@ -7522,7 +7555,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11090163316",
@@ -7541,7 +7574,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11090163319",
@@ -7560,7 +7593,7 @@
     "hours": "14:00-22:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11109606193",
@@ -7579,7 +7612,7 @@
     "hours": "Mo-Su 12:00-22:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11132320003",
@@ -7598,7 +7631,7 @@
     "hours": "Mo-Sa 08:00-21:00; Su 09:00-20:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11152384626",
@@ -7617,7 +7650,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11152384627",
@@ -7636,7 +7669,7 @@
     "hours": "11:00-1:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11169103777",
@@ -7655,7 +7688,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11169103778",
@@ -7674,7 +7707,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11169103779",
@@ -7693,7 +7726,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11169103782",
@@ -7712,7 +7745,7 @@
     "hours": "Mo-Sa 15:00-01:00, Su 15:00-24:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11197533938",
@@ -7731,7 +7764,7 @@
     "hours": "Su-Th 11:00-23:00; Fr-Sa 11:00-00:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11243011269",
@@ -7750,7 +7783,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11243011270",
@@ -7769,7 +7802,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11303056339",
@@ -7788,7 +7821,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11307421470",
@@ -7807,7 +7840,7 @@
     "hours": "Mo-Th 16:00-24:00; Fr 16:00-02:00; Sa 12:00-02:00; Su 12:00-24:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11353812065",
@@ -7826,7 +7859,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11365914866",
@@ -7845,7 +7878,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11434349304",
@@ -7864,7 +7897,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11506908131",
@@ -7883,7 +7916,7 @@
     "hours": "Mo-Su 17:00-24:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11634350526",
@@ -7902,7 +7935,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11634402256",
@@ -7921,7 +7954,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11648854186",
@@ -7940,7 +7973,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11648854188",
@@ -7959,7 +7992,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11730882836",
@@ -7978,7 +8011,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11787396645",
@@ -7997,7 +8030,7 @@
     "hours": "Mo-Th 10:00-24:00; Fr-Sa 10:00-02:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11862417540",
@@ -8016,7 +8049,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11866819830",
@@ -8035,7 +8068,7 @@
     "hours": "Mo off; Tu-Th 16:00-22:00; Fr 16:00-02:00; Sa 09:00-02:00; Su 09:00-22:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11953693269",
@@ -8054,7 +8087,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11957723470",
@@ -8073,7 +8106,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11981452787",
@@ -8092,7 +8125,7 @@
     "hours": "12:00-22:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-12026827517",
@@ -8111,7 +8144,7 @@
     "hours": "Su-Th 17:00-23:00, Fr,Sa 17:00-01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-12036270648",
@@ -8130,7 +8163,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-12036270657",
@@ -8149,7 +8182,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-12037478068",
@@ -8168,7 +8201,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-12037487570",
@@ -8187,7 +8220,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-12093884729",
@@ -8206,7 +8239,7 @@
     "hours": "Mo off; Tu-Th 17:00-23:00; Fr 17:00-00:00; Sa 16:00-00:00; Su,PH 14:00-23:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-12160542258",
@@ -8225,7 +8258,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-12161691669",
@@ -8244,7 +8277,7 @@
     "hours": "Mo-Th 14:00-23:00, Fr 14:00-24:00, Sa 12:00-24:00, Su 12:00-22:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-12214681501",
@@ -8263,7 +8296,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-12237652840",
@@ -8282,7 +8315,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-12339094591",
@@ -8301,7 +8334,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-12389863464",
@@ -8320,7 +8353,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-12422530094",
@@ -8339,7 +8372,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-12443836702",
@@ -8358,7 +8391,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-12497954393",
@@ -8377,7 +8410,7 @@
     "hours": "Mo-Th 17:00-00:00; Fr-Sa 17:00-02:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-12509885210",
@@ -8396,7 +8429,7 @@
     "hours": "24/7",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-12520371361",
@@ -8415,7 +8448,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-12543433404",
@@ -8434,7 +8467,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-12578606138",
@@ -8453,7 +8486,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-12629973075",
@@ -8472,7 +8505,7 @@
     "hours": "Mo-Th 17:00-24:00; Fr-Sa 17:00-02:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-12647791019",
@@ -8491,7 +8524,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-12647791264",
@@ -8510,7 +8543,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-12662423340",
@@ -8529,7 +8562,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-12858109300",
@@ -8548,7 +8581,7 @@
     "hours": "Mo-Th 09:00-22:00; Fr-Sa 09:00-23:00; Su 09:00-20:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-12888500997",
@@ -8567,7 +8600,7 @@
     "hours": "Mo-Fr 11:00+; Sa-Su 10:00+",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-12956154793",
@@ -8586,7 +8619,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-12956154795",
@@ -8605,7 +8638,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-13096197701",
@@ -8624,7 +8657,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-13097027901",
@@ -8643,7 +8676,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-13135172938",
@@ -8662,7 +8695,7 @@
     "hours": "Mo-Su 10:00-00:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-13147199730",
@@ -8681,7 +8714,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-13165556135",
@@ -8700,7 +8733,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-13308362998",
@@ -8719,7 +8752,7 @@
     "hours": "Mo-We 16:00-23:00; Th-Fr 10:00-24:00; Sa 00:00-24:00; Su 13:00-23:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-13357596426",
@@ -8738,7 +8771,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-13410650072",
@@ -8757,7 +8790,7 @@
     "hours": "24/7",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-13427611124",
@@ -8776,7 +8809,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-13429378168",
@@ -8795,7 +8828,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-13566732438",
@@ -8814,7 +8847,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-13646267728",
@@ -8833,7 +8866,7 @@
     "hours": "Mo-Fr 12:00-23:00 \"bar od 17:00\"; Sa-Su 12:00-23:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-13661123054",
@@ -8852,7 +8885,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-13677296338",
@@ -8871,7 +8904,7 @@
     "hours": "Mo-Su 10:00-22:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-13811965801",
@@ -8890,7 +8923,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-13853749531",
@@ -8909,7 +8942,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-13931718959",
@@ -8928,7 +8961,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-13931793948",
@@ -8947,7 +8980,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-14003260757",
@@ -8966,7 +8999,7 @@
     "hours": "Mo-Th,Su 19:00-01:00; Fr-Sa 19:00-03:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-14048312362",
@@ -8985,7 +9018,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-way-28176109",
@@ -9004,7 +9037,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-way-29995825",
@@ -9023,7 +9056,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-way-45758490",
@@ -9042,7 +9075,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-way-131479138",
@@ -9061,7 +9094,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-way-160342684",
@@ -9080,7 +9113,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-way-166979925",
@@ -9099,7 +9132,7 @@
     "hours": "Mo-We 16:00-23:00, Th, Su 16:00-24:00, Fr-Sa 16:00-02:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-way-218722780",
@@ -9118,7 +9151,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-way-228350014",
@@ -9137,7 +9170,7 @@
     "hours": "Mo-Fr 16:00-22:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-way-229170140",
@@ -9156,7 +9189,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-way-230261783",
@@ -9175,7 +9208,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-way-243925642",
@@ -9194,7 +9227,7 @@
     "hours": "Mo-Su,PH 10:00-18:00+",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-way-244662258",
@@ -9213,7 +9246,7 @@
     "hours": "Tu-Th 14:00-21:00; Fr-Sa 14:00-00:00; Su 13:00-18:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-way-300979385",
@@ -9232,7 +9265,7 @@
     "hours": "Mo-Su 14:00-22:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-way-316613218",
@@ -9251,7 +9284,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-way-523375031",
@@ -9270,7 +9303,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-way-865418148",
@@ -9289,7 +9322,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-way-888765994",
@@ -9308,7 +9341,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-way-977350469",
@@ -9327,7 +9360,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-way-993221384",
@@ -9346,7 +9379,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-way-993221390",
@@ -9365,7 +9398,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-way-1060042804",
@@ -9384,7 +9417,7 @@
     "hours": "Th,Fr 16:00-21:00; Sa 14:00-20:00; Su 14:00-20:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-way-1192523292",
@@ -9403,7 +9436,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-319430784",
@@ -9422,7 +9455,7 @@
     "hours": "24/7",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-386236349",
@@ -9441,7 +9474,7 @@
     "hours": "Mo-Tu, Th 14:00-18:00; We, Fr-Su 12:00-00:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-457296879",
@@ -9460,7 +9493,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-979596058",
@@ -9479,7 +9512,7 @@
     "hours": "Mo-Fr 11:00-22:00; Sa-Su 12:00-22:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-1292308637",
@@ -9498,7 +9531,7 @@
     "hours": "Mo-Fr 09:00-21:00; Sa-Su 10:00-21:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-2479494887",
@@ -9517,7 +9550,7 @@
     "hours": "Mo-Fr 08:00-16:00; Sa,Su 10:00-16:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-2799346901",
@@ -9536,7 +9569,7 @@
     "hours": "Mo 09:00-20:00; Tu-Th 08:00-22:00; Fr 08:00-23:00; Su 08:30-20:00; Sa 08:30-23:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-3230318676",
@@ -9555,7 +9588,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-3424760272",
@@ -9574,7 +9607,7 @@
     "hours": "Tu-Fr 13:00-21:00; Sa 12:00-19:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-3711021687",
@@ -9593,7 +9626,7 @@
     "hours": "Mo-FR - 12:00-22:00, Sa - SU 10:00-22:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-4366042671",
@@ -9612,7 +9645,7 @@
     "hours": "Mo-Fr 08:00-16:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-4373622791",
@@ -9631,7 +9664,7 @@
     "hours": "Mo-Sa 12:00-22:00; Su 12:00-21:30",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-5777672936",
@@ -9650,7 +9683,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-6466436948",
@@ -9669,7 +9702,7 @@
     "hours": "12:00-22:30",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-6915850272",
@@ -9688,7 +9721,7 @@
     "hours": "Mo-Th 13:00-21:30; Fr 13:00-00:00; Sa-Su 11:00-21:30",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-7659416307",
@@ -9707,7 +9740,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9873285609",
@@ -9726,7 +9759,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9955410749",
@@ -9745,7 +9778,7 @@
     "hours": "Su-Th 12:00-22:00; Fr-Sa 12:00-23:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9983858837",
@@ -9764,7 +9797,7 @@
     "hours": "11:00-22:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-11486621229",
@@ -9783,7 +9816,7 @@
     "hours": "Mo-Th Su 11:00-23:00; Fr-Sa 11:00-00:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-12171880880",
@@ -9802,7 +9835,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-12994773775",
@@ -9821,7 +9854,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-way-243274440",
@@ -9840,7 +9873,7 @@
     "hours": "Mo,Su 11:00-20:00; Tu-Sa 11:00-21:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-way-930817947",
@@ -9859,7 +9892,7 @@
     "hours": "Mo-Su 12:00-23:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-way-1026554187",
@@ -9878,7 +9911,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "suburban-kraftodajnia-tarchomin",
@@ -9897,7 +9930,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-zanzi-bar-tarchomin",
@@ -9916,7 +9949,7 @@
     "hours": "14:00 - 01:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-pub-pod-mostem",
@@ -9935,7 +9968,7 @@
     "hours": "16:00 - 02:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-gospoda-zbojnicka",
@@ -9954,7 +9987,7 @@
     "hours": "12:00 - 23:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-bistro-pub-odkryta",
@@ -9973,7 +10006,7 @@
     "hours": "15:00 - 00:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-dziki-rys-browar-pub",
@@ -9992,7 +10025,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-browar-miejski-ursus",
@@ -10011,7 +10044,7 @@
     "hours": "15:00 - 01:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-bar-niedzwiadek",
@@ -10030,7 +10063,7 @@
     "hours": "12:00 - 23:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-stacja-ursus-pub-grill",
@@ -10049,7 +10082,7 @@
     "hours": "14:00 - 01:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-pub-skorosze",
@@ -10068,7 +10101,7 @@
     "hours": "16:00 - 00:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-piwiarnia-warka-ursus",
@@ -10087,7 +10120,7 @@
     "hours": "14:00 - 01:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-broadway-club-pub",
@@ -10106,7 +10139,7 @@
     "hours": "16:00 - 03:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-pub-brodno",
@@ -10125,7 +10158,7 @@
     "hours": "15:00 - 01:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-chmiel-i-slod-targowek",
@@ -10144,7 +10177,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-tawerna-pod-kasztanami",
@@ -10163,7 +10196,7 @@
     "hours": "13:00 - 23:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-piwiarnia-targowek",
@@ -10182,7 +10215,7 @@
     "hours": "14:00 - 00:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-bar-zacisze",
@@ -10201,7 +10234,7 @@
     "hours": "14:00 - 23:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-kinokawiarnia-bar-stacja-falenica",
@@ -10220,7 +10253,7 @@
     "hours": "14:00 - 23:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-pub-anin",
@@ -10239,7 +10272,7 @@
     "hours": "16:00 - 00:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-tawerna-wawer",
@@ -10258,7 +10291,7 @@
     "hours": "15:00 - 01:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-bar-radosc",
@@ -10277,7 +10310,7 @@
     "hours": "15:00 - 23:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-pod-debami-piwiarnia",
@@ -10296,7 +10329,7 @@
     "hours": "12:00 - 22:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-pub-czolgista",
@@ -10315,7 +10348,7 @@
     "hours": "15:00 - 01:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-tawerna-rembertowska",
@@ -10334,7 +10367,7 @@
     "hours": "16:00 - 00:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-stacja-rembertow-bar",
@@ -10353,7 +10386,7 @@
     "hours": "15:00 - 23:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-bar-strzelec",
@@ -10372,7 +10405,7 @@
     "hours": "14:00 - 23:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-browar-rembertowski-pub",
@@ -10391,7 +10424,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-pub-stara-milosna",
@@ -10410,7 +10443,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-bar-pod-palma-wesola",
@@ -10429,7 +10462,7 @@
     "hours": "14:00 - 23:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-tawerna-lesna-wesola",
@@ -10448,7 +10481,7 @@
     "hours": "13:00 - 23:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-kawiarnia-pub-grzybowa",
@@ -10467,7 +10500,7 @@
     "hours": "15:00 - 23:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-bar-przy-dworcu-wesola",
@@ -10486,7 +10519,7 @@
     "hours": "12:00 - 23:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-browar-wilanow-piwo-steki",
@@ -10505,7 +10538,7 @@
     "hours": "14:00 - 00:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-kuznia-kulturalna",
@@ -10524,7 +10557,7 @@
     "hours": "12:00 - 23:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-dziki-piec-craft-bar",
@@ -10543,7 +10576,7 @@
     "hours": "13:00 - 00:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-royal-pub-wilanow",
@@ -10562,7 +10595,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-karczma-wilanowska",
@@ -10581,7 +10614,7 @@
     "hours": "12:00 - 23:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-multitap-ursynow-craft",
@@ -10600,7 +10633,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-shot-beer-kabaty",
@@ -10619,7 +10652,7 @@
     "hours": "15:00 - 02:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-baobab-pub-natolin",
@@ -10638,7 +10671,7 @@
     "hours": "15:00 - 00:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "suburban-pub-stoklosy",
@@ -10657,7 +10690,7 @@
     "hours": "14:00 - 23:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 3
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-1128110061",
@@ -10676,7 +10709,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-1175150282",
@@ -10695,7 +10728,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-1569847123",
@@ -10714,7 +10747,7 @@
     "hours": "Mo-Su 12:00-22:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-2129619369",
@@ -10733,7 +10766,7 @@
     "hours": "Mo-Th 12:00-21:00, Fr,Sa 12:00-24:00, Su 12:00-21:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-2211360883",
@@ -10752,7 +10785,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-2558914962",
@@ -10771,7 +10804,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-3656915554",
@@ -10790,7 +10823,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-4319970418",
@@ -10809,7 +10842,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-4351677497",
@@ -10828,7 +10861,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-4382967190",
@@ -10847,7 +10880,7 @@
     "hours": "Mo-Su 10:00-22:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-6939850085",
@@ -10866,7 +10899,7 @@
     "hours": "Mo-Su 08:30-21:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9113827057",
@@ -10885,7 +10918,7 @@
     "hours": "Mo-Sa 18:00+",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-9726510119",
@@ -10904,7 +10937,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-12111437619",
@@ -10923,7 +10956,7 @@
     "hours": "Apr-Oct: Mo-Fr 14:00-21:00; Apr-Oct: Sa,Su 11:00-21:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-node-13955444995",
@@ -10942,7 +10975,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-way-250133255",
@@ -10961,7 +10994,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-way-302624232",
@@ -10980,7 +11013,7 @@
     "hours": "Tu-Fr 16:30-22:00; Sa 16:30-23:00; Su 16:30-22:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-way-336335147",
@@ -10999,7 +11032,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   },
   {
     "id": "osm-way-600421815",
@@ -11018,7 +11051,7 @@
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 1
+    "votes_confirm": 0
   }
 ];
 
