@@ -1,4 +1,4 @@
-const CACHE_NAME = "ile-kosztuje-piwo-v5";
+const CACHE_NAME = "ile-kosztuje-piwo-v6";
 
 const STATIC_ASSETS = [
   "./",
@@ -9,6 +9,9 @@ const STATIC_ASSETS = [
   "./manifest.json",
   "./vendor/leaflet/leaflet.css",
   "./vendor/leaflet/leaflet.js",
+  "./vendor/leaflet/leaflet.markercluster.js",
+  "./vendor/leaflet/MarkerCluster.css",
+  "./vendor/leaflet/MarkerCluster.Default.css",
   "./vendor/supabase/supabase.min.js",
   "./data/venues.json",
   "./icons/icon.svg",

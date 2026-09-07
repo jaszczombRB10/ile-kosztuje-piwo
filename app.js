@@ -36,6 +36,8 @@
   let map;
   let allVenues = [];
   let activeMarkers = [];
+  let clusterGroup = null;
+  let cityMarkersGroup = null;
   let currentFilter = "all";
   let currentDistrict = "all";
   let searchQuery = "";
@@ -96,11 +98,30 @@
     return R * c;
   }
 
+  // Exact Bounding Box of Poland (South-West to North-East)
+  const POLAND_BOUNDS = [
+    [48.8, 14.0], // South-West (below Bieszczady / Czech border)
+    [55.2, 24.4]  // North-East (above Baltic / Lithuania border)
+  ];
+
+  // Polish Cities for Nationwide Expansion (Vad Kostar Ölen style)
+  const EXPANSION_CITIES = [
+    { name: "WARSZAWA", count: 524, coords: [52.2319, 21.0185], status: "active", sub: "524 bary · od 10 zł", zoom: 13 },
+    { name: "KRAKÓW", count: 0, coords: [50.0647, 19.9450], status: "coming_soon", sub: "wkrótce", zoom: 13 },
+    { name: "GDAŃSK", count: 0, coords: [54.3520, 18.6466], status: "coming_soon", sub: "wkrótce", zoom: 13 },
+    { name: "WROCŁAW", count: 0, coords: [51.1079, 17.0385], status: "coming_soon", sub: "wkrótce", zoom: 13 },
+    { name: "POZNAŃ", count: 0, coords: [52.4064, 16.9252], status: "coming_soon", sub: "wkrótce", zoom: 13 }
+  ];
+
   // Initialize Leaflet Map
   function initMap() {
     map = L.map("map", {
       center: WARSAW_CENTER,
       zoom: DEFAULT_ZOOM,
+      minZoom: 6,
+      maxZoom: 19,
+      maxBounds: POLAND_BOUNDS,
+      maxBoundsViscosity: 0.95,
       zoomControl: false
     });
 
@@ -111,20 +132,147 @@
     const cartoKey = (typeof MAP_CONFIG !== "undefined" && MAP_CONFIG.cartoApiKey) ? `?key=${MAP_CONFIG.cartoApiKey}` : "";
     L.tileLayer(`https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png${cartoKey}`, {
       attribution: '&copy; <a href="https://carto.com/">CARTO</a> | &copy; OpenStreetMap',
+      minZoom: 6,
       maxZoom: 19,
       subdomains: "abcd"
     }).addTo(map);
 
+    initClusters();
+
+    map.on("zoomend", updateZoomOverview);
+
     // Ensure Leaflet recalculates dimensions once DOM has rendered
-    setTimeout(() => {
-      if (map) map.invalidateSize();
-    }, 200);
-    setTimeout(() => {
-      if (map) map.invalidateSize();
-    }, 600);
-    window.addEventListener("resize", () => {
-      if (map) map.invalidateSize();
+    setTimeout(() => { if (map) map.invalidateSize(); }, 200);
+    setTimeout(() => { if (map) map.invalidateSize(); }, 600);
+    window.addEventListener("resize", () => { if (map) map.invalidateSize(); });
+  }
+
+  // Initialize Marker Clusters (60 FPS Performance on Mobile)
+  function initClusters() {
+    if (window.L && L.markerClusterGroup && !clusterGroup) {
+      clusterGroup = L.markerClusterGroup({
+        maxClusterRadius: 42,
+        spiderfyOnMaxZoom: true,
+        showCoverageOnHover: false,
+        zoomToBoundsOnClick: true,
+        disableClusteringAtZoom: 16,
+        chunkedLoading: true,
+        iconCreateFunction: function(cluster) {
+          const markers = cluster.getAllChildMarkers();
+          const count = markers.length;
+
+          let minPrice = Infinity;
+          let hasOpen = false;
+          markers.forEach(m => {
+            const v = m._venueData;
+            if (v) {
+              if (v._isOpen) hasOpen = true;
+              if (typeof v.beer_price_pln === "number" && v.beer_price_pln < minPrice) {
+                minPrice = v.beer_price_pln;
+              }
+            }
+          });
+
+          let clusterClass = "beer-cluster-mid";
+          if (!hasOpen) {
+            clusterClass = "beer-cluster-closed";
+          } else if (minPrice <= 12.0) {
+            clusterClass = "beer-cluster-low";
+          } else if (minPrice > 18.0) {
+            clusterClass = "beer-cluster-high";
+          }
+
+          const priceLabel = minPrice !== Infinity ? `od ${minPrice.toFixed(minPrice % 1 === 0 ? 0 : 1)}zł` : "";
+
+          return L.divIcon({
+            html: `<div class="beer-cluster ${clusterClass}">
+                    <span class="cluster-count">${count}</span>
+                    <span class="cluster-sub">${hasOpen ? priceLabel : '✕'}</span>
+                   </div>`,
+            className: 'beer-cluster-wrap',
+            iconSize: [44, 44],
+            iconAnchor: [22, 22]
+          });
+        }
+      });
+      map.addLayer(clusterGroup);
+    }
+  }
+
+  // Render country-level city overview labels when zoomed out (Vad Kostar Ölen style)
+  function renderCityOverviewMarkers() {
+    if (!cityMarkersGroup) {
+      cityMarkersGroup = L.layerGroup().addTo(map);
+    }
+    cityMarkersGroup.clearLayers();
+
+    EXPANSION_CITIES.forEach(city => {
+      const isComingSoon = city.status === "coming_soon";
+      const icon = L.divIcon({
+        className: `city-overview-marker ${isComingSoon ? 'coming-soon' : ''}`,
+        html: `
+          <div class="city-overview-box">
+            <div class="city-overview-name">${escapeHtml(city.name)}</div>
+            <div class="city-overview-sub">${escapeHtml(city.sub)}</div>
+          </div>
+        `,
+        iconSize: [130, 48],
+        iconAnchor: [65, 24]
+      });
+
+      const m = L.marker(city.coords, { icon });
+      m.on("click", () => {
+        if (!isComingSoon) {
+          map.flyTo(city.coords, city.zoom, { duration: 1.2 });
+        } else {
+          alert(`📍 ${city.name} - zbieranie bazy barów i cen piwa już wkrótce!\nJeśli chcesz pomóc jako lokalny ambasador w mieście ${city.name}, napisz do nas 🍻`);
+        }
+      });
+      cityMarkersGroup.addLayer(m);
     });
+  }
+
+  // Zoom level switch: cities view (<= 10) vs bars view (> 10)
+  function updateZoomOverview() {
+    if (!map) return;
+    const z = map.getZoom();
+    if (z <= 10) {
+      if (clusterGroup && map.hasLayer(clusterGroup)) map.removeLayer(clusterGroup);
+      renderCityOverviewMarkers();
+      if (cityMarkersGroup && !map.hasLayer(cityMarkersGroup)) map.addLayer(cityMarkersGroup);
+    } else {
+      if (cityMarkersGroup && map.hasLayer(cityMarkersGroup)) map.removeLayer(cityMarkersGroup);
+      if (clusterGroup && !map.hasLayer(clusterGroup)) map.addLayer(clusterGroup);
+    }
+  }
+
+  // Check if venue is currently open based on hours
+  function isVenueOpen(venue, now = new Date()) {
+    if (!venue.hours) return true;
+    const hStr = venue.hours.toLowerCase().trim();
+    if (hStr.includes("24/7") || hStr.includes("24h") || hStr.includes("całodobow")) return true;
+
+    const match = hStr.match(/(\d{1,2}):(\d{2})\s*[-–]\s*(\d{1,2}):(\d{2})/);
+    if (!match) return true;
+
+    const openHour = parseInt(match[1], 10);
+    const openMin = parseInt(match[2], 10);
+    const closeHour = parseInt(match[3], 10);
+    const closeMin = parseInt(match[4], 10);
+
+    const curMinutes = now.getHours() * 60 + now.getMinutes();
+    const openMinutes = openHour * 60 + openMin;
+    let closeMinutes = closeHour * 60 + closeMin;
+
+    if (closeMinutes <= openMinutes) {
+      // Crosses midnight (e.g. 16:00 - 02:00)
+      if (curMinutes < (closeHour * 60 + closeMin)) {
+        return true;
+      }
+      return curMinutes >= openMinutes;
+    } else {
+      return curMinutes >= openMinutes && curMinutes <= closeMinutes;
+    }
   }
 
   // Determine Price Tier and Style
@@ -134,13 +282,26 @@
     return { tier: "high", class: "marker-high", color: "#ef4444" };
   }
 
-  // Create Custom HTML Marker Badge
+  // Create Custom HTML Marker Badge (Vad Kostar Ölen Style: grey ✕ circle if closed)
   function createMarkerIcon(venue) {
+    const open = isVenueOpen(venue);
     const price = venue.beer_price_pln;
     const tier = getPriceTier(price);
     const craftClass = venue.is_craft ? "marker-craft-halo" : "";
-    const size = price <= 12.0 ? [44, 44] : [38, 38];
 
+    if (!open) {
+      const size = [32, 32];
+      return L.divIcon({
+        className: "custom-price-div-icon",
+        html: `<div class="price-badge-marker marker-closed" style="width:${size[0]}px; height:${size[1]}px;" title="Zamknięte teraz · ${escapeHtml(venue.hours || '')}">
+                <span class="closed-x">✕</span>
+               </div>`,
+        iconSize: size,
+        iconAnchor: [size[0] / 2, size[1] / 2]
+      });
+    }
+
+    const size = price <= 12.0 ? [44, 44] : [38, 38];
     return L.divIcon({
       className: "custom-price-div-icon",
       html: `<div class="price-badge-marker ${tier.class} ${craftClass}" style="width:${size[0]}px; height:${size[1]}px;">
@@ -153,6 +314,7 @@
 
   // Create Venue Popup HTML
   function createPopupContent(venue) {
+    const open = isVenueOpen(venue);
     const price = venue.beer_price_pln;
     const tier = getPriceTier(price);
     const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${venue.latitude},${venue.longitude}`;
@@ -164,6 +326,10 @@
       const walkMin = Math.max(1, Math.round(distKm / 4.8 * 60));
       walkInfo = `<div style="font-size:0.75rem;color:#38bdf8;margin-top:4px;font-weight:600;">🚶 ${distM < 1000 ? distM + ' m' : distKm.toFixed(1) + ' km'} (${walkMin} min spacerem stąd)</div>`;
     }
+
+    const statusBadge = open
+      ? `<span style="display:inline-flex;align-items:center;gap:4px;font-size:0.72rem;background:rgba(34,197,94,0.12);color:#4ade80;border:1px solid rgba(74,222,128,0.3);padding:2px 7px;border-radius:999px;font-weight:700;">🟢 Otwarte teraz</span>`
+      : `<span style="display:inline-flex;align-items:center;gap:4px;font-size:0.72rem;background:rgba(148,163,184,0.12);color:#94a3b8;border:1px solid rgba(148,163,184,0.3);padding:2px 7px;border-radius:999px;font-weight:700;">🔴 Zamknięte (${escapeHtml(venue.hours || 'sprawdź godziny')})</span>`;
 
     const proofUrl = venue.photo_url || venue.proof_image_url;
 
@@ -177,6 +343,8 @@
           </div>
           ${venue.is_verified ? '<span title="Zweryfikowany lokal" style="color:#22c55e;font-size:16px;">✓</span>' : ''}
         </div>
+
+        <div style="margin-bottom:8px;">${statusBadge}</div>
 
         <div class="venue-price-box">
           <div>
@@ -247,10 +415,13 @@
     alert(`Dziękujemy! Potwierdziłeś aktualność ceny dla baru: ${venue.name}. Ten lokal ma teraz ${venue.votes_confirm} ${venue.votes_confirm === 1 ? 'potwierdzenie' : 'potwierdzenia'}.`);
   };
 
-  // Render Markers on Map based on filters
+  // Render Markers on Map based on filters (Clustered for 60 FPS performance)
   function renderMarkers() {
-    // Clear old markers
-    activeMarkers.forEach(m => map.removeLayer(m));
+    if (clusterGroup) {
+      clusterGroup.clearLayers();
+    } else {
+      activeMarkers.forEach(m => map.removeLayer(m));
+    }
     activeMarkers = [];
 
     const filtered = getFilteredVenues();
@@ -264,18 +435,29 @@
       }
     }
 
+    const newMarkers = [];
     filtered.forEach(venue => {
+      venue._isOpen = isVenueOpen(venue);
       const icon = createMarkerIcon(venue);
       const marker = L.marker([venue.latitude, venue.longitude], { icon })
-        .addTo(map)
         .bindPopup(() => createPopupContent(venue), {
           maxWidth: 320,
           className: "custom-leaflet-popup"
         });
 
-      activeMarkers.push(marker);
+      marker._venueData = venue;
+      newMarkers.push(marker);
     });
 
+    activeMarkers = newMarkers;
+
+    if (clusterGroup) {
+      clusterGroup.addLayers(newMarkers);
+    } else {
+      newMarkers.forEach(m => m.addTo(map));
+    }
+
+    updateZoomOverview();
     renderRankingList(filtered);
   }
 
@@ -329,6 +511,8 @@
       // Filter chips
       const price = venue.beer_price_pln;
       switch (currentFilter) {
+        case "open-now":
+          return isVenueOpen(venue);
         case "pawilony":
           return venue.district.toLowerCase() === "pawilony";
         case "srodmiescie":
@@ -633,28 +817,34 @@
     }).join("");
   }
 
-  // Zoom & Pan to a specific venue from Ranking Drawer
+  // Zoom & Pan to a specific venue from Ranking Drawer or Search
   window.__zoomToVenue = function (venueId) {
     const venue = allVenues.find(v => v.id === venueId);
     if (!venue) return;
 
     // Close drawer on small screens
-    if (window.innerWidth <= 640) {
-      document.getElementById("ranking-drawer").classList.remove("open");
+    const drawer = document.getElementById("ranking-drawer");
+    if (drawer) {
+      drawer.classList.remove("open");
     }
 
-    map.flyTo([venue.latitude, venue.longitude], 17, { duration: 1.2 });
+    const targetMarker = activeMarkers.find(m => {
+      const ll = m.getLatLng();
+      return Math.abs(ll.lat - venue.latitude) < 0.0001 && Math.abs(ll.lng - venue.longitude) < 0.0001;
+    });
 
-    // Open its popup after pan
-    setTimeout(() => {
-      const targetMarker = activeMarkers.find(m => {
-        const ll = m.getLatLng();
-        return Math.abs(ll.lat - venue.latitude) < 0.0001 && Math.abs(ll.lng - venue.longitude) < 0.0001;
-      });
-      if (targetMarker) {
+    if (clusterGroup && targetMarker) {
+      clusterGroup.zoomToShowLayer(targetMarker, () => {
         targetMarker.openPopup();
-      }
-    }, 1300);
+      });
+    } else {
+      map.flyTo([venue.latitude, venue.longitude], 17, { duration: 1.2 });
+      setTimeout(() => {
+        if (targetMarker) {
+          targetMarker.openPopup();
+        }
+      }, 1300);
+    }
   };
 
   // Local Storage Helpers
@@ -1074,6 +1264,68 @@
       // Pan to updated or new venue
       window.__zoomToVenue(existing.id);
       alert(`Dziękujemy! Opublikowano aktualną cenę dla: ${name} (${price.toFixed(2)} zł).`);
+    });
+
+    // Live Clock for Header (Vad Kostar Ölen Style)
+    function updateLiveClock() {
+      const clockEl = document.getElementById("live-clock-time");
+      if (!clockEl) return;
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2, "0");
+      const mm = String(now.getMinutes()).padStart(2, "0");
+      clockEl.textContent = `${hh}:${mm}`;
+    }
+    updateLiveClock();
+    setInterval(updateLiveClock, 30000);
+
+    // Floating Locate Button (Moja pozycja)
+    const btnLocateFloat = document.getElementById("btn-locate-float");
+    if (btnLocateFloat) {
+      btnLocateFloat.addEventListener("click", () => {
+        const btnLocate = document.getElementById("btn-locate-me");
+        if (btnLocate) btnLocate.click();
+      });
+    }
+
+    // Toggle Mobile Search Overlay (Minimize / Expand)
+    const btnToggleSearch = document.getElementById("btn-toggle-search");
+    const mapOverlay = document.querySelector(".map-overlay");
+    if (btnToggleSearch && mapOverlay) {
+      btnToggleSearch.addEventListener("click", () => {
+        mapOverlay.classList.toggle("collapsed-mobile");
+      });
+    }
+
+    // Mobile Bottom Navigation Bar Actions (Native App Dock)
+    const bottomNavItems = document.querySelectorAll(".mobile-bottom-nav .nav-item");
+    bottomNavItems.forEach(item => {
+      item.addEventListener("click", () => {
+        const target = item.getAttribute("data-target");
+        bottomNavItems.forEach(btn => btn.classList.remove("active"));
+        item.classList.add("active");
+
+        if (target === "map") {
+          if (drawer) drawer.classList.remove("open");
+          if (baroModal) baroModal.classList.remove("active");
+          closeModal();
+          if (map) map.flyTo(WARSAW_CENTER, 13, { duration: 0.8 });
+        } else if (target === "compass") {
+          if (baroModal) baroModal.classList.remove("active");
+          if (tabNearest) tabNearest.click();
+          if (drawer) drawer.classList.add("open");
+        } else if (target === "ranking") {
+          if (baroModal) baroModal.classList.remove("active");
+          if (tabCheapest) tabCheapest.click();
+          if (drawer) drawer.classList.add("open");
+        } else if (target === "barometer") {
+          if (drawer) drawer.classList.remove("open");
+          if (btnBarometer) btnBarometer.click();
+        } else if (target === "add") {
+          if (drawer) drawer.classList.remove("open");
+          if (baroModal) baroModal.classList.remove("active");
+          openModal();
+        }
+      });
     });
   }
 

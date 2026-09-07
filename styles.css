@@ -435,8 +435,18 @@ header {
 }
 
 .legend-dot.green { background: var(--price-low); box-shadow: 0 0 8px var(--price-low); }
-.legend-dot.amber { background: var(--price-mid); box-shadow: 0 0 8px var(--price-mid); }
 .legend-dot.red { background: var(--price-high); box-shadow: 0 0 8px var(--price-high); }
+.legend-dot.closed {
+  background: rgba(30, 41, 59, 0.95);
+  border: 1px solid #94a3b8;
+  color: #94a3b8;
+  font-size: 7px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+}
 
 /* Leaflet Custom Price Markers */
 .price-badge-marker {
@@ -489,6 +499,138 @@ header {
   align-items: center;
   justify-content: center;
   border: 1.5px solid #fff;
+}
+
+/* Closed Bar Marker (Vad Kostar Ölen Style) */
+.price-badge-marker.marker-closed {
+  background: rgba(30, 41, 59, 0.88) !important;
+  border: 1.5px solid rgba(148, 163, 184, 0.45) !important;
+  color: #94a3b8 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6) !important;
+}
+
+.marker-closed .closed-x {
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+/* Cluster Markers (Leaflet.markercluster) */
+.beer-cluster-wrap {
+  background: none;
+  border: none;
+}
+
+.beer-cluster {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 800;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.65);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.beer-cluster:hover {
+  transform: scale(1.1);
+}
+
+.beer-cluster-low {
+  background: #15803d;
+  border: 2px solid #4ade80;
+  box-shadow: 0 0 16px rgba(74, 222, 128, 0.35);
+}
+
+.beer-cluster-mid {
+  background: #b45309;
+  border: 2px solid #fbbf24;
+  box-shadow: 0 0 16px rgba(251, 191, 36, 0.35);
+}
+
+.beer-cluster-high {
+  background: #b91c1c;
+  border: 2px solid #f87171;
+  box-shadow: 0 0 16px rgba(248, 113, 113, 0.35);
+}
+
+.beer-cluster-closed {
+  background: rgba(30, 41, 59, 0.88);
+  border: 2px solid rgba(148, 163, 184, 0.45);
+  color: #94a3b8;
+}
+
+.cluster-count {
+  font-size: 0.85rem;
+  line-height: 1;
+  font-weight: 800;
+}
+
+.cluster-sub {
+  font-size: 0.6rem;
+  line-height: 1;
+  margin-top: 2px;
+  font-weight: 600;
+}
+
+/* City Overview Markers (When zoomed out to Poland level) */
+.city-overview-marker {
+  text-align: center;
+  cursor: pointer;
+}
+
+.city-overview-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 14px;
+  background: rgba(13, 22, 21, 0.88);
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.75);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.city-overview-box:hover {
+  border-color: var(--primary);
+  transform: scale(1.08);
+  background: rgba(22, 36, 34, 0.95);
+}
+
+.city-overview-name {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: #fff;
+  text-transform: uppercase;
+}
+
+.city-overview-sub {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-top: 2px;
+}
+
+.city-overview-marker.coming-soon .city-overview-box {
+  border-color: rgba(255, 255, 255, 0.08);
+  opacity: 0.72;
+}
+
+.city-overview-marker.coming-soon .city-overview-name {
+  color: #94a3b8;
+}
+
+.city-overview-marker.coming-soon .city-overview-sub {
+  color: #64748b;
+  font-size: 0.64rem;
 }
 
 /* Custom Popup Styles */
@@ -1285,14 +1427,260 @@ header {
   transform: translateY(0) scale(0.97);
 }
 
-/* Responsive tweaks */
+/* Header Center Live Clock Badge */
+.header-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.live-clock-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #e2e8f0;
+  cursor: default;
+  transition: all 0.2s ease;
+}
+
+.live-clock-badge:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.live-clock-badge .clock-icon {
+  font-size: 0.85rem;
+}
+
+/* Floating My Location Button (Vad Kostar Ölen Style) */
+.fab-locate-float {
+  position: fixed;
+  bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  left: 14px;
+  z-index: 950;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(18, 26, 25, 0.92);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+  transition: all 0.2s ease;
+}
+
+.fab-locate-float:hover {
+  background: rgba(30, 41, 40, 0.95);
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.fab-locate-float:active {
+  transform: translateY(0);
+}
+
+.btn-mobile-search-toggle {
+  display: none;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+/* Mobile Bottom Navigation Bar (Hidden on desktop) */
+.mobile-bottom-nav {
+  display: none;
+}
+
+/* ========================================================================== */
+/* Mobile Responsive Overhaul (Smartphones < 640px)                          */
+/* ========================================================================== */
 @media (max-width: 640px) {
-  .logo-title span.full-name { display: none; }
-  .sidebar-drawer { width: 100%; right: -100%; }
-  .map-overlay { top: 10px; left: 10px; right: 10px; }
-  .legend-pill { bottom: 16px; left: 10px; font-size: 0.7rem; padding: 5px 11px; }
-  .btn-text { display: none; }
-  .btn-text-report { display: inline-block; font-size: 0.78rem; font-weight: 700; margin-left: 2px; }
-  .baro-kpis { grid-template-columns: 1fr 1fr; }
-  .fab-add-bar { bottom: 18px; right: 14px; padding: 10px 16px; font-size: 0.82rem; }
+  /* Top header cleanup - never clip buttons */
+  .header-actions {
+    display: none !important;
+  }
+
+  .btn-mobile-search-toggle {
+    display: flex;
+  }
+
+  .header-top {
+    padding: 8px 12px;
+  }
+
+  .logo-title span.full-name {
+    display: none;
+  }
+
+  .live-clock-badge {
+    padding: 3px 8px;
+    font-size: 0.75rem;
+  }
+
+  /* Show native mobile bottom dock */
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: calc(62px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: rgba(13, 22, 21, 0.96);
+    backdrop-filter: blur(14px);
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    z-index: 9990;
+    align-items: center;
+    justify-content: space-around;
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: #94a3b8;
+    gap: 3px;
+    padding: 6px 0;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .nav-icon {
+    font-size: 1.25rem;
+    line-height: 1;
+  }
+
+  .nav-label {
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: inherit;
+  }
+
+  .nav-item.active {
+    color: var(--primary);
+  }
+
+  .nav-item.nav-item-add {
+    color: #fff;
+  }
+
+  .nav-item.nav-item-add .nav-icon {
+    background: var(--primary);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    box-shadow: 0 0 12px var(--primary-glow);
+    margin-bottom: -2px;
+  }
+
+  .fab-add-bar {
+    display: none !important;
+  }
+
+  /* Compact map overlay */
+  .map-overlay {
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    padding: 8px 10px;
+    gap: 6px;
+    max-height: 48vh;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  }
+
+  .map-overlay.collapsed-mobile {
+    display: none;
+  }
+
+  .search-box-row {
+    margin-bottom: 2px;
+  }
+
+  .search-input {
+    font-size: 0.8rem;
+    padding: 8px 32px 8px 32px;
+  }
+
+  .district-select-box select {
+    font-size: 0.78rem;
+    padding: 7px 10px;
+  }
+
+  .filter-row {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+    gap: 5px;
+    scrollbar-width: none;
+  }
+
+  .filter-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .filter-chip {
+    white-space: nowrap;
+    padding: 5px 10px;
+    font-size: 0.72rem;
+    flex-shrink: 0;
+  }
+
+  /* Legend placed above bottom dock */
+  .legend-pill {
+    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+    right: 12px;
+    left: auto;
+    font-size: 0.68rem;
+    padding: 4px 9px;
+  }
+
+  /* Floating locate button placed on left */
+  .fab-locate-float {
+    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+    left: 12px;
+    padding: 7px 12px;
+    font-size: 0.74rem;
+  }
+
+  .sidebar-drawer {
+    width: 100%;
+    right: -100%;
+    bottom: calc(62px + env(safe-area-inset-bottom, 0px));
+    height: calc(100% - 62px - env(safe-area-inset-bottom, 0px));
+  }
+
+  .baro-kpis {
+    grid-template-columns: 1fr 1fr;
+  }
 }
