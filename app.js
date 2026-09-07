@@ -363,10 +363,16 @@
         ${venue.happy_hour ? `<div class="venue-hh-pill">⚡ ${escapeHtml(venue.happy_hour)}</div>` : ''}
 
         <div class="venue-actions">
-          <a href="${mapsUrl}" target="_blank" rel="noopener" class="venue-btn-map">Prowadź (Nawiguj) →</a>
-          <button class="venue-btn-confirm" onclick="window.__confirmPrice('${venue.id}')">
-            ${venue.votes_confirm > 0 ? `👍 Potwierdź (${venue.votes_confirm})` : `👍 Potwierdź cenę`}
+          <button type="button" class="venue-btn-confirm" onclick="window.__confirmPrice('${venue.id}')" title="Cena jest aktualna">
+            ${venue.votes_confirm > 0 ? `👍 Potwierdź (${venue.votes_confirm})` : `👍 Potwierdź`}
           </button>
+          <button type="button" class="venue-btn-edit" onclick="window.__editVenuePrice('${venue.id}')" title="Zaktualizuj lub zmień cenę w tym lokalu">
+            ✏️ Zmień cenę
+          </button>
+        </div>
+
+        <div style="margin-top: 6px;">
+          <a href="${mapsUrl}" target="_blank" rel="noopener" class="venue-btn-map">🧭 Prowadź (Nawiguj) →</a>
         </div>
 
         ${proofUrl ? `
@@ -1090,25 +1096,107 @@
       });
     }
 
-    // Crowdsource Modal ("Zgłoś cenę")
+    // Modal State ("add" for new bars, "edit" for changing existing bar's price)
+    let currentModalMode = "add";
+    let currentEditVenue = null;
+
     const btnOpenReport = document.getElementById("btn-open-report");
     const modal = document.getElementById("report-modal");
     const btnCloseModal = document.getElementById("btn-close-modal");
     const btnCancelModal = document.getElementById("btn-cancel-modal");
     const reportForm = document.getElementById("report-form");
 
-    function openModal() {
+    function openAddModal() {
+      currentModalMode = "add";
+      currentEditVenue = null;
+
+      const modalHeadTitle = document.getElementById("report-modal-title");
+      const modalHeadDesc = document.getElementById("report-modal-desc");
+      const nameInput = document.getElementById("report-name");
+      const submitBtn = document.getElementById("report-submit-btn");
+
+      if (modalHeadTitle) modalHeadTitle.textContent = "➕ Dodaj Nowy Bar";
+      if (modalHeadDesc) modalHeadDesc.textContent = "Znasz fajny bar, którego brakuje na mapie? Dodaj go, a natychmiast pojawi się w aplikacji:";
+      if (submitBtn) submitBtn.innerHTML = "<span>➕</span><span>Dodaj bar na mapę</span>";
+
+      reportForm.reset();
+      resetPhotoUpload();
+
+      if (nameInput) {
+        nameInput.value = "";
+        nameInput.readOnly = false;
+        nameInput.style.opacity = "1";
+        nameInput.style.cursor = "text";
+        nameInput.placeholder = "np. Bar Pacyfik, Browar Warszawski...";
+      }
+
       modal.classList.add("active");
-      populateDatalist();
+      if (nameInput) setTimeout(() => nameInput.focus(), 150);
     }
+
+    function openEditModal(venueId) {
+      const venue = allVenues.find(v => v.id === venueId);
+      if (!venue) return;
+
+      currentModalMode = "edit";
+      currentEditVenue = venue;
+
+      const modalHeadTitle = document.getElementById("report-modal-title");
+      const modalHeadDesc = document.getElementById("report-modal-desc");
+      const nameInput = document.getElementById("report-name");
+      const submitBtn = document.getElementById("report-submit-btn");
+
+      if (modalHeadTitle) modalHeadTitle.textContent = `✏️ Zmień cenę: ${venue.name}`;
+      if (modalHeadDesc) modalHeadDesc.textContent = `Cena piwa lub oferta w lokalu uległa zmianie? Zaktualizuj ją poniżej:`;
+      if (submitBtn) submitBtn.innerHTML = "<span>💾</span><span>Zapisz nową cenę</span>";
+
+      reportForm.reset();
+      resetPhotoUpload();
+
+      if (nameInput) {
+        nameInput.value = venue.name;
+        nameInput.readOnly = true;
+        nameInput.style.opacity = "0.75";
+        nameInput.style.cursor = "not-allowed";
+      }
+
+      const distSelect = document.getElementById("report-district");
+      if (distSelect && venue.district) distSelect.value = venue.district;
+
+      const addrInput = document.getElementById("report-address");
+      if (addrInput) addrInput.value = venue.address || "";
+
+      const beerInput = document.getElementById("report-beer-name");
+      if (beerInput) beerInput.value = venue.beer_name || "Piwo z kranu";
+
+      const priceInput = document.getElementById("report-price");
+      if (priceInput) priceInput.value = venue.beer_price_pln || "";
+
+      const shotInput = document.getElementById("report-shot");
+      if (shotInput) shotInput.value = venue.shot_price_pln || "";
+
+      const craftSelect = document.getElementById("report-craft");
+      if (craftSelect) craftSelect.value = venue.is_craft ? "true" : "false";
+
+      const hhInput = document.getElementById("report-happy-hour");
+      if (hhInput) hhInput.value = venue.happy_hour || "";
+
+      modal.classList.add("active");
+      if (priceInput) setTimeout(() => priceInput.focus(), 150);
+    }
+
+    window.__editVenuePrice = openEditModal;
+
     function closeModal() {
       modal.classList.remove("active");
       resetPhotoUpload();
+      currentModalMode = "add";
+      currentEditVenue = null;
     }
 
-    btnOpenReport.addEventListener("click", openModal);
+    btnOpenReport.addEventListener("click", openAddModal);
     const btnFabAdd = document.getElementById("btn-fab-add");
-    if (btnFabAdd) btnFabAdd.addEventListener("click", openModal);
+    if (btnFabAdd) btnFabAdd.addEventListener("click", openAddModal);
 
     btnCloseModal.addEventListener("click", closeModal);
     btnCancelModal.addEventListener("click", closeModal);
@@ -1169,13 +1257,13 @@
         }
       }
 
-      // Check if existing venue
-      let existing = allVenues.find(v => v.name.toLowerCase() === name.toLowerCase());
+      // Check if editing existing venue or creating new
+      let existing = currentEditVenue || allVenues.find(v => v.name.toLowerCase() === name.toLowerCase());
 
       if (existing) {
         existing.beer_name = beerName;
         existing.beer_price_pln = price;
-        if (shotPrice) existing.shot_price_pln = shotPrice;
+        if (shotPrice !== null) existing.shot_price_pln = shotPrice;
         if (happyHour) existing.happy_hour = happyHour;
         if (uploadedPhotoUrl) existing.photo_url = uploadedPhotoUrl;
         existing.last_updated = new Date().toISOString().split("T")[0];
@@ -1255,6 +1343,7 @@
           });
       }
 
+      const isEditMode = currentModalMode === "edit";
       resetPhotoUpload();
       closeModal();
       reportForm.reset();
@@ -1263,7 +1352,11 @@
 
       // Pan to updated or new venue
       window.__zoomToVenue(existing.id);
-      alert(`Dziękujemy! Opublikowano aktualną cenę dla: ${name} (${price.toFixed(2)} zł).`);
+      if (isEditMode) {
+        alert(`Dziękujemy! Cena piwa w lokalu "${existing.name}" została pomyślnie zaktualizowana na ${price.toFixed(2)} zł.`);
+      } else {
+        alert(`Dziękujemy! Nowy bar "${name}" został pomyślnie dodany na mapę (${price.toFixed(2)} zł).`);
+      }
     });
 
     // Live Clock for Header (Vad Kostar Ölen Style)
@@ -1323,7 +1416,7 @@
         } else if (target === "add") {
           if (drawer) drawer.classList.remove("open");
           if (baroModal) baroModal.classList.remove("active");
-          openModal();
+          openAddModal();
         }
       });
     });

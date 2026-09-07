@@ -278,16 +278,15 @@
   <div class="modal-backdrop" id="report-modal">
     <div class="modal-card">
       <div class="modal-head">
-        <h3>🍻 Dodaj Nowy Bar lub Zaktualizuj Cenę</h3>
+        <h3 id="report-modal-title">➕ Dodaj Nowy Bar</h3>
         <button id="btn-close-modal" class="btn-close-drawer">✕</button>
       </div>
       
       <form id="report-form">
         <div class="form-group">
           <label class="form-label">Nazwa lokalu / baru</label>
-          <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:6px;">Wpisz nazwę nowego baru (dodamy go na mapę) lub wybierz istniejący:</div>
-          <input type="text" id="report-name" class="form-input" placeholder="np. Bar Pacyfik, Pijalnia, Klaps..." required list="venues-datalist" />
-          <datalist id="venues-datalist"></datalist>
+          <div id="report-modal-desc" style="font-size:0.75rem;color:var(--text-muted);margin-bottom:6px;">Wpisz nazwę nowego baru, który chcesz dodać na mapę:</div>
+          <input type="text" id="report-name" class="form-input" placeholder="np. Bar Pacyfik, Browar Warszawski..." required />
         </div>
 
         <div class="form-row">
@@ -369,7 +368,7 @@
 
         <div class="modal-footer">
           <button type="button" id="btn-cancel-modal" class="btn-cancel">Anuluj</button>
-          <button type="submit" class="btn-submit">Zapisz i opublikuj 🍺</button>
+          <button type="submit" id="report-submit-btn" class="btn-submit">➕ Dodaj bar na mapę</button>
         </div>
       </form>
     </div>
