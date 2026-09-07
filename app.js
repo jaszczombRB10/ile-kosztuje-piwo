@@ -44,6 +44,8 @@
   let supabaseClient = null;
   let userLocation = null;
   let userMarker = null;
+  let isSimulatedLocation = false;
+  let isLocationFarAway = false;
   let rankingMode = "cheapest"; // "cheapest" | "nearest"
   let currentPhotoBase64 = null;
   let currentPhotoContentType = "image/jpeg";
@@ -96,6 +98,50 @@
               Math.sin(dLon/2) * Math.sin(dLon/2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     return R * c;
+  }
+
+  // Set User Location (either real GPS or simulated Warsaw center for testing / foreign locations)
+  function setUserLocation(coords, isSimulated = false, isFar = false) {
+    userLocation = coords;
+    isSimulatedLocation = isSimulated;
+    isLocationFarAway = isFar;
+
+    const btnLocate = document.getElementById("btn-locate-me");
+    const btnLocateFloat = document.getElementById("btn-locate-float");
+
+    const labelText = isSimulated ? "Centrum (Nowy Świat)" : "Moja pozycja";
+    if (btnLocate) btnLocate.innerHTML = `<span>📍</span><span>${labelText}</span>`;
+    if (btnLocateFloat) {
+      const floatSpan = btnLocateFloat.querySelector("span:not(.locate-icon)");
+      if (floatSpan) floatSpan.textContent = labelText;
+    }
+
+    if (userMarker && map) map.removeLayer(userMarker);
+
+    if (map) {
+      const popupHtml = isSimulated
+        ? `<div style="font-weight:700;padding:4px;font-size:0.8rem;">📍 Pozycja w Warszawie: Nowy Świat / Centrum</div>`
+        : `<div style="font-weight:700;padding:4px;font-size:0.8rem;">📍 Twoja lokalizacja GPS</div>`;
+
+      userMarker = L.circleMarker(userLocation, {
+        radius: 9,
+        fillColor: isSimulated ? "#f97316" : "#3b82f6",
+        color: "#fff",
+        weight: 3,
+        opacity: 1,
+        fillOpacity: 0.95
+      }).addTo(map).bindPopup(popupHtml);
+
+      if (isFar) {
+        // User is far away (e.g. Stockholm) - keep map inside Poland bounds at Warsaw center
+        map.flyTo(WARSAW_CENTER, 13, { duration: 1.2 });
+      } else {
+        map.flyTo(userLocation, 15, { duration: 1.2 });
+      }
+    }
+
+    renderRankingList(getFilteredVenues());
+    renderMarkers();
   }
 
   // Exact Bounding Box of Poland (South-West to North-East)
@@ -753,17 +799,26 @@
     if (rankingMode === "nearest") {
       if (!userLocation) {
         listEl.innerHTML = `
-          <div style="text-align:center;padding:32px 20px;display:flex;flex-direction:column;align-items:center;gap:12px;">
-            <div style="font-size:36px;">🧭</div>
-            <div style="font-weight:700;font-size:1rem;color:#fff;">Włącz Piwny Kompas</div>
-            <div style="font-size:0.8rem;color:var(--text-muted);line-height:1.4;max-width:260px;">
-              Udostępnij lokalizację GPS, aby posortować bary od najbliższego wraz z czasem spaceru.
+          <div style="text-align:center;padding:26px 16px;display:flex;flex-direction:column;align-items:center;gap:12px;">
+            <div style="font-size:38px;">🧭</div>
+            <div style="font-weight:700;font-size:1.05rem;color:#fff;">Włącz Piwny Kompas</div>
+            <div style="font-size:0.78rem;color:var(--text-muted);line-height:1.45;max-width:280px;">
+              Jesteś w Sztokholmie 🇸🇪 lub Safari zablokowało GPS? Ustaw pozycję w centrum Warszawy, aby zobaczyć najbliższe bary i czas spaceru:
             </div>
-            <button type="button" class="btn-primary" id="btn-enable-gps" style="padding:10px 18px;font-size:0.84rem;margin-top:6px;">
-              📍 Włącz GPS
+            <button type="button" class="btn-simulate-warsaw" id="btn-simulate-warsaw" style="width:100%;max-width:280px;font-size:0.82rem;">
+              📍 Ustaw pozycję: Centrum (Nowy Świat)
+            </button>
+            <button type="button" class="btn-retry-gps" id="btn-enable-gps" style="width:100%;max-width:280px;font-size:0.78rem;">
+              🎯 Spróbuj pobrać GPS z telefonu
             </button>
           </div>
         `;
+        const btnSimulate = document.getElementById("btn-simulate-warsaw");
+        if (btnSimulate) {
+          btnSimulate.addEventListener("click", () => {
+            setUserLocation([52.2323, 21.0206], true, false); // Nowy Świat / Pawilony
+          });
+        }
         const btnEnable = document.getElementById("btn-enable-gps");
         if (btnEnable) {
           btnEnable.addEventListener("click", () => {
@@ -792,7 +847,29 @@
       return;
     }
 
-    listEl.innerHTML = sorted.map((venue, idx) => {
+    let bannerHtml = "";
+    if (rankingMode === "nearest") {
+      if (isLocationFarAway) {
+        const distFromWarsaw = Math.round(calculateDistanceKm(userLocation[0], userLocation[1], WARSAW_CENTER[0], WARSAW_CENTER[1]));
+        bannerHtml = `
+          <div style="background:rgba(245,158,11,0.14);border:1px solid rgba(251,191,36,0.35);border-radius:10px;padding:8px 12px;margin:8px 10px;font-size:0.75rem;color:#fde68a;display:flex;flex-direction:column;gap:6px;">
+            <div>🇸🇪 Wykryto lokalizację: <strong>${distFromWarsaw} km od Warszawy</strong> (np. Sztokholm).</div>
+            <button type="button" id="btn-switch-to-warsaw" style="background:#ea580c;color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:0.75rem;font-weight:700;cursor:pointer;">
+              📍 Przełącz na Centrum Warszawy (spacer w minutach)
+            </button>
+          </div>
+        `;
+      } else if (isSimulatedLocation) {
+        bannerHtml = `
+          <div style="background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.25);border-radius:10px;padding:6px 12px;margin:6px 10px;font-size:0.72rem;color:#7dd3fc;display:flex;align-items:center;justify-content:space-between;">
+            <span>📍 Pozycja: <strong>Centrum (Nowy Świat)</strong></span>
+            <button type="button" id="btn-refresh-gps" style="background:none;border:none;color:#38bdf8;text-decoration:underline;cursor:pointer;font-size:0.72rem;font-weight:600;">Włącz GPS</button>
+          </div>
+        `;
+      }
+    }
+
+    listEl.innerHTML = bannerHtml + sorted.map((venue, idx) => {
       let distanceBadge = "";
       if (userLocation) {
         const distKm = venue._distKm !== undefined ? venue._distKm : calculateDistanceKm(userLocation[0], userLocation[1], venue.latitude, venue.longitude);
@@ -821,6 +898,20 @@
         </div>
       `;
     }).join("");
+
+    const btnSwitchWarsaw = document.getElementById("btn-switch-to-warsaw");
+    if (btnSwitchWarsaw) {
+      btnSwitchWarsaw.addEventListener("click", () => {
+        setUserLocation([52.2323, 21.0206], true, false);
+      });
+    }
+    const btnRefreshGps = document.getElementById("btn-refresh-gps");
+    if (btnRefreshGps) {
+      btnRefreshGps.addEventListener("click", () => {
+        const btnLocate = document.getElementById("btn-locate-me");
+        if (btnLocate) btnLocate.click();
+      });
+    }
   }
 
   // Zoom & Pan to a specific venue from Ranking Drawer or Search
@@ -897,33 +988,27 @@
     if (btnLocate) {
       btnLocate.addEventListener("click", () => {
         if (!navigator.geolocation) {
-          alert("Twoja przeglądarka nie obsługuje geolokalizacji.");
+          setUserLocation(WARSAW_CENTER, true, false);
           return;
         }
         btnLocate.innerHTML = "<span>📍</span><span>Lokalizowanie...</span>";
         navigator.geolocation.getCurrentPosition(
           (pos) => {
-            userLocation = [pos.coords.latitude, pos.coords.longitude];
-            btnLocate.innerHTML = "<span>📍</span><span>Moja pozycja</span>";
-
-            if (userMarker) map.removeLayer(userMarker);
-            userMarker = L.circleMarker(userLocation, {
-              radius: 9,
-              fillColor: "#3b82f6",
-              color: "#fff",
-              weight: 3,
-              opacity: 1,
-              fillOpacity: 0.95
-            }).addTo(map).bindPopup("<div style=\"font-weight:700;padding:4px;\">📍 Twoja lokalizacja</div>").openPopup();
-
-            map.flyTo(userLocation, 16, { duration: 1.2 });
-            renderRankingList(getFilteredVenues());
+            const coords = [pos.coords.latitude, pos.coords.longitude];
+            const distFromWarsaw = calculateDistanceKm(coords[0], coords[1], WARSAW_CENTER[0], WARSAW_CENTER[1]);
+            if (distFromWarsaw > 150) {
+              // User is abroad (e.g. in Stockholm)
+              setUserLocation(coords, false, true);
+            } else {
+              setUserLocation(coords, false, false);
+            }
           },
           (err) => {
-            btnLocate.innerHTML = "<span>📍</span><span>Blisko mnie</span>";
-            alert("Nie udało się pobrać lokalizacji: " + err.message);
+            console.warn("Geolocation permission error or unavailable:", err);
+            // Seamless fallback to Warsaw Center - never block user with alert
+            setUserLocation(WARSAW_CENTER, true, false);
           },
-          { enableHighAccuracy: true, timeout: 8000 }
+          { enableHighAccuracy: true, timeout: 6000 }
         );
       });
     }
