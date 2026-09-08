@@ -281,10 +281,44 @@
         <h3 id="report-modal-title">➕ Dodaj Nowy Bar</h3>
         <button id="btn-close-modal" class="btn-close-drawer">✕</button>
       </div>
+
+      <!-- Mode Selector Tabs: Nowy Bar vs Zmiana Nazwy (Zastąp z OSM) -->
+      <div class="report-mode-toggle" id="report-mode-toggle">
+        <button type="button" class="report-mode-tab active" id="tab-mode-add">➕ Nowy bar</button>
+        <button type="button" class="report-mode-tab" id="tab-mode-rename">🔄 Bar zmienił nazwę (zastąp)</button>
+      </div>
+
+      <!-- Rename Selector Group (gdy użytkownik wybiera stary bar do zastąpienia) -->
+      <div id="rename-selector-box" class="rename-selector-box" style="display: none;">
+        <label class="form-label" style="color: #fbbf24;">🔍 Wyszukaj stary bar z mapy do zastąpienia:</label>
+        <div style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 6px;">
+          Wybierz stary lokal z bazy OSM, aby zachować jego dokładną pinezkę GPS na mapie:
+        </div>
+        <input type="text" id="rename-search-input" class="form-input" placeholder="Wpisz starą nazwę lub adres (np. Sultan, Chmielna...)" autocomplete="off" />
+        <div id="rename-suggestions" class="rename-suggestions-list" style="display: none;"></div>
+        <input type="hidden" id="rename-target-id" value="" />
+        <div id="rename-selected-badge" style="display: none;">
+          <div>
+            🔄 Zastępujesz: <strong id="rename-selected-name"></strong> <span id="rename-selected-addr" style="opacity:0.85;font-size:0.75rem;"></span>
+          </div>
+          <button type="button" id="btn-clear-rename-selection" title="Wybierz inny lokal">✕</button>
+        </div>
+      </div>
+
+      <!-- Edit Modal Unlock Name Toggle (widoczne przy edycji istniejącego baru z karty) -->
+      <div id="rename-edit-toggle-row" class="rename-edit-toggle-row" style="display: none;">
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.82rem; color: #f1f5f9;">
+          <input type="checkbox" id="check-unlock-rename" style="accent-color: var(--primary);" />
+          <span>🔄 <strong>Ten bar zmienił nazwę (rebranding / nowy szyld)</strong></span>
+        </label>
+        <div id="rename-edit-tip" style="display: none; font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; margin-left: 24px;">
+          Możesz teraz zmienić nazwę powyżej. Dawna nazwa zostanie zachowana w bazie (d. stara nazwa), a pinezka GPS nie zmieni pozycji.
+        </div>
+      </div>
       
       <form id="report-form">
         <div class="form-group">
-          <label class="form-label">Nazwa lokalu / baru</label>
+          <label class="form-label" id="report-name-label">Nazwa lokalu / baru</label>
           <div id="report-modal-desc" style="font-size:0.75rem;color:var(--text-muted);margin-bottom:6px;">Wpisz nazwę nowego baru, który chcesz dodać na mapę:</div>
           <input type="text" id="report-name" class="form-input" placeholder="np. Bar Pacyfik, Browar Warszawski..." required />
         </div>
@@ -320,6 +354,7 @@
             <input type="text" id="report-address" class="form-input" placeholder="np. Nowogrodzka 12" />
           </div>
         </div>
+        <div id="address-match-box"></div>
 
         <div class="form-row">
           <div class="form-group">

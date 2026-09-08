@@ -1118,6 +1118,170 @@ header {
   cursor: pointer;
 }
 
+/* Mode Toggle in Report Modal (Nowy bar vs Zmiana nazwy) */
+.report-mode-toggle {
+  display: flex;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 3px;
+  margin-bottom: 16px;
+  gap: 4px;
+}
+
+.report-mode-tab {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 8px 10px;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.report-mode-tab:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.report-mode-tab.active {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(249, 115, 22, 0.35);
+}
+
+/* Rename Selector Box */
+.rename-selector-box {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.rename-suggestions-list {
+  max-height: 180px;
+  overflow-y: auto;
+  background: #0f1917;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  margin-top: 6px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  position: relative;
+  z-index: 10;
+}
+
+.rename-suggestion-item {
+  padding: 9px 12px;
+  font-size: 0.82rem;
+  color: #fff;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background 0.15s;
+}
+
+.rename-suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.rename-suggestion-item:hover {
+  background: rgba(249, 115, 22, 0.2);
+}
+
+.rename-item-name {
+  font-weight: 700;
+  color: #fbbf24;
+}
+
+.rename-item-sub {
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  margin-left: 8px;
+}
+
+#rename-selected-badge {
+  margin-top: 8px;
+  font-size: 0.78rem;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: #34d399;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#btn-clear-rename-selection {
+  background: none;
+  border: none;
+  color: #f87171;
+  cursor: pointer;
+  font-size: 1.05rem;
+  font-weight: 700;
+  padding: 0 4px;
+}
+
+.rename-edit-toggle-row {
+  margin-bottom: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.address-match-alert {
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-top: 8px;
+  font-size: 0.76rem;
+  color: #bae6fd;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.btn-match-rename {
+  background: #0284c7;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.btn-match-rename:hover {
+  background: #0369a1;
+}
+
+/* Former / Old Venue Name Badge */
+.venue-old-name {
+  display: inline-block;
+  font-size: 0.74rem;
+  font-weight: 500;
+  color: #94a3b8;
+  margin-left: 6px;
+  background: rgba(255, 255, 255, 0.07);
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  vertical-align: middle;
+}
+
 /* Barometer Modal Styling */
 .modal-card-wide {
   max-width: 640px;

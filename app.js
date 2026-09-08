@@ -383,7 +383,10 @@
       <div class="venue-card">
         <div class="venue-header">
           <div>
-            <div class="venue-name">${escapeHtml(venue.name)}</div>
+            <div class="venue-name">
+              ${escapeHtml(venue.name)}
+              ${venue.old_name ? `<span class="venue-old-name" title="Poprzednia nazwa lokalu">(d. ${escapeHtml(venue.old_name)})</span>` : ''}
+            </div>
             <div class="venue-district">📍 ${escapeHtml(venue.district)} · ${escapeHtml(venue.address)}</div>
             ${walkInfo}
           </div>
@@ -412,8 +415,8 @@
           <button type="button" class="venue-btn-confirm" onclick="window.__confirmPrice('${venue.id}')" title="Cena jest aktualna">
             ${venue.votes_confirm > 0 ? `👍 Potwierdź (${venue.votes_confirm})` : `👍 Potwierdź`}
           </button>
-          <button type="button" class="venue-btn-edit" onclick="window.__editVenuePrice('${venue.id}')" title="Zaktualizuj lub zmień cenę w tym lokalu">
-            ✏️ Zmień cenę
+          <button type="button" class="venue-btn-edit" onclick="window.__editVenuePrice('${venue.id}')" title="Zaktualizuj cenę lub zmień nazwę lokalu">
+            ✏️ Zmień cenę / nazwę
           </button>
         </div>
 
@@ -554,6 +557,7 @@
         const q = searchQuery.toLowerCase();
         const matchesText = 
           venue.name.toLowerCase().includes(q) ||
+          (venue.old_name && venue.old_name.toLowerCase().includes(q)) ||
           venue.district.toLowerCase().includes(q) ||
           venue.address.toLowerCase().includes(q) ||
           (venue.beer_name && venue.beer_name.toLowerCase().includes(q));
@@ -887,6 +891,7 @@
           <div class="ranked-info">
             <div class="ranked-name">
               ${escapeHtml(venue.name)}
+              ${venue.old_name ? `<span style="font-size:0.75rem;font-weight:400;color:var(--text-muted);margin-left:4px;">(d. ${escapeHtml(venue.old_name)})</span>` : ''}
               ${hasProof ? '<span title="Posiada zdjęcie menu/paragonu" style="font-size:12px;margin-left:4px;">📸</span>' : ''}
             </div>
             <div class="ranked-sub">
@@ -957,7 +962,12 @@
   function saveLocalVenue(venue) {
     try {
       const list = loadLocalUpdates();
-      list.push(venue);
+      const idx = list.findIndex(v => v.id === venue.id);
+      if (idx >= 0) {
+        list[idx] = venue;
+      } else {
+        list.push(venue);
+      }
       localStorage.setItem("warsaw_user_venues", JSON.stringify(list));
     } catch (e) {
       console.error(e);
@@ -1181,9 +1191,10 @@
       });
     }
 
-    // Modal State ("add" for new bars, "edit" for changing existing bar's price)
+    // Modal State ("add" for new bars, "rename" for replacing old bar, "edit" for changing existing bar's price/name)
     let currentModalMode = "add";
     let currentEditVenue = null;
+    let currentRenameTarget = null;
 
     const btnOpenReport = document.getElementById("btn-open-report");
     const modal = document.getElementById("report-modal");
@@ -1191,31 +1202,274 @@
     const btnCancelModal = document.getElementById("btn-cancel-modal");
     const reportForm = document.getElementById("report-form");
 
-    function openAddModal() {
-      currentModalMode = "add";
-      currentEditVenue = null;
+    const reportModeToggle = document.getElementById("report-mode-toggle");
+    const tabModeAdd = document.getElementById("tab-mode-add");
+    const tabModeRename = document.getElementById("tab-mode-rename");
+    const renameSelectorBox = document.getElementById("rename-selector-box");
+    const renameSearchInput = document.getElementById("rename-search-input");
+    const renameSuggestions = document.getElementById("rename-suggestions");
+    const renameTargetId = document.getElementById("rename-target-id");
+    const renameSelectedBadge = document.getElementById("rename-selected-badge");
+    const renameSelectedName = document.getElementById("rename-selected-name");
+    const renameSelectedAddr = document.getElementById("rename-selected-addr");
+    const btnClearRenameSelection = document.getElementById("btn-clear-rename-selection");
+    const renameEditToggleRow = document.getElementById("rename-edit-toggle-row");
+    const checkUnlockRename = document.getElementById("check-unlock-rename");
+    const renameEditTip = document.getElementById("rename-edit-tip");
+    const reportNameLabel = document.getElementById("report-name-label");
+    const addressMatchBox = document.getElementById("address-match-box");
 
+    function setModalMode(mode, targetVenue = null) {
+      currentModalMode = mode;
       const modalHeadTitle = document.getElementById("report-modal-title");
       const modalHeadDesc = document.getElementById("report-modal-desc");
       const nameInput = document.getElementById("report-name");
       const submitBtn = document.getElementById("report-submit-btn");
 
-      if (modalHeadTitle) modalHeadTitle.textContent = "➕ Dodaj Nowy Bar";
-      if (modalHeadDesc) modalHeadDesc.textContent = "Znasz fajny bar, którego brakuje na mapie? Dodaj go, a natychmiast pojawi się w aplikacji:";
-      if (submitBtn) submitBtn.innerHTML = "<span>➕</span><span>Dodaj bar na mapę</span>";
+      if (mode === "add") {
+        if (modalHeadTitle) modalHeadTitle.textContent = "➕ Dodaj Nowy Bar";
+        if (modalHeadDesc) modalHeadDesc.textContent = "Znasz fajny bar, którego brakuje na mapie? Dodaj go, a natychmiast pojawi się w aplikacji:";
+        if (reportNameLabel) reportNameLabel.textContent = "Nazwa lokalu / baru";
+        if (submitBtn) submitBtn.innerHTML = "<span>➕</span><span>Dodaj bar na mapę</span>";
 
-      reportForm.reset();
-      resetPhotoUpload();
+        if (tabModeAdd) tabModeAdd.classList.add("active");
+        if (tabModeRename) tabModeRename.classList.remove("active");
+        if (reportModeToggle) reportModeToggle.style.display = "flex";
+        if (renameSelectorBox) renameSelectorBox.style.display = "none";
+        if (renameEditToggleRow) renameEditToggleRow.style.display = "none";
 
+        clearRenameTarget();
+
+        if (nameInput) {
+          nameInput.readOnly = false;
+          nameInput.style.opacity = "1";
+          nameInput.style.cursor = "text";
+          nameInput.placeholder = "np. Bar Pacyfik, Browar Warszawski...";
+        }
+      } else if (mode === "rename") {
+        if (modalHeadTitle) modalHeadTitle.textContent = "🔄 Zmień Nazwę Baru z Mapy";
+        if (modalHeadDesc) modalHeadDesc.textContent = "Bar w bazie OSM ma nieaktualną nazwę lub działa pod nowym szyldem? Wybierz stary lokal i wprowadź nową nazwę:";
+        if (reportNameLabel) reportNameLabel.textContent = "Nowa nazwa lokalu (aktualny szyld)";
+        if (submitBtn) submitBtn.innerHTML = "<span>🔄</span><span>Zmień nazwę i zapisz bar</span>";
+
+        if (tabModeAdd) tabModeAdd.classList.remove("active");
+        if (tabModeRename) tabModeRename.classList.add("active");
+        if (reportModeToggle) reportModeToggle.style.display = "flex";
+        if (renameSelectorBox) renameSelectorBox.style.display = "block";
+        if (renameEditToggleRow) renameEditToggleRow.style.display = "none";
+
+        if (nameInput) {
+          nameInput.readOnly = false;
+          nameInput.style.opacity = "1";
+          nameInput.style.cursor = "text";
+          nameInput.placeholder = "Wpisz nową nazwę lokalu (np. Česká, Nowy Bar)...";
+        }
+
+        if (targetVenue) {
+          selectRenameTarget(targetVenue);
+        } else if (renameSearchInput) {
+          setTimeout(() => renameSearchInput.focus(), 150);
+        }
+      } else if (mode === "edit") {
+        if (reportModeToggle) reportModeToggle.style.display = "none";
+        if (renameSelectorBox) renameSelectorBox.style.display = "none";
+        if (renameEditToggleRow) renameEditToggleRow.style.display = "block";
+
+        if (checkUnlockRename) {
+          checkUnlockRename.checked = false;
+        }
+        if (renameEditTip) renameEditTip.style.display = "none";
+
+        if (reportNameLabel) reportNameLabel.textContent = "Nazwa lokalu";
+        if (submitBtn) submitBtn.innerHTML = "<span>💾</span><span>Zapisz nową cenę / dane</span>";
+
+        if (nameInput) {
+          nameInput.readOnly = true;
+          nameInput.style.opacity = "0.75";
+          nameInput.style.cursor = "not-allowed";
+        }
+      }
+    }
+
+    function selectRenameTarget(venue) {
+      currentRenameTarget = venue;
+      if (renameTargetId) renameTargetId.value = venue.id;
+      if (renameSelectedName) renameSelectedName.textContent = venue.name;
+      if (renameSelectedAddr) renameSelectedAddr.textContent = `(${venue.address || venue.district})`;
+      if (renameSelectedBadge) renameSelectedBadge.style.display = "flex";
+      if (renameSuggestions) renameSuggestions.style.display = "none";
+
+      const distSelect = document.getElementById("report-district");
+      if (distSelect && venue.district) distSelect.value = venue.district;
+
+      const addrInput = document.getElementById("report-address");
+      if (addrInput) addrInput.value = venue.address || "";
+
+      const beerInput = document.getElementById("report-beer-name");
+      if (beerInput) beerInput.value = venue.beer_name || "";
+
+      const priceInput = document.getElementById("report-price");
+      if (priceInput) priceInput.value = venue.beer_price_pln || "";
+
+      const shotInput = document.getElementById("report-shot");
+      if (shotInput) shotInput.value = venue.shot_price_pln || "";
+
+      const craftSelect = document.getElementById("report-craft");
+      if (craftSelect) craftSelect.value = venue.is_craft ? "true" : "false";
+
+      const hhInput = document.getElementById("report-happy-hour");
+      if (hhInput) hhInput.value = venue.happy_hour || "";
+
+      const nameInput = document.getElementById("report-name");
       if (nameInput) {
         nameInput.value = "";
-        nameInput.readOnly = false;
-        nameInput.style.opacity = "1";
-        nameInput.style.cursor = "text";
-        nameInput.placeholder = "np. Bar Pacyfik, Browar Warszawski...";
+        nameInput.focus();
       }
+    }
+
+    function clearRenameTarget() {
+      currentRenameTarget = null;
+      if (renameTargetId) renameTargetId.value = "";
+      if (renameSelectedBadge) renameSelectedBadge.style.display = "none";
+      if (renameSuggestions) renameSuggestions.style.display = "none";
+      if (renameSearchInput) renameSearchInput.value = "";
+    }
+
+    if (btnClearRenameSelection) {
+      btnClearRenameSelection.addEventListener("click", () => {
+        clearRenameTarget();
+        if (renameSearchInput) renameSearchInput.focus();
+      });
+    }
+
+    // Live search for old venue to rename
+    if (renameSearchInput) {
+      renameSearchInput.addEventListener("input", (e) => {
+        const q = e.target.value.trim().toLowerCase();
+        if (!q || q.length < 2) {
+          if (renameSuggestions) renameSuggestions.style.display = "none";
+          return;
+        }
+
+        const matches = allVenues.filter(v => 
+          v.name.toLowerCase().includes(q) ||
+          (v.address && v.address.toLowerCase().includes(q)) ||
+          (v.old_name && v.old_name.toLowerCase().includes(q))
+        ).slice(0, 7);
+
+        if (matches.length === 0) {
+          if (renameSuggestions) {
+            renameSuggestions.innerHTML = `<div style="padding:10px;font-size:0.78rem;color:var(--text-muted);text-align:center;">Nie znaleziono lokalu o tej nazwie lub adresie.</div>`;
+            renameSuggestions.style.display = "block";
+          }
+          return;
+        }
+
+        if (renameSuggestions) {
+          renameSuggestions.innerHTML = matches.map(v => `
+            <div class="rename-suggestion-item" data-id="${v.id}">
+              <div>
+                <span class="rename-item-name">${escapeHtml(v.name)}</span>
+                ${v.old_name ? `<span style="font-size:0.72rem;color:var(--text-muted);">(d. ${escapeHtml(v.old_name)})</span>` : ''}
+              </div>
+              <span class="rename-item-sub">${escapeHtml(v.address || v.district)} · ${escapeHtml(v.district)}</span>
+            </div>
+          `).join("");
+          renameSuggestions.style.display = "block";
+
+          renameSuggestions.querySelectorAll(".rename-suggestion-item").forEach(item => {
+            item.addEventListener("click", () => {
+              const vid = item.getAttribute("data-id");
+              const target = allVenues.find(v => v.id === vid);
+              if (target) selectRenameTarget(target);
+            });
+          });
+        }
+      });
+    }
+
+    // Checkbox in edit mode to unlock name
+    if (checkUnlockRename) {
+      checkUnlockRename.addEventListener("change", (e) => {
+        const nameInput = document.getElementById("report-name");
+        const submitBtn = document.getElementById("report-submit-btn");
+        if (e.target.checked) {
+          if (nameInput) {
+            nameInput.readOnly = false;
+            nameInput.style.opacity = "1";
+            nameInput.style.cursor = "text";
+            nameInput.focus();
+          }
+          if (renameEditTip) renameEditTip.style.display = "block";
+          if (submitBtn) submitBtn.innerHTML = "<span>💾</span><span>Zapisz nową nazwę i cenę</span>";
+        } else {
+          if (nameInput) {
+            nameInput.readOnly = true;
+            nameInput.style.opacity = "0.75";
+            nameInput.style.cursor = "not-allowed";
+            if (currentEditVenue) nameInput.value = currentEditVenue.name;
+          }
+          if (renameEditTip) renameEditTip.style.display = "none";
+          if (submitBtn) submitBtn.innerHTML = "<span>💾</span><span>Zapisz nową cenę</span>";
+        }
+      });
+    }
+
+    // Tab buttons
+    if (tabModeAdd) {
+      tabModeAdd.addEventListener("click", () => setModalMode("add"));
+    }
+    if (tabModeRename) {
+      tabModeRename.addEventListener("click", () => setModalMode("rename"));
+    }
+
+    // Address matcher in add mode to prevent duplicate bars
+    const reportAddressInput = document.getElementById("report-address");
+    if (reportAddressInput) {
+      reportAddressInput.addEventListener("input", (e) => {
+        if (currentModalMode !== "add") {
+          if (addressMatchBox) addressMatchBox.innerHTML = "";
+          return;
+        }
+        const val = e.target.value.trim().toLowerCase();
+        if (val.length < 5) {
+          if (addressMatchBox) addressMatchBox.innerHTML = "";
+          return;
+        }
+
+        const match = allVenues.find(v => v.address && v.address.toLowerCase().includes(val));
+        if (match && addressMatchBox) {
+          addressMatchBox.innerHTML = `
+            <div class="address-match-alert">
+              <div>💡 Pod tym adresem na mapie znajduje się już lokal: <strong>${escapeHtml(match.name)}</strong></div>
+              <button type="button" class="btn-match-rename" onclick="window.__switchToRename('${match.id}')">
+                Zastąp ten bar
+              </button>
+            </div>
+          `;
+        } else if (addressMatchBox) {
+          addressMatchBox.innerHTML = "";
+        }
+      });
+    }
+
+    window.__switchToRename = function(venueId) {
+      const target = allVenues.find(v => v.id === venueId);
+      if (target) {
+        setModalMode("rename", target);
+        if (addressMatchBox) addressMatchBox.innerHTML = "";
+      }
+    };
+
+    function openAddModal() {
+      currentEditVenue = null;
+      reportForm.reset();
+      resetPhotoUpload();
+      if (addressMatchBox) addressMatchBox.innerHTML = "";
+      setModalMode("add");
 
       modal.classList.add("active");
+      const nameInput = document.getElementById("report-name");
       if (nameInput) setTimeout(() => nameInput.focus(), 150);
     }
 
@@ -1223,26 +1477,22 @@
       const venue = allVenues.find(v => v.id === venueId);
       if (!venue) return;
 
-      currentModalMode = "edit";
       currentEditVenue = venue;
+      reportForm.reset();
+      resetPhotoUpload();
+      if (addressMatchBox) addressMatchBox.innerHTML = "";
 
       const modalHeadTitle = document.getElementById("report-modal-title");
       const modalHeadDesc = document.getElementById("report-modal-desc");
       const nameInput = document.getElementById("report-name");
-      const submitBtn = document.getElementById("report-submit-btn");
 
-      if (modalHeadTitle) modalHeadTitle.textContent = `✏️ Zmień cenę: ${venue.name}`;
-      if (modalHeadDesc) modalHeadDesc.textContent = `Cena piwa lub oferta w lokalu uległa zmianie? Zaktualizuj ją poniżej:`;
-      if (submitBtn) submitBtn.innerHTML = "<span>💾</span><span>Zapisz nową cenę</span>";
+      if (modalHeadTitle) modalHeadTitle.textContent = `✏️ Edycja lokalu: ${venue.name}`;
+      if (modalHeadDesc) modalHeadDesc.textContent = `Zaktualizuj cenę, ofertę lub zgłoś nową nazwę baru w tym miejscu:`;
 
-      reportForm.reset();
-      resetPhotoUpload();
+      setModalMode("edit");
 
       if (nameInput) {
         nameInput.value = venue.name;
-        nameInput.readOnly = true;
-        nameInput.style.opacity = "0.75";
-        nameInput.style.cursor = "not-allowed";
       }
 
       const distSelect = document.getElementById("report-district");
@@ -1275,6 +1525,8 @@
     function closeModal() {
       modal.classList.remove("active");
       resetPhotoUpload();
+      clearRenameTarget();
+      if (addressMatchBox) addressMatchBox.innerHTML = "";
       currentModalMode = "add";
       currentEditVenue = null;
     }
@@ -1342,43 +1594,95 @@
         }
       }
 
-      // Check if editing existing venue or creating new
-      let existing = currentEditVenue || allVenues.find(v => v.name.toLowerCase() === name.toLowerCase());
+      let existing = null;
+      let isNameChange = false;
+      let prevName = "";
 
-      if (existing) {
+      if (currentModalMode === "rename") {
+        if (!currentRenameTarget) {
+          alert("Wybierz stary lokal z listy powyżej, który chcesz zastąpić nową nazwą.");
+          if (renameSearchInput) renameSearchInput.focus();
+          return;
+        }
+        existing = currentRenameTarget;
+        prevName = existing.name;
+        isNameChange = true;
+        if (!existing.old_name) {
+          existing.old_name = prevName;
+        }
+        existing.name = name;
+        existing.slug = name.toLowerCase().replace(/[^a-z0-9]/g, "-");
+        existing.district = district;
+        existing.address = address;
         existing.beer_name = beerName;
         existing.beer_price_pln = price;
         if (shotPrice !== null) existing.shot_price_pln = shotPrice;
+        existing.is_craft = isCraft;
+        if (happyHour) existing.happy_hour = happyHour;
+        if (uploadedPhotoUrl) existing.photo_url = uploadedPhotoUrl;
+        existing.last_updated = new Date().toISOString().split("T")[0];
+        existing.votes_confirm = (existing.votes_confirm || 1) + 1;
+        saveLocalVenue(existing);
+      } else if (currentModalMode === "edit" && currentEditVenue) {
+        existing = currentEditVenue;
+        if (name !== existing.name) {
+          prevName = existing.name;
+          isNameChange = true;
+          if (!existing.old_name) {
+            existing.old_name = prevName;
+          }
+          existing.name = name;
+          existing.slug = name.toLowerCase().replace(/[^a-z0-9]/g, "-");
+        }
+        existing.district = district;
+        existing.address = address;
+        existing.beer_name = beerName;
+        existing.beer_price_pln = price;
+        if (shotPrice !== null) existing.shot_price_pln = shotPrice;
+        existing.is_craft = isCraft;
         if (happyHour) existing.happy_hour = happyHour;
         if (uploadedPhotoUrl) existing.photo_url = uploadedPhotoUrl;
         existing.last_updated = new Date().toISOString().split("T")[0];
         existing.votes_confirm = (existing.votes_confirm || 1) + 1;
         saveLocalVenue(existing);
       } else {
-        // Create new venue with slight random jitter around district center
-        const newVenue = {
-          id: "user-" + Date.now(),
-          name,
-          slug: name.toLowerCase().replace(/[^a-z0-9]/g, "-"),
-          district,
-          address,
-          latitude: WARSAW_CENTER[0] + (Math.random() - 0.5) * 0.015,
-          longitude: WARSAW_CENTER[1] + (Math.random() - 0.5) * 0.02,
-          beer_name: beerName,
-          beer_price_pln: price,
-          beer_size_ml: 500,
-          shot_price_pln: shotPrice,
-          is_craft: isCraft,
-          happy_hour: happyHour,
-          photo_url: uploadedPhotoUrl,
-          hours: "16:00 - 02:00",
-          is_verified: false,
-          last_updated: new Date().toISOString().split("T")[0],
-          votes_confirm: 1
-        };
-        allVenues.unshift(newVenue);
-        saveLocalVenue(newVenue);
-        existing = newVenue;
+        // Mode "add"
+        existing = allVenues.find(v => v.name.toLowerCase() === name.toLowerCase());
+        if (existing) {
+          existing.beer_name = beerName;
+          existing.beer_price_pln = price;
+          if (shotPrice !== null) existing.shot_price_pln = shotPrice;
+          if (happyHour) existing.happy_hour = happyHour;
+          if (uploadedPhotoUrl) existing.photo_url = uploadedPhotoUrl;
+          existing.last_updated = new Date().toISOString().split("T")[0];
+          existing.votes_confirm = (existing.votes_confirm || 1) + 1;
+          saveLocalVenue(existing);
+        } else {
+          // Create new venue with slight random jitter around district center
+          const newVenue = {
+            id: "user-" + Date.now(),
+            name,
+            slug: name.toLowerCase().replace(/[^a-z0-9]/g, "-"),
+            district,
+            address,
+            latitude: WARSAW_CENTER[0] + (Math.random() - 0.5) * 0.015,
+            longitude: WARSAW_CENTER[1] + (Math.random() - 0.5) * 0.02,
+            beer_name: beerName,
+            beer_price_pln: price,
+            beer_size_ml: 500,
+            shot_price_pln: shotPrice,
+            is_craft: isCraft,
+            happy_hour: happyHour,
+            photo_url: uploadedPhotoUrl,
+            hours: "16:00 - 02:00",
+            is_verified: false,
+            last_updated: new Date().toISOString().split("T")[0],
+            votes_confirm: 1
+          };
+          allVenues.unshift(newVenue);
+          saveLocalVenue(newVenue);
+          existing = newVenue;
+        }
       }
 
       // Sync to Supabase if connected
@@ -1414,7 +1718,7 @@
           reported_beer_name: beerName,
           reported_price_pln: price,
           reported_shot_pln: shotPrice,
-          happy_hour_info: happyHour
+          happy_hour_info: isNameChange ? `Zmiana nazwy z "${prevName}" na "${name}". ${happyHour || ''}` : happyHour
         };
         if (uploadedPhotoUrl) {
           reportPayload.proof_image_url = uploadedPhotoUrl;
@@ -1437,7 +1741,9 @@
 
       // Pan to updated or new venue
       window.__zoomToVenue(existing.id);
-      if (isEditMode) {
+      if (isNameChange) {
+        alert(`Dziękujemy! Lokal "${prevName}" został pomyślnie zaktualizowany na nową nazwę "${name}" (dokładna pinezka na mapie została zachowana).`);
+      } else if (isEditMode) {
         alert(`Dziękujemy! Cena piwa w lokalu "${existing.name}" została pomyślnie zaktualizowana na ${price.toFixed(2)} zł.`);
       } else {
         alert(`Dziękujemy! Nowy bar "${name}" został pomyślnie dodany na mapę (${price.toFixed(2)} zł).`);
