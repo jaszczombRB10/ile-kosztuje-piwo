@@ -368,66 +368,78 @@
     let walkInfo = "";
     if (userLocation) {
       const distKm = calculateDistanceKm(userLocation[0], userLocation[1], venue.latitude, venue.longitude);
-      const distM = Math.round(distKm * 1000);
-      const walkMin = Math.max(1, Math.round(distKm / 4.8 * 60));
-      walkInfo = `<div style="font-size:0.75rem;color:#38bdf8;margin-top:4px;font-weight:600;">🚶 ${distM < 1000 ? distM + ' m' : distKm.toFixed(1) + ' km'} (${walkMin} min spacerem stąd)</div>`;
+      if (distKm <= 15) {
+        const distM = Math.round(distKm * 1000);
+        const walkMin = Math.max(1, Math.round(distKm / 4.8 * 60));
+        walkInfo = `<div class="venue-dist-tag">🚶 <strong>${distM < 1000 ? distM + ' m' : distKm.toFixed(1) + ' km'}</strong> (${walkMin} min pieszo)</div>`;
+      } else {
+        walkInfo = `<div class="venue-dist-tag distant">📍 <strong>${Math.round(distKm)} km</strong> od Ciebie</div>`;
+      }
     }
 
     const statusBadge = open
-      ? `<span style="display:inline-flex;align-items:center;gap:4px;font-size:0.72rem;background:rgba(34,197,94,0.12);color:#4ade80;border:1px solid rgba(74,222,128,0.3);padding:2px 7px;border-radius:999px;font-weight:700;">🟢 Otwarte teraz</span>`
-      : `<span style="display:inline-flex;align-items:center;gap:4px;font-size:0.72rem;background:rgba(148,163,184,0.12);color:#94a3b8;border:1px solid rgba(148,163,184,0.3);padding:2px 7px;border-radius:999px;font-weight:700;">🔴 Zamknięte (${escapeHtml(venue.hours || 'sprawdź godziny')})</span>`;
+      ? `<span class="venue-status-badge open"><span class="status-dot"></span> Otwarte teraz</span>`
+      : `<span class="venue-status-badge closed"><span class="status-dot"></span> Zamknięte</span>`;
 
     const proofUrl = venue.photo_url || venue.proof_image_url;
 
     return `
       <div class="venue-card">
         <div class="venue-header">
-          <div>
+          <div class="venue-title-group">
             <div class="venue-name">
-              ${escapeHtml(venue.name)}
+              <span>${escapeHtml(venue.name)}</span>
+              ${venue.is_verified ? '<span class="venue-badge-verified" title="Zweryfikowany lokal">✓</span>' : ''}
               ${venue.old_name ? `<span class="venue-old-name" title="Poprzednia nazwa lokalu">(d. ${escapeHtml(venue.old_name)})</span>` : ''}
             </div>
             <div class="venue-district">📍 ${escapeHtml(venue.district)} · ${escapeHtml(venue.address)}</div>
             ${walkInfo}
           </div>
-          ${venue.is_verified ? '<span title="Zweryfikowany lokal" style="color:#22c55e;font-size:16px;">✓</span>' : ''}
         </div>
 
-        <div style="margin-bottom:8px;">${statusBadge}</div>
+        <div class="venue-meta-bar">
+          ${statusBadge}
+          ${venue.hours ? `<span class="venue-hours-chip">🕒 ${escapeHtml(venue.hours)}</span>` : ''}
+        </div>
 
         <div class="venue-price-box">
-          <div>
+          <div class="price-beer-info">
             <div class="price-beer-title">Najtańsze piwo (0.5L)</div>
-            <div class="price-beer-brand">${escapeHtml(venue.beer_name || "Piwo z nalewaka")}</div>
+            <div class="price-beer-brand">${escapeHtml(venue.beer_name || "Piwo z nalewaka / kranu")}</div>
           </div>
-          <div class="price-val ${tier.tier}">${price.toFixed(2)} zł</div>
+          <div class="price-val ${tier.tier}">
+            ${price.toFixed(2)}<span class="price-currency"> zł</span>
+          </div>
         </div>
 
-        <div class="venue-extras">
-          ${venue.shot_price_pln ? `<div>🥃 <strong>Shot (wódka):</strong> ${venue.shot_price_pln.toFixed(2)} zł</div>` : ''}
-          ${venue.hours ? `<div>🕒 <strong>Godziny:</strong> ${escapeHtml(venue.hours)}</div>` : ''}
-          ${venue.is_craft ? `<div>⭐ <strong>Klimat:</strong> Multitap rzemieślniczy</div>` : ''}
-        </div>
-
-        ${venue.happy_hour ? `<div class="venue-hh-pill">⚡ ${escapeHtml(venue.happy_hour)}</div>` : ''}
+        ${(venue.shot_price_pln || venue.is_craft || venue.happy_hour) ? `
+          <div class="venue-chips-row">
+            ${venue.shot_price_pln ? `<span class="venue-chip">🥃 Shot: <strong>${venue.shot_price_pln.toFixed(2)} zł</strong></span>` : ''}
+            ${venue.is_craft ? `<span class="venue-chip craft">⭐ Kraft / Multitap</span>` : ''}
+            ${venue.happy_hour ? `<span class="venue-chip hh">⚡ ${escapeHtml(venue.happy_hour)}</span>` : ''}
+          </div>
+        ` : ''}
 
         <div class="venue-actions">
-          <button type="button" class="venue-btn-confirm" onclick="window.__confirmPrice('${venue.id}')" title="Cena jest aktualna">
-            ${venue.votes_confirm > 0 ? `👍 Potwierdź (${venue.votes_confirm})` : `👍 Potwierdź`}
+          <button type="button" class="venue-btn-confirm" onclick="window.__confirmPrice('${venue.id}')" title="Potwierdź, że cena jest aktualna">
+            ${venue.votes_confirm > 0 ? `👍 Aktualna (${venue.votes_confirm})` : `👍 Potwierdź`}
           </button>
-          <button type="button" class="venue-btn-edit" onclick="window.__editVenuePrice('${venue.id}')" title="Zaktualizuj cenę lub zmień nazwę lokalu">
-            ✏️ Zmień cenę / nazwę
+          <button type="button" class="venue-btn-edit" onclick="window.__editVenuePrice('${venue.id}')" title="Zgłoś nową cenę lub inną nazwę lokalu">
+            ✏️ Zgłoś zmianę
           </button>
         </div>
 
-        <div style="margin-top: 6px;">
-          <a href="${mapsUrl}" target="_blank" rel="noopener" class="venue-btn-map">🧭 Prowadź (Nawiguj) →</a>
+        <div class="venue-nav-wrap">
+          <a href="${mapsUrl}" target="_blank" rel="noopener" class="venue-btn-map">
+            <span>🧭 Prowadź w Google Maps</span>
+            <span class="nav-arrow">→</span>
+          </a>
         </div>
 
         ${proofUrl ? `
-          <div style="margin-top: 8px; text-align: center;">
+          <div class="venue-proof-wrap">
             <button type="button" class="venue-proof-badge" onclick="window.__openLightbox('${escapeHtml(proofUrl)}', '${escapeHtml(venue.name)} - menu / paragon')">
-              📸 Zobacz menu / paragon
+              📸 Zobacz paragon / menu
             </button>
           </div>
         ` : ''}
@@ -497,7 +509,9 @@
       const marker = L.marker([venue.latitude, venue.longitude], { icon })
         .bindPopup(() => createPopupContent(venue), {
           maxWidth: 320,
-          className: "custom-leaflet-popup"
+          minWidth: 280,
+          className: "custom-leaflet-popup",
+          autoPanPadding: [16, 16]
         });
 
       marker._venueData = venue;
