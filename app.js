@@ -1811,6 +1811,64 @@
         }
       });
     });
+
+    // Age Gate Verification (18+ Polish Law Requirement)
+    function initAgeGate() {
+      const isVerified = localStorage.getItem("age_verified_18") === "true";
+      const ageModal = document.getElementById("age-gate-modal");
+      const btnAgeYes = document.getElementById("btn-age-yes");
+      const btnAgeNo = document.getElementById("btn-age-no");
+      const ageDeniedMsg = document.getElementById("age-denied-message");
+      const ageActions = document.querySelector(".age-gate-actions");
+
+      if (!isVerified && ageModal) {
+        ageModal.classList.add("active");
+      }
+
+      if (btnAgeYes && ageModal) {
+        btnAgeYes.addEventListener("click", () => {
+          try {
+            localStorage.setItem("age_verified_18", "true");
+          } catch (e) {}
+          ageModal.classList.remove("active");
+        });
+      }
+
+      if (btnAgeNo && ageDeniedMsg && ageActions) {
+        btnAgeNo.addEventListener("click", () => {
+          ageActions.style.display = "none";
+          ageDeniedMsg.style.display = "block";
+        });
+      }
+    }
+    initAgeGate();
+
+    // Legal, Privacy & Responsible Drinking Modal
+    function initLegalModal() {
+      const legalModal = document.getElementById("legal-modal");
+      const btnOpenLegal = document.getElementById("btn-open-legal");
+      const btnRankingLegal = document.getElementById("btn-ranking-legal");
+      const btnCloseLegal = document.getElementById("btn-close-legal");
+      const btnAckLegal = document.getElementById("btn-ack-legal");
+
+      function openLegal() {
+        if (legalModal) legalModal.classList.add("active");
+      }
+      function closeLegal() {
+        if (legalModal) legalModal.classList.remove("active");
+      }
+
+      if (btnOpenLegal) btnOpenLegal.addEventListener("click", openLegal);
+      if (btnRankingLegal) btnRankingLegal.addEventListener("click", openLegal);
+      if (btnCloseLegal) btnCloseLegal.addEventListener("click", closeLegal);
+      if (btnAckLegal) btnAckLegal.addEventListener("click", closeLegal);
+      if (legalModal) {
+        legalModal.addEventListener("click", (e) => {
+          if (e.target === legalModal) closeLegal();
+        });
+      }
+    }
+    initLegalModal();
   }
 
   // Populate Datalist for autocomplete in form

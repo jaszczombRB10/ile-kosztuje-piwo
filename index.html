@@ -35,12 +35,15 @@
         </div>
       </a>
 
-      <!-- Center Live Time Badge (Vad Kostar Ölen style) -->
+      <!-- Center Live Time Badge (Vad Kostar Ölen style) & 18+ Badge -->
       <div class="header-center">
         <div class="live-clock-badge" id="live-clock-badge" title="Aktualny czas w Warszawie · szare ikony ✕ oznaczają bary zamknięte teraz">
           <span class="clock-icon">🕒</span>
           <span id="live-clock-time">--:--</span>
         </div>
+        <button type="button" class="badge-legal-18" id="btn-open-legal" title="Informacje prawne, weryfikacja 18+ i polityka prywatności">
+          🔞 18+
+        </button>
       </div>
       
       <!-- Desktop Header Actions -->
@@ -198,6 +201,14 @@
       </div>
       <div class="drawer-list" id="ranking-list">
         <!-- Injected via JavaScript -->
+      </div>
+      <div class="drawer-legal-footer">
+        <div class="legal-warning-text">
+          🔞 <strong>18+</strong> · Informacje wyłącznie dla osób pełnoletnich. Spożywanie alkoholu szkodzi zdrowiu.
+        </div>
+        <button type="button" class="btn-legal-link" id="btn-ranking-legal">
+          Regulamin, odpowiedzialność & cookies
+        </button>
       </div>
     </div>
 
@@ -433,6 +444,88 @@
       <span class="nav-label">Dodaj bar</span>
     </button>
   </nav>
+
+  <!-- Age Gate Verification Modal (18+ Wymóg Prawa Polskiego) -->
+  <div class="modal-backdrop age-gate-backdrop" id="age-gate-modal" style="display: none;">
+    <div class="modal-card age-gate-card">
+      <div class="age-gate-icon">🔞</div>
+      <h2 class="age-gate-title">Weryfikacja wieku (18+)</h2>
+      <p class="age-gate-desc">
+        Serwis <strong>„Ile Kosztuje Piwo”</strong> zawiera informacje o ofercie i cenach napojów alkoholowych w warszawskich lokalach gastronomicznych.
+      </p>
+      <div class="age-gate-law-note">
+        Zgodnie z art. 13<sup>1</sup> ustawy z dnia 26 października 1982 r. o wychowaniu w trzeźwości i przeciwdziałaniu alkoholizmowi treści te są przeznaczone wyłącznie dla osób pełnoletnich.
+      </div>
+      <div class="age-gate-question">
+        Czy masz ukończone 18 lat?
+      </div>
+      <div class="age-gate-actions">
+        <button type="button" id="btn-age-yes" class="btn-age-confirm">
+          ✓ Tak, mam ukończone 18 lat
+        </button>
+        <button type="button" id="btn-age-no" class="btn-age-deny">
+          ✕ Nie mam 18 lat
+        </button>
+      </div>
+      <div id="age-denied-message" style="display: none;" class="age-denied-box">
+        <p>⛔ Dostęp do serwisu jest dozwolony wyłącznie dla osób pełnoletnich.</p>
+        <a href="https://www.google.pl" class="btn-age-exit">Opuść stronę</a>
+      </div>
+      <div class="age-gate-footer">
+        Spożywanie alkoholu szkodzi zdrowiu. Nigdy nie siadaj za kierownicą po alkoholu.
+      </div>
+    </div>
+  </div>
+
+  <!-- Legal & Privacy Modal (Nota prawna, Cookies, RODO & Odpowiedzialność) -->
+  <div class="modal-backdrop" id="legal-modal" style="display: none;">
+    <div class="modal-card modal-card-wide">
+      <div class="modal-head">
+        <h3>⚖️ Informacje Prawne & Odpowiedzialność</h3>
+        <button id="btn-close-legal" class="btn-close-drawer">✕</button>
+      </div>
+      <div class="legal-modal-body">
+        <div class="legal-section">
+          <h4>🔞 1. Dostęp wyłącznie dla osób pełnoletnich (+18)</h4>
+          <p>
+            Zgodnie z ustawą z dnia 26 października 1982 r. o wychowaniu w trzeźwości i przeciwdziałaniu alkoholizmowi (Dz.U. z 2023 r. poz. 165 z późn. zm.), serwis jest przeznaczony wyłącznie dla osób, które ukończyły 18. rok życia.
+          </p>
+        </div>
+
+        <div class="legal-section">
+          <h4>🍻 2. Charakter serwisu i brak sprzedaży</h4>
+          <p>
+            Serwis <em>„Ile Kosztuje Piwo”</em> jest niezależnym narzędziem o charakterze czysto informacyjno-statystycznym (społecznościowy crowdsourcing cen).
+            Serwis <strong>nie prowadzi sprzedaży, rezerwacji ani dostawy napojów alkoholowych</strong>. Wszystkie znaki towarowe i nazwy lokali należą do ich prawnych właścicieli i zostały użyte wyłącznie w celach informacyjnych.
+          </p>
+        </div>
+
+        <div class="legal-section">
+          <h4>⚠️ 3. Odpowiedzialne spożywanie alkoholu</h4>
+          <p>
+            Nadmierne spożywanie alkoholu jest szkodliwe dla zdrowia. Serwis nie zachęca do spożywania alkoholu ani do nadużywania napojów alkoholowych.
+            Pamiętaj: <strong>Nigdy nie prowadź pojazdów po spożyciu alkoholu</strong>.
+          </p>
+        </div>
+
+        <div class="legal-section">
+          <h4>🍪 4. Prywatność i pamięć lokalna (LocalStorage)</h4>
+          <p>
+            Szanujemy Twoją prywatność:
+          </p>
+          <ul>
+            <li><strong>Brak ciasteczek śledzących i reklamowych</strong>.</li>
+            <li>Aplikacja korzysta z pamięci lokalnej urządzenia (<code>localStorage</code>) wyłącznie w celach technicznych: zapamiętanie weryfikacji wieku (18+), potwierdzeń cen oraz dodanych przez Ciebie lokali.</li>
+            <li>Dane geolokalizacyjne (GPS) są przetwarzane wyłącznie lokalnie w Twojej przeglądarce i nie są gromadzone na zewnętrznych serwerach.</li>
+          </ul>
+        </div>
+
+        <div class="modal-footer" style="margin-top: 18px;">
+          <button type="button" id="btn-ack-legal" class="btn-submit">Rozumiem i akceptuję</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Lightbox Modal for Photo Proofs -->
   <div id="lightbox-modal" class="lightbox-backdrop" style="display:none;">
