@@ -74,7 +74,7 @@
           <span>🏆</span>
           <span class="btn-text">Ranking</span>
         </button>
-        <button id="btn-open-report" class="btn-report" title="Dodaj nowy lokal lub zaktualizuj cenę">
+        <button id="btn-open-report" class="btn-report" title="Dodaj nowy lokal lub zaktualizuj cenę" onclick="window.__openAddModal ? window.__openAddModal() : null">
           <span>➕</span>
           <span class="btn-text-report">Dodaj bar</span>
         </button>
@@ -562,6 +562,10 @@
   </div>
 
   <!-- Floating Action Button: Add bar on mobile & desktop -->
+  <button type="button" id="btn-fab-add" class="fab-add-bar" title="Dodaj nowy bar na mapę" onclick="window.__openAddModal ? window.__openAddModal() : null">
+    <span>➕ Dodaj bar</span>
+  </button>
+
   <!-- Mobile Bottom Navigation Bar (Native App Dock) -->
   <nav class="mobile-bottom-nav" id="mobile-bottom-nav" aria-label="Nawigacja dolna">
     <button type="button" class="nav-item active" id="nav-btn-map" data-target="map">
@@ -580,7 +584,7 @@
       <span class="nav-icon">📊</span>
       <span class="nav-label">Barometr</span>
     </button>
-    <button type="button" class="nav-item nav-item-add" id="nav-btn-add" data-target="add">
+    <button type="button" class="nav-item nav-item-add" id="nav-btn-add" data-target="add" onclick="window.__openAddModal ? window.__openAddModal() : null">
       <span class="nav-icon">➕</span>
       <span class="nav-label">Dodaj bar</span>
     </button>

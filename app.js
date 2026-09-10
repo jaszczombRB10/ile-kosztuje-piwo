@@ -1103,7 +1103,8 @@
   function loadLocalUpdates() {
     try {
       const saved = localStorage.getItem("warsaw_user_venues");
-      return saved ? JSON.parse(saved) : [];
+      const parsed = saved ? JSON.parse(saved) : [];
+      return Array.isArray(parsed) ? parsed : [];
     } catch (e) {
       return [];
     }
@@ -2587,12 +2588,22 @@
 
     function openAddModal() {
       currentEditVenue = null;
-      reportForm.reset();
+      if (reportForm) reportForm.reset();
       resetPhotoUpload();
       if (addressMatchBox) addressMatchBox.innerHTML = "";
       setModalMode("add");
 
-      modal.classList.add("active");
+      if (drawer) drawer.classList.remove("open");
+      if (baroModal) baroModal.classList.remove("active");
+      if (window.__closePubCrawl) window.__closePubCrawl();
+      if (window.__closeHappyHours) window.__closeHappyHours();
+      if (window.__closePassport) window.__closePassport();
+      if (window.__closeIosInstall) window.__closeIosInstall();
+
+      if (modal) {
+        modal.classList.add("active");
+        modal.style.display = "flex";
+      }
       const nameInput = document.getElementById("report-name");
       if (nameInput) setTimeout(() => nameInput.focus(), 150);
     }
@@ -2602,7 +2613,7 @@
       if (!venue) return;
 
       currentEditVenue = venue;
-      reportForm.reset();
+      if (reportForm) reportForm.reset();
       resetPhotoUpload();
       if (addressMatchBox) addressMatchBox.innerHTML = "";
 
@@ -2640,14 +2651,28 @@
       const hhInput = document.getElementById("report-happy-hour");
       if (hhInput) hhInput.value = venue.happy_hour || "";
 
-      modal.classList.add("active");
+      if (drawer) drawer.classList.remove("open");
+      if (baroModal) baroModal.classList.remove("active");
+      if (window.__closePubCrawl) window.__closePubCrawl();
+      if (window.__closeHappyHours) window.__closeHappyHours();
+      if (window.__closePassport) window.__closePassport();
+      if (window.__closeIosInstall) window.__closeIosInstall();
+
+      if (modal) {
+        modal.classList.add("active");
+        modal.style.display = "flex";
+      }
       if (priceInput) setTimeout(() => priceInput.focus(), 150);
     }
 
     window.__editVenuePrice = openEditModal;
+    window.__openAddModal = openAddModal;
 
     function closeModal() {
-      modal.classList.remove("active");
+      if (modal) {
+        modal.classList.remove("active");
+        modal.style.display = "none";
+      }
       resetPhotoUpload();
       clearRenameTarget();
       if (addressMatchBox) addressMatchBox.innerHTML = "";
@@ -2655,20 +2680,25 @@
       currentEditVenue = null;
     }
 
-    btnOpenReport.addEventListener("click", openAddModal);
+    window.__closeAddModal = closeModal;
+
+    if (btnOpenReport) btnOpenReport.addEventListener("click", openAddModal);
     const btnFabAdd = document.getElementById("btn-fab-add");
     if (btnFabAdd) btnFabAdd.addEventListener("click", openAddModal);
 
-    btnCloseModal.addEventListener("click", closeModal);
-    btnCancelModal.addEventListener("click", closeModal);
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) closeModal();
-    });
+    if (btnCloseModal) btnCloseModal.addEventListener("click", closeModal);
+    if (btnCancelModal) btnCancelModal.addEventListener("click", closeModal);
+    if (modal) {
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) closeModal();
+      });
+    }
 
     // Handle Report Form Submit
     reportForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const name = document.getElementById("report-name").value.trim();
+      try {
+        const name = document.getElementById("report-name").value.trim();
       const district = document.getElementById("report-district").value;
       const address = document.getElementById("report-address").value.trim() || district;
       const beerName = document.getElementById("report-beer-name").value.trim();
@@ -2781,6 +2811,7 @@
           existing.last_updated = new Date().toISOString().split("T")[0];
           existing.votes_confirm = (existing.votes_confirm || 1) + 1;
           saveLocalVenue(existing);
+        } else {
           // Determine accurate coordinates based on district and address
           const dTarget = DISTRICT_CENTERS[district] || DISTRICT_CENTERS["all"] || { coords: WARSAW_CENTER };
           let venueLat = dTarget.coords[0] + (Math.random() - 0.5) * 0.005;
@@ -2900,8 +2931,12 @@
         alert(`Dziękujemy! Lokal "${prevName}" został pomyślnie zaktualizowany na nową nazwę "${name}" (dokładna pinezka na mapie została zachowana).`);
       } else if (isEditMode) {
         alert(`Dziękujemy! Cena piwa w lokalu "${existing.name}" została pomyślnie zaktualizowana na ${price.toFixed(2)} zł.`);
-      } else {
-        alert(`Dziękujemy! Nowy bar "${name}" został pomyślnie dodany na mapę (${price.toFixed(2)} zł).`);
+        } else {
+          alert(`Dziękujemy! Nowy bar "${name}" został pomyślnie dodany na mapę (${price.toFixed(2)} zł).`);
+        }
+      } catch (submitErr) {
+        console.error("Błąd podczas zapisywania lokalu:", submitErr);
+        alert("Wystąpił nieoczekiwany problem podczas zapisywania: " + (submitErr.message || submitErr));
       }
     });
 
