@@ -2831,50 +2831,59 @@
         }
       }
 
-      // Sync to Supabase if connected
-      if (supabaseClient) {
-        const venuePayload = {
-          osm_id: existing.id,
-          name: existing.name,
-          slug: existing.slug,
-          district: existing.district,
-          address: existing.address,
-          latitude: existing.latitude,
-          longitude: existing.longitude,
-          beer_name: existing.beer_name,
-          beer_price_pln: existing.beer_price_pln,
-          shot_price_pln: existing.shot_price_pln,
-          is_craft: existing.is_craft,
-          happy_hour: existing.happy_hour,
-          hours: existing.hours,
-          is_verified: existing.is_verified,
-          votes_confirm: existing.votes_confirm,
-          last_updated: new Date().toISOString()
-        };
+      const reportPayload = {
+        reported_beer_name: beerName,
+        reported_price_pln: price,
+        reported_shot_pln: shotPrice,
+        happy_hour_info: isNameChange ? `Zmiana nazwy z "${prevName}" na "${name}". ${happyHour || ''}` : happyHour
+      };
+      if (uploadedPhotoUrl) {
+        reportPayload.proof_image_url = uploadedPhotoUrl;
+      }
 
+      const venuePayload = {
+        osm_id: existing.id,
+        name: existing.name,
+        slug: existing.slug,
+        district: existing.district,
+        address: existing.address,
+        latitude: existing.latitude,
+        longitude: existing.longitude,
+        beer_name: existing.beer_name,
+        beer_price_pln: existing.beer_price_pln,
+        shot_price_pln: existing.shot_price_pln,
+        is_craft: existing.is_craft,
+        happy_hour: existing.happy_hour,
+        hours: existing.hours,
+        is_verified: existing.is_verified,
+        votes_confirm: existing.votes_confirm,
+        last_updated: new Date().toISOString()
+      };
+
+      // 1. Cloud sync via Vercel Serverless Function (Admin Service Role - always succeeds across all users)
+      fetch("/api/update-venue", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ venuePayload, reportPayload })
+      }).then(res => {
+        if (res.ok) console.log("✓ Cloud sync via /api/update-venue succeeded!");
+      }).catch(e => console.warn("API update-venue note:", e));
+
+      // 2. Direct client-side Supabase sync
+      if (supabaseClient) {
         supabaseClient
           .from("venues")
           .upsert(venuePayload)
           .then(({ error }) => {
-            if (error) console.error("Supabase upsert error:", error);
+            if (error) console.warn("Supabase upsert note:", error);
             else console.log("Venue updated in Supabase cloud!");
           });
-
-        const reportPayload = {
-          reported_beer_name: beerName,
-          reported_price_pln: price,
-          reported_shot_pln: shotPrice,
-          happy_hour_info: isNameChange ? `Zmiana nazwy z "${prevName}" na "${name}". ${happyHour || ''}` : happyHour
-        };
-        if (uploadedPhotoUrl) {
-          reportPayload.proof_image_url = uploadedPhotoUrl;
-        }
 
         supabaseClient
           .from("price_reports")
           .insert(reportPayload)
           .then(({ error }) => {
-            if (error) console.error("Supabase report log error:", error);
+            if (error) console.warn("Supabase report log note:", error);
           });
       }
 
