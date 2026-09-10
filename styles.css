@@ -1226,7 +1226,7 @@ header {
 }
 
 .modal-backdrop.active {
-  display: flex;
+  display: flex !important;
   opacity: 1;
 }
 
@@ -2719,6 +2719,32 @@ header {
   font-weight: 700;
   font-size: 0.76rem;
   margin-top: 6px;
+}
+
+.pwa-ios-pointer-hint {
+  margin-top: 16px;
+  background: rgba(249, 115, 22, 0.12);
+  border: 1px dashed rgba(249, 115, 22, 0.4);
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #fed7aa;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.pwa-ios-arrow {
+  font-size: 1.3rem;
+  color: var(--primary);
+  animation: bounce-down 1.2s infinite ease-in-out;
+  flex-shrink: 0;
+}
+
+@keyframes bounce-down {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(5px); }
 }
 
 /* ==========================================================================

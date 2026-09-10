@@ -576,7 +576,7 @@
   </nav>
 
   <!-- Age Gate Verification Modal (18+ Wymóg Prawa Polskiego) -->
-  <div class="modal-backdrop age-gate-backdrop" id="age-gate-modal" style="display: none;">
+  <div class="modal-backdrop age-gate-backdrop" id="age-gate-modal">
     <div class="modal-card age-gate-card">
       <div class="age-gate-icon">🔞</div>
       <h2 class="age-gate-title">Weryfikacja wieku (18+)</h2>
@@ -608,7 +608,7 @@
   </div>
 
   <!-- Legal & Privacy Modal (Nota prawna, Cookies, RODO & Odpowiedzialność) -->
-  <div class="modal-backdrop" id="legal-modal" style="display: none;">
+  <div class="modal-backdrop" id="legal-modal">
     <div class="modal-card modal-card-wide">
       <div class="modal-head">
         <h3>⚖️ Informacje Prawne & Odpowiedzialność</h3>
@@ -673,10 +673,10 @@
   </div>
 
   <!-- PWA iOS Safari Install Guide Modal -->
-  <div class="modal-backdrop" id="pwa-ios-modal" style="display: none;">
+  <div class="modal-backdrop" id="pwa-ios-modal">
     <div class="modal-card pwa-ios-card">
       <div class="modal-head">
-        <h3>📲 Dodaj do ekranu początkowego</h3>
+        <h3>📲 Jak zainstalować na iPhone</h3>
         <button id="btn-close-pwa-ios" class="btn-close-drawer">✕</button>
       </div>
       <div class="pwa-ios-body">
@@ -692,14 +692,14 @@
           <div class="pwa-step-item">
             <div class="pwa-step-badge">1</div>
             <div class="pwa-step-desc">
-              Na dolnym pasku Safari stuknij ikonę <strong>Udostępnij</strong>:
+              Na dolnym pasku przeglądarki <strong>Safari</strong> stuknij ikonę <strong>Udostępnij</strong>:
               <div class="pwa-safari-share-pill">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
                   <polyline points="16 6 12 2 8 6"></polyline>
                   <line x1="12" y1="2" x2="12" y2="15"></line>
                 </svg>
-                <span>Udostępnij (Share)</span>
+                <span>Udostępnij (Kwadrat ze strzałką w górę)</span>
               </div>
             </div>
           </div>
@@ -707,10 +707,10 @@
           <div class="pwa-step-item">
             <div class="pwa-step-badge">2</div>
             <div class="pwa-step-desc">
-              Przewiń w dół i wybierz opcję:
+              Przewiń menu w dół i wybierz opcję:
               <div class="pwa-safari-add-pill">
                 <span class="pwa-plus-icon">➕</span>
-                <strong>Do ekranu początkowego</strong>
+                <strong>Do ekranu początkowego (Add to Home Screen)</strong>
               </div>
             </div>
           </div>
@@ -718,9 +718,15 @@
           <div class="pwa-step-item">
             <div class="pwa-step-badge">3</div>
             <div class="pwa-step-desc">
-              Kliknij <strong>Dodaj</strong> w prawym górnym rogu. Gotowe! Ikona pojawi się na pulpicie i uruchamia się na pełnym ekranie bez pasków Safari.
+              Stuknij <strong>Dodaj</strong> w prawym górnym rogu. Aplikacja <strong>poilepiwko</strong> pojawi się na pulpicie i uruchamia się na pełnym ekranie bez pasków Safari!
             </div>
           </div>
+        </div>
+
+        <!-- Animated bouncing pointer hint pointing to Safari bottom toolbar -->
+        <div class="pwa-ios-pointer-hint">
+          <div class="pwa-ios-arrow">↓</div>
+          <span>Przycisk <strong>Udostępnij</strong> (kwadrat ze strzałką) znajduje się na dolnym pasku Twojego iPhone'a</span>
         </div>
 
         <div class="modal-footer" style="margin-top: 18px;">
