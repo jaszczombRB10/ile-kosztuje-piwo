@@ -2781,16 +2781,38 @@
           existing.last_updated = new Date().toISOString().split("T")[0];
           existing.votes_confirm = (existing.votes_confirm || 1) + 1;
           saveLocalVenue(existing);
-        } else {
-          // Create new venue with slight random jitter around district center
+          // Determine accurate coordinates based on district and address
+          const dTarget = DISTRICT_CENTERS[district] || DISTRICT_CENTERS["all"] || { coords: WARSAW_CENTER };
+          let venueLat = dTarget.coords[0] + (Math.random() - 0.5) * 0.005;
+          let venueLng = dTarget.coords[1] + (Math.random() - 0.5) * 0.005;
+
+          if (address && address.trim()) {
+            try {
+              const cleanAddr = address.trim().replace(/^ul\.\s*/i, "");
+              const q = encodeURIComponent(`${cleanAddr}, Warszawa`);
+              const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`, {
+                headers: { "Accept": "application/json" }
+              });
+              if (geoRes.ok) {
+                const geoData = await geoRes.json();
+                if (geoData && geoData.length > 0 && geoData[0].lat && geoData[0].lon) {
+                  venueLat = parseFloat(geoData[0].lat);
+                  venueLng = parseFloat(geoData[0].lon);
+                }
+              }
+            } catch (geoErr) {
+              console.warn("Geocoding lookup note:", geoErr);
+            }
+          }
+
           const newVenue = {
             id: "user-" + Date.now(),
             name,
             slug: name.toLowerCase().replace(/[^a-z0-9]/g, "-"),
             district,
             address,
-            latitude: WARSAW_CENTER[0] + (Math.random() - 0.5) * 0.015,
-            longitude: WARSAW_CENTER[1] + (Math.random() - 0.5) * 0.02,
+            latitude: venueLat,
+            longitude: venueLng,
             beer_name: beerName,
             beer_price_pln: price,
             beer_size_ml: 500,
@@ -3299,6 +3321,25 @@
   }
 
   const FALLBACK_VENUES = [
+  {
+    "id": "ochota-pochwala-niekonsekwencji",
+    "name": "Pochwała Niekonsekwencji",
+    "slug": "pochwala-niekonsekwencji",
+    "district": "Ochota",
+    "address": "Grójecka 118",
+    "latitude": 52.20728,
+    "longitude": 20.97221,
+    "beer_name": "Holba z kija",
+    "beer_price_pln": 16.0,
+    "beer_size_ml": 500,
+    "is_craft": false,
+    "shot_price_pln": null,
+    "happy_hour": null,
+    "hours": "16:00 - 02:00",
+    "is_verified": true,
+    "last_updated": "2026-09-10",
+    "votes_confirm": 1
+  },
   {
     "id": "pawilony-klaps",
     "name": "Klaps (Pawilony)",
@@ -13298,6 +13339,12 @@
     // Merge any user-added local venues
     const localVenues = loadLocalUpdates();
     localVenues.forEach(local => {
+      if (local.name && local.name.toLowerCase().includes("pochwała niekonsekwencji")) {
+        local.latitude = 52.20728;
+        local.longitude = 20.97221;
+        local.district = "Ochota";
+        local.address = "Grójecka 118";
+      }
       const idx = allVenues.findIndex(v => v.id === local.id || v.name.toLowerCase() === local.name.toLowerCase());
       if (idx !== -1) {
         allVenues[idx] = Object.assign({}, allVenues[idx], local);

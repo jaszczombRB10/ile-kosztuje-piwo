@@ -1,5 +1,24 @@
 [
   {
+    "id": "ochota-pochwala-niekonsekwencji",
+    "name": "Pochwała Niekonsekwencji",
+    "slug": "pochwala-niekonsekwencji",
+    "district": "Ochota",
+    "address": "Grójecka 118",
+    "latitude": 52.20728,
+    "longitude": 20.97221,
+    "beer_name": "Holba z kija",
+    "beer_price_pln": 16.0,
+    "beer_size_ml": 500,
+    "is_craft": false,
+    "shot_price_pln": null,
+    "happy_hour": null,
+    "hours": "16:00 - 02:00",
+    "is_verified": true,
+    "last_updated": "2026-09-10",
+    "votes_confirm": 1
+  },
+  {
     "id": "pawilony-klaps",
     "name": "Klaps (Pawilony)",
     "slug": "klaps-pawilony",
