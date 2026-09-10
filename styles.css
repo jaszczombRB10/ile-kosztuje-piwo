@@ -1,5 +1,5 @@
 /* ==========================================================================
-   ILE KOSZTUJE PIWO - WARSZAWA (Warsaw Beer Price Map)
+   POILEPIWKO - WARSZAWA (Warsaw Beer Price Map & Pub Crawl)
    Reverse-Engineered & Designed from "Vad Kostar Olen"
    ========================================================================== */
 
@@ -82,6 +82,12 @@ header {
   align-items: baseline;
   gap: 5px;
   white-space: nowrap;
+}
+
+.logo-title span.logo-main {
+  color: #fff;
+  font-weight: 800;
+  letter-spacing: -0.03em;
 }
 
 .logo-title span.glow {
@@ -2713,4 +2719,510 @@ header {
   font-weight: 700;
   font-size: 0.76rem;
   margin-top: 6px;
+}
+
+/* ==========================================================================
+   Pub Crawl Generator Styles (poilepiwko)
+   ========================================================================== */
+
+/* Filter Chip Pub Crawl */
+.chip-crawl {
+  background: rgba(249, 115, 22, 0.16) !important;
+  border-color: rgba(249, 115, 22, 0.45) !important;
+  color: #fb923c !important;
+  font-weight: 800 !important;
+  cursor: pointer;
+}
+
+.chip-crawl:hover {
+  background: rgba(249, 115, 22, 0.3) !important;
+  transform: translateY(-1px);
+}
+
+/* Pub Crawl Modal Head Subtitle */
+.modal-head-sub {
+  font-size: 0.76rem;
+  color: #94a3b8;
+  margin-top: 3px;
+  line-height: 1.35;
+}
+
+/* Form Grid */
+.crawl-form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.crawl-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.crawl-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.crawl-select {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #fff;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.crawl-select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 10px rgba(249, 115, 22, 0.25);
+}
+
+.crawl-select option, .crawl-select optgroup {
+  background: #111a18;
+  color: #fff;
+}
+
+/* Pills Row for Stops and Vibes */
+.crawl-pills-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.crawl-pill-btn {
+  flex: 1;
+  min-width: 120px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #94a3b8;
+  padding: 9px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.82rem;
+  font-weight: 700;
+  transition: all 0.18s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.crawl-pill-btn span {
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.crawl-pill-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+}
+
+.crawl-pill-btn.active {
+  background: rgba(249, 115, 22, 0.18);
+  border-color: #f97316;
+  color: #fff;
+  box-shadow: 0 0 14px rgba(249, 115, 22, 0.2);
+}
+
+.crawl-pill-btn.active span {
+  color: #fb923c;
+}
+
+/* Generate Button */
+.crawl-generate-wrap {
+  margin-top: 16px;
+  margin-bottom: 12px;
+}
+
+.btn-generate-crawl {
+  width: 100%;
+  background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+  color: #fff;
+  border: none;
+  font-size: 0.94rem;
+  font-weight: 800;
+  padding: 13px;
+  border-radius: 14px;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(249, 115, 22, 0.4);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-generate-crawl:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 26px rgba(249, 115, 22, 0.55);
+}
+
+/* Generated Result Container */
+.crawl-result-box {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  animation: fade-in-result 0.3s ease-out;
+}
+
+@keyframes fade-in-result {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Summary Bar */
+.crawl-summary-bar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.crawl-stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.crawl-stat-label {
+  font-size: 0.68rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-weight: 600;
+}
+
+.crawl-stat-val {
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: #fff;
+}
+
+.crawl-stat-val.highlight {
+  color: #4ade80;
+  text-shadow: 0 0 10px rgba(74, 222, 128, 0.3);
+}
+
+/* Timeline of Stops */
+.crawl-timeline {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  gap: 0;
+}
+
+.crawl-stop-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 12px 14px;
+  transition: all 0.2s;
+}
+
+.crawl-stop-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(249, 115, 22, 0.35);
+}
+
+.crawl-stop-badge {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+  color: #fff;
+  font-weight: 900;
+  font-size: 0.88rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 0 12px rgba(249, 115, 22, 0.5);
+  margin-top: 2px;
+}
+
+.crawl-stop-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.crawl-stop-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.crawl-stop-name {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.crawl-stop-price {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: #4ade80;
+  white-space: nowrap;
+}
+
+.crawl-stop-address {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.crawl-stop-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.crawl-stop-chip {
+  font-size: 0.68rem;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #cbd5e1;
+}
+
+.crawl-stop-chip.craft {
+  background: rgba(249, 115, 22, 0.15);
+  color: #fb923c;
+  font-weight: 600;
+}
+
+.crawl-stop-chip.hh {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  font-weight: 600;
+}
+
+/* Leg transit connector */
+.crawl-leg-transit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  font-size: 0.74rem;
+  color: #38bdf8;
+  font-weight: 600;
+}
+
+.crawl-leg-dots {
+  width: 2px;
+  height: 16px;
+  background: repeating-linear-gradient(to bottom, #38bdf8 0, #38bdf8 3px, transparent 3px, transparent 6px);
+  margin-left: 5px;
+}
+
+/* Bottom Actions */
+.crawl-actions-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.btn-crawl-primary {
+  flex: 1.2;
+  min-width: 140px;
+  background: #16a34a;
+  color: #fff;
+  border: none;
+  font-size: 0.84rem;
+  font-weight: 800;
+  padding: 10px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.18s;
+  box-shadow: 0 4px 14px rgba(22, 163, 74, 0.35);
+}
+
+.btn-crawl-primary:hover {
+  background: #15803d;
+  transform: translateY(-1px);
+}
+
+.btn-crawl-secondary {
+  flex: 1;
+  min-width: 130px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #e2e8f0;
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 10px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.18s;
+  box-sizing: border-box;
+}
+
+.btn-crawl-secondary:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+.btn-crawl-ghost {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #94a3b8;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 10px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+.btn-crawl-ghost:hover {
+  border-color: #cbd5e1;
+  color: #fff;
+}
+
+/* Active Crawl Floating Banner on Map */
+.active-crawl-bar {
+  position: fixed;
+  top: 76px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1500;
+  background: rgba(15, 24, 23, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1.5px solid #f97316;
+  border-radius: 16px;
+  padding: 10px 16px;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.85), 0 0 20px rgba(249, 115, 22, 0.25);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: auto;
+  max-width: calc(100vw - 32px);
+  box-sizing: border-box;
+  animation: drop-down-crawl 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes drop-down-crawl {
+  from { opacity: 0; transform: translate(-50%, -15px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.active-crawl-title {
+  font-size: 0.84rem;
+  color: #fff;
+}
+
+.active-crawl-title strong {
+  color: #fb923c;
+}
+
+.active-crawl-sub {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin-top: 1px;
+}
+
+.active-crawl-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.btn-crawl-action-gmaps {
+  background: #16a34a;
+  color: #fff;
+  text-decoration: none;
+  font-size: 0.76rem;
+  font-weight: 800;
+  padding: 6px 12px;
+  border-radius: 999px;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.btn-crawl-action-gmaps:hover {
+  background: #15803d;
+}
+
+.btn-crawl-action-details {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-crawl-action-clear {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #f87171;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.btn-crawl-action-clear:hover {
+  background: #ef4444;
+  color: #fff;
+}
+
+/* Custom Marker on Map for Pub Crawl Stops */
+.crawl-marker-badge {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+  color: #fff;
+  font-weight: 900;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 16px rgba(249, 115, 22, 0.85), 0 4px 10px rgba(0, 0, 0, 0.85);
+  border: 2px solid #fff;
+  animation: pulse-crawl-marker 2s infinite ease-in-out;
+}
+
+@keyframes pulse-crawl-marker {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); box-shadow: 0 0 22px rgba(249, 115, 22, 1), 0 4px 12px rgba(0, 0, 0, 0.9); }
 }

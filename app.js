@@ -1,5 +1,5 @@
 // ==========================================================================
-// ILE KOSZTUJE PIWO? - WARSZAWA (Warsaw Beer Price Tracker)
+// POILEPIWKO - WARSZAWA (Warsaw Beer Price Tracker & Pub Crawl)
 // ==========================================================================
 
 (function () {
@@ -33,6 +33,15 @@
     "Wesoła": { coords: [52.2450, 21.2300], zoom: 13 }
   };
 
+  const CRAWL_HOTSPOTS = {
+    "pawilony": { name: "Pawilony Nowy Świat", coords: [52.2323, 21.0206] },
+    "nowogrodzka": { name: "Nowogrodzka & Poznańska", coords: [52.2289, 21.0118] },
+    "bulwary": { name: "Bulwary Wiślane", coords: [52.2385, 21.0295] },
+    "zbawiciela": { name: "Plac Zbawiciela", coords: [52.2199, 21.0185] },
+    "praga": { name: "Praga (Ząbkowska / Okrzei)", coords: [52.2530, 21.0390] },
+    "wola": { name: "Wola (Chłodna / Grzybowska)", coords: [52.2355, 20.9880] }
+  };
+
   let map;
   let allVenues = [];
   let activeMarkers = [];
@@ -49,6 +58,12 @@
   let rankingMode = "cheapest"; // "cheapest" | "nearest"
   let currentPhotoBase64 = null;
   let currentPhotoContentType = "image/jpeg";
+
+  // Pub Crawl state
+  let crawlMapLayer = null;
+  let activeCrawlRoute = null;
+  let currentCrawlStopsCount = 3;
+  let currentCrawlVibe = "cheap";
 
   // Initialize Supabase client if configured in config.js
   function initSupabase() {
@@ -938,10 +953,14 @@
     const venue = allVenues.find(v => v.id === venueId);
     if (!venue) return;
 
-    // Close drawer on small screens
+    // Close drawer and pubcrawl modal on small screens
     const drawer = document.getElementById("ranking-drawer");
     if (drawer) {
       drawer.classList.remove("open");
+    }
+    const crawlModal = document.getElementById("pubcrawl-modal");
+    if (crawlModal) {
+      crawlModal.classList.remove("active");
     }
 
     const targetMarker = activeMarkers.find(m => {
@@ -1003,6 +1022,328 @@
         if (votesMap[v.id]) v.votes_confirm = votesMap[v.id];
       });
     } catch (e) {}
+  }
+
+  // ==========================================================================
+  // PUB CRAWL GENERATOR LOGIC (poilepiwko)
+  // ==========================================================================
+
+  function generatePubCrawlRoute(startVal, stopsCount, vibe) {
+    let startCoords = WARSAW_CENTER;
+
+    if (startVal === "gps") {
+      if (userLocation) {
+        const distFromWarsaw = calculateDistanceKm(userLocation[0], userLocation[1], WARSAW_CENTER[0], WARSAW_CENTER[1]);
+        if (distFromWarsaw < 60) {
+          startCoords = userLocation;
+        }
+      }
+    } else if (CRAWL_HOTSPOTS[startVal]) {
+      startCoords = CRAWL_HOTSPOTS[startVal].coords;
+    } else if (DISTRICT_CENTERS[startVal]) {
+      startCoords = DISTRICT_CENTERS[startVal].coords;
+    }
+
+    const validVenues = allVenues.filter(v => v.latitude && v.longitude && typeof v.beer_price_pln === "number" && v.beer_price_pln > 0);
+    if (validVenues.length === 0) return null;
+
+    // Score venues based on distance, vibe, open status, and variety
+    const scored = validVenues.map(v => {
+      const distFromStartKm = calculateDistanceKm(startCoords[0], startCoords[1], v.latitude, v.longitude);
+      let score = 100 - (distFromStartKm * 8);
+
+      const isOpen = isVenueOpen(v);
+      if (isOpen) score += 14;
+
+      if (vibe === "cheap") {
+        if (v.beer_price_pln <= 12) score += 28;
+        else if (v.beer_price_pln <= 15) score += 14;
+        else score -= (v.beer_price_pln - 15) * 4;
+      } else if (vibe === "craft") {
+        if (v.is_craft) score += 32;
+        else if (v.beer_price_pln >= 17) score += 8;
+        else score -= 15;
+      } else if (vibe === "party") {
+        if (v.happy_hour) score += 20;
+        if (v.shot_price_pln && v.shot_price_pln <= 9) score += 16;
+        if (v.district && v.district.toLowerCase() === "pawilony") score += 14;
+      } else if (vibe === "mix") {
+        if (v.is_craft) score += 10;
+        if (v.beer_price_pln <= 14) score += 10;
+        if (v.happy_hour) score += 8;
+      }
+
+      // Random jitter for variety on rerolls
+      score += (Math.random() - 0.5) * 8;
+
+      return { venue: v, distKm: distFromStartKm, score, isOpen };
+    });
+
+    let pool = scored
+      .filter(item => item.distKm <= 3.8)
+      .sort((a, b) => b.score - a.score);
+
+    if (pool.length < stopsCount) {
+      pool = scored.sort((a, b) => a.distKm - b.distKm).slice(0, 35);
+    }
+
+    const routeStops = [];
+    let currentPos = startCoords;
+    let remainingPool = [...pool];
+
+    for (let i = 0; i < stopsCount; i++) {
+      if (remainingPool.length === 0) break;
+
+      if (i === 0) {
+        // Pick top candidate with mild randomization
+        const topSlice = remainingPool.slice(0, Math.min(3, remainingPool.length));
+        const chosen = topSlice[Math.floor(Math.random() * topSlice.length)];
+        const legDistM = Math.round(calculateDistanceKm(startCoords[0], startCoords[1], chosen.venue.latitude, chosen.venue.longitude) * 1000);
+        routeStops.push({
+          venue: chosen.venue,
+          legDistMeters: legDistM,
+          legMinutes: Math.max(1, Math.round(legDistM / 75))
+        });
+        currentPos = [chosen.venue.latitude, chosen.venue.longitude];
+        remainingPool = remainingPool.filter(p => p.venue.id !== chosen.venue.id);
+      } else {
+        // Walking distance scoring (optimal 100m - 500m)
+        const candidates = remainingPool.map(item => {
+          const dM = Math.round(calculateDistanceKm(currentPos[0], currentPos[1], item.venue.latitude, item.venue.longitude) * 1000);
+          let legScore = item.score;
+          if (dM < 40) {
+            legScore -= 8;
+            if (item.venue.district && item.venue.district.toLowerCase() === "pawilony") legScore += 12;
+          } else if (dM <= 450) {
+            legScore += 22; // sweet spot walking distance
+          } else if (dM <= 850) {
+            legScore += 10;
+          } else {
+            legScore -= (dM - 850) / 25;
+          }
+          return { ...item, dM, legScore };
+        }).sort((a, b) => b.legScore - a.legScore);
+
+        const chosen = candidates[0];
+        routeStops.push({
+          venue: chosen.venue,
+          legDistMeters: chosen.dM,
+          legMinutes: Math.max(1, Math.round(chosen.dM / 75))
+        });
+        currentPos = [chosen.venue.latitude, chosen.venue.longitude];
+        remainingPool = remainingPool.filter(p => p.venue.id !== chosen.venue.id);
+      }
+    }
+
+    let totalDistMeters = 0;
+    let totalCost = 0;
+    for (let i = 0; i < routeStops.length; i++) {
+      totalCost += routeStops[i].venue.beer_price_pln;
+      if (i > 0) {
+        totalDistMeters += routeStops[i].legDistMeters;
+      }
+    }
+    const avgPrice = routeStops.length > 0 ? (totalCost / routeStops.length) : 0;
+
+    return {
+      stops: routeStops,
+      totalDistance: totalDistMeters,
+      totalCost,
+      avgPrice,
+      startCoords,
+      startVal,
+      vibe,
+      stopsCount
+    };
+  }
+
+  function buildGoogleMapsDirectionsUrl(venues) {
+    if (!venues || venues.length < 2) return "#";
+    const origin = `${venues[0].latitude},${venues[0].longitude}`;
+    const destination = `${venues[venues.length - 1].latitude},${venues[venues.length - 1].longitude}`;
+
+    if (venues.length === 2) {
+      return `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=walking`;
+    }
+
+    const waypoints = venues.slice(1, -1).map(v => `${v.latitude},${v.longitude}`).join("%7C");
+    return `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&waypoints=${waypoints}&travelmode=walking`;
+  }
+
+  function renderPubCrawlResult(route) {
+    activeCrawlRoute = route;
+    const resultBox = document.getElementById("crawl-result-container");
+    const statDist = document.getElementById("crawl-stat-dist");
+    const statCost = document.getElementById("crawl-stat-cost");
+    const statAvg = document.getElementById("crawl-stat-avg");
+    const timelineList = document.getElementById("crawl-timeline-list");
+    const gmapsLink = document.getElementById("btn-crawl-gmaps-link");
+
+    if (!resultBox || !timelineList) return;
+
+    const distText = route.totalDistance >= 1000
+      ? (route.totalDistance / 1000).toFixed(1) + " km"
+      : Math.round(route.totalDistance) + " m";
+
+    if (statDist) statDist.textContent = distText;
+    if (statCost) statCost.textContent = route.totalCost.toFixed(2) + " zł";
+    if (statAvg) statAvg.textContent = route.avgPrice.toFixed(2) + " zł / piwo";
+
+    const gmapsUrl = buildGoogleMapsDirectionsUrl(route.stops.map(s => s.venue));
+    if (gmapsLink) {
+      gmapsLink.href = gmapsUrl;
+    }
+
+    let html = "";
+    route.stops.forEach((stop, idx) => {
+      const v = stop.venue;
+      const isOpen = isVenueOpen(v);
+
+      if (idx > 0) {
+        html += `
+          <div class="crawl-leg-transit">
+            <div class="crawl-leg-dots"></div>
+            <span>🚶 ~${stop.legDistMeters}m (ok. ${stop.legMinutes} min spaceru)</span>
+          </div>
+        `;
+      }
+
+      const craftChip = v.is_craft ? `<span class="crawl-stop-chip craft">💎 Kraft</span>` : "";
+      const hhChip = v.happy_hour ? `<span class="crawl-stop-chip hh">⚡ ${escapeHtml(v.happy_hour)}</span>` : "";
+      const openChip = isOpen ? `<span class="crawl-stop-chip" style="color:#4ade80;">● Otwarte</span>` : `<span class="crawl-stop-chip" style="color:#94a3b8;">○ Sprawdź godz.</span>`;
+
+      html += `
+        <div class="crawl-stop-card" onclick="window.__zoomToVenue('${v.id}')" title="Kliknij, aby zobaczyć ten bar na mapie">
+          <div class="crawl-stop-badge">${idx + 1}</div>
+          <div class="crawl-stop-info">
+            <div class="crawl-stop-header">
+              <span class="crawl-stop-name">${escapeHtml(v.name)}</span>
+              <span class="crawl-stop-price">${v.beer_price_pln.toFixed(2)} zł</span>
+            </div>
+            <div class="crawl-stop-address">📍 ${escapeHtml(v.address || v.district)} · ${escapeHtml(v.beer_name || 'Piwo')}</div>
+            <div class="crawl-stop-chips">
+              ${craftChip}
+              ${hhChip}
+              ${openChip}
+            </div>
+          </div>
+        </div>
+      `;
+    });
+
+    timelineList.innerHTML = html;
+    resultBox.style.display = "block";
+  }
+
+  function showCrawlOnMap(route) {
+    if (!map || !route || !route.stops.length) return;
+
+    if (!crawlMapLayer) {
+      crawlMapLayer = L.layerGroup().addTo(map);
+    } else {
+      crawlMapLayer.clearLayers();
+    }
+
+    const latlngs = route.stops.map(s => [s.venue.latitude, s.venue.longitude]);
+
+    // Underglow polyline
+    L.polyline(latlngs, {
+      color: "#ea580c",
+      weight: 9,
+      opacity: 0.35
+    }).addTo(crawlMapLayer);
+
+    // Dashed main polyline
+    const mainPoly = L.polyline(latlngs, {
+      color: "#f97316",
+      weight: 5,
+      opacity: 0.95,
+      dashArray: "8, 8",
+      lineCap: "round",
+      lineJoin: "round"
+    }).addTo(crawlMapLayer);
+
+    // Numbered stop markers
+    route.stops.forEach((stop, idx) => {
+      const v = stop.venue;
+      const badgeIcon = L.divIcon({
+        className: "crawl-marker-wrap",
+        html: `<div class="crawl-marker-badge">${idx + 1}</div>`,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+        popupAnchor: [0, -18]
+      });
+
+      const popupHtml = `
+        <div style="min-width:175px; font-family:inherit;">
+          <div style="font-size:0.75rem; font-weight:800; color:#fb923c; text-transform:uppercase; margin-bottom:2px;">Przystanek #${idx + 1} Pub Crawl</div>
+          <div style="font-size:1rem; font-weight:800; color:#fff; margin-bottom:4px;">${escapeHtml(v.name)}</div>
+          <div style="font-size:0.85rem; color:#4ade80; font-weight:700; margin-bottom:6px;">🍺 ${v.beer_price_pln.toFixed(2)} zł <span style="font-size:0.72rem; color:#94a3b8; font-weight:400;">(${escapeHtml(v.beer_name || 'Piwo')})</span></div>
+          <div style="font-size:0.74rem; color:#94a3b8; margin-bottom:8px;">📍 ${escapeHtml(v.address || v.district)}</div>
+          <button onclick="window.__zoomToVenue('${v.id}')" style="width:100%; background:#f97316; color:#fff; border:none; border-radius:6px; padding:6px 8px; font-size:0.75rem; font-weight:700; cursor:pointer;">Pokaż szczegóły lokalu</button>
+        </div>
+      `;
+
+      L.marker([v.latitude, v.longitude], { icon: badgeIcon })
+        .addTo(crawlMapLayer)
+        .bindPopup(popupHtml);
+    });
+
+    map.fitBounds(mainPoly.getBounds(), { padding: [60, 60], maxZoom: 16 });
+
+    const activeBar = document.getElementById("active-crawl-bar");
+    const activeSummary = document.getElementById("crawl-active-summary");
+    const activeSub = document.getElementById("crawl-active-sub");
+    const activeGmaps = document.getElementById("btn-crawl-active-gmaps");
+
+    if (activeSummary) {
+      const distText = route.totalDistance >= 1000 ? (route.totalDistance / 1000).toFixed(1) + " km" : Math.round(route.totalDistance) + " m";
+      activeSummary.textContent = `${route.stops.length} bary (${distText})`;
+    }
+    if (activeSub) {
+      activeSub.textContent = `Koszt: ~${route.totalCost.toFixed(2)} zł · śr. ${route.avgPrice.toFixed(2)} zł/piwo`;
+    }
+    if (activeGmaps) {
+      activeGmaps.href = buildGoogleMapsDirectionsUrl(route.stops.map(s => s.venue));
+    }
+    if (activeBar) {
+      activeBar.style.display = "flex";
+    }
+
+    if (window.__closePubCrawl) window.__closePubCrawl();
+  }
+
+  function clearCrawlFromMap() {
+    if (crawlMapLayer) {
+      crawlMapLayer.clearLayers();
+    }
+    const activeBar = document.getElementById("active-crawl-bar");
+    if (activeBar) {
+      activeBar.style.display = "none";
+    }
+  }
+
+  function shareCrawlRoute(route) {
+    if (!route || !route.stops.length) return;
+    const stopsText = route.stops.map((s, i) => `${i + 1}. ${s.venue.name} (${s.venue.beer_price_pln.toFixed(2)} zł)`).join("\n");
+    const distText = route.totalDistance >= 1000 ? (route.totalDistance / 1000).toFixed(1) + " km" : Math.round(route.totalDistance) + " m";
+    const gmaps = buildGoogleMapsDirectionsUrl(route.stops.map(s => s.venue));
+    const text = `🍻 Trasa Pub Crawl poilepiwko:\n${stopsText}\n🚶 Spacer: ~${distText} | Koszt piwek: ${route.totalCost.toFixed(2)} zł\n🧭 Nawigacja piesza: ${gmaps}\nSprawdź w poilepiwko!`;
+
+    if (navigator.share) {
+      navigator.share({
+        title: "Trasa Pub Crawl - poilepiwko",
+        text: text
+      }).catch(() => {});
+    } else if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => {
+        alert("📋 Trasa skopiowana do schowka! Możesz wysłać ją znajomym.");
+      }).catch(() => {
+        prompt("Skopiuj trasę pub crawl:", text);
+      });
+    } else {
+      prompt("Skopiuj trasę pub crawl:", text);
+    }
   }
 
   // Setup UI Event Listeners
@@ -1083,7 +1424,13 @@
     const chips = document.querySelectorAll(".filter-chip");
     chips.forEach(chip => {
       chip.addEventListener("click", () => {
-        chips.forEach(c => c.classList.remove("active"));
+        if (chip.id === "chip-open-pubcrawl") {
+          if (window.__openPubCrawl) window.__openPubCrawl();
+          return;
+        }
+        chips.forEach(c => {
+          if (c.id !== "chip-open-pubcrawl") c.classList.remove("active");
+        });
         chip.classList.add("active");
         currentFilter = chip.getAttribute("data-filter");
         renderMarkers();
@@ -1157,6 +1504,7 @@
       if (e.key === "Escape") {
         window.__closeLightbox();
         if (baroModal) baroModal.classList.remove("active");
+        if (window.__closePubCrawl) window.__closePubCrawl();
       }
     });
 
@@ -1806,21 +2154,26 @@
           if (drawer) drawer.classList.remove("open");
           if (baroModal) baroModal.classList.remove("active");
           closeModal();
+          if (window.__closePubCrawl) window.__closePubCrawl();
           if (map) map.flyTo(WARSAW_CENTER, 13, { duration: 0.8 });
-        } else if (target === "compass") {
+        } else if (target === "pubcrawl" || target === "compass") {
+          if (drawer) drawer.classList.remove("open");
           if (baroModal) baroModal.classList.remove("active");
-          if (tabNearest) tabNearest.click();
-          if (drawer) drawer.classList.add("open");
+          closeModal();
+          if (window.__openPubCrawl) window.__openPubCrawl();
         } else if (target === "ranking") {
           if (baroModal) baroModal.classList.remove("active");
+          if (window.__closePubCrawl) window.__closePubCrawl();
           if (tabCheapest) tabCheapest.click();
           if (drawer) drawer.classList.add("open");
         } else if (target === "barometer") {
           if (drawer) drawer.classList.remove("open");
+          if (window.__closePubCrawl) window.__closePubCrawl();
           if (btnBarometer) btnBarometer.click();
         } else if (target === "add") {
           if (drawer) drawer.classList.remove("open");
           if (baroModal) baroModal.classList.remove("active");
+          if (window.__closePubCrawl) window.__closePubCrawl();
           openAddModal();
         }
       });
@@ -2021,6 +2374,121 @@
       }
     }
     initPwaInstall();
+
+    // Pub Crawl Feature Initialization (poilepiwko)
+    function initPubCrawl() {
+      const crawlModal = document.getElementById("pubcrawl-modal");
+      const btnHeader = document.getElementById("btn-pubcrawl-header");
+      const btnClose = document.getElementById("btn-close-pubcrawl");
+      const btnGenerate = document.getElementById("btn-generate-crawl");
+      const startSelect = document.getElementById("crawl-start-select");
+      const stopsPills = document.querySelectorAll("#crawl-stops-pills .crawl-pill-btn");
+      const vibePills = document.querySelectorAll("#crawl-vibe-pills .crawl-pill-btn");
+      const btnShowOnMap = document.getElementById("btn-show-crawl-on-map");
+      const btnShare = document.getElementById("btn-share-crawl");
+      const btnReroll = document.getElementById("btn-reroll-crawl");
+
+      // Active crawl floating bar elements
+      const activeBar = document.getElementById("active-crawl-bar");
+      const btnActiveDetails = document.getElementById("btn-crawl-active-details");
+      const btnActiveClear = document.getElementById("btn-crawl-clear");
+
+      function openModal() {
+        if (!crawlModal) return;
+        const drawer = document.getElementById("ranking-drawer");
+        if (drawer) drawer.classList.remove("open");
+        const baroModal = document.getElementById("barometer-modal");
+        if (baroModal) baroModal.classList.remove("active");
+        closeModal();
+        crawlModal.classList.add("active");
+      }
+
+      function closeModalWindow() {
+        if (crawlModal) crawlModal.classList.remove("active");
+      }
+
+      window.__openPubCrawl = openModal;
+      window.__closePubCrawl = closeModalWindow;
+
+      if (btnHeader) btnHeader.addEventListener("click", openModal);
+      if (btnClose) btnClose.addEventListener("click", closeModalWindow);
+      if (crawlModal) {
+        crawlModal.addEventListener("click", (e) => {
+          if (e.target === crawlModal) closeModalWindow();
+        });
+      }
+
+      // Stops Count selection
+      stopsPills.forEach(pill => {
+        pill.addEventListener("click", () => {
+          stopsPills.forEach(p => p.classList.remove("active"));
+          pill.classList.add("active");
+          currentCrawlStopsCount = parseInt(pill.getAttribute("data-stops"), 10) || 3;
+        });
+      });
+
+      // Vibe selection
+      vibePills.forEach(pill => {
+        pill.addEventListener("click", () => {
+          vibePills.forEach(p => p.classList.remove("active"));
+          pill.classList.add("active");
+          currentCrawlVibe = pill.getAttribute("data-vibe") || "cheap";
+        });
+      });
+
+      // Generate Route
+      function triggerGenerate() {
+        const startVal = startSelect ? startSelect.value : "pawilony";
+        const route = generatePubCrawlRoute(startVal, currentCrawlStopsCount, currentCrawlVibe);
+        if (!route || !route.stops || route.stops.length === 0) {
+          alert("Nie udało się znaleźć odpowiednich barów dla wybranego rejonu. Wybierz inną lokalizację lub klimat.");
+          return;
+        }
+        renderPubCrawlResult(route);
+      }
+
+      if (btnGenerate) {
+        btnGenerate.addEventListener("click", triggerGenerate);
+      }
+
+      // Reroll variant
+      if (btnReroll) {
+        btnReroll.addEventListener("click", () => {
+          triggerGenerate();
+          if (activeBar && activeBar.style.display !== "none" && activeCrawlRoute) {
+            showCrawlOnMap(activeCrawlRoute);
+          }
+        });
+      }
+
+      // Show on map
+      if (btnShowOnMap) {
+        btnShowOnMap.addEventListener("click", () => {
+          if (activeCrawlRoute) {
+            showCrawlOnMap(activeCrawlRoute);
+          }
+        });
+      }
+
+      // Share
+      if (btnShare) {
+        btnShare.addEventListener("click", () => {
+          if (activeCrawlRoute) {
+            shareCrawlRoute(activeCrawlRoute);
+          }
+        });
+      }
+
+      // Active Floating Bar controls
+      if (btnActiveDetails) {
+        btnActiveDetails.addEventListener("click", openModal);
+      }
+
+      if (btnActiveClear) {
+        btnActiveClear.addEventListener("click", clearCrawlFromMap);
+      }
+    }
+    initPubCrawl();
   }
 
   // Populate Datalist for autocomplete in form

@@ -1,7 +1,7 @@
 {
-  "name": "Ile Kosztuje Piwo? - Warszawa",
-  "short_name": "IleZaPiwo",
-  "description": "Sprawdź na żywo aktualne ceny piwa z nalewaka w barach i pubach w Warszawie.",
+  "name": "poilepiwko - Gdzie na piwo w Warszawie",
+  "short_name": "poilepiwko",
+  "description": "Sprawdź na żywo aktualne ceny piwa z nalewaka w Warszawie, Happy Hours i wyznacz trasę barową Pub Crawl!",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

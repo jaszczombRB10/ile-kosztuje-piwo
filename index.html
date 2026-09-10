@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Ile Kosztuje Piwo? - Mapa Cen Piwa w Warszawie</title>
-  <meta name="description" content="Sprawdź aktualne ceny piwa z nalewaka w barach i pubach w Warszawie. Znajdź najtańsze piwo, happy hours i multitapy na żywo.">
+  <title>poilepiwko - Gdzie na piwo w Warszawie? Mapa Cen & Pub Crawl</title>
+  <meta name="description" content="poilepiwko: sprawdź na żywo aktualne ceny piwa z nalewaka w Warszawie, happy hours, krafty i wyznacz optymalną trasę barową Pub Crawl!">
   <meta name="theme-color" content="#0d1615">
   
   <!-- PWA & Mobile Web App Meta Tags -->
@@ -13,7 +13,7 @@
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="IleZaPiwo">
+  <meta name="apple-mobile-web-app-title" content="poilepiwko">
   
   <!-- Leaflet CSS & MarkerCluster CSS (Local) -->
   <link rel="stylesheet" href="vendor/leaflet/leaflet.css" />
@@ -31,7 +31,7 @@
       <a href="#" class="logo-wrap">
         <span class="logo-icon">🍺</span>
         <div class="logo-title">
-          <span class="logo-main">Ile Kosztuje</span> <span class="glow">Piwo?</span>
+          <span class="logo-main">poile</span><span class="glow">piwko</span>
         </div>
       </a>
 
@@ -51,6 +51,10 @@
         <button id="btn-locate-me" class="btn-secondary" title="Znajdź bary blisko mnie">
           <span>📍</span>
           <span class="btn-text">Blisko mnie</span>
+        </button>
+        <button id="btn-pubcrawl-header" class="btn-secondary" title="Generator trasy barowej (Pub Crawl)">
+          <span>🍻</span>
+          <span class="btn-text">Pub Crawl</span>
         </button>
         <button id="btn-barometer-toggle" class="btn-secondary" title="Barometr cenowy Warszawy">
           <span>📊</span>
@@ -148,6 +152,7 @@
 
         <div class="filter-row">
           <span class="filter-chip active" data-filter="all">Wszystkie</span>
+          <span class="filter-chip chip-crawl" id="chip-open-pubcrawl" title="Wyznacz trasę barową (Pub Crawl)">🍻 Pub Crawl</span>
           <span class="filter-chip chip-open" data-filter="open-now">🟢 Otwarte teraz</span>
           <span class="filter-chip chip-green" data-filter="tier-low">≤ 12 zł</span>
           <span class="filter-chip chip-amber" data-filter="tier-mid">13-18 zł</span>
@@ -160,6 +165,19 @@
 
     <!-- Map Canvas -->
     <div id="map"></div>
+
+    <!-- Active Crawl Floating Banner on Map -->
+    <div id="active-crawl-bar" class="active-crawl-bar" style="display: none;">
+      <div class="active-crawl-info">
+        <div class="active-crawl-title">🍻 Trasa aktywna: <strong id="crawl-active-summary">3 bary (850 m)</strong></div>
+        <div class="active-crawl-sub" id="crawl-active-sub">Łączny koszt: ~34 zł · śr. 11.30 zł</div>
+      </div>
+      <div class="active-crawl-actions">
+        <a href="#" id="btn-crawl-active-gmaps" target="_blank" rel="noopener" class="btn-crawl-action-gmaps">🧭 Google Maps</a>
+        <button type="button" id="btn-crawl-active-details" class="btn-crawl-action-details">📋 Trasa</button>
+        <button type="button" id="btn-crawl-clear" class="btn-crawl-action-clear" title="Zakończ trasę">✕</button>
+      </div>
+    </div>
 
     <!-- Floating My Location Button (Vad Kostar Ölen style) -->
     <button type="button" id="btn-locate-float" class="fab-locate-float" title="Pokaż moją pozycję na mapie">
@@ -217,6 +235,113 @@
       </div>
     </div>
 
+  </div>
+
+  <!-- Pub Crawl Generator Modal (poilepiwko) -->
+  <div class="modal-backdrop" id="pubcrawl-modal">
+    <div class="modal-card modal-card-wide pubcrawl-modal-card">
+      <div class="modal-head">
+        <div>
+          <h3>🍻 Generator Trasy Barowej (Pub Crawl)</h3>
+          <p class="modal-head-sub">Wybierz rejon i klimat, a <strong>poilepiwko</strong> wyznaczy trasę od baru do baru!</p>
+        </div>
+        <button id="btn-close-pubcrawl" class="btn-close-drawer">✕</button>
+      </div>
+
+      <div class="pubcrawl-modal-body">
+        <!-- Generator Controls Form -->
+        <div class="crawl-form-grid">
+          <!-- Start Location -->
+          <div class="crawl-field">
+            <label for="crawl-start-select" class="crawl-label">📍 Gdzie zaczynamy?</label>
+            <select id="crawl-start-select" class="crawl-select">
+              <option value="gps">🎯 Moja lokalizacja GPS (lub Centrum)</option>
+              <optgroup label="🔥 Imprezowe Zagłębia">
+                <option value="pawilony" selected>🔥 Pawilony Nowy Świat (Klasyk)</option>
+                <option value="nowogrodzka">💎 Nowogrodzka & Poznańska (Krafty)</option>
+                <option value="bulwary">🌊 Bulwary Wiślane</option>
+                <option value="zbawiciela">🌆 Plac Zbawiciela</option>
+                <option value="praga">🎨 Praga (Ząbkowska / Okrzei)</option>
+                <option value="wola">🏙️ Wola (Chłodna / Grzybowska)</option>
+              </optgroup>
+              <optgroup label="🏙️ Dzielnice">
+                <option value="Śródmieście">Śródmieście</option>
+                <option value="Mokotów">Mokotów</option>
+                <option value="Ochota">Ochota</option>
+                <option value="Żoliborz">Żoliborz</option>
+                <option value="Bielany">Bielany</option>
+              </optgroup>
+            </select>
+          </div>
+
+          <!-- Stops Count -->
+          <div class="crawl-field">
+            <label class="crawl-label">🚶 Ile przystanków (barów)?</label>
+            <div class="crawl-pills-row" id="crawl-stops-pills">
+              <button type="button" class="crawl-pill-btn" data-stops="2">2 bary <span>(Szybki bifor)</span></button>
+              <button type="button" class="crawl-pill-btn active" data-stops="3">3 bary <span>(Klasyczny wieczór)</span></button>
+              <button type="button" class="crawl-pill-btn" data-stops="4">4 bary <span>(Mocny crawl)</span></button>
+            </div>
+          </div>
+
+          <!-- Route Profile / Vibe -->
+          <div class="crawl-field">
+            <label class="crawl-label">⭐ Klimat & Priorytet</label>
+            <div class="crawl-pills-row" id="crawl-vibe-pills">
+              <button type="button" class="crawl-pill-btn active" data-vibe="cheap">💰 Najtaniej <span>(Max oszczędności)</span></button>
+              <button type="button" class="crawl-pill-btn" data-vibe="craft">💎 Kraft & Multitap <span>(Dobre piwo)</span></button>
+              <button type="button" class="crawl-pill-btn" data-vibe="party">⚡ Party & Happy Hour <span>(Luz & shoty)</span></button>
+              <button type="button" class="crawl-pill-btn" data-vibe="mix">🎲 Mix Warszawski <span>(Różnorodność)</span></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="crawl-generate-wrap">
+          <button type="button" id="btn-generate-crawl" class="btn-generate-crawl">
+            <span>🚀 Wyznacz Trasę Barową</span>
+          </button>
+        </div>
+
+        <!-- Result Container (Appears after clicking generate) -->
+        <div id="crawl-result-container" class="crawl-result-box" style="display: none;">
+          <div class="crawl-summary-bar">
+            <div class="crawl-stat-item">
+              <span class="crawl-stat-label">🚶 Spacer łącznie</span>
+              <span class="crawl-stat-val" id="crawl-stat-dist">-- m</span>
+            </div>
+            <div class="crawl-stat-item">
+              <span class="crawl-stat-label">💰 Koszt piwek</span>
+              <span class="crawl-stat-val highlight" id="crawl-stat-cost">-- zł</span>
+            </div>
+            <div class="crawl-stat-item">
+              <span class="crawl-stat-label">🍻 Średnia cena</span>
+              <span class="crawl-stat-val" id="crawl-stat-avg">-- zł / piwo</span>
+            </div>
+          </div>
+
+          <!-- Timeline Stops List -->
+          <div class="crawl-timeline" id="crawl-timeline-list">
+            <!-- Populated via JS -->
+          </div>
+
+          <!-- Bottom Route Actions -->
+          <div class="crawl-actions-footer">
+            <button type="button" id="btn-show-crawl-on-map" class="btn-crawl-primary">
+              🗺️ Pokaż na mapie
+            </button>
+            <a href="#" id="btn-crawl-gmaps-link" target="_blank" rel="noopener" class="btn-crawl-secondary">
+              🧭 Otwórz w Google Maps
+            </a>
+            <button type="button" id="btn-share-crawl" class="btn-crawl-secondary">
+              📤 Wyślij ekipie
+            </button>
+            <button type="button" id="btn-reroll-crawl" class="btn-crawl-ghost" title="Wylosuj inny wariant trasy">
+              🔄 Inna trasa
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Warsaw Beer Price Barometer Modal -->
@@ -432,9 +557,9 @@
       <span class="nav-icon">🗺️</span>
       <span class="nav-label">Mapa</span>
     </button>
-    <button type="button" class="nav-item" id="nav-btn-compass" data-target="compass">
-      <span class="nav-icon">🧭</span>
-      <span class="nav-label">Kompas</span>
+    <button type="button" class="nav-item" id="nav-btn-pubcrawl" data-target="pubcrawl">
+      <span class="nav-icon">🍻</span>
+      <span class="nav-label">Pub Crawl</span>
     </button>
     <button type="button" class="nav-item" id="nav-btn-ranking" data-target="ranking">
       <span class="nav-icon">🏆</span>
@@ -456,7 +581,7 @@
       <div class="age-gate-icon">🔞</div>
       <h2 class="age-gate-title">Weryfikacja wieku (18+)</h2>
       <p class="age-gate-desc">
-        Serwis <strong>„Ile Kosztuje Piwo”</strong> zawiera informacje o ofercie i cenach napojów alkoholowych w warszawskich lokalach gastronomicznych.
+        Serwis <strong>„poilepiwko”</strong> zawiera informacje o ofercie i cenach napojów alkoholowych w warszawskich lokalach gastronomicznych.
       </p>
       <div class="age-gate-law-note">
         Zgodnie z art. 13<sup>1</sup> ustawy z dnia 26 października 1982 r. o wychowaniu w trzeźwości i przeciwdziałaniu alkoholizmowi treści te są przeznaczone wyłącznie dla osób pełnoletnich.
@@ -500,7 +625,7 @@
         <div class="legal-section">
           <h4>🍻 2. Charakter serwisu i brak sprzedaży</h4>
           <p>
-            Serwis <em>„Ile Kosztuje Piwo”</em> jest niezależnym narzędziem o charakterze czysto informacyjno-statystycznym (społecznościowy crowdsourcing cen).
+            Serwis <em>„poilepiwko”</em> jest niezależnym narzędziem o charakterze czysto informacyjno-statystycznym (społecznościowy crowdsourcing cen).
             Serwis <strong>nie prowadzi sprzedaży, rezerwacji ani dostawy napojów alkoholowych</strong>. Wszystkie znaki towarowe i nazwy lokali należą do ich prawnych właścicieli i zostały użyte wyłącznie w celach informacyjnych.
           </p>
         </div>
@@ -556,10 +681,10 @@
       </div>
       <div class="pwa-ios-body">
         <div class="pwa-ios-app-header">
-          <img src="icons/icon-192.png" alt="Ile Za Piwo" class="pwa-app-icon-preview" />
+          <img src="icons/icon-192.png" alt="poilepiwko" class="pwa-app-icon-preview" />
           <div class="pwa-ios-app-meta">
-            <div class="pwa-ios-app-title">Ile Kosztuje Piwo?</div>
-            <div class="pwa-ios-app-sub">Warszawa · Aplikacja PWA</div>
+            <div class="pwa-ios-app-title">poilepiwko</div>
+            <div class="pwa-ios-app-sub">Warszawa · Gdzie na piwo</div>
           </div>
         </div>
 
