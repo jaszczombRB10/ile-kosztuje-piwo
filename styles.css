@@ -3252,3 +3252,708 @@ header {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.1); box-shadow: 0 0 22px rgba(249, 115, 22, 1), 0 4px 12px rgba(0, 0, 0, 0.9); }
 }
+
+/* ==========================================================================
+   Happy Hours & Piwny Paszport Warszawy Styles
+   ========================================================================== */
+
+/* Passport Badge in Header Center */
+.badge-passport {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(234, 179, 8, 0.12);
+  border: 1px solid rgba(234, 179, 8, 0.35);
+  color: #facc15;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  letter-spacing: -0.01em;
+}
+
+.badge-passport:hover {
+  background: rgba(234, 179, 8, 0.22);
+  border-color: #facc15;
+  transform: translateY(-1px);
+  box-shadow: 0 0 14px rgba(234, 179, 8, 0.4);
+}
+
+.btn-hh-header {
+  border-color: rgba(245, 158, 11, 0.35) !important;
+  color: #fbbf24 !important;
+}
+
+.btn-hh-header:hover {
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.3) !important;
+}
+
+/* Happy Hour Modal */
+.happyhour-modal-card {
+  max-width: 640px;
+}
+
+.hh-modal-tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0 20px;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.hh-tab {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 0.88rem;
+  font-weight: 700;
+  padding: 12px 14px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.hh-tab:hover {
+  color: #fff;
+}
+
+.hh-tab.active {
+  color: #fbbf24;
+}
+
+.hh-tab.active::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2.5px;
+  background: #fbbf24;
+  border-radius: 2px;
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+}
+
+.hh-modal-body {
+  padding: 16px 20px 24px;
+}
+
+.hh-now-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+}
+
+.hh-live-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #4ade80;
+  letter-spacing: 0.05em;
+}
+
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4ade80;
+  box-shadow: 0 0 8px #4ade80;
+  animation: live-pulse 1.5s infinite;
+}
+
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.2); }
+}
+
+.hh-now-sub {
+  font-size: 0.76rem;
+  color: #cbd5e1;
+}
+
+/* Day Pills for Calendar */
+.hh-days-pills {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  margin-bottom: 14px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.hh-day-pill {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+.hh-day-pill:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.hh-day-pill.active {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: #fbbf24;
+  color: #fbbf24;
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.25);
+}
+
+/* Happy Hour Cards */
+.hh-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 52vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.hh-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 12px 14px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.hh-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(245, 158, 11, 0.35);
+  transform: translateY(-1px);
+}
+
+.hh-card-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.hh-card-title {
+  font-size: 0.96rem;
+  font-weight: 800;
+  color: #fff;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.hh-card-tag {
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(245, 158, 11, 0.18);
+  color: #fbbf24;
+  text-transform: uppercase;
+}
+
+.hh-card-tag.active-now {
+  background: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+  animation: pulse-hh-tag 2s infinite;
+}
+
+@keyframes pulse-hh-tag {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.hh-card-desc {
+  font-size: 0.78rem;
+  color: #cbd5e1;
+  margin-top: 3px;
+}
+
+.hh-card-meta {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hh-card-prices {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.hh-price-promo {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: #4ade80;
+  text-shadow: 0 0 10px rgba(74, 222, 128, 0.3);
+}
+
+.hh-price-regular {
+  font-size: 0.74rem;
+  color: #94a3b8;
+  text-decoration: line-through;
+  margin-top: 2px;
+}
+
+.hh-countdown-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #fb923c;
+  background: rgba(249, 115, 22, 0.12);
+  padding: 2px 6px;
+  border-radius: 6px;
+  margin-top: 4px;
+  display: inline-block;
+}
+
+/* ==========================================================================
+   Piwny Paszport Warszawy Styles
+   ========================================================================== */
+
+.passport-modal-card {
+  max-width: 660px;
+}
+
+.passport-modal-body {
+  padding: 16px 20px 24px;
+}
+
+/* Hero Level Card */
+.passport-hero-card {
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.15) 0%, rgba(249, 115, 22, 0.12) 100%);
+  border: 1px solid rgba(234, 179, 8, 0.3);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.passport-avatar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.passport-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(234, 179, 8, 0.2);
+  border: 2px solid #facc15;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  box-shadow: 0 0 16px rgba(234, 179, 8, 0.35);
+}
+
+.passport-rank-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.01em;
+}
+
+.passport-rank-sub {
+  font-size: 0.74rem;
+  color: #cbd5e1;
+  margin-top: 2px;
+}
+
+.passport-progress-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.passport-progress-bar-bg {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.passport-progress-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #eab308 0%, #f97316 100%);
+  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 0 10px rgba(249, 115, 22, 0.5);
+}
+
+.passport-progress-label {
+  font-size: 0.68rem;
+  color: #cbd5e1;
+  text-align: right;
+  font-weight: 600;
+}
+
+/* 4 KPI Grid */
+.passport-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+@media (max-width: 500px) {
+  .passport-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.passport-stat-box {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 10px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.passport-stat-num {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: #fff;
+}
+
+.passport-stat-num.highlight {
+  color: #facc15;
+}
+
+.passport-stat-label {
+  font-size: 0.68rem;
+  color: #94a3b8;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+/* Section Titles */
+.passport-section-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 10px;
+}
+
+.passport-section-hint {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+/* Badges Showcase Grid */
+.passport-badges-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.passport-badge-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 10px 8px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.passport-badge-card.unlocked {
+  background: rgba(234, 179, 8, 0.08);
+  border-color: rgba(234, 179, 8, 0.4);
+  box-shadow: 0 4px 14px rgba(234, 179, 8, 0.15);
+}
+
+.passport-badge-card.unlocked:hover {
+  transform: translateY(-2px);
+  border-color: #facc15;
+  box-shadow: 0 6px 18px rgba(234, 179, 8, 0.25);
+}
+
+.passport-badge-card.locked {
+  opacity: 0.45;
+  filter: grayscale(0.85);
+}
+
+.badge-card-icon {
+  font-size: 1.6rem;
+  margin-bottom: 2px;
+}
+
+.badge-card-name {
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.25;
+}
+
+.badge-card-desc {
+  font-size: 0.66rem;
+  color: #cbd5e1;
+  line-height: 1.2;
+}
+
+.badge-card-status {
+  font-size: 0.62rem;
+  font-weight: 700;
+  margin-top: 3px;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.passport-badge-card.unlocked .badge-card-status {
+  background: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+}
+
+.passport-badge-card.locked .badge-card-status {
+  background: rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+}
+
+/* Visited Venues List */
+.passport-venues-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.passport-venue-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  color: #cbd5e1;
+  transition: all 0.15s;
+}
+
+.passport-venue-row:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.passport-venue-title {
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+}
+
+.passport-venue-title:hover {
+  color: #f97316;
+}
+
+.btn-remove-visited {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 2px 6px;
+  font-size: 0.72rem;
+  border-radius: 4px;
+  transition: all 0.15s;
+}
+
+.btn-remove-visited:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.15);
+}
+
+/* Passport Footer Actions */
+.passport-footer-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.btn-passport-share {
+  flex: 1;
+  background: linear-gradient(135deg, #eab308 0%, #f97316 100%);
+  color: #0b1312;
+  font-weight: 900;
+  font-size: 0.84rem;
+  padding: 11px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 16px rgba(234, 179, 8, 0.35);
+}
+
+.btn-passport-share:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(234, 179, 8, 0.5);
+}
+
+.btn-passport-reset {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #94a3b8;
+  font-size: 0.78rem;
+  padding: 10px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+.btn-passport-reset:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+/* "Byłem tu!" Button in Popups & Cards */
+.btn-toggle-visited {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #cbd5e1;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s;
+  width: 100%;
+  margin-top: 6px;
+  box-sizing: border-box;
+}
+
+.btn-toggle-visited:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.btn-toggle-visited.visited {
+  background: rgba(34, 197, 94, 0.18);
+  border-color: rgba(34, 197, 94, 0.45);
+  color: #4ade80;
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.2);
+}
+
+.btn-toggle-visited.visited:hover {
+  background: rgba(239, 68, 68, 0.18);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #f87171;
+}
+
+/* Visited Marker on Map */
+.marker-visited-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #22c55e;
+  border: 1.5px solid #fff;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.8);
+}
+
+/* Floating Toast Notification */
+.passport-toast {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  z-index: 10090;
+  background: rgba(15, 24, 23, 0.96);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1.5px solid #facc15;
+  border-radius: 16px;
+  padding: 12px 18px;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.85), 0 0 24px rgba(234, 179, 8, 0.35);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 320px;
+  animation: toast-drop 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (max-width: 600px) {
+  .passport-toast {
+    top: 72px;
+    right: 12px;
+    left: 12px;
+    max-width: none;
+  }
+}
+
+@keyframes toast-drop {
+  from { opacity: 0; transform: translateY(-20px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.toast-icon {
+  font-size: 1.8rem;
+  flex-shrink: 0;
+  animation: toast-wiggle 0.6s ease-in-out;
+}
+
+@keyframes toast-wiggle {
+  0%, 100% { transform: rotate(0); }
+  25% { transform: rotate(-12deg) scale(1.15); }
+  75% { transform: rotate(12deg) scale(1.15); }
+}
+
+.toast-title {
+  font-size: 0.85rem;
+  font-weight: 900;
+  color: #facc15;
+  letter-spacing: -0.01em;
+}
+
+.toast-desc {
+  font-size: 0.74rem;
+  color: #e2e8f0;
+  margin-top: 1px;
+}

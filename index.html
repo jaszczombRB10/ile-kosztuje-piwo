@@ -43,6 +43,10 @@
           <span class="clock-icon">🕒</span>
           <span id="live-clock-time">--:--</span>
         </div>
+        <button type="button" class="badge-passport" id="btn-open-passport" title="Twój Piwny Paszport Warszawy (Odwiedzone lokale i odznaki)">
+          <span class="passport-icon">🎖️</span>
+          <span id="passport-header-count">0/524</span>
+        </button>
         <button type="button" class="badge-legal-18" id="btn-open-legal" title="Informacje prawne, weryfikacja 18+ i polityka prywatności">
           🔞 18+
         </button>
@@ -53,6 +57,10 @@
         <button id="btn-locate-me" class="btn-secondary" title="Znajdź bary blisko mnie">
           <span>📍</span>
           <span class="btn-text">Blisko mnie</span>
+        </button>
+        <button id="btn-happyhour-header" class="btn-secondary btn-hh-header" title="Aktualne promocje i kalendarz Happy Hours">
+          <span>⚡</span>
+          <span class="btn-text">Happy Hours</span>
         </button>
         <button id="btn-pubcrawl-header" class="btn-secondary" title="Generator trasy barowej (Pub Crawl)">
           <span>🍻</span>
@@ -217,6 +225,7 @@
         <div class="ranking-tabs">
           <button type="button" class="ranking-tab active" id="tab-rank-cheapest">💰 Najtańsze</button>
           <button type="button" class="ranking-tab" id="tab-rank-nearest">🧭 Najbliżej mnie</button>
+          <button type="button" class="ranking-tab" id="tab-rank-visited">🎖️ Byłem (<span id="drawer-visited-count">0</span>)</button>
         </div>
       </div>
       <div class="drawer-list" id="ranking-list">
@@ -735,6 +744,141 @@
           <button type="button" id="btn-ack-pwa-ios" class="btn-submit">Rozumiem, dzięki!</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Happy Hours & Promo Calendar Modal -->
+  <div class="modal-backdrop" id="happyhour-modal">
+    <div class="modal-card modal-card-wide happyhour-modal-card">
+      <div class="modal-head">
+        <div>
+          <h3>⚡ Happy Hours & Kalendarz Promocji</h3>
+          <p class="modal-head-sub">Gdzie w Warszawie napijesz się taniej w tej chwili lub w dany dzień tygodnia!</p>
+        </div>
+        <button id="btn-close-happyhour" class="btn-close-drawer">✕</button>
+      </div>
+
+      <div class="hh-modal-tabs">
+        <button type="button" class="hh-tab active" id="tab-hh-now">⚡ Trwające TERAZ (<span id="hh-now-count">0</span>)</button>
+        <button type="button" class="hh-tab" id="tab-hh-calendar">📅 Rozpiska Tygodnia</button>
+      </div>
+
+      <div class="hh-modal-body">
+        <!-- Tab 1: Active Now Content -->
+        <div id="hh-tab-content-now" class="hh-tab-content">
+          <div class="hh-now-banner">
+            <div class="hh-live-indicator"><span class="pulse-dot"></span> NA ŻYWO W WARSZAWIE</div>
+            <div class="hh-now-sub" id="hh-now-clock-text">Sprawdzanie ofert...</div>
+          </div>
+          <div class="hh-cards-list" id="hh-now-list">
+            <!-- Populated dynamically via JS -->
+          </div>
+        </div>
+
+        <!-- Tab 2: Weekly Calendar Content -->
+        <div id="hh-tab-content-calendar" class="hh-tab-content" style="display: none;">
+          <div class="hh-days-pills" id="hh-days-pills">
+            <button type="button" class="hh-day-pill" data-day="1">Poniedziałek</button>
+            <button type="button" class="hh-day-pill" data-day="2">Wtorek</button>
+            <button type="button" class="hh-day-pill" data-day="3">Środa</button>
+            <button type="button" class="hh-day-pill" data-day="4">Czwartek</button>
+            <button type="button" class="hh-day-pill" data-day="5">Piątek</button>
+            <button type="button" class="hh-day-pill" data-day="6">Sobota</button>
+            <button type="button" class="hh-day-pill" data-day="0">Niedziela</button>
+          </div>
+          <div class="hh-cards-list" id="hh-calendar-list">
+            <!-- Populated dynamically via JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Piwny Paszport Warszawy Modal -->
+  <div class="modal-backdrop" id="passport-modal">
+    <div class="modal-card modal-card-wide passport-modal-card">
+      <div class="modal-head">
+        <div>
+          <h3>🎖️ Piwny Paszport Warszawy</h3>
+          <p class="modal-head-sub">Zbieraj pieczątki z warszawskich lokali, odblokowuj odznaki i odkrywaj miasto!</p>
+        </div>
+        <button id="btn-close-passport" class="btn-close-drawer">✕</button>
+      </div>
+
+      <div class="passport-modal-body">
+        <!-- User Level & Progress Card -->
+        <div class="passport-hero-card">
+          <div class="passport-avatar-wrap">
+            <div class="passport-avatar" id="passport-rank-icon">🎓</div>
+            <div class="passport-level-info">
+              <div class="passport-rank-title" id="passport-rank-title">Nowicjusz w Warszawie</div>
+              <div class="passport-rank-sub" id="passport-rank-sub">Odwiedzaj bary i zaznaczaj „Byłem tu!”, aby awansować!</div>
+            </div>
+          </div>
+          <div class="passport-progress-wrap">
+            <div class="passport-progress-bar-bg">
+              <div class="passport-progress-bar-fill" id="passport-progress-bar" style="width: 0%;"></div>
+            </div>
+            <div class="passport-progress-label" id="passport-progress-label">0 / 3 do rangi Studenta</div>
+          </div>
+        </div>
+
+        <!-- 4 KPI Metrics -->
+        <div class="passport-stats-grid">
+          <div class="passport-stat-box">
+            <span class="passport-stat-num" id="stat-visited-count">0</span>
+            <span class="passport-stat-label">Odwiedzone bary</span>
+          </div>
+          <div class="passport-stat-box">
+            <span class="passport-stat-num highlight" id="stat-visited-percent">0.0%</span>
+            <span class="passport-stat-label">% Warszawy</span>
+          </div>
+          <div class="passport-stat-box">
+            <span class="passport-stat-num" id="stat-visited-districts">0 / 18</span>
+            <span class="passport-stat-label">Dzielnice</span>
+          </div>
+          <div class="passport-stat-box">
+            <span class="passport-stat-num" id="stat-badges-unlocked">0 / 10</span>
+            <span class="passport-stat-label">Zdobyte odznaki</span>
+          </div>
+        </div>
+
+        <!-- Badges Showcase Section -->
+        <div class="passport-section-title">
+          <span>🏆 Gablota Odznak</span>
+          <span class="passport-section-hint">Kliknij odznakę, aby sprawdzić szczegóły</span>
+        </div>
+        <div class="passport-badges-grid" id="passport-badges-grid">
+          <!-- Populated via JS -->
+        </div>
+
+        <!-- Visited Venues Timeline -->
+        <div class="passport-section-title" style="margin-top: 20px;">
+          <span>📍 Twoje Odwiedzone Bary (<span id="passport-list-count">0</span>)</span>
+        </div>
+        <div class="passport-venues-list" id="passport-venues-list">
+          <!-- Populated via JS -->
+        </div>
+
+        <!-- Passport Actions -->
+        <div class="passport-footer-actions">
+          <button type="button" id="btn-share-passport" class="btn-passport-share">
+            📤 Udostępnij mój profil
+          </button>
+          <button type="button" id="btn-reset-passport" class="btn-passport-reset">
+            🗑️ Wyczyść historię
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Toast Notification for Unlocking Badges -->
+  <div id="passport-toast" class="passport-toast" style="display: none;">
+    <div class="toast-icon" id="toast-icon">🎉</div>
+    <div class="toast-content">
+      <div class="toast-title" id="toast-title">Odblokowano Odznakę!</div>
+      <div class="toast-desc" id="toast-desc">Student na Pawilonach</div>
     </div>
   </div>
 

@@ -17,7 +17,21 @@
     "is_verified": true,
     "last_updated": "2026-09-05",
     "votes_confirm": 0,
-    "photo_url": "https://agsodpzkytdgicpmphxz.supabase.co/storage/v1/object/public/proofs/sample-menu-klaps.jpg"
+    "photo_url": "https://agsodpzkytdgicpmphxz.supabase.co/storage/v1/object/public/proofs/sample-menu-klaps.jpg",
+    "happy_hour_rule": {
+      "days": [
+        1,
+        2,
+        3
+      ],
+      "start_hour": 16,
+      "start_minute": 0,
+      "end_hour": 19,
+      "end_minute": 0,
+      "promo_price": 9.0,
+      "description": "Piwo z kranu za 9 zł",
+      "label": "Pn-Śr 16:00-19:00"
+    }
   },
   {
     "id": "pawilony-shot-gun",
@@ -36,7 +50,25 @@
     "hours": "15:00 - 03:00",
     "is_verified": true,
     "last_updated": "2026-09-04",
-    "votes_confirm": 0
+    "votes_confirm": 0,
+    "happy_hour_rule": {
+      "days": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "start_hour": 14,
+      "start_minute": 0,
+      "end_hour": 18,
+      "end_minute": 0,
+      "promo_price": 8.5,
+      "description": "Codzienne Happy Hour do 18:00: Piwo 8.50 zł",
+      "label": "Codziennie 14:00-18:00"
+    }
   },
   {
     "id": "pawilony-pewex",
@@ -55,7 +87,21 @@
     "hours": "16:00 - 03:00",
     "is_verified": false,
     "last_updated": "2026-09-02",
-    "votes_confirm": 0
+    "votes_confirm": 0,
+    "happy_hour_rule": {
+      "days": [
+        2,
+        3,
+        4
+      ],
+      "start_hour": 17,
+      "start_minute": 0,
+      "end_hour": 20,
+      "end_minute": 0,
+      "promo_price": 10.0,
+      "description": "Wt-Czw: Piwo 10 zł",
+      "label": "Wt-Czw 17:00-20:00"
+    }
   },
   {
     "id": "pawilony-peron",
@@ -70,11 +116,23 @@
     "beer_size_ml": 500,
     "is_craft": false,
     "shot_price_pln": 6.5,
-    "happy_hour": null,
+    "happy_hour": "Wt 17:00-21:00: Wtorki studenckie 9.50 zł",
     "hours": "16:00 - 02:00",
     "is_verified": false,
     "last_updated": "2026-09-01",
-    "votes_confirm": 0
+    "votes_confirm": 0,
+    "happy_hour_rule": {
+      "days": [
+        2
+      ],
+      "start_hour": 17,
+      "start_minute": 0,
+      "end_hour": 21,
+      "end_minute": 0,
+      "promo_price": 9.5,
+      "description": "Wtorki studenckie: Piwo 9.50 zł",
+      "label": "Wt 17:00-21:00"
+    }
   },
   {
     "id": "pijalnia-nowy-swiat",
@@ -89,11 +147,29 @@
     "beer_size_ml": 500,
     "is_craft": false,
     "shot_price_pln": 6.0,
-    "happy_hour": "Stała cena kultowa",
+    "happy_hour": "Codziennie: Piwo lane 10 zł",
     "hours": "09:00 - 04:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 0
+    "votes_confirm": 0,
+    "happy_hour_rule": {
+      "days": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "start_hour": 12,
+      "start_minute": 0,
+      "end_hour": 23,
+      "end_minute": 59,
+      "promo_price": 10.0,
+      "description": "Kultowa cena: Piwo z nalewaka 10 zł",
+      "label": "Codziennie cały dzień"
+    }
   },
   {
     "id": "pijalnia-foksal",
@@ -108,11 +184,29 @@
     "beer_size_ml": 500,
     "is_craft": false,
     "shot_price_pln": 6.0,
-    "happy_hour": null,
+    "happy_hour": "Codziennie: Piwo lane 10 zł",
     "hours": "12:00 - 05:00",
     "is_verified": true,
     "last_updated": "2026-09-05",
-    "votes_confirm": 0
+    "votes_confirm": 0,
+    "happy_hour_rule": {
+      "days": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "start_hour": 12,
+      "start_minute": 0,
+      "end_hour": 23,
+      "end_minute": 59,
+      "promo_price": 10.0,
+      "description": "Kultowa cena: Piwo z nalewaka 10 zł",
+      "label": "Codziennie cały dzień"
+    }
   },
   {
     "id": "pijalnia-mazowiecka",
@@ -127,11 +221,29 @@
     "beer_size_ml": 500,
     "is_craft": false,
     "shot_price_pln": 6.0,
-    "happy_hour": null,
+    "happy_hour": "Codziennie: Piwo lane 10 zł",
     "hours": "14:00 - 04:00",
     "is_verified": true,
     "last_updated": "2026-09-08",
-    "votes_confirm": 0
+    "votes_confirm": 0,
+    "happy_hour_rule": {
+      "days": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "start_hour": 12,
+      "start_minute": 0,
+      "end_hour": 23,
+      "end_minute": 59,
+      "promo_price": 10.0,
+      "description": "Kultowa cena: Piwo z nalewaka 10 zł",
+      "label": "Codziennie cały dzień"
+    }
   },
   {
     "id": "banialuka",
@@ -150,7 +262,22 @@
     "hours": "12:00 - 04:00",
     "is_verified": true,
     "last_updated": "2026-09-04",
-    "votes_confirm": 0
+    "votes_confirm": 0,
+    "happy_hour_rule": {
+      "days": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "start_hour": 12,
+      "start_minute": 0,
+      "end_hour": 16,
+      "end_minute": 0,
+      "promo_price": 9.5,
+      "description": "Lunch & Happy Hour: Piwo 9.50 zł",
+      "label": "Pn-Czw 12:00-16:00"
+    }
   },
   {
     "id": "ambasada",
@@ -184,11 +311,23 @@
     "beer_size_ml": 500,
     "is_craft": false,
     "shot_price_pln": 6.5,
-    "happy_hour": "Śr 17:00-21:00: Drugie piwo 50%",
+    "happy_hour": "Śr 17:00-21:00: Drugie piwo za pół ceny",
     "hours": "14:00 - 02:00",
     "is_verified": false,
     "last_updated": "2026-09-01",
-    "votes_confirm": 0
+    "votes_confirm": 0,
+    "happy_hour_rule": {
+      "days": [
+        3
+      ],
+      "start_hour": 17,
+      "start_minute": 0,
+      "end_hour": 21,
+      "end_minute": 0,
+      "promo_price": 9.0,
+      "description": "Środowe bifory: drugie piwo za 50%",
+      "label": "Śr 17:00-21:00"
+    }
   },
   {
     "id": "plan-b",
@@ -203,11 +342,25 @@
     "beer_size_ml": 500,
     "is_craft": false,
     "shot_price_pln": 10.0,
-    "happy_hour": null,
+    "happy_hour": "Pn-Śr 17:00-19:00: Piwo 11.50 zł",
     "hours": "16:00 - 04:00",
     "is_verified": true,
     "last_updated": "2026-09-05",
-    "votes_confirm": 0
+    "votes_confirm": 0,
+    "happy_hour_rule": {
+      "days": [
+        1,
+        2,
+        3
+      ],
+      "start_hour": 17,
+      "start_minute": 0,
+      "end_hour": 19,
+      "end_minute": 0,
+      "promo_price": 11.5,
+      "description": "Zbawix Happy Hour: Piwo 11.50 zł",
+      "label": "Pn-Śr 17:00-19:00"
+    }
   },
   {
     "id": "cuda-na-kiju",
@@ -226,7 +379,20 @@
     "hours": "14:00 - 01:00",
     "is_verified": true,
     "last_updated": "2026-09-05",
-    "votes_confirm": 0
+    "votes_confirm": 0,
+    "happy_hour_rule": {
+      "days": [
+        1,
+        2
+      ],
+      "start_hour": 16,
+      "start_minute": 0,
+      "end_hour": 18,
+      "end_minute": 0,
+      "promo_price": 14.0,
+      "description": "Craft Happy Hour: Pils 14 zł",
+      "label": "Pn-Wt 16:00-18:00"
+    }
   },
   {
     "id": "jabeerwocky",
@@ -241,11 +407,23 @@
     "beer_size_ml": 500,
     "is_craft": true,
     "shot_price_pln": 14.0,
-    "happy_hour": "Pn do 19:00: -20% na lane rzemiosło",
+    "happy_hour": "Pn 16:00-19:00: -20% na lane krafty",
     "hours": "14:00 - 02:00",
     "is_verified": true,
     "last_updated": "2026-09-06",
-    "votes_confirm": 0
+    "votes_confirm": 0,
+    "happy_hour_rule": {
+      "days": [
+        1
+      ],
+      "start_hour": 16,
+      "start_minute": 0,
+      "end_hour": 19,
+      "end_minute": 0,
+      "promo_price": 14.5,
+      "description": "Kraftowe poniedziałki: -20% na wszystkie krany",
+      "label": "Pn 16:00-19:00"
+    }
   },
   {
     "id": "kufle-i-kapsle",
@@ -283,7 +461,21 @@
     "hours": "15:00 - 01:00",
     "is_verified": true,
     "last_updated": "2026-09-03",
-    "votes_confirm": 0
+    "votes_confirm": 0,
+    "happy_hour_rule": {
+      "days": [
+        1,
+        2,
+        3
+      ],
+      "start_hour": 16,
+      "start_minute": 0,
+      "end_hour": 18,
+      "end_minute": 0,
+      "promo_price": 15.0,
+      "description": "Early Bird: Lane piwo 15 zł",
+      "label": "Pn-Śr 16:00-18:00"
+    }
   },
   {
     "id": "same-krafty",
@@ -298,11 +490,25 @@
     "beer_size_ml": 500,
     "is_craft": true,
     "shot_price_pln": 13.0,
-    "happy_hour": null,
+    "happy_hour": "Pn-Śr 16:00-18:00: Pils 13 zł",
     "hours": "14:00 - 23:00",
     "is_verified": true,
     "last_updated": "2026-09-04",
-    "votes_confirm": 0
+    "votes_confirm": 0,
+    "happy_hour_rule": {
+      "days": [
+        1,
+        2,
+        3
+      ],
+      "start_hour": 16,
+      "start_minute": 0,
+      "end_hour": 18,
+      "end_minute": 0,
+      "promo_price": 13.0,
+      "description": "Staromiejskie Happy Hour: Pils rzemieślniczy 13 zł",
+      "label": "Pn-Śr 16:00-18:00"
+    }
   },
   {
     "id": "bar-studio",
@@ -317,11 +523,26 @@
     "beer_size_ml": 500,
     "is_craft": false,
     "shot_price_pln": 11.0,
-    "happy_hour": null,
+    "happy_hour": "Pn-Czw 16:00-18:00: Piwo 12 zł",
     "hours": "10:00 - 02:00",
     "is_verified": true,
     "last_updated": "2026-09-05",
-    "votes_confirm": 0
+    "votes_confirm": 0,
+    "happy_hour_rule": {
+      "days": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "start_hour": 16,
+      "start_minute": 0,
+      "end_hour": 18,
+      "end_minute": 0,
+      "promo_price": 12.0,
+      "description": "Plac Defilad Happy Hour: Piwo 12 zł",
+      "label": "Pn-Czw 16:00-18:00"
+    }
   },
   {
     "id": "cafe-kulturalna",
@@ -374,11 +595,29 @@
     "beer_size_ml": 500,
     "is_craft": false,
     "shot_price_pln": 13.0,
-    "happy_hour": null,
+    "happy_hour": "Codziennie 16:00-18:00: Piwo 12 zł",
     "hours": "16:00 - 00:00",
     "is_verified": true,
     "last_updated": "2026-09-08",
-    "votes_confirm": 0
+    "votes_confirm": 0,
+    "happy_hour_rule": {
+      "days": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "start_hour": 16,
+      "start_minute": 0,
+      "end_hour": 18,
+      "end_minute": 0,
+      "promo_price": 12.0,
+      "description": "Klasyk Wilcza: Piwo lane 12 zł",
+      "label": "Codziennie 16:00-18:00"
+    }
   },
   {
     "id": "chmielnik",
@@ -397,7 +636,23 @@
     "hours": "14:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-03",
-    "votes_confirm": 0
+    "votes_confirm": 0,
+    "happy_hour_rule": {
+      "days": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "start_hour": 15,
+      "start_minute": 0,
+      "end_hour": 18,
+      "end_minute": 0,
+      "promo_price": 12.0,
+      "description": "After-work: Piwo lane 12 zł",
+      "label": "Pn-Pt 15:00-18:00"
+    }
   },
   {
     "id": "w-oparach-absurdu",
@@ -435,7 +690,19 @@
     "hours": "16:00 - 02:00",
     "is_verified": false,
     "last_updated": "2026-08-31",
-    "votes_confirm": 0
+    "votes_confirm": 0,
+    "happy_hour_rule": {
+      "days": [
+        4
+      ],
+      "start_hour": 17,
+      "start_minute": 0,
+      "end_hour": 20,
+      "end_minute": 0,
+      "promo_price": 12.0,
+      "description": "Czwartki na Ząbkowskiej: piwo + shot gratis",
+      "label": "Czw 17:00-20:00"
+    }
   },
   {
     "id": "bazar-klub",
@@ -492,7 +759,21 @@
     "hours": "14:00 - 04:00",
     "is_verified": false,
     "last_updated": "2026-09-01",
-    "votes_confirm": 0
+    "votes_confirm": 0,
+    "happy_hour_rule": {
+      "days": [
+        1,
+        2,
+        3
+      ],
+      "start_hour": 16,
+      "start_minute": 0,
+      "end_hour": 19,
+      "end_minute": 0,
+      "promo_price": 12.0,
+      "description": "Bulwarowy chill: Piwo 12 zł",
+      "label": "Pn-Śr 16:00-19:00"
+    }
   },
   {
     "id": "solec-powisle",
@@ -526,11 +807,26 @@
     "beer_size_ml": 500,
     "is_craft": false,
     "shot_price_pln": 7.5,
-    "happy_hour": "Dla studentów: Piwo 11 zł z legitymacją",
+    "happy_hour": "Pn-Czw 17:00-20:00: Studenckie piwo 11 zł",
     "hours": "15:00 - 01:00",
     "is_verified": true,
     "last_updated": "2026-09-03",
-    "votes_confirm": 0
+    "votes_confirm": 0,
+    "happy_hour_rule": {
+      "days": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "start_hour": 17,
+      "start_minute": 0,
+      "end_hour": 20,
+      "end_minute": 0,
+      "promo_price": 11.0,
+      "description": "Promocja studencka: Piwo 11 zł",
+      "label": "Pn-Czw 17:00-20:00"
+    }
   },
   {
     "id": "pub-lolek",
@@ -545,11 +841,26 @@
     "beer_size_ml": 500,
     "is_craft": false,
     "shot_price_pln": 11.0,
-    "happy_hour": "Pn-Czw 12:00-16:00: Zestaw lunchowy z piwem",
+    "happy_hour": "Pn-Czw 12:00-16:00: Zestaw z piwem 13 zł",
     "hours": "11:00 - 01:00",
     "is_verified": true,
     "last_updated": "2026-09-04",
-    "votes_confirm": 0
+    "votes_confirm": 0,
+    "happy_hour_rule": {
+      "days": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "start_hour": 12,
+      "start_minute": 0,
+      "end_hour": 16,
+      "end_minute": 0,
+      "promo_price": 13.0,
+      "description": "Wczesne popołudnie w Lolku: piwo 13 zł",
+      "label": "Pn-Czw 12:00-16:00"
+    }
   },
   {
     "id": "osm-node-248197975",
@@ -583,11 +894,23 @@
     "beer_size_ml": 500,
     "is_craft": false,
     "shot_price_pln": 8.0,
-    "happy_hour": null,
+    "happy_hour": "Śr 16:00-21:00: Studenckie piwo 10.50 zł",
     "hours": "12:00+",
     "is_verified": true,
     "last_updated": "2026-09-08",
-    "votes_confirm": 0
+    "votes_confirm": 0,
+    "happy_hour_rule": {
+      "days": [
+        3
+      ],
+      "start_hour": 16,
+      "start_minute": 0,
+      "end_hour": 21,
+      "end_minute": 0,
+      "promo_price": 10.5,
+      "description": "Środy akademickie: Piwo 10.50 zł z legitymacją",
+      "label": "Śr 16:00-21:00"
+    }
   },
   {
     "id": "osm-node-261659066",
@@ -1001,11 +1324,26 @@
     "beer_size_ml": 500,
     "is_craft": false,
     "shot_price_pln": 10.0,
-    "happy_hour": "Pn-Czw 13:00-17:00 (14.0 PLN)",
+    "happy_hour": "Pn-Czw 14:00-17:00: Piwo 14 zł",
     "hours": "16:00 - 01:00",
     "is_verified": true,
     "last_updated": "2026-09-08",
-    "votes_confirm": 0
+    "votes_confirm": 0,
+    "happy_hour_rule": {
+      "days": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "start_hour": 14,
+      "start_minute": 0,
+      "end_hour": 17,
+      "end_minute": 0,
+      "promo_price": 14.0,
+      "description": "Irish Happy Hour: Piwo 14 zł",
+      "label": "Pn-Czw 14:00-17:00"
+    }
   },
   {
     "id": "osm-node-473159293",
@@ -2122,11 +2460,29 @@
     "beer_size_ml": 500,
     "is_craft": true,
     "shot_price_pln": 6.0,
-    "happy_hour": null,
+    "happy_hour": "Codziennie: Piwo lane 10 zł",
     "hours": "24/7",
     "is_verified": true,
     "last_updated": "2026-09-08",
-    "votes_confirm": 0
+    "votes_confirm": 0,
+    "happy_hour_rule": {
+      "days": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "start_hour": 12,
+      "start_minute": 0,
+      "end_hour": 23,
+      "end_minute": 59,
+      "promo_price": 10.0,
+      "description": "Kultowa cena: Piwo z nalewaka 10 zł",
+      "label": "Codziennie cały dzień"
+    }
   },
   {
     "id": "osm-node-3985025972",
@@ -2255,11 +2611,23 @@
     "beer_size_ml": 500,
     "is_craft": false,
     "shot_price_pln": 10.0,
-    "happy_hour": null,
+    "happy_hour": "Pn 16:00-19:00: -20% na lane krafty",
     "hours": "Mo-Tu 14:00-24:00; We-Th 14:00-01:00; Fr-Sa 14:00-02:00; Su 15:00-24:00",
     "is_verified": true,
     "last_updated": "2026-09-08",
-    "votes_confirm": 0
+    "votes_confirm": 0,
+    "happy_hour_rule": {
+      "days": [
+        1
+      ],
+      "start_hour": 16,
+      "start_minute": 0,
+      "end_hour": 19,
+      "end_minute": 0,
+      "promo_price": 14.5,
+      "description": "Kraftowe poniedziałki: -20% na wszystkie krany",
+      "label": "Pn 16:00-19:00"
+    }
   },
   {
     "id": "osm-node-4233519776",
@@ -2274,11 +2642,25 @@
     "beer_size_ml": 500,
     "is_craft": true,
     "shot_price_pln": 13.0,
-    "happy_hour": null,
+    "happy_hour": "Pn-Śr 16:00-18:00: Pils 13 zł",
     "hours": "Mo-Th 14:00-23:00; Fr 14:00-00:00; Sa 13:00-00:00; Su 13:00-22:00",
     "is_verified": true,
     "last_updated": "2026-09-08",
-    "votes_confirm": 0
+    "votes_confirm": 0,
+    "happy_hour_rule": {
+      "days": [
+        1,
+        2,
+        3
+      ],
+      "start_hour": 16,
+      "start_minute": 0,
+      "end_hour": 18,
+      "end_minute": 0,
+      "promo_price": 13.0,
+      "description": "Staromiejskie Happy Hour: Pils rzemieślniczy 13 zł",
+      "label": "Pn-Śr 16:00-18:00"
+    }
   },
   {
     "id": "osm-node-4244306639",
@@ -3053,11 +3435,25 @@
     "beer_size_ml": 500,
     "is_craft": false,
     "shot_price_pln": 10.0,
-    "happy_hour": null,
+    "happy_hour": "Wt-Czw 17:00-19:00: Piwo & drinki -15%",
     "hours": "Mo-Th,Su 16:00-24:00+; Fr-Sa 16:00-02:00+",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 0
+    "votes_confirm": 0,
+    "happy_hour_rule": {
+      "days": [
+        2,
+        3,
+        4
+      ],
+      "start_hour": 17,
+      "start_minute": 0,
+      "end_hour": 19,
+      "end_minute": 0,
+      "promo_price": 13.0,
+      "description": "After-work: piwo i koktajle z kranu -15%",
+      "label": "Wt-Czw 17:00-19:00"
+    }
   },
   {
     "id": "osm-node-6085723350",
@@ -3167,11 +3563,29 @@
     "beer_size_ml": 500,
     "is_craft": false,
     "shot_price_pln": 6.0,
-    "happy_hour": null,
+    "happy_hour": "Codziennie 14:00-18:00: Piwo 9.50 zł",
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 0
+    "votes_confirm": 0,
+    "happy_hour_rule": {
+      "days": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "start_hour": 14,
+      "start_minute": 0,
+      "end_hour": 18,
+      "end_minute": 0,
+      "promo_price": 9.5,
+      "description": "Happy Hours: Piwo 9.50 zł",
+      "label": "Codziennie 14:00-18:00"
+    }
   },
   {
     "id": "osm-node-6578340642",
@@ -4497,11 +4911,27 @@
     "beer_size_ml": 500,
     "is_craft": false,
     "shot_price_pln": 10.0,
-    "happy_hour": null,
+    "happy_hour": "Pn-Pt 16:00-18:00: Piwo z kranu 12 zł",
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 0
+    "votes_confirm": 0,
+    "happy_hour_rule": {
+      "days": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "start_hour": 16,
+      "start_minute": 0,
+      "end_hour": 18,
+      "end_minute": 0,
+      "promo_price": 12.0,
+      "description": "Wisła Sunset Happy Hour: Piwo 12 zł",
+      "label": "Pn-Pt 16:00-18:00"
+    }
   },
   {
     "id": "osm-node-9796966791",
@@ -5314,11 +5744,26 @@
     "beer_size_ml": 500,
     "is_craft": false,
     "shot_price_pln": 10.0,
-    "happy_hour": null,
+    "happy_hour": "Pn-Czw 16:00-18:00: Piwo 12 zł",
     "hours": "Mo-Su 09:00-00:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 0
+    "votes_confirm": 0,
+    "happy_hour_rule": {
+      "days": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "start_hour": 16,
+      "start_minute": 0,
+      "end_hour": 18,
+      "end_minute": 0,
+      "promo_price": 12.0,
+      "description": "Plac Defilad Happy Hour: Piwo 12 zł",
+      "label": "Pn-Czw 16:00-18:00"
+    }
   },
   {
     "id": "osm-node-10963230633",
@@ -5903,11 +6348,25 @@
     "beer_size_ml": 500,
     "is_craft": false,
     "shot_price_pln": 8.5,
-    "happy_hour": null,
+    "happy_hour": "Pn-Śr 16:00-18:00: Piwo 15 zł",
     "hours": "16:00 - 01:00",
     "is_verified": false,
     "last_updated": "2026-09-06",
-    "votes_confirm": 0
+    "votes_confirm": 0,
+    "happy_hour_rule": {
+      "days": [
+        1,
+        2,
+        3
+      ],
+      "start_hour": 16,
+      "start_minute": 0,
+      "end_hour": 18,
+      "end_minute": 0,
+      "promo_price": 15.0,
+      "description": "Early Bird: Lane piwo 15 zł",
+      "label": "Pn-Śr 16:00-18:00"
+    }
   },
   {
     "id": "osm-node-11042003800",

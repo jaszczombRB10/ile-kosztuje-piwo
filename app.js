@@ -65,6 +65,57 @@
   let currentCrawlStopsCount = 3;
   let currentCrawlVibe = "cheap";
 
+  // Piwny Paszport & Happy Hour state
+  const PASSPORT_STORAGE_KEY = "poilepiwko_passport_visited";
+  const PASSPORT_BADGES_KEY = "poilepiwko_unlocked_badges";
+  let visitedVenues = loadVisitedVenues();
+
+  function loadVisitedVenues() {
+    try {
+      const raw = localStorage.getItem(PASSPORT_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function isVenueVisited(venueId) {
+    return visitedVenues.includes(venueId);
+  }
+
+  function getActiveHappyHour(venue, now = new Date()) {
+    const rule = venue.happy_hour_rule;
+    if (!rule || !Array.isArray(rule.days)) return null;
+
+    const currentDay = now.getDay();
+    if (!rule.days.includes(currentDay)) return null;
+
+    const curM = now.getHours() * 60 + now.getMinutes();
+    const startM = (rule.start_hour || 0) * 60 + (rule.start_minute || 0);
+    const endM = (rule.end_hour || 0) * 60 + (rule.end_minute || 0);
+
+    if (endM <= startM) {
+      // Midnight crossing (e.g. 20:00 - 02:00)
+      const isActive = (curM >= startM || curM < endM);
+      if (!isActive) return null;
+      const minutesLeft = curM >= startM ? (24 * 60 - curM) + endM : endM - curM;
+      return { rule, minutesLeft };
+    } else {
+      if (curM >= startM && curM < endM) {
+        const minutesLeft = endM - curM;
+        return { rule, minutesLeft };
+      }
+    }
+    return null;
+  }
+
+  function formatMinutesLeft(minutes) {
+    if (minutes < 60) return `${minutes} min`;
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return m > 0 ? `${h}h ${m}m` : `${h}h`;
+  }
+
   // Initialize Supabase client if configured in config.js
   function initSupabase() {
     if (typeof isSupabaseConfigured === "function" && isSupabaseConfigured() && window.supabase) {
@@ -343,12 +394,14 @@
     return { tier: "high", class: "marker-high", color: "#ef4444" };
   }
 
-  // Create Custom HTML Marker Badge (Vad Kostar Ölen Style: grey ✕ circle if closed)
+  // Create Custom HTML Marker Badge (Vad Kostar Ölen Style: grey ✕ circle if closed, green checkmark if visited)
   function createMarkerIcon(venue) {
     const open = isVenueOpen(venue);
     const price = venue.beer_price_pln;
     const tier = getPriceTier(price);
     const craftClass = venue.is_craft ? "marker-craft-halo" : "";
+    const visited = isVenueVisited(venue.id);
+    const visitedBadge = visited ? `<span class="marker-visited-badge" title="Odwiedzony bar!">✓</span>` : "";
 
     if (!open) {
       const size = [32, 32];
@@ -356,6 +409,7 @@
         className: "custom-price-div-icon",
         html: `<div class="price-badge-marker marker-closed" style="width:${size[0]}px; height:${size[1]}px;" title="Zamknięte teraz · ${escapeHtml(venue.hours || '')}">
                 <span class="closed-x">✕</span>
+                ${visitedBadge}
                </div>`,
         iconSize: size,
         iconAnchor: [size[0] / 2, size[1] / 2]
@@ -367,6 +421,7 @@
       className: "custom-price-div-icon",
       html: `<div class="price-badge-marker ${tier.class} ${craftClass}" style="width:${size[0]}px; height:${size[1]}px;">
               ${price.toFixed(price % 1 === 0 ? 0 : 1)}<span style="font-size:9px;margin-left:1px;">zł</span>
+              ${visitedBadge}
              </div>`,
       iconSize: size,
       iconAnchor: [size[0] / 2, size[1] / 2]
@@ -379,6 +434,8 @@
     const price = venue.beer_price_pln;
     const tier = getPriceTier(price);
     const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${venue.latitude},${venue.longitude}`;
+    const visited = isVenueVisited(venue.id);
+    const activeHh = getActiveHappyHour(venue);
 
     let walkInfo = "";
     if (userLocation) {
@@ -397,6 +454,25 @@
       : `<span class="venue-status-badge closed"><span class="status-dot"></span> Zamknięte</span>`;
 
     const proofUrl = venue.photo_url || venue.proof_image_url;
+
+    let hhLivePromoHtml = "";
+    if (activeHh) {
+      hhLivePromoHtml = `
+        <div style="background:rgba(34,197,94,0.14);border:1px solid rgba(34,197,94,0.45);border-radius:10px;padding:8px 10px;margin:8px 0;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <div>
+            <div style="font-size:0.75rem;font-weight:800;color:#4ade80;display:flex;align-items:center;gap:4px;">
+              <span class="pulse-dot" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#4ade80;"></span>
+              HAPPY HOUR TRWA TERAZ!
+            </div>
+            <div style="font-size:0.7rem;color:#cbd5e1;margin-top:2px;">${escapeHtml(activeHh.rule.description || "Piwo w promocji")}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-size:1.15rem;font-weight:900;color:#4ade80;">${activeHh.rule.promo_price.toFixed(2)} zł</div>
+            <div style="font-size:0.64rem;font-weight:700;color:#fb923c;">jeszcze ${formatMinutesLeft(activeHh.minutesLeft)}</div>
+          </div>
+        </div>
+      `;
+    }
 
     return `
       <div class="venue-card">
@@ -417,6 +493,8 @@
           ${venue.hours ? `<span class="venue-hours-chip">🕒 ${escapeHtml(venue.hours)}</span>` : ''}
         </div>
 
+        ${hhLivePromoHtml}
+
         <div class="venue-price-box">
           <div class="price-beer-info">
             <div class="price-beer-title">Najtańsze piwo (0.5L)</div>
@@ -427,13 +505,17 @@
           </div>
         </div>
 
-        ${(venue.shot_price_pln || venue.is_craft || venue.happy_hour) ? `
+        ${(venue.shot_price_pln || venue.is_craft || (venue.happy_hour && !activeHh)) ? `
           <div class="venue-chips-row">
             ${venue.shot_price_pln ? `<span class="venue-chip">🥃 Shot: <strong>${venue.shot_price_pln.toFixed(2)} zł</strong></span>` : ''}
             ${venue.is_craft ? `<span class="venue-chip craft">⭐ Kraft / Multitap</span>` : ''}
-            ${venue.happy_hour ? `<span class="venue-chip hh">⚡ ${escapeHtml(venue.happy_hour)}</span>` : ''}
+            ${(venue.happy_hour && !activeHh) ? `<span class="venue-chip hh">⚡ ${escapeHtml(venue.happy_hour)}</span>` : ''}
           </div>
         ` : ''}
+
+        <button type="button" class="btn-toggle-visited ${visited ? 'visited' : ''}" onclick="window.__toggleVisited('${venue.id}')" title="Zapisz ten bar w swoim Piwnym Paszporcie">
+          ${visited ? '✓ Byłem tu! (Zaznaczone w Paszporcie)' : '🎖️ Zaznacz: Byłem tu!'}
+        </button>
 
         <div class="venue-actions">
           <button type="button" class="venue-btn-confirm" onclick="window.__confirmPrice('${venue.id}')" title="Potwierdź, że cena jest aktualna">
@@ -615,7 +697,7 @@
         case "craft":
           return venue.is_craft === true;
         case "happy-hour":
-          return !!venue.happy_hour;
+          return !!(venue.happy_hour || venue.happy_hour_rule);
         default:
           return true;
       }
@@ -822,14 +904,38 @@
     renderMarkers();
   };
 
-  // Render Ranking Leaderboard (Feature A: Piwny Kompas or Najtańsze)
+  // Render Ranking Leaderboard (Feature A: Piwny Kompas or Najtańsze or Odwiedzone)
   function renderRankingList(venuesToRank) {
     const listEl = document.getElementById("ranking-list");
     if (!listEl) return;
 
     let sorted = [...venuesToRank].filter(v => typeof v.beer_price_pln === "number" && v.beer_price_pln > 0);
 
-    if (rankingMode === "nearest") {
+    if (rankingMode === "visited") {
+      sorted = sorted.filter(v => isVenueVisited(v.id)).sort((a, b) => a.beer_price_pln - b.beer_price_pln);
+      if (sorted.length === 0) {
+        listEl.innerHTML = `
+          <div style="text-align:center;padding:32px 16px;display:flex;flex-direction:column;align-items:center;gap:12px;">
+            <div style="font-size:42px;">🎖️</div>
+            <div style="font-weight:700;font-size:1.05rem;color:#fff;">Brak odwiedzonych lokali</div>
+            <div style="font-size:0.78rem;color:var(--text-muted);line-height:1.45;max-width:280px;">
+              Kliknij na dowolny bar na mapie i wciśnij <strong>„Byłem tu!”</strong>, aby zbierać pieczątki i zdobywać odznaki w Piwnym Paszporcie Warszawy.
+            </div>
+            <button type="button" id="btn-browse-all-bars" class="btn-primary" style="margin-top:6px;font-size:0.8rem;padding:8px 16px;">
+              💰 Zobacz najtańsze bary
+            </button>
+          </div>
+        `;
+        const btnBrowse = document.getElementById("btn-browse-all-bars");
+        if (btnBrowse) {
+          btnBrowse.addEventListener("click", () => {
+            const tabCheapest = document.getElementById("tab-rank-cheapest");
+            if (tabCheapest) tabCheapest.click();
+          });
+        }
+        return;
+      }
+    } else if (rankingMode === "nearest") {
       if (!userLocation) {
         listEl.innerHTML = `
           <div style="text-align:center;padding:26px 16px;display:flex;flex-direction:column;align-items:center;gap:12px;">
@@ -913,6 +1019,8 @@
       }
 
       const hasProof = !!(venue.photo_url || venue.proof_image_url);
+      const isVisited = isVenueVisited(venue.id);
+      const visitedChip = isVisited ? `<span style="color:#4ade80;font-size:0.7rem;font-weight:700;margin-left:4px;">✓ Byłem</span>` : "";
 
       return `
         <div class="ranked-card" onclick="window.__zoomToVenue('${venue.id}')">
@@ -922,6 +1030,7 @@
               ${escapeHtml(venue.name)}
               ${venue.old_name ? `<span style="font-size:0.75rem;font-weight:400;color:var(--text-muted);margin-left:4px;">(d. ${escapeHtml(venue.old_name)})</span>` : ''}
               ${hasProof ? '<span title="Posiada zdjęcie menu/paragonu" style="font-size:12px;margin-left:4px;">📸</span>' : ''}
+              ${visitedChip}
             </div>
             <div class="ranked-sub">
               ${escapeHtml(venue.beer_name || "Piwo z kija")} · ${escapeHtml(venue.district)}
@@ -953,7 +1062,7 @@
     const venue = allVenues.find(v => v.id === venueId);
     if (!venue) return;
 
-    // Close drawer and pubcrawl modal on small screens
+    // Close drawer and modals on small screens
     const drawer = document.getElementById("ranking-drawer");
     if (drawer) {
       drawer.classList.remove("open");
@@ -961,6 +1070,14 @@
     const crawlModal = document.getElementById("pubcrawl-modal");
     if (crawlModal) {
       crawlModal.classList.remove("active");
+    }
+    const hhModal = document.getElementById("happyhour-modal");
+    if (hhModal) {
+      hhModal.classList.remove("active");
+    }
+    const passportModal = document.getElementById("passport-modal");
+    if (passportModal) {
+      passportModal.classList.remove("active");
     }
 
     const targetMarker = activeMarkers.find(m => {
@@ -1346,6 +1463,636 @@
     }
   }
 
+  // ==========================================================================
+  // HAPPY HOURS & LIVE PROMOTIONS ENGINE
+  // ==========================================================================
+
+  let selectedCalendarDay = (new Date()).getDay();
+
+  function renderHappyHourModal() {
+    const now = new Date();
+    const nowCountEl = document.getElementById("hh-now-count");
+    const nowClockEl = document.getElementById("hh-now-clock-text");
+    const nowListEl = document.getElementById("hh-now-list");
+    const calendarListEl = document.getElementById("hh-calendar-list");
+
+    // 1. Render Active Now Tab
+    const activeVenues = allVenues
+      .map(v => ({ venue: v, hh: getActiveHappyHour(v, now) }))
+      .filter(item => item.hh !== null)
+      .sort((a, b) => (a.hh.rule.promo_price || 99) - (b.hh.rule.promo_price || 99));
+
+    if (nowCountEl) nowCountEl.textContent = activeVenues.length;
+
+    const timeStr = now.toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" });
+    if (nowClockEl) {
+      if (activeVenues.length > 0) {
+        nowClockEl.textContent = `Aktualnie ${activeVenues.length} ${activeVenues.length === 1 ? 'bar ma' : activeVenues.length < 5 ? 'bary mają' : 'barów ma'} aktywną promocję (stan na ${timeStr})`;
+      } else {
+        nowClockEl.textContent = `Brak aktywnych promocji o tej godzinie (${timeStr}). Zobacz Rozpiskę Tygodnia lub sprawdź ok. 16:00-19:00!`;
+      }
+    }
+
+    if (nowListEl) {
+      if (activeVenues.length === 0) {
+        nowListEl.innerHTML = `
+          <div style="text-align:center;padding:28px 16px;color:var(--text-muted);font-size:0.82rem;">
+            <div style="font-size:36px;margin-bottom:8px;">🕒</div>
+            <div style="font-weight:700;color:#fff;margin-bottom:4px;">Aktualnie brak trwających Happy Hours</div>
+            <div>Większość warszawskich lokali odpala promocje studenckie i biforowe w godzinach 16:00 - 19:00.</div>
+            <button type="button" id="btn-switch-to-calendar" class="btn-primary" style="margin-top:12px;font-size:0.78rem;padding:7px 14px;">
+              📅 Sprawdź Rozpiskę Tygodnia
+            </button>
+          </div>
+        `;
+        const btnSwitch = document.getElementById("btn-switch-to-calendar");
+        if (btnSwitch) {
+          btnSwitch.addEventListener("click", () => {
+            const tabCal = document.getElementById("tab-hh-calendar");
+            if (tabCal) tabCal.click();
+          });
+        }
+      } else {
+        nowListEl.innerHTML = activeVenues.map(({ venue, hh }) => {
+          const rule = hh.rule;
+          const regPrice = venue.beer_price_pln;
+          const promoPrice = rule.promo_price;
+          const savePln = (regPrice - promoPrice).toFixed(2);
+          return `
+            <div class="hh-card" onclick="window.__zoomToVenue('${venue.id}')" title="Kliknij, aby pokazać na mapie">
+              <div class="hh-card-info">
+                <div class="hh-card-title">
+                  <span>${escapeHtml(venue.name)}</span>
+                  <span class="hh-card-tag active-now">⚡ Trwa teraz</span>
+                </div>
+                <div class="hh-card-desc">${escapeHtml(rule.description || "Piwo w promocji")}</div>
+                <div class="hh-card-meta">
+                  <span>📍 ${escapeHtml(venue.district)}</span>
+                  <span class="hh-countdown-badge">⏳ Jeszcze ${formatMinutesLeft(hh.minutesLeft)}</span>
+                  ${parseFloat(savePln) > 0 ? `<span style="color:#4ade80;font-weight:700;">Taniej o ${savePln} zł!</span>` : ''}
+                </div>
+              </div>
+              <div class="hh-card-prices">
+                <div class="hh-price-promo">${promoPrice.toFixed(2)} zł</div>
+                <div class="hh-price-regular">standard: ${regPrice.toFixed(2)} zł</div>
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
+    }
+
+    // 2. Render Calendar Tab
+    if (calendarListEl) {
+      const dayVenues = allVenues.filter(v => v.happy_hour_rule && Array.isArray(v.happy_hour_rule.days) && v.happy_hour_rule.days.includes(selectedCalendarDay))
+        .sort((a, b) => (a.happy_hour_rule.promo_price || 99) - (b.happy_hour_rule.promo_price || 99));
+
+      if (dayVenues.length === 0) {
+        calendarListEl.innerHTML = `
+          <div style="text-align:center;padding:24px 16px;color:var(--text-muted);font-size:0.8rem;">
+            Brak wprowadzonych Happy Hours na ten dzień tygodnia w naszej bazie.
+          </div>
+        `;
+      } else {
+        calendarListEl.innerHTML = dayVenues.map(venue => {
+          const rule = venue.happy_hour_rule;
+          const regPrice = venue.beer_price_pln;
+          const promoPrice = rule.promo_price;
+          const startStr = `${String(rule.start_hour).padStart(2, '0')}:${String(rule.start_minute || 0).padStart(2, '0')}`;
+          const endStr = `${String(rule.end_hour).padStart(2, '0')}:${String(rule.end_minute || 0).padStart(2, '0')}`;
+          const isCurrentlyActive = getActiveHappyHour(venue, now) !== null;
+
+          return `
+            <div class="hh-card" onclick="window.__zoomToVenue('${venue.id}')" title="Kliknij, aby pokazać na mapie">
+              <div class="hh-card-info">
+                <div class="hh-card-title">
+                  <span>${escapeHtml(venue.name)}</span>
+                  <span class="hh-card-tag ${isCurrentlyActive ? 'active-now' : ''}">${isCurrentlyActive ? '⚡ Trwa teraz' : escapeHtml(rule.label || 'Promocja')}</span>
+                </div>
+                <div class="hh-card-desc">${escapeHtml(rule.description || "Piwo z kranu w promocji")}</div>
+                <div class="hh-card-meta">
+                  <span>📍 ${escapeHtml(venue.district)}</span>
+                  <span>🕒 ${startStr} - ${endStr}</span>
+                </div>
+              </div>
+              <div class="hh-card-prices">
+                <div class="hh-price-promo">${promoPrice.toFixed(2)} zł</div>
+                <div class="hh-price-regular">standard: ${regPrice.toFixed(2)} zł</div>
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
+    }
+  }
+
+  function initHappyHours() {
+    const hhModal = document.getElementById("happyhour-modal");
+    const btnHeader = document.getElementById("btn-happyhour-header");
+    const btnClose = document.getElementById("btn-close-happyhour");
+    const tabNow = document.getElementById("tab-hh-now");
+    const tabCal = document.getElementById("tab-hh-calendar");
+    const contentNow = document.getElementById("hh-tab-content-now");
+    const contentCal = document.getElementById("hh-tab-content-calendar");
+    const pills = document.querySelectorAll("#hh-days-pills .hh-day-pill");
+
+    function openModal() {
+      if (!hhModal) return;
+      // Close other panels
+      const drawer = document.getElementById("ranking-drawer");
+      if (drawer) drawer.classList.remove("open");
+      const baroModal = document.getElementById("barometer-modal");
+      if (baroModal) baroModal.classList.remove("active");
+      const crawlModal = document.getElementById("pubcrawl-modal");
+      if (crawlModal) crawlModal.classList.remove("active");
+      const passportModal = document.getElementById("passport-modal");
+      if (passportModal) passportModal.classList.remove("active");
+
+      // Highlight current day pill by default
+      selectedCalendarDay = (new Date()).getDay();
+      pills.forEach(p => {
+        const d = parseInt(p.getAttribute("data-day"), 10);
+        if (d === selectedCalendarDay) p.classList.add("active");
+        else p.classList.remove("active");
+      });
+
+      renderHappyHourModal();
+      hhModal.classList.add("active");
+    }
+
+    function closeModal() {
+      if (hhModal) hhModal.classList.remove("active");
+    }
+
+    window.__openHappyHours = openModal;
+    window.__closeHappyHours = closeModal;
+
+    if (btnHeader) btnHeader.addEventListener("click", openModal);
+    if (btnClose) btnClose.addEventListener("click", closeModal);
+    if (hhModal) {
+      hhModal.addEventListener("click", (e) => {
+        if (e.target === hhModal) closeModal();
+      });
+    }
+
+    // Tabs switching
+    if (tabNow && tabCal && contentNow && contentCal) {
+      tabNow.addEventListener("click", () => {
+        tabNow.classList.add("active");
+        tabCal.classList.remove("active");
+        contentNow.style.display = "block";
+        contentCal.style.display = "none";
+        renderHappyHourModal();
+      });
+      tabCal.addEventListener("click", () => {
+        tabCal.classList.add("active");
+        tabNow.classList.remove("active");
+        contentNow.style.display = "none";
+        contentCal.style.display = "block";
+        renderHappyHourModal();
+      });
+    }
+
+    // Calendar day pills
+    pills.forEach(pill => {
+      pill.addEventListener("click", () => {
+        pills.forEach(p => p.classList.remove("active"));
+        pill.classList.add("active");
+        selectedCalendarDay = parseInt(pill.getAttribute("data-day"), 10);
+        renderHappyHourModal();
+      });
+    });
+  }
+
+  // ==========================================================================
+  // PIWNY PASZPORT WARSZAWY & GAMIFICATION
+  // ==========================================================================
+
+  function saveVisitedVenues(list) {
+    try {
+      localStorage.setItem(PASSPORT_STORAGE_KEY, JSON.stringify(list));
+    } catch (e) {}
+  }
+
+  function loadUnlockedBadges() {
+    try {
+      const raw = localStorage.getItem(PASSPORT_BADGES_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveUnlockedBadges(list) {
+    try {
+      localStorage.setItem(PASSPORT_BADGES_KEY, JSON.stringify(list));
+    } catch (e) {}
+  }
+
+  const PASSPORT_BADGES = [
+    {
+      id: "student_pawilony",
+      name: "Student na Pawilonach",
+      icon: "🎓",
+      desc: "Odwiedź co najmniej 3 bary w Pawilonach Nowy Świat",
+      check: (visited, vMap) => {
+        const c = visited.filter(id => vMap[id] && (vMap[id].district === "Pawilony" || (vMap[id].name && vMap[id].name.toLowerCase().includes("pawilony")))).length;
+        return { unlocked: c >= 3, progress: `${Math.min(c, 3)}/3` };
+      }
+    },
+    {
+      id: "veteran_pawilony",
+      name: "Weteran Pawilonów",
+      icon: "🔥",
+      desc: "Odwiedź co najmniej 10 barów w Pawilonach",
+      check: (visited, vMap) => {
+        const c = visited.filter(id => vMap[id] && (vMap[id].district === "Pawilony" || (vMap[id].name && vMap[id].name.toLowerCase().includes("pawilony")))).length;
+        return { unlocked: c >= 10, progress: `${Math.min(c, 10)}/10` };
+      }
+    },
+    {
+      id: "craft_connoisseur",
+      name: "Koneser Kraftu",
+      icon: "💎",
+      desc: "Odwiedź co najmniej 3 multitapy lub bary kraftowe",
+      check: (visited, vMap) => {
+        const c = visited.filter(id => vMap[id] && vMap[id].is_craft).length;
+        return { unlocked: c >= 3, progress: `${Math.min(c, 3)}/3` };
+      }
+    },
+    {
+      id: "wisla_sailor",
+      name: "Bulwarowy Żeglarz",
+      icon: "🌊",
+      desc: "Odwiedź co najmniej 2 bary na Bulwarach Wiślanych",
+      check: (visited, vMap) => {
+        const c = visited.filter(id => vMap[id] && (vMap[id].district === "Bulwary" || (vMap[id].address && vMap[id].address.toLowerCase().includes("bulwar")))).length;
+        return { unlocked: c >= 2, progress: `${Math.min(c, 2)}/2` };
+      }
+    },
+    {
+      id: "praga_artist",
+      name: "Praski Odkrywca",
+      icon: "🎨",
+      desc: "Odwiedź co najmniej 3 bary po prawej stronie Wisły (Praga)",
+      check: (visited, vMap) => {
+        const c = visited.filter(id => vMap[id] && vMap[id].district && vMap[id].district.includes("Praga")).length;
+        return { unlocked: c >= 3, progress: `${Math.min(c, 3)}/3` };
+      }
+    },
+    {
+      id: "district_explorer",
+      name: "Dzielnicowy Podróżnik",
+      icon: "🧭",
+      desc: "Odwiedź lokale w co najmniej 4 różnych dzielnicach",
+      check: (visited, vMap) => {
+        const districts = new Set(visited.map(id => vMap[id] && vMap[id].district).filter(Boolean));
+        return { unlocked: districts.size >= 4, progress: `${Math.min(districts.size, 4)}/4` };
+      }
+    },
+    {
+      id: "pub_crawler",
+      name: "Pub Crawler",
+      icon: "🚀",
+      desc: "Odwiedź co najmniej 3 bary w ramach warszawskiej trasy",
+      check: (visited, vMap) => {
+        return { unlocked: visited.length >= 3, progress: `${Math.min(visited.length, 3)}/3` };
+      }
+    },
+    {
+      id: "cheap_hunter",
+      name: "Łowca Taniochy",
+      icon: "💰",
+      desc: "Odwiedź co najmniej 3 bary z piwem do 11 zł",
+      check: (visited, vMap) => {
+        const c = visited.filter(id => vMap[id] && typeof vMap[id].beer_price_pln === "number" && vMap[id].beer_price_pln <= 11.0).length;
+        return { unlocked: c >= 3, progress: `${Math.min(c, 3)}/3` };
+      }
+    },
+    {
+      id: "happy_hour_hunter",
+      name: "Łowca Okazji",
+      icon: "⚡",
+      desc: "Odwiedź bar oferujący zniżki Happy Hour",
+      check: (visited, vMap) => {
+        const c = visited.filter(id => vMap[id] && (vMap[id].happy_hour || vMap[id].happy_hour_rule)).length;
+        return { unlocked: c >= 1, progress: `${Math.min(c, 1)}/1` };
+      }
+    },
+    {
+      id: "warsaw_king",
+      name: "Król Warszawskiej Nocy",
+      icon: "👑",
+      desc: "Odwiedź łącznie co najmniej 20 lokali w Warszawie",
+      check: (visited, vMap) => {
+        return { unlocked: visited.length >= 20, progress: `${Math.min(visited.length, 20)}/20` };
+      }
+    }
+  ];
+
+  const PASSPORT_RANKS = [
+    { min: 0, title: "Nowicjusz w Warszawie", icon: "🎓", sub: "Rozpocznij przygodę — zaznacz pierwszy odwiedzony bar!", nextMin: 1, nextTitle: "Bywalec Barowy" },
+    { min: 1, title: "Bywalec Barowy", icon: "🍺", sub: "Znasz już dobre miejscówki w stolicy. Czas na więcej!", nextMin: 5, nextTitle: "Koneser Chmielu" },
+    { min: 5, title: "Koneser Chmielu", icon: "🍻", sub: "Imponujący dorobek! Warszawa nie ma przed Tobą tajemnic.", nextMin: 10, nextTitle: "Mistrz Stolicy" },
+    { min: 10, title: "Mistrz Stolicy", icon: "🌟", sub: "Jesteś prawdziwym ekspertem warszawskiej gastronomii!", nextMin: 20, nextTitle: "Legenda Warszawskiej Nocy" },
+    { min: 20, title: "Legenda Warszawskiej Nocy", icon: "👑", sub: "Absolutny mistrz! Twoja wiedza o barach przeszła do historii.", nextMin: null, nextTitle: null }
+  ];
+
+  function getPassportRank(count) {
+    let activeRank = PASSPORT_RANKS[0];
+    for (const r of PASSPORT_RANKS) {
+      if (count >= r.min) activeRank = r;
+    }
+    return activeRank;
+  }
+
+  let passportToastTimer = null;
+  function showPassportToast(badge) {
+    const toast = document.getElementById("passport-toast");
+    const iconEl = document.getElementById("toast-icon");
+    const titleEl = document.getElementById("toast-title");
+    const descEl = document.getElementById("toast-desc");
+    if (!toast) return;
+
+    if (iconEl) iconEl.textContent = badge.icon;
+    if (titleEl) titleEl.textContent = "Odblokowano nową odznakę!";
+    if (descEl) descEl.textContent = `${badge.name} (${badge.desc})`;
+
+    toast.style.display = "flex";
+
+    if (passportToastTimer) clearTimeout(passportToastTimer);
+    passportToastTimer = setTimeout(() => {
+      toast.style.display = "none";
+    }, 4200);
+  }
+
+  function updatePassportCounters() {
+    const count = visitedVenues.length;
+    const total = allVenues.length || 524;
+    const headerCount = document.getElementById("passport-header-count");
+    if (headerCount) headerCount.textContent = `${count}/${total}`;
+
+    const drawerCount = document.getElementById("drawer-visited-count");
+    if (drawerCount) drawerCount.textContent = count;
+  }
+
+  function renderPassportModal() {
+    const vMap = {};
+    allVenues.forEach(v => { vMap[v.id] = v; });
+
+    const count = visitedVenues.length;
+    const total = allVenues.length || 524;
+    const pct = ((count / total) * 100).toFixed(1);
+
+    const districts = new Set(visitedVenues.map(id => vMap[id] && vMap[id].district).filter(Boolean));
+
+    // Badges
+    const badgeEvaluations = PASSPORT_BADGES.map(b => ({
+      ...b,
+      res: b.check(visitedVenues, vMap)
+    }));
+    const unlockedCount = badgeEvaluations.filter(b => b.res.unlocked).length;
+
+    // Rank & Level Progress
+    const currentRank = getPassportRank(count);
+    const rankIconEl = document.getElementById("passport-rank-icon");
+    const rankTitleEl = document.getElementById("passport-rank-title");
+    const rankSubEl = document.getElementById("passport-rank-sub");
+    const progressBar = document.getElementById("passport-progress-bar");
+    const progressLabel = document.getElementById("passport-progress-label");
+
+    if (rankIconEl) rankIconEl.textContent = currentRank.icon;
+    if (rankTitleEl) rankTitleEl.textContent = currentRank.title;
+    if (rankSubEl) rankSubEl.textContent = currentRank.sub;
+
+    if (progressBar && progressLabel) {
+      if (currentRank.nextMin !== null) {
+        const range = currentRank.nextMin - currentRank.min;
+        const progressInLevel = count - currentRank.min;
+        const pctLevel = Math.min(100, Math.round((progressInLevel / range) * 100));
+        progressBar.style.width = `${pctLevel}%`;
+        progressLabel.textContent = `${count} / ${currentRank.nextMin} do rangi: ${currentRank.nextTitle}`;
+      } else {
+        progressBar.style.width = "100%";
+        progressLabel.textContent = "Maksymalna ranga osiągnięta! 👑";
+      }
+    }
+
+    // KPIs
+    const statVisited = document.getElementById("stat-visited-count");
+    const statPct = document.getElementById("stat-visited-percent");
+    const statDist = document.getElementById("stat-visited-districts");
+    const statBadges = document.getElementById("stat-badges-unlocked");
+    const listCount = document.getElementById("passport-list-count");
+
+    if (statVisited) statVisited.textContent = count;
+    if (statPct) statPct.textContent = `${pct}%`;
+    if (statDist) statDist.textContent = `${districts.size} / 18`;
+    if (statBadges) statBadges.textContent = `${unlockedCount} / ${PASSPORT_BADGES.length}`;
+    if (listCount) listCount.textContent = count;
+
+    // Badges Showcase Grid
+    const badgesGrid = document.getElementById("passport-badges-grid");
+    if (badgesGrid) {
+      badgesGrid.innerHTML = badgeEvaluations.map(b => `
+        <div class="passport-badge-card ${b.res.unlocked ? 'unlocked' : 'locked'}" title="${b.res.unlocked ? 'Zdobyta!' : `Postęp: ${b.res.progress}`}">
+          <div class="badge-card-icon">${b.icon}</div>
+          <div class="badge-card-name">${escapeHtml(b.name)}</div>
+          <div class="badge-card-desc">${escapeHtml(b.desc)}</div>
+          <div class="badge-card-status">
+            ${b.res.unlocked ? '✓ Odblokowana' : `🔒 ${b.res.progress}`}
+          </div>
+        </div>
+      `).join("");
+    }
+
+    // Visited Venues List
+    const venuesList = document.getElementById("passport-venues-list");
+    if (venuesList) {
+      if (count === 0) {
+        venuesList.innerHTML = `
+          <div style="text-align:center;color:var(--text-muted);padding:18px;font-size:0.8rem;">
+            Nie masz jeszcze zapisanych barów. Kliknij na mapie dowolny lokal i wciśnij „Byłem tu!”.
+          </div>
+        `;
+      } else {
+        const visitedObjs = visitedVenues
+          .map(id => vMap[id])
+          .filter(Boolean);
+
+        venuesList.innerHTML = visitedObjs.map(v => `
+          <div class="passport-venue-row">
+            <div>
+              <span class="passport-venue-title" onclick="window.__zoomToVenue('${v.id}')" title="Pokaż na mapie">
+                ${escapeHtml(v.name)}
+              </span>
+              <span style="font-size:0.72rem;color:var(--text-muted);margin-left:6px;">
+                (${escapeHtml(v.district)} · ${v.beer_price_pln ? v.beer_price_pln.toFixed(2) + ' zł' : ''})
+              </span>
+            </div>
+            <button type="button" class="btn-remove-visited" onclick="window.__toggleVisited('${v.id}')" title="Usuń z odwiedzonych">
+              ✕
+            </button>
+          </div>
+        `).join("");
+      }
+    }
+
+    updatePassportCounters();
+  }
+
+  function toggleVisitedVenue(venueId) {
+    const idx = visitedVenues.indexOf(venueId);
+    let isNowVisited = false;
+    if (idx >= 0) {
+      visitedVenues.splice(idx, 1);
+      isNowVisited = false;
+    } else {
+      visitedVenues.push(venueId);
+      isNowVisited = true;
+    }
+    saveVisitedVenues(visitedVenues);
+
+    // Check newly unlocked badges
+    const vMap = {};
+    allVenues.forEach(v => { vMap[v.id] = v; });
+    const previouslyUnlocked = loadUnlockedBadges();
+    const currentlyUnlocked = [];
+
+    PASSPORT_BADGES.forEach(badge => {
+      const evaluation = badge.check(visitedVenues, vMap);
+      if (evaluation.unlocked) {
+        currentlyUnlocked.push(badge.id);
+        if (!previouslyUnlocked.includes(badge.id)) {
+          // Newly unlocked badge! Trigger celebration toast
+          showPassportToast(badge);
+        }
+      }
+    });
+
+    saveUnlockedBadges(currentlyUnlocked);
+    updatePassportCounters();
+    return isNowVisited;
+  }
+
+  window.__toggleVisited = function (venueId) {
+    const venue = allVenues.find(v => v.id === venueId);
+    if (!venue) return;
+    const isNowVisited = toggleVisitedVenue(venueId);
+
+    // Update marker icon directly without losing popup state
+    const targetMarker = activeMarkers.find(m => {
+      const ll = m.getLatLng();
+      return Math.abs(ll.lat - venue.latitude) < 0.0001 && Math.abs(ll.lng - venue.longitude) < 0.0001;
+    });
+    if (targetMarker) {
+      targetMarker.setIcon(createMarkerIcon(venue));
+    }
+
+    // Update button in popup if currently open
+    const popupBtn = document.querySelector(`.leaflet-popup .btn-toggle-visited`);
+    if (popupBtn) {
+      if (isNowVisited) {
+        popupBtn.classList.add("visited");
+        popupBtn.innerHTML = "✓ Byłem tu! (Zaznaczone w Paszporcie)";
+      } else {
+        popupBtn.classList.remove("visited");
+        popupBtn.innerHTML = "🎖️ Zaznacz: Byłem tu!";
+      }
+    }
+
+    // Refresh ranking list if visited tab active
+    if (rankingMode === "visited") {
+      renderRankingList(getFilteredVenues());
+    }
+
+    // Refresh passport modal if open
+    const passportModal = document.getElementById("passport-modal");
+    if (passportModal && passportModal.classList.contains("active")) {
+      renderPassportModal();
+    }
+  };
+
+  function initPassport() {
+    const passportModal = document.getElementById("passport-modal");
+    const btnOpenHeader = document.getElementById("btn-open-passport");
+    const btnClose = document.getElementById("btn-close-passport");
+    const btnShare = document.getElementById("btn-share-passport");
+    const btnReset = document.getElementById("btn-reset-passport");
+
+    function openModal() {
+      if (!passportModal) return;
+      const drawer = document.getElementById("ranking-drawer");
+      if (drawer) drawer.classList.remove("open");
+      const baroModal = document.getElementById("barometer-modal");
+      if (baroModal) baroModal.classList.remove("active");
+      const crawlModal = document.getElementById("pubcrawl-modal");
+      if (crawlModal) crawlModal.classList.remove("active");
+      const hhModal = document.getElementById("happyhour-modal");
+      if (hhModal) hhModal.classList.remove("active");
+
+      renderPassportModal();
+      passportModal.classList.add("active");
+    }
+
+    function closeModal() {
+      if (passportModal) passportModal.classList.remove("active");
+    }
+
+    window.__openPassport = openModal;
+    window.__closePassport = closeModal;
+
+    if (btnOpenHeader) btnOpenHeader.addEventListener("click", openModal);
+    if (btnClose) btnClose.addEventListener("click", closeModal);
+    if (passportModal) {
+      passportModal.addEventListener("click", (e) => {
+        if (e.target === passportModal) closeModal();
+      });
+    }
+
+    // Share Passport Profile
+    if (btnShare) {
+      btnShare.addEventListener("click", () => {
+        const count = visitedVenues.length;
+        const total = allVenues.length || 524;
+        const rank = getPassportRank(count);
+        const vMap = {};
+        allVenues.forEach(v => { vMap[v.id] = v; });
+        const unlockedBadges = PASSPORT_BADGES.filter(b => b.check(visitedVenues, vMap).unlocked);
+        const badgesIcons = unlockedBadges.map(b => b.icon).join(" ") || "Brak odznak";
+
+        const text = `🎖️ Mój Piwny Paszport Warszawy (poilepiwko):\n👑 Ranga: ${rank.icon} ${rank.title}\n📍 Odwiedzone bary: ${count} / ${total}\n🏆 Odznaki (${unlockedBadges.length}/10): ${badgesIcons}\nSprawdź ceny piwa w Warszawie na https://poilepiwko.pl !`;
+
+        if (navigator.share) {
+          navigator.share({ title: "Piwny Paszport Warszawy - poilepiwko", text: text }).catch(() => {});
+        } else if (navigator.clipboard) {
+          navigator.clipboard.writeText(text).then(() => {
+            alert("📋 Podsumowanie Paszportu skopiowane do schowka! Możesz wysłać je znajomym.");
+          });
+        } else {
+          prompt("Skopiuj tekst swojego profilu:", text);
+        }
+      });
+    }
+
+    // Reset Passport
+    if (btnReset) {
+      btnReset.addEventListener("click", () => {
+        if (confirm("Czy na pewno chcesz zresetować swój Piwny Paszport? Usunie to wszystkie zaznaczone bary i odznaki.")) {
+          visitedVenues = [];
+          saveVisitedVenues([]);
+          saveUnlockedBadges([]);
+          renderPassportModal();
+          renderMarkers();
+          if (rankingMode === "visited") renderRankingList(getFilteredVenues());
+          alert("Paszport został zresetowany.");
+        }
+      });
+    }
+
+    updatePassportCounters();
+  }
+
   // Setup UI Event Listeners
   function setupEventListeners() {
     // Geolocation ("Blisko mnie")
@@ -1445,26 +2192,38 @@
     btnRanking.addEventListener("click", () => drawer.classList.toggle("open"));
     btnCloseDrawer.addEventListener("click", () => drawer.classList.remove("open"));
 
-    // Feature A: Ranking Tabs (Najtańsze vs Najbliżej mnie / Piwny Kompas)
+    // Feature A: Ranking Tabs (Najtańsze vs Najbliżej mnie vs Byłem / Piwny Paszport)
     const tabCheapest = document.getElementById("tab-rank-cheapest");
     const tabNearest = document.getElementById("tab-rank-nearest");
+    const tabVisited = document.getElementById("tab-rank-visited");
     if (tabCheapest && tabNearest) {
       tabCheapest.addEventListener("click", () => {
         rankingMode = "cheapest";
         tabCheapest.classList.add("active");
         tabNearest.classList.remove("active");
+        if (tabVisited) tabVisited.classList.remove("active");
         renderRankingList(getFilteredVenues());
       });
       tabNearest.addEventListener("click", () => {
         rankingMode = "nearest";
         tabNearest.classList.add("active");
         tabCheapest.classList.remove("active");
+        if (tabVisited) tabVisited.classList.remove("active");
         if (!userLocation) {
           const btnLocate = document.getElementById("btn-locate-me");
           if (btnLocate) btnLocate.click();
         }
         renderRankingList(getFilteredVenues());
       });
+      if (tabVisited) {
+        tabVisited.addEventListener("click", () => {
+          rankingMode = "visited";
+          tabVisited.classList.add("active");
+          tabCheapest.classList.remove("active");
+          tabNearest.classList.remove("active");
+          renderRankingList(getFilteredVenues());
+        });
+      }
     }
 
     // Feature B: Barometer Modal Events
@@ -1506,6 +2265,8 @@
         if (baroModal) baroModal.classList.remove("active");
         if (window.__closePubCrawl) window.__closePubCrawl();
         if (window.__closeIosInstall) window.__closeIosInstall();
+        if (window.__closeHappyHours) window.__closeHappyHours();
+        if (window.__closePassport) window.__closePassport();
       }
     });
 
@@ -2121,6 +2882,12 @@
       const hh = String(now.getHours()).padStart(2, "0");
       const mm = String(now.getMinutes()).padStart(2, "0");
       clockEl.textContent = `${hh}:${mm}`;
+
+      // Refresh Happy Hours modal countdowns if active
+      const hhModal = document.getElementById("happyhour-modal");
+      if (hhModal && hhModal.classList.contains("active")) {
+        renderHappyHourModal();
+      }
     }
     updateLiveClock();
     setInterval(updateLiveClock, 30000);
@@ -2509,6 +3276,8 @@
       }
     }
     initPubCrawl();
+    initHappyHours();
+    initPassport();
   }
 
   // Populate Datalist for autocomplete in form
@@ -12508,6 +13277,7 @@
           applyLocalVotes();
           updateDistrictCounts();
           updateBarometerStats();
+          updatePassportCounters();
           renderMarkers();
           return;
         }
@@ -12539,6 +13309,7 @@
     applyLocalVotes();
     updateDistrictCounts();
     updateBarometerStats();
+    updatePassportCounters();
     renderMarkers();
   }
 
