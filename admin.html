@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel Moderatora — poilepiwko.pl</title>
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0b1312;
+      --card-bg: #13211f;
+      --card-border: rgba(255, 255, 255, 0.1);
+      --primary: #f97316;
+      --primary-hover: #ea580c;
+      --green: #10b981;
+      --green-hover: #059669;
+      --red: #ef4444;
+      --red-hover: #dc2626;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --font-main: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      --font-display: 'Space Grotesk', -apple-system, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: rgba(19, 33, 31, 0.95);
+      border-bottom: 1px solid var(--card-border);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .brand-icon {
+      font-size: 24px;
+    }
+
+    .brand-title {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .brand-tag {
+      background: rgba(249, 115, 22, 0.2);
+      color: var(--primary);
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+      text-decoration: none;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border-color: var(--card-border);
+    }
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-green {
+      background: var(--green);
+      color: #fff;
+    }
+    .btn-green:hover {
+      background: var(--green-hover);
+    }
+
+    .btn-red {
+      background: rgba(239, 68, 68, 0.15);
+      color: #fca5a5;
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+    .btn-red:hover {
+      background: var(--red);
+      color: #fff;
+    }
+
+    /* Container */
+    .container {
+      max-width: 1120px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 24px 16px 40px 16px;
+      flex: 1;
+    }
+
+    /* Login View */
+    .login-box {
+      max-width: 420px;
+      margin: 80px auto 0 auto;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 32px 24px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      text-align: center;
+    }
+
+    .login-icon {
+      font-size: 42px;
+      margin-bottom: 12px;
+    }
+
+    .login-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .login-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+      line-height: 1.4;
+    }
+
+    .form-group {
+      text-align: left;
+      margin-bottom: 18px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .form-input {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--card-border);
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-input:focus {
+      border-color: var(--primary);
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .stat-val {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .stat-card.alert-card {
+      border-color: rgba(249, 115, 22, 0.4);
+      background: rgba(249, 115, 22, 0.08);
+    }
+    .stat-card.alert-card .stat-val {
+      color: #fbbf24;
+    }
+
+    /* Navigation Tabs */
+    .tabs-bar {
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 12px;
+      margin-bottom: 20px;
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+    .tab-btn:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .tab-btn.active {
+      background: rgba(249, 115, 22, 0.15);
+      color: var(--primary);
+    }
+
+    .badge-pill {
+      background: #f97316;
+      color: #fff;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 99px;
+    }
+
+    /* Search & Filter Bar */
+    .filter-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+
+    .search-input-wrap {
+      flex: 1;
+      min-width: 240px;
+      position: relative;
+    }
+
+    /* Venue Cards / Table */
+    .venue-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .venue-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      transition: border-color 0.15s ease;
+    }
+    .venue-card:hover {
+      border-color: rgba(255, 255, 255, 0.22);
+    }
+
+    .venue-card.unverified {
+      border-left: 4px solid #fbbf24;
+      background: linear-gradient(90deg, rgba(251, 191, 36, 0.06) 0%, var(--card-bg) 100%);
+    }
+
+    .venue-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .venue-top-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+      flex-wrap: wrap;
+    }
+
+    .venue-name {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .status-tag {
+      font-size: 0.68rem;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .tag-verified {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+    }
+    .tag-unverified {
+      background: rgba(251, 191, 36, 0.2);
+      color: #fbbf24;
+    }
+    .tag-user {
+      background: rgba(168, 85, 247, 0.2);
+      color: #c084fc;
+    }
+
+    .venue-sub {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .venue-pricing {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-top: 6px;
+      font-size: 0.82rem;
+    }
+
+    .price-badge {
+      font-family: var(--font-display);
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #facc15;
+      background: rgba(250, 204, 21, 0.1);
+      padding: 3px 10px;
+      border-radius: 8px;
+    }
+
+    .venue-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    /* Modal for Quick Edit */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-backdrop.active {
+      display: flex;
+    }
+
+    .modal-box {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 24px;
+      max-width: 500px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    /* Photo Proofs Grid */
+    .photos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 16px;
+    }
+
+    .photo-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .photo-card img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      cursor: pointer;
+    }
+
+    .photo-card-info {
+      padding: 12px;
+      font-size: 0.8rem;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .venue-card {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .venue-actions {
+        width: 100%;
+        justify-content: flex-end;
+        margin-top: 6px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <a href="/" class="brand" title="Powrót do mapy poilepiwko.pl">
+      <span class="brand-icon">🍻</span>
+      <span class="brand-title">poilepiwko.pl</span>
+      <span class="brand-tag">Admin</span>
+    </a>
+    <div class="header-actions">
+      <a href="/" class="btn btn-secondary">🗺️ Przejdź do Mapy</a>
+      <button type="button" id="btn-logout" class="btn btn-secondary" style="display:none;">Wyloguj</button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <div class="container">
+
+    <!-- 1. LOGIN SCREEN -->
+    <div id="login-section" class="login-box">
+      <div class="login-icon">🛡️</div>
+      <h2 class="login-title">Panel Moderatora</h2>
+      <p class="login-desc">Wprowadź hasło administratora, aby zarządzać bazą barów, moderować nowe zgłoszenia i usuwać spam.</p>
+      <form id="login-form">
+        <div class="form-group">
+          <label class="form-label" for="admin-pass">Hasło moderatora</label>
+          <input type="password" id="admin-pass" class="form-input" placeholder="Wpisz hasło..." autocomplete="current-password" required />
+        </div>
+        <button type="submit" id="btn-login-submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px;">
+          🔓 Zaloguj do panelu
+        </button>
+        <div id="login-err" style="color: #fca5a5; font-size: 0.8rem; margin-top: 10px; display: none;"></div>
+      </form>
+    </div>
+
+    <!-- 2. DASHBOARD (Hidden until logged in) -->
+    <div id="dashboard-section" style="display: none;">
+
+      <!-- Top KPI Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-label">Wszystkie lokale</span>
+          <span class="stat-val" id="stat-total-venues">--</span>
+        </div>
+        <div class="stat-card alert-card">
+          <span class="stat-label">Do weryfikacji / nowe</span>
+          <span class="stat-val" id="stat-unverified-count">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Zgłoszone zdjęcia / menu</span>
+          <span class="stat-val" id="stat-reports-count">--</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Średnia cena w Warszawie</span>
+          <span class="stat-val" id="stat-avg-price">-- zł</span>
+        </div>
+      </div>
+
+      <!-- Tabs Navigation -->
+      <div class="tabs-bar">
+        <button type="button" class="tab-btn active" data-tab="unverified">
+          <span>⏳ Do weryfikacji</span>
+          <span class="badge-pill" id="badge-unverified-count">0</span>
+        </button>
+        <button type="button" class="tab-btn" data-tab="all">
+          <span>📋 Wszystkie lokale</span>
+        </button>
+        <button type="button" class="tab-btn" data-tab="reports">
+          <span>📸 Zgłoszenia i Zdjęcia</span>
+        </button>
+      </div>
+
+      <!-- Filter Bar -->
+      <div class="filter-bar">
+        <div class="search-input-wrap">
+          <input type="text" id="admin-search-input" class="form-input" placeholder="🔍 Szukaj baru, ulicy lub dzielnicy..." />
+        </div>
+        <select id="admin-district-filter" class="form-input" style="width: auto; min-width: 160px;">
+          <option value="all">Wszystkie dzielnice</option>
+          <option value="Śródmieście">Śródmieście</option>
+          <option value="Pawilony">Pawilony</option>
+          <option value="Mokotów">Mokotów</option>
+          <option value="Wola">Wola</option>
+          <option value="Ochota">Ochota</option>
+          <option value="Żoliborz">Żoliborz</option>
+          <option value="Praga Północ">Praga Północ</option>
+          <option value="Praga Południe">Praga Południe</option>
+          <option value="Ursynów">Ursynów</option>
+          <option value="Bielany">Bielany</option>
+        </select>
+        <button type="button" id="btn-refresh" class="btn btn-secondary" title="Odśwież dane z bazy">
+          🔄 Odśwież
+        </button>
+      </div>
+
+      <!-- Tab Content 1: Unverified Venues -->
+      <div id="tab-content-unverified" class="tab-content">
+        <div id="unverified-list" class="venue-list">
+          <!-- Injected via JS -->
+        </div>
+      </div>
+
+      <!-- Tab Content 2: All Venues -->
+      <div id="tab-content-all" class="tab-content" style="display: none;">
+        <div id="all-venues-list" class="venue-list">
+          <!-- Injected via JS -->
+        </div>
+      </div>
+
+      <!-- Tab Content 3: Reports & Photos -->
+      <div id="tab-content-reports" class="tab-content" style="display: none;">
+        <div id="reports-grid" class="photos-grid">
+          <!-- Injected via JS -->
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Edit Venue Modal -->
+  <div id="edit-modal" class="modal-backdrop">
+    <div class="modal-box">
+      <h3 class="modal-title">✏️ Edytuj lokal w bazie</h3>
+      <form id="edit-form">
+        <input type="hidden" id="edit-venue-id" />
+        
+        <div class="form-group">
+          <label class="form-label">Nazwa baru</label>
+          <input type="text" id="edit-name" class="form-input" required />
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <div class="form-group" style="flex: 1;">
+            <label class="form-label">Dzielnica</label>
+            <input type="text" id="edit-district" class="form-input" required />
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <label class="form-label">Cena piwa (zł)</label>
+            <input type="number" step="0.5" id="edit-price" class="form-input" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Adres</label>
+          <input type="text" id="edit-address" class="form-input" />
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <div class="form-group" style="flex: 1;">
+            <label class="form-label">Nazwa piwa</label>
+            <input type="text" id="edit-beer-name" class="form-input" />
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <label class="form-label">Cena szota (zł)</label>
+            <input type="number" step="0.5" id="edit-shot" class="form-input" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Promocja / Happy Hour</label>
+          <input type="text" id="edit-happy-hour" class="form-input" placeholder="np. Pn-Śr 16:00-19:00 piwo 9 zł" />
+        </div>
+
+        <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-top: 12px;">
+          <input type="checkbox" id="edit-is-verified" style="accent-color: var(--green); width: 18px; height: 18px;" />
+          <label for="edit-is-verified" style="font-size: 0.85rem; font-weight: 600; cursor: pointer;">
+            Zweryfikowany lokal (zielony ptaszek na mapie ✓)
+          </label>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" id="btn-cancel-edit" class="btn btn-secondary">Anuluj</button>
+          <button type="submit" class="btn btn-primary">💾 Zapisz zmiany</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>
