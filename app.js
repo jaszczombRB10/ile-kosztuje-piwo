@@ -1883,6 +1883,144 @@
       }
     }
     initLegalModal();
+
+    // PWA Installation (Android / Chrome & iOS Safari Guide)
+    function initPwaInstall() {
+      const banner = document.getElementById("pwa-install-banner");
+      const bannerDesc = document.getElementById("pwa-banner-desc");
+      const btnInstall = document.getElementById("btn-pwa-install");
+      const btnDismiss = document.getElementById("btn-pwa-dismiss");
+      const iosModal = document.getElementById("pwa-ios-modal");
+      const btnCloseIos = document.getElementById("btn-close-pwa-ios");
+      const btnAckIos = document.getElementById("btn-ack-pwa-ios");
+      const btnDrawerPwa = document.getElementById("btn-drawer-pwa-install");
+      const drawerPwaWrap = document.getElementById("drawer-pwa-wrap");
+
+      let deferredInstallPrompt = null;
+      const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+      const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+
+      // If running inside standalone installed app, hide install options
+      if (isStandalone) {
+        if (banner) banner.style.display = "none";
+        if (drawerPwaWrap) drawerPwaWrap.style.display = "none";
+        return;
+      }
+
+      function openIosModal() {
+        if (iosModal) iosModal.classList.add("active");
+      }
+
+      function closeIosModal() {
+        if (iosModal) iosModal.classList.remove("active");
+      }
+
+      if (btnCloseIos) btnCloseIos.addEventListener("click", closeIosModal);
+      if (btnAckIos) btnAckIos.addEventListener("click", closeIosModal);
+      if (iosModal) {
+        iosModal.addEventListener("click", (e) => {
+          if (e.target === iosModal) closeIosModal();
+        });
+      }
+
+      // Check if dismissed recently (within 5 days)
+      function isDismissedRecently() {
+        try {
+          const dismissedTime = localStorage.getItem("pwa_install_dismissed_time");
+          if (!dismissedTime) return false;
+          const diffDays = (Date.now() - parseInt(dismissedTime, 10)) / (1000 * 60 * 60 * 24);
+          return diffDays < 5;
+        } catch (e) {
+          return false;
+        }
+      }
+
+      function dismissBanner() {
+        if (banner) banner.style.display = "none";
+        try {
+          localStorage.setItem("pwa_install_dismissed_time", Date.now().toString());
+        } catch (e) {}
+      }
+
+      if (btnDismiss) btnDismiss.addEventListener("click", dismissBanner);
+
+      function showInstallBanner() {
+        if (isStandalone || isDismissedRecently() || !banner) return;
+
+        // Check if Age Gate is currently blocking the screen
+        const isAgeVerified = localStorage.getItem("age_verified_18") === "true";
+        if (!isAgeVerified) {
+          const ageYes = document.getElementById("btn-age-yes");
+          if (ageYes) {
+            ageYes.addEventListener("click", () => {
+              setTimeout(showInstallBanner, 2500);
+            }, { once: true });
+          }
+          return;
+        }
+
+        if (isIOS) {
+          if (bannerDesc) bannerDesc.textContent = "Dodaj do ekranu początkowego Safari!";
+        } else {
+          if (bannerDesc) bannerDesc.textContent = "Szybki dostęp z pulpitu, bez pasków!";
+        }
+
+        banner.style.display = "flex";
+      }
+
+      // Listen for Chrome / Android beforeinstallprompt
+      window.addEventListener("beforeinstallprompt", (e) => {
+        e.preventDefault();
+        deferredInstallPrompt = e;
+        setTimeout(showInstallBanner, 2000);
+      });
+
+      // For iOS devices: trigger banner after a few seconds
+      if (isIOS && !isStandalone) {
+        setTimeout(showInstallBanner, 2500);
+      }
+
+      // Action on floating banner install button
+      if (btnInstall) {
+        btnInstall.addEventListener("click", () => {
+          if (deferredInstallPrompt) {
+            deferredInstallPrompt.prompt();
+            deferredInstallPrompt.userChoice.then((choice) => {
+              if (choice.outcome === "accepted") {
+                if (banner) banner.style.display = "none";
+                if (drawerPwaWrap) drawerPwaWrap.style.display = "none";
+              }
+              deferredInstallPrompt = null;
+            });
+          } else if (isIOS) {
+            openIosModal();
+            dismissBanner();
+          } else {
+            openIosModal();
+            dismissBanner();
+          }
+        });
+      }
+
+      // Action on persistent drawer install button
+      if (btnDrawerPwa) {
+        btnDrawerPwa.addEventListener("click", () => {
+          if (deferredInstallPrompt) {
+            deferredInstallPrompt.prompt();
+            deferredInstallPrompt.userChoice.then((choice) => {
+              if (choice.outcome === "accepted") {
+                if (banner) banner.style.display = "none";
+                if (drawerPwaWrap) drawerPwaWrap.style.display = "none";
+              }
+              deferredInstallPrompt = null;
+            });
+          } else {
+            openIosModal();
+          }
+        });
+      }
+    }
+    initPwaInstall();
   }
 
   // Populate Datalist for autocomplete in form

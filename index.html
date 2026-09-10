@@ -203,6 +203,11 @@
         <!-- Injected via JavaScript -->
       </div>
       <div class="drawer-legal-footer">
+        <div class="drawer-pwa-wrap" id="drawer-pwa-wrap">
+          <button type="button" class="btn-drawer-pwa" id="btn-drawer-pwa-install">
+            <span>📲 Zainstaluj aplikację na telefonie</span>
+          </button>
+        </div>
         <div class="legal-warning-text">
           🔞 <strong>18+</strong> · Informacje wyłącznie dla osób pełnoletnich. Spożywanie alkoholu szkodzi zdrowiu.
         </div>
@@ -522,6 +527,79 @@
 
         <div class="modal-footer" style="margin-top: 18px;">
           <button type="button" id="btn-ack-legal" class="btn-submit">Rozumiem i akceptuję</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PWA Install Floating Banner (Android / Chrome & iOS) -->
+  <div id="pwa-install-banner" class="pwa-install-banner" style="display: none;">
+    <div class="pwa-banner-main">
+      <div class="pwa-banner-icon">🍺</div>
+      <div class="pwa-banner-info">
+        <div class="pwa-banner-title">Zainstaluj na telefonie</div>
+        <div class="pwa-banner-desc" id="pwa-banner-desc">Szybki dostęp z pulpitu, jak natywna aplikacja!</div>
+      </div>
+    </div>
+    <div class="pwa-banner-actions">
+      <button type="button" id="btn-pwa-install" class="btn-pwa-action">📲 Zainstaluj</button>
+      <button type="button" id="btn-pwa-dismiss" class="btn-pwa-close" aria-label="Zamknij podpowiedź">✕</button>
+    </div>
+  </div>
+
+  <!-- PWA iOS Safari Install Guide Modal -->
+  <div class="modal-backdrop" id="pwa-ios-modal" style="display: none;">
+    <div class="modal-card pwa-ios-card">
+      <div class="modal-head">
+        <h3>📲 Dodaj do ekranu początkowego</h3>
+        <button id="btn-close-pwa-ios" class="btn-close-drawer">✕</button>
+      </div>
+      <div class="pwa-ios-body">
+        <div class="pwa-ios-app-header">
+          <img src="icons/icon-192.png" alt="Ile Za Piwo" class="pwa-app-icon-preview" />
+          <div class="pwa-ios-app-meta">
+            <div class="pwa-ios-app-title">Ile Kosztuje Piwo?</div>
+            <div class="pwa-ios-app-sub">Warszawa · Aplikacja PWA</div>
+          </div>
+        </div>
+
+        <div class="pwa-ios-steps">
+          <div class="pwa-step-item">
+            <div class="pwa-step-badge">1</div>
+            <div class="pwa-step-desc">
+              Na dolnym pasku Safari stuknij ikonę <strong>Udostępnij</strong>:
+              <div class="pwa-safari-share-pill">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                  <polyline points="16 6 12 2 8 6"></polyline>
+                  <line x1="12" y1="2" x2="12" y2="15"></line>
+                </svg>
+                <span>Udostępnij (Share)</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="pwa-step-item">
+            <div class="pwa-step-badge">2</div>
+            <div class="pwa-step-desc">
+              Przewiń w dół i wybierz opcję:
+              <div class="pwa-safari-add-pill">
+                <span class="pwa-plus-icon">➕</span>
+                <strong>Do ekranu początkowego</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="pwa-step-item">
+            <div class="pwa-step-badge">3</div>
+            <div class="pwa-step-desc">
+              Kliknij <strong>Dodaj</strong> w prawym górnym rogu. Gotowe! Ikona pojawi się na pulpicie i uruchamia się na pełnym ekranie bez pasków Safari.
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer" style="margin-top: 18px;">
+          <button type="button" id="btn-ack-pwa-ios" class="btn-submit">Rozumiem, dzięki!</button>
         </div>
       </div>
     </div>
