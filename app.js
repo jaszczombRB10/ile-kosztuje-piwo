@@ -70,6 +70,38 @@
   const PASSPORT_BADGES_KEY = "poilepiwko_unlocked_badges";
   let visitedVenues = loadVisitedVenues();
 
+  // Ulubione lokale (Favorites) state
+  const FAVORITES_STORAGE_KEY = "poilepiwko_favorite_venues";
+  let favoriteVenues = loadFavoriteVenues();
+
+  function loadFavoriteVenues() {
+    try {
+      const raw = localStorage.getItem(FAVORITES_STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveFavoriteVenues(favs) {
+    try {
+      localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favs));
+    } catch (e) {}
+  }
+
+  function isVenueFavorite(venueId) {
+    return favoriteVenues.includes(venueId);
+  }
+
+  function updateFavoriteCounters() {
+    const count = favoriteVenues.length;
+    const badge = document.getElementById("fav-count-badge");
+    if (badge) badge.textContent = count;
+    const drawerBadge = document.getElementById("drawer-fav-count");
+    if (drawerBadge) drawerBadge.textContent = count;
+  }
+
   function loadVisitedVenues() {
     try {
       const raw = localStorage.getItem(PASSPORT_STORAGE_KEY);
@@ -387,6 +419,16 @@
     }
   }
 
+  function isNonAlcoholicVenue(venue) {
+    if (!venue) return false;
+    if (venue.has_non_alcoholic === true || venue.is_non_alcoholic === true) return true;
+    if (venue.has_non_alcoholic === false) return false;
+    if (venue.beer_name && /(?:0\.0|bezalk|0%|zero|free)/i.test(venue.beer_name)) return true;
+    if (venue.is_craft === true) return true;
+    if (venue.happy_hour && /(?:0\.0|bezalk|0%|zero|free)/i.test(venue.happy_hour)) return true;
+    return false;
+  }
+
   // Determine Price Tier and Style
   function getPriceTier(price) {
     if (price <= 12.0) return { tier: "low", class: "marker-low", color: "#22c55e" };
@@ -436,6 +478,8 @@
     const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${venue.latitude},${venue.longitude}`;
     const visited = isVenueVisited(venue.id);
     const activeHh = getActiveHappyHour(venue);
+    const isFav = isVenueFavorite(venue.id);
+    const hasZero = isNonAlcoholicVenue(venue);
 
     let walkInfo = "";
     if (userLocation) {
@@ -505,13 +549,23 @@
           </div>
         </div>
 
-        ${(venue.shot_price_pln || venue.is_craft || (venue.happy_hour && !activeHh)) ? `
+        ${(venue.shot_price_pln || venue.is_craft || (venue.happy_hour && !activeHh) || hasZero) ? `
           <div class="venue-chips-row">
             ${venue.shot_price_pln ? `<span class="venue-chip">🥃 Shot: <strong>${venue.shot_price_pln.toFixed(2)} zł</strong></span>` : ''}
             ${venue.is_craft ? `<span class="venue-chip craft">⭐ Kraft / Multitap</span>` : ''}
             ${(venue.happy_hour && !activeHh) ? `<span class="venue-chip hh">⚡ ${escapeHtml(venue.happy_hour)}</span>` : ''}
+            ${hasZero ? `<span class="venue-chip chip-bezalko" title="Dostępne piwo bezalkoholowe / 0.0%">🌱 0.0% / Bezalko</span>` : ''}
           </div>
         ` : ''}
+
+        <div class="venue-social-row">
+          <button type="button" class="btn-fav-toggle ${isFav ? 'active' : ''}" onclick="window.__toggleFavorite('${venue.id}')" data-id="${venue.id}" title="${isFav ? 'Usuń z ulubionych' : 'Dodaj do ulubionych'}">
+            <span>${isFav ? '❤️ W ulubionych' : '🤍 Do ulubionych'}</span>
+          </button>
+          <button type="button" class="btn-share-venue" onclick="window.__shareVenue('${venue.id}')" title="Udostępnij bezpośredni link do tego lokalu">
+            <span>📤 Udostępnij</span>
+          </button>
+        </div>
 
         <button type="button" class="btn-toggle-visited ${visited ? 'visited' : ''}" onclick="window.__toggleVisited('${venue.id}')" title="Zapisz ten bar w swoim Piwnym Paszporcie">
           ${visited ? '✓ Byłem tu! (Zaznaczone w Paszporcie)' : '🎖️ Zaznacz: Byłem tu!'}
@@ -612,6 +666,17 @@
         });
 
       marker._venueData = venue;
+      marker.on("popupopen", () => {
+        const v = marker._venueData;
+        if (v) {
+          const slug = v.slug || v.id;
+          if (slug && window.location.hash !== `#${slug}`) {
+            try {
+              history.replaceState(null, "", `#${slug}`);
+            } catch (e) {}
+          }
+        }
+      });
       newMarkers.push(marker);
     });
 
@@ -621,6 +686,17 @@
       clusterGroup.addLayers(newMarkers);
     } else {
       newMarkers.forEach(m => m.addTo(map));
+    }
+
+    if (!window.__mapPopupCloseAttached && map) {
+      window.__mapPopupCloseAttached = true;
+      map.on("popupclose", () => {
+        if (window.location.hash) {
+          try {
+            history.replaceState(null, "", window.location.pathname + window.location.search);
+          } catch (e) {}
+        }
+      });
     }
 
     updateZoomOverview();
@@ -680,6 +756,10 @@
       switch (currentFilter) {
         case "open-now":
           return isVenueOpen(venue);
+        case "favorites":
+          return isVenueFavorite(venue.id);
+        case "non-alcoholic":
+          return isNonAlcoholicVenue(venue);
         case "pawilony":
           return venue.district.toLowerCase() === "pawilony";
         case "srodmiescie":
@@ -935,6 +1015,30 @@
         }
         return;
       }
+    } else if (rankingMode === "favorites") {
+      sorted = sorted.filter(v => isVenueFavorite(v.id)).sort((a, b) => a.beer_price_pln - b.beer_price_pln);
+      if (sorted.length === 0) {
+        listEl.innerHTML = `
+          <div style="text-align:center;padding:32px 16px;display:flex;flex-direction:column;align-items:center;gap:12px;">
+            <div style="font-size:42px;">❤️</div>
+            <div style="font-weight:700;font-size:1.05rem;color:#fff;">Brak ulubionych barów</div>
+            <div style="font-size:0.78rem;color:var(--text-muted);line-height:1.45;max-width:280px;">
+              Kliknij <strong>„🤍 Do ulubionych”</strong> na karcie dowolnego lokalu na mapie, aby zapisać go w szybkim dostępie.
+            </div>
+            <button type="button" id="btn-browse-fav-all" class="btn-primary" style="margin-top:6px;font-size:0.8rem;padding:8px 16px;">
+              💰 Zobacz najtańsze bary
+            </button>
+          </div>
+        `;
+        const btnBrowse = document.getElementById("btn-browse-fav-all");
+        if (btnBrowse) {
+          btnBrowse.addEventListener("click", () => {
+            const tabCheapest = document.getElementById("tab-rank-cheapest");
+            if (tabCheapest) tabCheapest.click();
+          });
+        }
+        return;
+      }
     } else if (rankingMode === "nearest") {
       if (!userLocation) {
         listEl.innerHTML = `
@@ -1006,6 +1110,13 @@
           </div>
         `;
       }
+    } else if (rankingMode === "favorites") {
+      bannerHtml = `
+        <div style="background:rgba(244,63,94,0.12);border:1px solid rgba(244,63,94,0.3);border-radius:10px;padding:8px 12px;margin:8px 10px;font-size:0.75rem;color:#fecdd3;display:flex;align-items:center;justify-content:space-between;">
+          <span>❤️ Twoje ulubione lokale (<strong>${sorted.length}</strong>)</span>
+          <span style="font-size:0.7rem;color:#fda4af;">wg ceny</span>
+        </div>
+      `;
     }
 
     listEl.innerHTML = bannerHtml + sorted.map((venue, idx) => {
@@ -1020,7 +1131,9 @@
 
       const hasProof = !!(venue.photo_url || venue.proof_image_url);
       const isVisited = isVenueVisited(venue.id);
+      const isFav = isVenueFavorite(venue.id);
       const visitedChip = isVisited ? `<span style="color:#4ade80;font-size:0.7rem;font-weight:700;margin-left:4px;">✓ Byłem</span>` : "";
+      const favChip = isFav ? `<span style="color:#fb7185;font-size:0.75rem;margin-left:4px;" title="W Twoich ulubionych">❤️</span>` : "";
 
       return `
         <div class="ranked-card" onclick="window.__zoomToVenue('${venue.id}')">
@@ -1030,6 +1143,7 @@
               ${escapeHtml(venue.name)}
               ${venue.old_name ? `<span style="font-size:0.75rem;font-weight:400;color:var(--text-muted);margin-left:4px;">(d. ${escapeHtml(venue.old_name)})</span>` : ''}
               ${hasProof ? '<span title="Posiada zdjęcie menu/paragonu" style="font-size:12px;margin-left:4px;">📸</span>' : ''}
+              ${favChip}
               ${visitedChip}
             </div>
             <div class="ranked-sub">
@@ -1057,10 +1171,18 @@
     }
   }
 
-  // Zoom & Pan to a specific venue from Ranking Drawer or Search
+  // Zoom & Pan to a specific venue from Ranking Drawer, Search or Deep Link
   window.__zoomToVenue = function (venueId) {
-    const venue = allVenues.find(v => v.id === venueId);
+    const venue = allVenues.find(v => v.id === venueId || (v.slug && v.slug.toLowerCase() === venueId.toLowerCase()));
     if (!venue) return;
+
+    // Update URL hash for deep linking
+    const slug = venue.slug || venue.id;
+    if (slug && window.location.hash !== `#${slug}`) {
+      try {
+        history.replaceState(null, "", `#${slug}`);
+      } catch (e) {}
+    }
 
     // Close drawer and modals on small screens
     const drawer = document.getElementById("ranking-drawer");
@@ -1078,6 +1200,19 @@
     const passportModal = document.getElementById("passport-modal");
     if (passportModal) {
       passportModal.classList.remove("active");
+    }
+
+    // If venue is hidden by current district or filter chip, reset to show all so marker exists
+    if (!activeMarkers.some(m => m._venueData && m._venueData.id === venue.id)) {
+      currentFilter = "all";
+      currentDistrict = "all";
+      const districtSelect = document.getElementById("district-select");
+      if (districtSelect) districtSelect.value = "all";
+      document.querySelectorAll(".filter-chip").forEach(c => {
+        if (c.getAttribute("data-filter") === "all") c.classList.add("active");
+        else if (c.id !== "chip-open-pubcrawl") c.classList.remove("active");
+      });
+      renderMarkers();
     }
 
     const targetMarker = activeMarkers.find(m => {
@@ -1807,24 +1942,28 @@
     return activeRank;
   }
 
-  let passportToastTimer = null;
-  function showPassportToast(badge) {
+  let appToastTimer = null;
+  function showAppToast(title, desc, icon = "🍺", duration = 3200) {
     const toast = document.getElementById("passport-toast");
     const iconEl = document.getElementById("toast-icon");
     const titleEl = document.getElementById("toast-title");
     const descEl = document.getElementById("toast-desc");
     if (!toast) return;
 
-    if (iconEl) iconEl.textContent = badge.icon;
-    if (titleEl) titleEl.textContent = "Odblokowano nową odznakę!";
-    if (descEl) descEl.textContent = `${badge.name} (${badge.desc})`;
+    if (iconEl) iconEl.textContent = icon;
+    if (titleEl) titleEl.textContent = title;
+    if (descEl) descEl.textContent = desc;
 
     toast.style.display = "flex";
 
-    if (passportToastTimer) clearTimeout(passportToastTimer);
-    passportToastTimer = setTimeout(() => {
+    if (appToastTimer) clearTimeout(appToastTimer);
+    appToastTimer = setTimeout(() => {
       toast.style.display = "none";
-    }, 4200);
+    }, duration);
+  }
+
+  function showPassportToast(badge) {
+    showAppToast("Odblokowano nową odznakę!", `${badge.name} (${badge.desc})`, badge.icon || "🎉", 4200);
   }
 
   function updatePassportCounters() {
@@ -2014,6 +2153,117 @@
     }
   };
 
+  // Toggle Favorite Venue (stored in localStorage)
+  window.__toggleFavorite = function (venueId) {
+    const venue = allVenues.find(v => v.id === venueId);
+    const idx = favoriteVenues.indexOf(venueId);
+    let isNowFav = false;
+    if (idx > -1) {
+      favoriteVenues.splice(idx, 1);
+      isNowFav = false;
+    } else {
+      favoriteVenues.push(venueId);
+      isNowFav = true;
+    }
+    saveFavoriteVenues(favoriteVenues);
+    updateFavoriteCounters();
+
+    // Update button in popup if currently open
+    const btn = document.querySelector(`.btn-fav-toggle[data-id="${venueId}"]`);
+    if (btn) {
+      if (isNowFav) {
+        btn.classList.add("active");
+        btn.innerHTML = `<span>❤️ W ulubionych</span>`;
+        btn.title = "Usuń z ulubionych";
+      } else {
+        btn.classList.remove("active");
+        btn.innerHTML = `<span>🤍 Do ulubionych</span>`;
+        btn.title = "Dodaj do ulubionych";
+      }
+    }
+
+    const vName = venue ? venue.name : "Lokal";
+    if (isNowFav) {
+      showAppToast("Dodano do ulubionych!", vName, "❤️");
+    } else {
+      showAppToast("Usunięto z ulubionych", vName, "🤍");
+    }
+
+    if (currentFilter === "favorites") {
+      renderMarkers();
+    }
+    if (rankingMode === "favorites") {
+      renderRankingList(getFilteredVenues());
+    }
+  };
+
+  // Share Venue Handler (Native Web Share API with Clipboard Fallback)
+  window.__shareVenue = function (venueId) {
+    const venue = allVenues.find(v => v.id === venueId);
+    if (!venue) return;
+
+    const hashPart = venue.slug || venue.id;
+    const shareUrl = `${window.location.origin}${window.location.pathname}#${hashPart}`;
+    const priceTxt = venue.beer_price_pln ? `${venue.beer_price_pln.toFixed(2)} zł` : "tanie piwo";
+    const shareTitle = `${venue.name} (${priceTxt}) · Po ile piwko?`;
+    const shareText = `Zobacz cenę piwa w ${venue.name} (${venue.address}) na poilepiwko.pl:`;
+
+    if (navigator.share) {
+      navigator.share({
+        title: shareTitle,
+        text: shareText,
+        url: shareUrl
+      }).catch(err => {
+        if (err.name !== "AbortError") {
+          copyShareLink(shareUrl, venue.name);
+        }
+      });
+    } else {
+      copyShareLink(shareUrl, venue.name);
+    }
+  };
+
+  function copyShareLink(url, venueName) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(() => {
+        showAppToast("Skopiowano link do lokalu!", venueName || "Możesz wkleić znajomym", "📤");
+      }).catch(() => {
+        fallbackCopyText(url, venueName);
+      });
+    } else {
+      fallbackCopyText(url, venueName);
+    }
+  }
+
+  function fallbackCopyText(text, venueName) {
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      showAppToast("Skopiowano link do lokalu!", venueName || "Możesz wkleić znajomym", "📤");
+    } catch (e) {
+      prompt("Skopiuj link do lokalu:", text);
+    }
+  }
+
+  function checkUrlHash() {
+    const raw = decodeURIComponent(window.location.hash.replace(/^#/, "").trim().toLowerCase());
+    if (!raw) return;
+    const target = allVenues.find(v => 
+      (v.slug && v.slug.toLowerCase() === raw) || 
+      (v.id && v.id.toLowerCase() === raw)
+    );
+    if (target) {
+      window.__zoomToVenue(target.id);
+    }
+  }
+
   function initPassport() {
     const passportModal = document.getElementById("passport-modal");
     const btnOpenHeader = document.getElementById("btn-open-passport");
@@ -2193,16 +2443,18 @@
     btnRanking.addEventListener("click", () => drawer.classList.toggle("open"));
     btnCloseDrawer.addEventListener("click", () => drawer.classList.remove("open"));
 
-    // Feature A: Ranking Tabs (Najtańsze vs Najbliżej mnie vs Byłem / Piwny Paszport)
+    // Feature A: Ranking Tabs (Najtańsze vs Najbliżej vs Byłem vs Ulubione)
     const tabCheapest = document.getElementById("tab-rank-cheapest");
     const tabNearest = document.getElementById("tab-rank-nearest");
     const tabVisited = document.getElementById("tab-rank-visited");
+    const tabFavorites = document.getElementById("tab-rank-favorites");
     if (tabCheapest && tabNearest) {
       tabCheapest.addEventListener("click", () => {
         rankingMode = "cheapest";
         tabCheapest.classList.add("active");
         tabNearest.classList.remove("active");
         if (tabVisited) tabVisited.classList.remove("active");
+        if (tabFavorites) tabFavorites.classList.remove("active");
         renderRankingList(getFilteredVenues());
       });
       tabNearest.addEventListener("click", () => {
@@ -2210,6 +2462,7 @@
         tabNearest.classList.add("active");
         tabCheapest.classList.remove("active");
         if (tabVisited) tabVisited.classList.remove("active");
+        if (tabFavorites) tabFavorites.classList.remove("active");
         if (!userLocation) {
           const btnLocate = document.getElementById("btn-locate-me");
           if (btnLocate) btnLocate.click();
@@ -2222,6 +2475,17 @@
           tabVisited.classList.add("active");
           tabCheapest.classList.remove("active");
           tabNearest.classList.remove("active");
+          if (tabFavorites) tabFavorites.classList.remove("active");
+          renderRankingList(getFilteredVenues());
+        });
+      }
+      if (tabFavorites) {
+        tabFavorites.addEventListener("click", () => {
+          rankingMode = "favorites";
+          tabFavorites.classList.add("active");
+          tabCheapest.classList.remove("active");
+          tabNearest.classList.remove("active");
+          if (tabVisited) tabVisited.classList.remove("active");
           renderRankingList(getFilteredVenues());
         });
       }
@@ -3344,6 +3608,9 @@
     initPubCrawl();
     initHappyHours();
     initPassport();
+
+    // Deep linking: listen to URL hash changes
+    window.addEventListener("hashchange", checkUrlHash);
   }
 
   // Populate Datalist for autocomplete in form
@@ -13374,7 +13641,9 @@
           updateDistrictCounts();
           updateBarometerStats();
           updatePassportCounters();
+          updateFavoriteCounters();
           renderMarkers();
+          setTimeout(checkUrlHash, 250);
           return;
         }
       } catch (err) {
@@ -13415,7 +13684,9 @@
     updateDistrictCounts();
     updateBarometerStats();
     updatePassportCounters();
+    updateFavoriteCounters();
     renderMarkers();
+    setTimeout(checkUrlHash, 250);
   }
 
   // Boot Application

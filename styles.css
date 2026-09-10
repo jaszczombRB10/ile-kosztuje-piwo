@@ -442,6 +442,18 @@ header {
   box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
 }
 
+.filter-chip.chip-favorites.active {
+  background: #f43f5e;
+  border-color: #f43f5e;
+  box-shadow: 0 0 12px rgba(244, 63, 94, 0.4);
+}
+
+.filter-chip.chip-non-alcoholic.active {
+  background: #10b981;
+  border-color: #10b981;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+}
+
 /* Legend Pill */
 .legend-pill {
   position: absolute;
@@ -949,6 +961,13 @@ header {
   font-weight: 600;
 }
 
+.venue-chip.chip-bezalko {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #34d399;
+  font-weight: 600;
+}
+
 /* Action Buttons (50/50 Grid - Never Clips) */
 .venue-actions {
   display: flex;
@@ -1100,22 +1119,30 @@ header {
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 999px;
   padding: 3px;
-  gap: 4px;
+  gap: 3px;
   width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ranking-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .ranking-tab {
-  flex: 1;
+  flex: 1 0 auto;
   background: none;
   border: none;
   color: var(--text-muted);
-  padding: 6px 10px;
+  padding: 6px 7px;
   border-radius: 999px;
-  font-size: 0.78rem;
-  font-weight: 600;
+  font-size: 0.72rem;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
   text-align: center;
+  white-space: nowrap;
 }
 
 .ranking-tab.active {
@@ -3839,6 +3866,56 @@ header {
 .btn-passport-reset:hover {
   border-color: #ef4444;
   color: #ef4444;
+}
+
+/* Venue Social & Actions Row (Favorites & Share) */
+.venue-social-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 7px;
+  width: 100%;
+}
+
+.btn-fav-toggle,
+.btn-share-venue {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #cbd5e1;
+  padding: 6px 8px;
+  border-radius: 8px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.btn-fav-toggle:hover,
+.btn-share-venue:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.btn-fav-toggle.active {
+  background: rgba(244, 63, 94, 0.2);
+  border-color: rgba(244, 63, 94, 0.55);
+  color: #fb7185;
+  box-shadow: 0 0 10px rgba(244, 63, 94, 0.25);
+}
+
+.btn-fav-toggle.active:hover {
+  background: rgba(244, 63, 94, 0.3);
+}
+
+.btn-share-venue:active {
+  transform: scale(0.97);
 }
 
 /* "Byłem tu!" Button in Popups & Cards */
