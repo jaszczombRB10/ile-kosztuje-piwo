@@ -13345,6 +13345,15 @@
 
   // Load Initial Venues
   async function loadVenues() {
+    // Clean up any test venues that were removed (e.g. Bog on Dickensa 27)
+    try {
+      const stored = loadLocalUpdates();
+      const filtered = stored.filter(v => v.id !== "user-1789053780065" && !(v.name && v.name.toLowerCase().includes("bog") && v.address && v.address.toLowerCase().includes("dicken")));
+      if (filtered.length !== stored.length) {
+        localStorage.setItem("warsaw_user_venues", JSON.stringify(filtered));
+      }
+    } catch (e) {}
+
     if (supabaseClient) {
       try {
         const { data, error } = await supabaseClient
@@ -13353,11 +13362,13 @@
           .order("beer_price_pln", { ascending: true });
         if (error) throw error;
         if (data && data.length > 0) {
-          allVenues = data.map(v => ({
-            ...v,
-            beer_price_pln: parseFloat(v.beer_price_pln),
-            shot_price_pln: v.shot_price_pln ? parseFloat(v.shot_price_pln) : null
-          }));
+          allVenues = data
+            .filter(v => v.id !== "user-1789053780065" && v.osm_id !== "user-1789053780065" && !(v.name && v.name.toLowerCase() === "bog"))
+            .map(v => ({
+              ...v,
+              beer_price_pln: parseFloat(v.beer_price_pln),
+              shot_price_pln: v.shot_price_pln ? parseFloat(v.shot_price_pln) : null
+            }));
           console.log(`Loaded ${allVenues.length} venues directly from Supabase!`);
           applyLocalVotes();
           updateDistrictCounts();
@@ -13383,6 +13394,9 @@
     // Merge any user-added local venues
     const localVenues = loadLocalUpdates();
     localVenues.forEach(local => {
+      if (local.id === "user-1789053780065" || (local.name && local.name.toLowerCase().includes("bog") && local.address && local.address.toLowerCase().includes("dicken"))) {
+        return;
+      }
       if (local.name && local.name.toLowerCase().includes("pochwała niekonsekwencji")) {
         local.latitude = 52.20728;
         local.longitude = 20.97221;
