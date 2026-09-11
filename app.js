@@ -2689,7 +2689,9 @@
       const passModal = document.getElementById("passport-modal");
       if (passModal) passModal.classList.remove("active");
       closeModal();
+      if (window.__closeAuth) window.__closeAuth();
 
+      compassModal.classList.add("active");
       compassModal.style.display = "flex";
 
       if (statusText) statusText.textContent = "Kalibrowanie radaru GPS...";
@@ -2707,6 +2709,7 @@
 
     function closeCompass() {
       if (!compassModal) return;
+      compassModal.classList.remove("active");
       compassModal.style.display = "none";
       stopGpsTracking();
     }
@@ -2985,14 +2988,18 @@
         if (window.__closeHappyHours) window.__closeHappyHours();
         if (window.__closePassport) window.__closePassport();
         if (window.__closeCompass) window.__closeCompass();
+        if (window.__closeAuth) window.__closeAuth();
+        if (window.__closeMyProfile) window.__closeMyProfile();
+        if (window.__closeCommunity) window.__closeCommunity();
+        if (window.__closePublicProfile) window.__closePublicProfile();
         const authModal = document.getElementById("auth-modal");
-        if (authModal) authModal.style.display = "none";
+        if (authModal) { authModal.classList.remove("active"); authModal.style.display = "none"; }
         const profModal = document.getElementById("profile-modal");
-        if (profModal) profModal.style.display = "none";
+        if (profModal) { profModal.classList.remove("active"); profModal.style.display = "none"; }
         const commModal = document.getElementById("community-modal");
-        if (commModal) commModal.style.display = "none";
+        if (commModal) { commModal.classList.remove("active"); commModal.style.display = "none"; }
         const pubProfModal = document.getElementById("public-profile-modal");
-        if (pubProfModal) pubProfModal.style.display = "none";
+        if (pubProfModal) { pubProfModal.classList.remove("active"); pubProfModal.style.display = "none"; }
       }
     });
 
@@ -4089,8 +4096,15 @@
         if (currentUser && currentProfile) {
           if (window.__openMyProfile) window.__openMyProfile();
         } else {
-          const authModal = document.getElementById("auth-modal");
-          if (authModal) authModal.style.display = "flex";
+          if (window.__openAuth) {
+            window.__openAuth();
+          } else {
+            const authModal = document.getElementById("auth-modal");
+            if (authModal) {
+              authModal.classList.add("active");
+              authModal.style.display = "flex";
+            }
+          }
         }
       });
     }
@@ -4365,10 +4379,26 @@
       btnBackToLogin.addEventListener("click", () => showTab("login"));
     }
 
+    function openModalWindow(defaultTab = "login") {
+      if (!modal) return;
+      showTab(defaultTab);
+      modal.classList.add("active");
+      modal.style.display = "flex";
+    }
+
+    function closeModalWindow() {
+      if (!modal) return;
+      modal.classList.remove("active");
+      modal.style.display = "none";
+    }
+
+    window.__openAuth = openModalWindow;
+    window.__closeAuth = closeModalWindow;
+
     if (btnClose && modal) {
-      btnClose.addEventListener("click", () => { modal.style.display = "none"; });
+      btnClose.addEventListener("click", closeModalWindow);
       modal.addEventListener("click", (e) => {
-        if (e.target === modal) modal.style.display = "none";
+        if (e.target === modal) closeModalWindow();
       });
     }
 
@@ -4678,18 +4708,27 @@
 
     window.__openMyProfile = function () {
       if (!currentUser) {
-        const authModal = document.getElementById("auth-modal");
-        if (authModal) authModal.style.display = "flex";
+        if (window.__openAuth) window.__openAuth();
         return;
       }
       renderMyProfile();
-      if (modal) modal.style.display = "flex";
+      if (modal) {
+        modal.classList.add("active");
+        modal.style.display = "flex";
+      }
+    };
+
+    window.__closeMyProfile = function () {
+      if (modal) {
+        modal.classList.remove("active");
+        modal.style.display = "none";
+      }
     };
 
     if (btnClose && modal) {
-      btnClose.addEventListener("click", () => { modal.style.display = "none"; });
+      btnClose.addEventListener("click", () => { window.__closeMyProfile(); });
       modal.addEventListener("click", (e) => {
-        if (e.target === modal) modal.style.display = "none";
+        if (e.target === modal) window.__closeMyProfile();
       });
     }
 
@@ -4831,14 +4870,24 @@
     if (tabFollowing) tabFollowing.addEventListener("click", () => switchTab("following"));
 
     window.__openCommunity = function (initialTab = "feed") {
-      if (modal) modal.style.display = "flex";
+      if (modal) {
+        modal.classList.add("active");
+        modal.style.display = "flex";
+      }
       switchTab(initialTab);
     };
 
+    window.__closeCommunity = function () {
+      if (modal) {
+        modal.classList.remove("active");
+        modal.style.display = "none";
+      }
+    };
+
     if (btnClose && modal) {
-      btnClose.addEventListener("click", () => { modal.style.display = "none"; });
+      btnClose.addEventListener("click", () => { window.__closeCommunity(); });
       modal.addEventListener("click", (e) => {
-        if (e.target === modal) modal.style.display = "none";
+        if (e.target === modal) window.__closeCommunity();
       });
     }
 
@@ -5100,7 +5149,10 @@
         return;
       }
 
-      if (modal) modal.style.display = "flex";
+      if (modal) {
+        modal.classList.add("active");
+        modal.style.display = "flex";
+      }
 
       const avatarEl = document.getElementById("pubprof-avatar");
       const nameEl = document.getElementById("pubprof-name");
@@ -5190,10 +5242,17 @@
       }
     };
 
+    window.__closePublicProfile = function () {
+      if (modal) {
+        modal.classList.remove("active");
+        modal.style.display = "none";
+      }
+    };
+
     if (btnClose && modal) {
-      btnClose.addEventListener("click", () => { modal.style.display = "none"; });
+      btnClose.addEventListener("click", () => { window.__closePublicProfile(); });
       modal.addEventListener("click", (e) => {
-        if (e.target === modal) modal.style.display = "none";
+        if (e.target === modal) window.__closePublicProfile();
       });
     }
 

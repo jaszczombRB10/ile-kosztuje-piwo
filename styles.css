@@ -1252,9 +1252,18 @@ header {
   transition: opacity 0.25s ease;
 }
 
-.modal-backdrop.active {
+.modal-backdrop.active,
+.modal-backdrop[style*="display: flex"],
+.modal-backdrop[style*="display:flex"] {
   display: flex !important;
-  opacity: 1;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+.modal-backdrop:not(.active):not([style*="display: flex"]):not([style*="display:flex"]) {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 
 .modal-card {
@@ -1275,8 +1284,10 @@ header {
   box-sizing: border-box;
 }
 
-.modal-backdrop.active .modal-card {
-  transform: translateY(0) scale(1);
+.modal-backdrop.active .modal-card,
+.modal-backdrop[style*="display: flex"] .modal-card,
+.modal-backdrop[style*="display:flex"] .modal-card {
+  transform: translateY(0) scale(1) !important;
 }
 
 .modal-head {
