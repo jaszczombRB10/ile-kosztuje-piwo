@@ -48,6 +48,15 @@
   let clusterGroup = null;
   let cityMarkersGroup = null;
   let currentFilter = "all";
+  let filterState = {
+    priceTier: "all",
+    maxPrice: null,
+    openNow: false,
+    craftOnly: false,
+    happyHourOnly: false,
+    favoritesOnly: false,
+    nonAlcoholicOnly: false
+  };
   let currentDistrict = "all";
   let searchQuery = "";
   let supabaseClient = null;
@@ -740,8 +749,16 @@
     return allVenues.filter(venue => {
       // District filter
       if (currentDistrict !== "all") {
-        if (venue.district.toLowerCase() !== currentDistrict.toLowerCase()) {
-          return false;
+        const vDist = (venue.district || "").toLowerCase();
+        const cDist = currentDistrict.toLowerCase();
+        if (currentDistrict === "Pawilony") {
+          if (vDist !== "pawilony") return false;
+        } else if (currentDistrict === "Bulwary") {
+          if (!vDist.includes("bulwary")) return false;
+        } else {
+          if (vDist !== cDist && !vDist.includes(cDist)) {
+            return false;
+          }
         }
       }
 
@@ -757,37 +774,196 @@
         if (!matchesText) return false;
       }
 
-      // Filter chips
       const price = venue.beer_price_pln;
-      switch (currentFilter) {
-        case "open-now":
-          return isVenueOpen(venue);
-        case "favorites":
-          return isVenueFavorite(venue.id);
-        case "non-alcoholic":
-          return isNonAlcoholicVenue(venue);
-        case "pawilony":
-          return venue.district.toLowerCase() === "pawilony";
-        case "srodmiescie":
-          return venue.district.toLowerCase().includes("śródmieście");
-        case "praga":
-          return venue.district.toLowerCase().includes("praga");
-        case "bulwary":
-          return venue.district.toLowerCase().includes("bulwary");
-        case "tier-low":
-          return price <= 12.0;
-        case "tier-mid":
-          return price > 12.0 && price <= 18.0;
-        case "tier-high":
-          return price > 18.0;
-        case "craft":
-          return venue.is_craft === true;
-        case "happy-hour":
-          return !!(venue.happy_hour || venue.happy_hour_rule);
-        default:
-          return true;
+
+      // Price criteria (slider or tier)
+      if (filterState.maxPrice !== null && filterState.maxPrice < 35) {
+        if (price > filterState.maxPrice) return false;
+      } else if (filterState.priceTier === "tier-low") {
+        if (price > 12.0) return false;
+      } else if (filterState.priceTier === "tier-mid") {
+        if (price <= 12.0 || price > 18.0) return false;
+      } else if (filterState.priceTier === "tier-high") {
+        if (price <= 18.0) return false;
+      }
+
+      // Toggles
+      if (filterState.openNow && !isVenueOpen(venue)) return false;
+      if (filterState.craftOnly && !venue.is_craft) return false;
+      if (filterState.happyHourOnly && !(venue.happy_hour || venue.happy_hour_rule)) return false;
+      if (filterState.favoritesOnly && !isVenueFavorite(venue.id)) return false;
+      if (filterState.nonAlcoholicOnly && !isNonAlcoholicVenue(venue)) return false;
+
+      // Fallback for legacy currentFilter
+      if (currentFilter && currentFilter !== "all" && filterState.priceTier === "all" && filterState.maxPrice === null && !filterState.openNow && !filterState.craftOnly && !filterState.happyHourOnly && !filterState.favoritesOnly && !filterState.nonAlcoholicOnly) {
+        switch (currentFilter) {
+          case "open-now": return isVenueOpen(venue);
+          case "favorites": return isVenueFavorite(venue.id);
+          case "non-alcoholic": return isNonAlcoholicVenue(venue);
+          case "pawilony": return venue.district.toLowerCase() === "pawilony";
+          case "srodmiescie": return venue.district.toLowerCase().includes("śródmieście");
+          case "praga": return venue.district.toLowerCase().includes("praga");
+          case "bulwary": return venue.district.toLowerCase().includes("bulwary");
+          case "tier-low": return price <= 12.0;
+          case "tier-mid": return price > 12.0 && price <= 18.0;
+          case "tier-high": return price > 18.0;
+          case "craft": return venue.is_craft === true;
+          case "happy-hour": return !!(venue.happy_hour || venue.happy_hour_rule);
+        }
+      }
+
+      return true;
+    });
+  }
+
+  function getActiveFilterCount() {
+    let count = 0;
+    if (filterState.priceTier !== "all" || (filterState.maxPrice !== null && filterState.maxPrice < 35)) count++;
+    if (filterState.openNow) count++;
+    if (filterState.craftOnly) count++;
+    if (filterState.happyHourOnly) count++;
+    if (filterState.favoritesOnly) count++;
+    if (filterState.nonAlcoholicOnly) count++;
+    if (currentDistrict !== "all") count++;
+    return count;
+  }
+
+  function updateFilterBadge() {
+    const count = getActiveFilterCount();
+    const btn = document.getElementById("btn-open-filter-modal");
+    const badge = document.getElementById("filter-active-badge");
+    if (badge) {
+      if (count > 0) {
+        badge.textContent = count;
+        badge.style.display = "inline-flex";
+      } else {
+        badge.style.display = "none";
+      }
+    }
+    if (btn) {
+      if (count > 0) btn.classList.add("has-filters");
+      else btn.classList.remove("has-filters");
+    }
+  }
+
+  function syncQuickChipsWithFilterState() {
+    const chips = document.querySelectorAll(".filter-chip[data-filter]");
+    chips.forEach(c => {
+      const f = c.getAttribute("data-filter");
+      let isActive = false;
+      if (f === "all") {
+        isActive = (filterState.priceTier === "all" && filterState.maxPrice === null && !filterState.openNow && !filterState.craftOnly && !filterState.happyHourOnly && !filterState.favoritesOnly && !filterState.nonAlcoholicOnly);
+      } else if (f === "tier-low") {
+        isActive = (filterState.priceTier === "tier-low" && filterState.maxPrice === null);
+      } else if (f === "tier-mid") {
+        isActive = (filterState.priceTier === "tier-mid" && filterState.maxPrice === null);
+      } else if (f === "tier-high") {
+        isActive = (filterState.priceTier === "tier-high" && filterState.maxPrice === null);
+      } else if (f === "open-now") {
+        isActive = filterState.openNow;
+      } else if (f === "craft") {
+        isActive = filterState.craftOnly;
+      } else if (f === "happy-hour") {
+        isActive = filterState.happyHourOnly;
+      } else if (f === "favorites") {
+        isActive = filterState.favoritesOnly;
+      } else if (f === "non-alcoholic") {
+        isActive = filterState.nonAlcoholicOnly;
+      }
+      if (isActive) c.classList.add("active");
+      else c.classList.remove("active");
+    });
+    updateFilterBadge();
+  }
+
+  function syncFilterModalUI() {
+    // Price cards
+    document.querySelectorAll(".filter-price-card").forEach(card => {
+      const p = card.getAttribute("data-price");
+      if (filterState.maxPrice !== null && filterState.maxPrice < 35) {
+        card.classList.remove("active");
+      } else {
+        if (p === filterState.priceTier) card.classList.add("active");
+        else card.classList.remove("active");
       }
     });
+
+    // Slider
+    const slider = document.getElementById("filter-price-slider");
+    const sliderVal = document.getElementById("filter-slider-val");
+    if (slider && sliderVal) {
+      if (filterState.maxPrice !== null && filterState.maxPrice < 35) {
+        slider.value = filterState.maxPrice;
+        sliderVal.textContent = `≤ ${filterState.maxPrice} zł`;
+      } else {
+        slider.value = 35;
+        sliderVal.textContent = "Dowolna";
+      }
+    }
+
+    // Toggles
+    const toggleMap = {
+      "openNow": document.getElementById("filter-toggle-open"),
+      "happyHourOnly": document.getElementById("filter-toggle-happyhour"),
+      "craftOnly": document.getElementById("filter-toggle-craft"),
+      "nonAlcoholicOnly": document.getElementById("filter-toggle-nonalco"),
+      "favoritesOnly": document.getElementById("filter-toggle-favorites")
+    };
+    for (const [key, el] of Object.entries(toggleMap)) {
+      if (el) {
+        if (filterState[key]) el.classList.add("active");
+        else el.classList.remove("active");
+      }
+    }
+
+    // District chips inside modal
+    document.querySelectorAll(".filter-dist-chip").forEach(ch => {
+      const d = ch.getAttribute("data-dist");
+      if (d === currentDistrict) ch.classList.add("active");
+      else ch.classList.remove("active");
+    });
+
+    updateFilterMatchingCount();
+  }
+
+  function updateFilterMatchingCount() {
+    const matching = getFilteredVenues();
+    const countEl = document.getElementById("filter-matching-count");
+    if (countEl) countEl.textContent = matching.length;
+  }
+
+  function openFilterModal() {
+    const modal = document.getElementById("filter-modal");
+    if (!modal) return;
+    syncFilterModalUI();
+    modal.style.display = "flex";
+    modal.classList.add("active");
+  }
+
+  function closeFilterModal() {
+    const modal = document.getElementById("filter-modal");
+    if (!modal) return;
+    modal.classList.remove("active");
+    modal.style.display = "none";
+  }
+
+  function resetAllFilters() {
+    filterState = {
+      priceTier: "all",
+      maxPrice: null,
+      openNow: false,
+      craftOnly: false,
+      happyHourOnly: false,
+      favoritesOnly: false,
+      nonAlcoholicOnly: false
+    };
+    currentFilter = "all";
+    currentDistrict = "all";
+    const districtSelect = document.getElementById("district-select");
+    if (districtSelect) districtSelect.value = "all";
+    syncFilterModalUI();
+    syncQuickChipsWithFilterState();
+    renderMarkers();
   }
 
   // Lightbox Modal Handlers
@@ -1214,15 +1390,7 @@
 
     // If venue is hidden by current district or filter chip, reset to show all so marker exists
     if (!activeMarkers.some(m => m._venueData && m._venueData.id === venue.id)) {
-      currentFilter = "all";
-      currentDistrict = "all";
-      const districtSelect = document.getElementById("district-select");
-      if (districtSelect) districtSelect.value = "all";
-      document.querySelectorAll(".filter-chip").forEach(c => {
-        if (c.getAttribute("data-filter") === "all") c.classList.add("active");
-        else if (c.id !== "chip-open-pubcrawl") c.classList.remove("active");
-      });
-      renderMarkers();
+      resetAllFilters();
     }
 
     const targetMarker = activeMarkers.find(m => {
@@ -2874,19 +3042,131 @@
       });
     }
 
-    // Filter Chips
-    const chips = document.querySelectorAll(".filter-chip");
-    chips.forEach(chip => {
+    // Filter Modal Setup
+    const btnOpenFilterModal = document.getElementById("btn-open-filter-modal");
+    const btnCloseFilterModal = document.getElementById("btn-close-filter");
+    const filterModal = document.getElementById("filter-modal");
+    const btnFilterReset = document.getElementById("btn-filter-reset");
+    const btnFilterApply = document.getElementById("btn-filter-apply");
+
+    if (btnOpenFilterModal) {
+      btnOpenFilterModal.addEventListener("click", (e) => {
+        e.preventDefault();
+        openFilterModal();
+      });
+    }
+    if (btnCloseFilterModal) {
+      btnCloseFilterModal.addEventListener("click", closeFilterModal);
+    }
+    if (filterModal) {
+      filterModal.addEventListener("click", (e) => {
+        if (e.target === filterModal) closeFilterModal();
+      });
+    }
+    if (btnFilterReset) {
+      btnFilterReset.addEventListener("click", () => {
+        resetAllFilters();
+        if (typeof showAppToast === "function") {
+          showAppToast("Zresetowano filtry", "Wyświetlam wszystkie lokale w Warszawie", "🎛️");
+        }
+      });
+    }
+    if (btnFilterApply) {
+      btnFilterApply.addEventListener("click", () => {
+        closeFilterModal();
+        syncQuickChipsWithFilterState();
+        renderMarkers();
+        const count = getFilteredVenues().length;
+        if (typeof showAppToast === "function") {
+          showAppToast("Zastosowano filtry", `Znaleziono ${count} pasujących lokali`, "🍻");
+        }
+      });
+    }
+
+    // Modal: Price preset cards
+    document.querySelectorAll(".filter-price-card").forEach(card => {
+      card.addEventListener("click", () => {
+        const tier = card.getAttribute("data-price");
+        filterState.priceTier = tier;
+        filterState.maxPrice = null;
+        currentFilter = tier === "all" ? "all" : tier;
+        syncFilterModalUI();
+      });
+    });
+
+    // Modal: Price slider
+    const priceSlider = document.getElementById("filter-price-slider");
+    if (priceSlider) {
+      priceSlider.addEventListener("input", (e) => {
+        const val = parseInt(e.target.value, 10);
+        if (val >= 35) {
+          filterState.maxPrice = null;
+        } else {
+          filterState.maxPrice = val;
+          filterState.priceTier = "custom";
+        }
+        syncFilterModalUI();
+      });
+    }
+
+    // Modal: Toggle criteria
+    document.querySelectorAll(".filter-toggle-btn").forEach(tBtn => {
+      tBtn.addEventListener("click", () => {
+        const prop = tBtn.getAttribute("data-toggle");
+        if (prop && filterState.hasOwnProperty(prop)) {
+          filterState[prop] = !filterState[prop];
+          syncFilterModalUI();
+        }
+      });
+    });
+
+    // Modal: District chips
+    document.querySelectorAll(".filter-dist-chip").forEach(dChip => {
+      dChip.addEventListener("click", () => {
+        currentDistrict = dChip.getAttribute("data-dist");
+        if (districtSelect) districtSelect.value = currentDistrict;
+        const target = DISTRICT_CENTERS[currentDistrict] || DISTRICT_CENTERS["all"];
+        if (map && target) {
+          map.flyTo(target.coords, target.zoom, { duration: 1.0 });
+        }
+        syncFilterModalUI();
+      });
+    });
+
+    // Top Filter Bar Chips
+    const quickFilterChips = document.querySelectorAll(".filter-chip[data-filter]");
+    quickFilterChips.forEach(chip => {
       chip.addEventListener("click", () => {
-        if (chip.id === "chip-open-pubcrawl") {
-          if (window.__openPubCrawl) window.__openPubCrawl();
+        const filterVal = chip.getAttribute("data-filter");
+        if (filterVal === "all") {
+          resetAllFilters();
           return;
         }
-        chips.forEach(c => {
-          if (c.id !== "chip-open-pubcrawl") c.classList.remove("active");
-        });
-        chip.classList.add("active");
-        currentFilter = chip.getAttribute("data-filter");
+
+        // Reset other toggles so single tap on chip is focused
+        filterState.priceTier = "all";
+        filterState.maxPrice = null;
+        filterState.openNow = false;
+        filterState.craftOnly = false;
+        filterState.happyHourOnly = false;
+        filterState.favoritesOnly = false;
+        filterState.nonAlcoholicOnly = false;
+
+        if (filterVal === "tier-low" || filterVal === "tier-mid" || filterVal === "tier-high") {
+          filterState.priceTier = filterVal;
+        } else if (filterVal === "open-now") {
+          filterState.openNow = true;
+        } else if (filterVal === "craft") {
+          filterState.craftOnly = true;
+        } else if (filterVal === "happy-hour") {
+          filterState.happyHourOnly = true;
+        } else if (filterVal === "favorites") {
+          filterState.favoritesOnly = true;
+        } else if (filterVal === "non-alcoholic") {
+          filterState.nonAlcoholicOnly = true;
+        }
+        currentFilter = filterVal;
+        syncQuickChipsWithFilterState();
         renderMarkers();
       });
     });

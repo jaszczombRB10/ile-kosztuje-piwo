@@ -173,14 +173,19 @@
         </div>
 
         <div class="filter-row">
+          <button type="button" id="btn-open-filter-modal" class="filter-chip btn-filter-pill" title="Otwórz pełne filtry cen i lokali">
+            <span class="filter-pill-icon">🎛️</span>
+            <span class="filter-pill-text">Filtruj</span>
+            <span id="filter-active-badge" class="filter-active-count-badge" style="display:none;">0</span>
+          </button>
           <span class="filter-chip active" data-filter="all">Wszystkie</span>
-          <span class="filter-chip chip-open" data-filter="open-now">🟢 Otwarte teraz</span>
-          <span class="filter-chip chip-favorites" data-filter="favorites" id="chip-filter-favorites" title="Pokaż Twoje ulubione bary">❤️ Ulubione (<span id="fav-count-badge">0</span>)</span>
-          <span class="filter-chip chip-non-alcoholic" data-filter="non-alcoholic" title="Lokale z piwem bezalkoholowym / 0.0%">🌱 0.0% / Bezalko</span>
           <span class="filter-chip chip-green" data-filter="tier-low">≤ 12 zł</span>
           <span class="filter-chip chip-amber" data-filter="tier-mid">13-18 zł</span>
           <span class="filter-chip chip-red" data-filter="tier-high">19+ zł</span>
+          <span class="filter-chip chip-open" data-filter="open-now">🟢 Otwarte teraz</span>
           <span class="filter-chip" data-filter="craft">⭐ Kraft</span>
+          <span class="filter-chip chip-favorites" data-filter="favorites" id="chip-filter-favorites" title="Pokaż Twoje ulubione bary">❤️ Ulubione (<span id="fav-count-badge">0</span>)</span>
+          <span class="filter-chip chip-non-alcoholic" data-filter="non-alcoholic" title="Lokale z piwem bezalkoholowym / 0.0%">🌱 0.0% / Bezalko</span>
           <span class="filter-chip" data-filter="happy-hour">⚡ Happy Hour</span>
         </div>
       </div>
@@ -265,6 +270,153 @@
         </button>
       </div>
     </div>
+
+  <!-- Filter Modal: Comprehensive Filtering & Price Ranges -->
+  <div class="modal-backdrop" id="filter-modal">
+    <div class="modal-card filter-modal-card">
+      <div class="modal-head">
+        <div class="modal-head-title">
+          <div class="modal-icon-badge">🎛️</div>
+          <div>
+            <h2>Filtry lokali i cen</h2>
+            <p class="modal-head-sub">Wybierz budżet, godziny i klimat piwka</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close" id="btn-close-filter">✕</button>
+      </div>
+
+      <div class="filter-modal-content">
+        <!-- Section 1: Ceny piwa -->
+        <div class="filter-section">
+          <label class="filter-section-title">
+            <span>💰 Przedział cenowy (lane 0.5L)</span>
+          </label>
+          <div class="filter-price-grid">
+            <button type="button" class="filter-price-card active" data-price="all">
+              <span class="price-card-icon">✨</span>
+              <span class="price-card-title">Wszystkie</span>
+              <span class="price-card-desc">Dowolny przedział</span>
+            </button>
+            <button type="button" class="filter-price-card tier-low" data-price="tier-low">
+              <span class="price-card-icon">🟢</span>
+              <span class="price-card-title">≤ 12 zł</span>
+              <span class="price-card-desc">Tanie & Studenckie</span>
+            </button>
+            <button type="button" class="filter-price-card tier-mid" data-price="tier-mid">
+              <span class="price-card-icon">🟡</span>
+              <span class="price-card-title">13 - 18 zł</span>
+              <span class="price-card-desc">Standard Warszawski</span>
+            </button>
+            <button type="button" class="filter-price-card tier-high" data-price="tier-high">
+              <span class="price-card-icon">🔴</span>
+              <span class="price-card-title">19+ zł</span>
+              <span class="price-card-desc">Kraft & Premium</span>
+            </button>
+          </div>
+
+          <!-- Quick Max Price Slider -->
+          <div class="filter-slider-box">
+            <div class="filter-slider-header">
+              <span>Maksymalna cena za piwo:</span>
+              <strong id="filter-slider-val">Dowolna</strong>
+            </div>
+            <input type="range" id="filter-price-slider" min="10" max="35" step="1" value="35" class="filter-slider" />
+            <div class="filter-slider-labels">
+              <span>10 zł</span>
+              <span>15 zł</span>
+              <span>20 zł</span>
+              <span>25 zł</span>
+              <span>30+ zł</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: Dostępność & Promocje -->
+        <div class="filter-section">
+          <label class="filter-section-title">
+            <span>🕒 Godziny i Promocje</span>
+          </label>
+          <div class="filter-toggle-grid">
+            <button type="button" class="filter-toggle-btn" id="filter-toggle-open" data-toggle="openNow">
+              <span class="toggle-icon">🟢</span>
+              <div class="toggle-text">
+                <span class="toggle-title">Otwarte teraz</span>
+                <span class="toggle-desc">Tylko bary otwarte w tej chwili</span>
+              </div>
+              <span class="toggle-check">✓</span>
+            </button>
+            <button type="button" class="filter-toggle-btn" id="filter-toggle-happyhour" data-toggle="happyHourOnly">
+              <span class="toggle-icon">⚡</span>
+              <div class="toggle-text">
+                <span class="toggle-title">Happy Hour</span>
+                <span class="toggle-desc">Lokale z aktualnymi promocjami</span>
+              </div>
+              <span class="toggle-check">✓</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Section 3: Klimat & Wybór piwa -->
+        <div class="filter-section">
+          <label class="filter-section-title">
+            <span>⭐ Klimat & Wybór piwa</span>
+          </label>
+          <div class="filter-toggle-grid">
+            <button type="button" class="filter-toggle-btn" id="filter-toggle-craft" data-toggle="craftOnly">
+              <span class="toggle-icon">⭐</span>
+              <div class="toggle-text">
+                <span class="toggle-title">Piwa rzemieślnicze (Kraft)</span>
+                <span class="toggle-desc">Wielokran, browary autorskie, IPA</span>
+              </div>
+              <span class="toggle-check">✓</span>
+            </button>
+            <button type="button" class="filter-toggle-btn" id="filter-toggle-nonalco" data-toggle="nonAlcoholicOnly">
+              <span class="toggle-icon">🌱</span>
+              <div class="toggle-text">
+                <span class="toggle-title">Bezalkoholowe / 0.0%</span>
+                <span class="toggle-desc">Lokale z opcjami bezalkoholowymi</span>
+              </div>
+              <span class="toggle-check">✓</span>
+            </button>
+            <button type="button" class="filter-toggle-btn" id="filter-toggle-favorites" data-toggle="favoritesOnly">
+              <span class="toggle-icon">❤️</span>
+              <div class="toggle-text">
+                <span class="toggle-title">Tylko ulubione bary</span>
+                <span class="toggle-desc">Lokale z Twojej listy ulubionych</span>
+              </div>
+              <span class="toggle-check">✓</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Section 4: Dzielnica / Zagłębie -->
+        <div class="filter-section">
+          <label class="filter-section-title">
+            <span>📍 Dzielnica / Zagłębie</span>
+          </label>
+          <div class="filter-district-chips" id="filter-district-chips">
+            <button type="button" class="filter-dist-chip active" data-dist="all">🏙️ Cała Warszawa</button>
+            <button type="button" class="filter-dist-chip" data-dist="Pawilony">🔥 Pawilony</button>
+            <button type="button" class="filter-dist-chip" data-dist="Bulwary">🌊 Bulwary</button>
+            <button type="button" class="filter-dist-chip" data-dist="Śródmieście">Śródmieście</button>
+            <button type="button" class="filter-dist-chip" data-dist="Mokotów">Mokotów</button>
+            <button type="button" class="filter-dist-chip" data-dist="Wola">Wola</button>
+            <button type="button" class="filter-dist-chip" data-dist="Praga Północ">Praga Północ</button>
+            <button type="button" class="filter-dist-chip" data-dist="Ochota">Ochota</button>
+            <button type="button" class="filter-dist-chip" data-dist="Żoliborz">Żoliborz</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sticky Action Footer -->
+      <div class="filter-modal-footer">
+        <button type="button" class="btn-filter-reset" id="btn-filter-reset">Wyczyść</button>
+        <button type="button" class="btn-filter-apply" id="btn-filter-apply">
+          Pokaż wyniki (<span id="filter-matching-count">0</span> barów)
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- Beer Compass / Radar Modal -->
   <div class="modal-backdrop compass-modal-backdrop" id="beer-compass-modal">
