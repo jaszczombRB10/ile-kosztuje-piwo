@@ -5126,25 +5126,27 @@ header {
 
 .goin-tags-list {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 6px;
-  margin-bottom: 14px;
+  margin-top: 10px;
 }
 
 .goin-tag-item {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.8rem;
+  gap: 5px;
+  font-size: 0.73rem;
   color: #e2e8f0;
-  font-weight: 500;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
 }
 
 .goin-tag-icon {
-  font-size: 0.95rem;
-  width: 18px;
-  text-align: center;
-  flex-shrink: 0;
+  font-size: 0.82rem;
 }
 
 .goin-tag-val {
@@ -5152,12 +5154,12 @@ header {
   font-weight: 600;
 }
 
-/* Prominent Profile Quick Actions Bar (Top of Profile) */
+/* Profile Actions Bar (Clean 2-Button Row) */
 .profile-hero-actions-bar {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-top: 16px;
+  gap: 10px;
+  margin-top: 14px;
   width: 100%;
   box-sizing: border-box;
 }
@@ -5166,16 +5168,16 @@ header {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 10px 8px;
-  border-radius: 12px;
-  font-size: 0.76rem;
+  gap: 7px;
+  padding: 11px 12px;
+  border-radius: 14px;
+  font-size: 0.82rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   white-space: nowrap;
   font-family: inherit;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
   -webkit-tap-highlight-color: transparent;
   border: 1px solid rgba(255, 255, 255, 0.18);
   color: #ffffff;
@@ -5186,59 +5188,33 @@ header {
   line-height: 1;
 }
 
-.btn-hero-action.btn-hero-share {
-  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
-  color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.3);
-  box-shadow: 0 4px 16px rgba(249, 115, 22, 0.45);
+.btn-hero-action.btn-hero-edit {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #f8fafc;
 }
 
-.btn-hero-action.btn-hero-share:hover {
-  background: linear-gradient(135deg, #fb923c 0%, #f97316 100%);
+.btn-hero-action.btn-hero-edit:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(249, 115, 22, 0.6);
 }
 
 .btn-hero-action.btn-hero-story {
   background: linear-gradient(135deg, #e11d48 0%, #c026d3 50%, #7c3aed 100%);
   color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.35);
-  box-shadow: 0 4px 16px rgba(192, 38, 211, 0.4);
+  border-color: rgba(255, 255, 255, 0.32);
+  box-shadow: 0 4px 16px rgba(192, 38, 211, 0.35);
 }
 
 .btn-hero-action.btn-hero-story:hover {
   background: linear-gradient(135deg, #f43f5e 0%, #d946ef 50%, #8b5cf6 100%);
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(192, 38, 211, 0.6);
-}
-
-.btn-hero-action.btn-hero-search {
-  background: rgba(59, 130, 246, 0.22);
-  color: #93c5fd;
-  border-color: rgba(96, 165, 250, 0.45);
-}
-
-.btn-hero-action.btn-hero-search:hover {
-  background: rgba(59, 130, 246, 0.35);
-  color: #ffffff;
-  border-color: #60a5fa;
-  transform: translateY(-1px);
-}
-
-.btn-hero-action.btn-hero-edit {
-  background: rgba(255, 255, 255, 0.12);
-  color: #f1f5f9;
-  border-color: rgba(255, 255, 255, 0.25);
-}
-
-.btn-hero-action.btn-hero-edit:hover {
-  background: rgba(255, 255, 255, 0.22);
-  color: #ffffff;
-  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(192, 38, 211, 0.55);
 }
 
 .btn-hero-action:active {
-  transform: scale(0.95);
+  transform: scale(0.97);
 }
 
 /* Avatar Frame */
@@ -5267,148 +5243,103 @@ header {
   user-select: none;
 }
 
-/* Floating Stats Card (Goin' Signature Island) */
-.profile-goin-stats {
-  margin: -18px 16px 12px 16px;
-  background: #ffffff;
-  color: #0f172a;
+/* ==========================================================================
+   Unified Dark Glass Stats Grid
+   ========================================================================== */
+.profile-stats-unified {
+  margin: 14px 16px 14px 16px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 18px;
-  padding: 14px 16px;
+  padding: 12px 6px;
   display: flex;
   align-items: center;
   justify-content: space-around;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.38);
-  position: relative;
-  z-index: 5;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
 }
 
-.goin-stat-col {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.stat-unit {
   flex: 1;
-  justify-content: center;
-}
-
-.goin-stat-icon-wrap {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.25rem;
-  flex-shrink: 0;
-}
-
-.goin-stat-icon-wrap.icon-visited {
-  background: #eff6ff;
-}
-
-.goin-stat-icon-wrap.icon-badges {
-  background: #fef3c7;
-}
-
-.goin-stat-info {
   display: flex;
   flex-direction: column;
-  text-align: left;
-}
-
-.goin-stat-num {
-  font-size: 1.25rem;
-  font-weight: 800;
-  color: #0f172a;
-  line-height: 1.1;
-}
-
-.goin-stat-label {
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: #64748b;
-  line-height: 1.2;
-}
-
-.goin-stat-divider {
-  width: 1px;
-  height: 32px;
-  background: #e2e8f0;
-  margin: 0 4px;
-}
-
-/* Mini stats row (Favorites & Friends) */
-.profile-mini-stats {
-  display: flex;
+  align-items: center;
   justify-content: center;
-  gap: 8px;
-  margin: 0 16px 14px 16px;
-}
-
-.mini-stat-pill {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 4px 12px;
-  border-radius: 999px;
-  font-size: 0.74rem;
-  color: #cbd5e1;
-}
-
-.mini-stat-pill strong {
-  color: #fff;
-}
-
-/* Progress Section ("Get the most out of poilepiwko") */
-.profile-goin-progress-card {
-  margin: 0 16px 16px 16px;
-  padding: 12px 14px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
+  gap: 2px;
   text-align: center;
 }
 
-.progress-card-head {
+.stat-unit-icon {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.stat-unit-val {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.1;
+  font-family: inherit;
+}
+
+.stat-unit-lbl {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.stat-unit-sep {
+  width: 1px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   Compact Level Progress Card (Clean Polish UI)
+   ========================================================================== */
+.profile-progress-card-clean {
+  margin: 0 16px 14px 16px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+}
+
+.progress-clean-head {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
-  gap: 6px;
-  font-size: 0.82rem;
+  font-size: 0.76rem;
   font-weight: 700;
-  color: #f8fafc;
+  color: #cbd5e1;
+  margin-bottom: 8px;
 }
 
-.progress-info-icon {
-  font-size: 0.85rem;
-  opacity: 0.75;
-  cursor: help;
+.progress-clean-title {
+  color: #cbd5e1;
 }
 
-.goin-progress-bar-track {
-  height: 8px;
+.progress-clean-pct {
+  color: #38bdf8;
+  font-weight: 800;
+  font-size: 0.78rem;
+}
+
+.progress-clean-track {
+  height: 6px;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 999px;
   overflow: hidden;
-  margin: 10px 0 8px 0;
 }
 
-.goin-progress-bar-fill {
+.progress-clean-fill {
   height: 100%;
-  background: linear-gradient(90deg, #2563eb 0%, #38bdf8 100%);
+  background: linear-gradient(90deg, #3b82f6 0%, #38bdf8 100%);
   border-radius: 999px;
   transition: width 0.4s ease;
-}
-
-.progress-card-foot {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: #94a3b8;
-}
-
-.progress-percent {
-  font-weight: 800;
-  color: #38bdf8;
 }
 
 /* Achievements Section */
@@ -5559,43 +5490,103 @@ header {
   margin-top: 2px;
 }
 
-/* Footer & Actions */
-.goin-profile-footer {
-  padding: 0 16px 16px 16px;
-}
-
-.profile-action-buttons {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-bottom: 12px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.btn-profile-action {
-  width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  color: #fff;
-  padding: 10px 8px;
-  border-radius: 12px;
-  font-size: 0.76rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.18s;
-  display: inline-flex;
+/* ==========================================================================
+   Single Elegant Community Banner
+   ========================================================================== */
+.profile-community-banner {
+  margin: 12px 16px 14px 16px;
+  width: calc(100% - 32px);
+  display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
-  white-space: nowrap;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(96, 165, 250, 0.22);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: inherit;
+  color: #ffffff;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.btn-profile-action:hover {
-  background: rgba(255, 255, 255, 0.16);
-  border-color: rgba(255, 255, 255, 0.28);
+.profile-community-banner:hover {
+  background: rgba(59, 130, 246, 0.16);
+  border-color: rgba(96, 165, 250, 0.4);
+  transform: translateY(-1px);
+}
+
+.profile-community-banner:active {
+  transform: scale(0.99);
+}
+
+.comm-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+}
+
+.comm-banner-icon {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.comm-banner-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.comm-banner-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #93c5fd;
+}
+
+.comm-banner-sub {
+  font-size: 0.7rem;
+  color: #94a3b8;
+}
+
+.comm-banner-arrow {
+  font-size: 0.95rem;
+  color: #93c5fd;
+  font-weight: 700;
+  transition: transform 0.2s ease;
+}
+
+.profile-community-banner:hover .comm-banner-arrow {
+  transform: translateX(3px);
+}
+
+/* ==========================================================================
+   Minimal Logout Link
+   ========================================================================== */
+.profile-logout-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 4px 16px 14px 16px;
+}
+
+.btn-logout-clean {
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  opacity: 0.7;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.btn-logout-clean:hover {
+  opacity: 1;
+  background: rgba(239, 68, 68, 0.1);
 }
 
 /* Edit Profile Modal Dialog / Sheet */

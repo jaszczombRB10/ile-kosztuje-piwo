@@ -1485,72 +1485,58 @@
           </div>
         </div>
 
-        <!-- Prominent Profile Quick Actions Bar (Immediately Visible Without Scrolling) -->
+        <!-- Profile Actions Bar: Clean 2-Button Row -->
         <div class="profile-hero-actions-bar">
-          <button type="button" class="btn-hero-action btn-hero-share" id="btn-share-my-profile" title="Udostępnij link do Twojego profilu">
-            <span class="btn-hero-action-icon">📤</span>
-            <span>Udostępnij</span>
+          <button type="button" class="btn-hero-action btn-hero-edit" id="btn-toggle-edit-profile" title="Edytuj profil i preferencje">
+            <span class="btn-hero-action-icon">✏️</span>
+            <span>Edytuj profil</span>
           </button>
           <button type="button" class="btn-hero-action btn-hero-story" id="btn-open-story-card" title="Wygeneruj kartę na Instagram Story">
             <span class="btn-hero-action-icon">📸</span>
-            <span>Story</span>
-          </button>
-          <button type="button" class="btn-hero-action btn-hero-search" id="btn-search-friends-hero" title="Wyszukaj znajomych po nicku">
-            <span class="btn-hero-action-icon">🔍</span>
-            <span>Szukaj</span>
-          </button>
-          <button type="button" class="btn-hero-action btn-hero-edit" id="btn-toggle-edit-profile" title="Edytuj profil i preferencje">
-            <span class="btn-hero-action-icon">✏️</span>
-            <span>Edytuj</span>
+            <span>Karta Story</span>
           </button>
         </div>
       </div>
 
-      <!-- Floating Stats Card (Goin' Style) -->
-      <div class="profile-goin-stats">
-        <div class="goin-stat-col">
-          <div class="goin-stat-icon-wrap icon-visited">🍺</div>
-          <div class="goin-stat-info">
-            <span class="goin-stat-num" id="prof-stat-visited">0</span>
-            <span class="goin-stat-label">odwiedzonych barów</span>
-          </div>
+      <!-- Unified Dark Glass Stats Grid (Replaces white card & loose pills) -->
+      <div class="profile-stats-unified">
+        <div class="stat-unit">
+          <div class="stat-unit-icon">🍺</div>
+          <div class="stat-unit-val" id="prof-stat-visited">0</div>
+          <div class="stat-unit-lbl">Bary</div>
         </div>
-        <div class="goin-stat-divider"></div>
-        <div class="goin-stat-col">
-          <div class="goin-stat-icon-wrap icon-badges">🎖️</div>
-          <div class="goin-stat-info">
-            <span class="goin-stat-num" id="prof-stat-badges">0</span>
-            <span class="goin-stat-label">odznak paszportu</span>
-          </div>
+        <div class="stat-unit-sep"></div>
+        <div class="stat-unit">
+          <div class="stat-unit-icon">🎖️</div>
+          <div class="stat-unit-val" id="prof-stat-badges">0</div>
+          <div class="stat-unit-lbl">Odznaki</div>
         </div>
-      </div>
-
-      <!-- Mini quick badges (Favorites & Friends) -->
-      <div class="profile-mini-stats">
-        <div class="mini-stat-pill">
-          <span>❤️ Ulubione: <strong id="prof-stat-favorites">0</strong></span>
+        <div class="stat-unit-sep"></div>
+        <div class="stat-unit">
+          <div class="stat-unit-icon">❤️</div>
+          <div class="stat-unit-val" id="prof-stat-favorites">0</div>
+          <div class="stat-unit-lbl">Ulubione</div>
         </div>
-        <div class="mini-stat-pill">
-          <span>👥 Obserwowani: <strong id="prof-stat-friends">0</strong></span>
+        <div class="stat-unit-sep"></div>
+        <div class="stat-unit">
+          <div class="stat-unit-icon">👥</div>
+          <div class="stat-unit-val" id="prof-stat-friends">0</div>
+          <div class="stat-unit-lbl">Znajomi</div>
         </div>
       </div>
 
-      <!-- Level & Progress Section (Goin' Style: "Get the most out of poilepiwko") -->
-      <div class="profile-goin-progress-card">
-        <div class="progress-card-head">
-          <span class="progress-title">Get the most out of poilepiwko</span>
-          <span class="progress-info-icon" title="Odwiedzaj bary i zdobywaj kolejne rangi warszawskiego piwosza!">ℹ️</span>
+      <!-- Compact Level Progress Card -->
+      <div class="profile-progress-card-clean">
+        <div class="progress-clean-head">
+          <span class="progress-clean-title" id="prof-progress-target">Następna ranga: Koneser Kraftu</span>
+          <span class="progress-clean-pct" id="prof-progress-percent">16%</span>
         </div>
-        <div class="goin-progress-bar-track">
-          <div class="goin-progress-bar-fill" id="prof-progress-fill" style="width: 16%;"></div>
-        </div>
-        <div class="progress-card-foot">
-          <span class="progress-percent" id="prof-progress-percent">16%</span>
-          <span class="progress-target" id="prof-progress-target">Następna ranga: Koneser Kraftu</span>
+        <div class="progress-clean-track">
+          <div class="progress-clean-fill" id="prof-progress-fill" style="width: 16%;"></div>
         </div>
       </div>
 
-      <!-- Achievements Section (Collapsible Goin' Style) -->
+      <!-- Achievements Section (Collapsible Accordion) -->
       <div class="profile-goin-achievements">
         <button type="button" class="achievements-section-toggle" id="btn-toggle-achievements" aria-expanded="false">
           <div class="achievements-toggle-left">
@@ -1569,25 +1555,23 @@
         </div>
       </div>
 
-      <!-- Action Buttons & Logout -->
-      <div class="goin-profile-footer">
-        <div class="profile-action-buttons">
-          <button type="button" class="btn-profile-action" id="btn-open-community-from-profile">
-            <span>👥 Znajomi & Puls Miasta</span>
-          </button>
-          <button type="button" class="btn-profile-action" id="btn-share-my-profile-bottom">
-            <span>📤 Udostępnij profil</span>
-          </button>
+      <!-- Single Elegant Community Banner -->
+      <button type="button" class="profile-community-banner" id="btn-open-community-from-profile" title="Przejdź do feedu i szukaj osób">
+        <div class="comm-banner-left">
+          <span class="comm-banner-icon">👥</span>
+          <div class="comm-banner-text">
+            <span class="comm-banner-title">Piwni Znajomi & Puls Miasta</span>
+            <span class="comm-banner-sub">Feed aktywności cenowej i wyszukiwarka osób</span>
+          </div>
         </div>
+        <span class="comm-banner-arrow">→</span>
+      </button>
 
-        <div class="profile-footer-bar">
-          <button type="button" class="btn-profile-back" id="btn-close-profile-bottom">
-            <span>✕ Wróć do mapy</span>
-          </button>
-          <button type="button" class="btn-logout" id="btn-logout">
-            <span>🚪 Wyloguj się</span>
-          </button>
-        </div>
+      <!-- Minimal Tasteful Logout Link -->
+      <div class="profile-logout-wrap">
+        <button type="button" class="btn-logout-clean" id="btn-logout">
+          <span>🚪 Wyloguj się</span>
+        </button>
       </div>
 
     </div>
