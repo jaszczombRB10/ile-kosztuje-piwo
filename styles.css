@@ -2143,24 +2143,31 @@ header {
     padding: 14px 14px 12px 14px;
   }
 
-  /* Show native mobile bottom dock */
+  /* Native iPhone TabBar (iOS Human Interface Guidelines) */
   .mobile-bottom-nav {
     display: flex;
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    height: calc(60px + env(safe-area-inset-bottom, 0px));
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    background: rgba(13, 22, 21, 0.96);
-    backdrop-filter: blur(14px);
-    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    width: 100%;
+    /* Native iOS TabBar content: 49px + hardware safe area inset */
+    height: calc(49px + env(safe-area-inset-bottom, 20px));
+    padding-top: 4px;
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+    background: rgba(14, 23, 21, 0.85);
+    background: -webkit-linear-gradient(bottom, rgba(12, 20, 18, 0.95), rgba(16, 26, 23, 0.82));
+    backdrop-filter: blur(25px) saturate(190%);
+    -webkit-backdrop-filter: blur(25px) saturate(190%);
+    border-top: 0.5px solid rgba(255, 255, 255, 0.16); /* Native Apple 0.5px hairline */
     z-index: 9990;
-    align-items: center;
+    align-items: stretch;
     justify-content: space-around;
-    padding-left: 6px;
-    padding-right: 6px;
     box-sizing: border-box;
+    -webkit-user-select: none;
+    user-select: none;
   }
 
   .nav-item {
@@ -2168,59 +2175,79 @@ header {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start; /* Strict top anchor - prevents any vertical misalignment */
+    height: 44px;
     background: none;
     border: none;
     color: #94a3b8;
-    gap: 4px;
-    padding: 6px 0;
+    padding: 0;
+    margin: 0;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: opacity 0.12s ease;
     -webkit-tap-highlight-color: transparent;
+    -webkit-appearance: none;
+    appearance: none;
     min-width: 0;
   }
 
+  .nav-item:active {
+    opacity: 0.6;
+  }
+
   .nav-icon {
-    height: 30px;
+    width: 24px;
+    height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.25rem;
+    font-size: 1.15rem;
     line-height: 1;
     margin: 0;
+    padding: 0;
+    flex-shrink: 0;
   }
 
   .nav-label {
-    font-size: 0.64rem;
-    font-weight: 700;
-    letter-spacing: 0.01em;
+    font-size: 10px; /* Native iOS 10pt TabBar label */
+    font-weight: 500;
+    letter-spacing: -0.2px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro", -apple-system-body, sans-serif;
     color: inherit;
     white-space: nowrap;
-    line-height: 1.1;
-    margin: 0;
+    line-height: 12px;
+    margin-top: 3px;
+    margin-bottom: 0;
     text-align: center;
+    display: block;
+    -webkit-font-smoothing: antialiased;
   }
 
   .nav-item.active {
     color: var(--primary);
   }
 
+  .nav-item.active .nav-label {
+    font-weight: 600;
+  }
+
   .nav-item.nav-item-add {
-    color: #fff;
+    color: #cbd5e1;
   }
 
   .nav-item.nav-item-add .nav-icon {
-    background: linear-gradient(135deg, #f97316, #ea580c);
-    width: 30px;
-    height: 30px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
+    background: linear-gradient(135deg, #f97316, #ea580c);
+    color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.95rem;
-    color: #fff;
-    box-shadow: 0 2px 10px rgba(249, 115, 22, 0.45);
-    margin: 0;
+    box-shadow: 0 2px 8px rgba(249, 115, 22, 0.45);
+  }
+
+  .nav-item.nav-item-add svg {
+    display: block;
   }
 
   .fab-add-bar {
@@ -2288,7 +2315,7 @@ header {
 
   /* Floating locate button: compact 44px circular target button on mobile (like Google/Apple Maps) */
   .fab-locate-float {
-    bottom: calc(74px + env(safe-area-inset-bottom, 0px));
+    bottom: calc(62px + env(safe-area-inset-bottom, 20px));
     right: 14px;
     left: auto;
     width: 44px;
@@ -2312,7 +2339,7 @@ header {
 
   /* Modal optimization on mobile: full scrollability & reachability */
   .modal-backdrop {
-    padding: 10px 10px calc(24px + env(safe-area-inset-bottom, 0px)) 10px;
+    padding: 10px 10px calc(24px + env(safe-area-inset-bottom, 20px)) 10px;
     align-items: flex-start;
   }
 
@@ -2320,9 +2347,9 @@ header {
     max-height: calc(100dvh - 20px);
     max-height: calc(100vh - 20px);
     border-radius: 16px;
-    padding: 18px 16px calc(28px + env(safe-area-inset-bottom, 0px)) 16px;
+    padding: 18px 16px calc(28px + env(safe-area-inset-bottom, 20px)) 16px;
     margin-top: 6px;
-    margin-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    margin-bottom: calc(24px + env(safe-area-inset-bottom, 20px));
   }
 
   .modal-footer {
@@ -2333,8 +2360,8 @@ header {
   .sidebar-drawer {
     width: 100%;
     right: -100%;
-    bottom: calc(62px + env(safe-area-inset-bottom, 0px));
-    height: calc(100% - 62px - env(safe-area-inset-bottom, 0px));
+    bottom: calc(49px + env(safe-area-inset-bottom, 20px));
+    height: calc(100% - 49px - env(safe-area-inset-bottom, 20px));
   }
 
   .baro-kpis {
@@ -2616,7 +2643,7 @@ header {
 /* Floating PWA Install Banner */
 .pwa-install-banner {
   position: fixed;
-  bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(60px + env(safe-area-inset-bottom, 20px));
   left: 12px;
   right: 12px;
   z-index: 9980;
