@@ -4742,6 +4742,21 @@
   function setupSupabaseAuth() {
     if (!supabaseClient || !supabaseClient.auth) return;
 
+    // Check URL params for OAuth return errors or cancellations
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const errDesc = urlParams.get("error_description");
+      if (errDesc) {
+        const cleanErr = decodeURIComponent(errDesc).replace(/\+/g, " ");
+        setTimeout(() => {
+          if (typeof showAppToast === "function") {
+            showAppToast("Błąd logowania", cleanErr, "⚠️");
+          }
+        }, 600);
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    } catch (e) {}
+
     supabaseClient.auth.getSession().then(({ data }) => {
       if (data && data.session && data.session.user) {
         currentUser = data.session.user;
@@ -4905,6 +4920,9 @@
     const regErrorMsg = document.getElementById("reg-error-msg");
     const forgotErrorMsg = document.getElementById("forgot-error-msg");
     const forgotSuccessMsg = document.getElementById("forgot-success-msg");
+    const authSocialWrap = document.getElementById("auth-social-wrap");
+    const btnOauthGoogle = document.getElementById("btn-oauth-google");
+    const btnOauthApple = document.getElementById("btn-oauth-apple");
 
     let selectedAvatar = "🍺";
 
@@ -4913,6 +4931,10 @@
       if (regErrorMsg) regErrorMsg.style.display = "none";
       if (forgotErrorMsg) forgotErrorMsg.style.display = "none";
       if (forgotSuccessMsg) forgotSuccessMsg.style.display = "none";
+
+      if (authSocialWrap) {
+        authSocialWrap.style.display = (tab === "forgot") ? "none" : "flex";
+      }
 
       if (tab === "login") {
         if (tabLogin) tabLogin.classList.add("active");
@@ -4943,6 +4965,61 @@
     }
     if (btnBackToLogin) {
       btnBackToLogin.addEventListener("click", () => showTab("login"));
+    }
+
+    async function handleOAuthSignIn(provider) {
+      if (!supabaseClient || !supabaseClient.auth) {
+        if (typeof showAppToast === "function") {
+          showAppToast("Błąd logowania", "Klient Supabase nie jest gotowy.", "⚠️");
+        }
+        return;
+      }
+
+      const provName = provider === "google" ? "Google" : "Apple";
+      const targetBtn = provider === "google" ? btnOauthGoogle : btnOauthApple;
+
+      if (targetBtn) {
+        targetBtn.disabled = true;
+        targetBtn.style.opacity = "0.7";
+      }
+
+      try {
+        const { data, error } = await supabaseClient.auth.signInWithOAuth({
+          provider: provider,
+          options: {
+            redirectTo: window.location.origin + window.location.pathname
+          }
+        });
+
+        if (error) {
+          throw error;
+        }
+      } catch (err) {
+        console.warn(`OAuth sign in error (${provider}):`, err);
+        let msg = err.message || `Błąd logowania przez ${provName}.`;
+        if (msg.includes("provider is not enabled") || msg.includes("Unsupported provider")) {
+          msg = `Logowanie przez ${provName} wymaga włączenia providera w panelu Supabase (Authentication → Providers).`;
+        }
+        if (typeof showAppToast === "function") {
+          showAppToast(`Logowanie ${provName}`, msg, "⚠️");
+        }
+        if (loginErrorMsg) {
+          loginErrorMsg.textContent = msg;
+          loginErrorMsg.style.display = "block";
+        }
+      } finally {
+        if (targetBtn) {
+          targetBtn.disabled = false;
+          targetBtn.style.opacity = "1";
+        }
+      }
+    }
+
+    if (btnOauthGoogle) {
+      btnOauthGoogle.addEventListener("click", () => handleOAuthSignIn("google"));
+    }
+    if (btnOauthApple) {
+      btnOauthApple.addEventListener("click", () => handleOAuthSignIn("apple"));
     }
 
     function openModalWindow(defaultTab = "login") {
