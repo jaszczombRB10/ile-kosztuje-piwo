@@ -90,6 +90,7 @@ module.exports = async (req, res) => {
           email_confirm: true,
           user_metadata: {
             username: cleanUser,
+            username_custom: true,
             display_name: displayName || cleanUser,
             avatar_icon: avatarIcon || "🍺"
           }
@@ -350,6 +351,73 @@ module.exports = async (req, res) => {
       }
 
       return res.status(200).json({ success: true, message: "Profil zsynchronizowany pomyślnie." });
+    }
+
+    // =========================================================================
+    // 9. Set / Change Username (e.g. after Google OAuth or in settings)
+    // =========================================================================
+    if (action === "set-username") {
+      const { userId, username, displayName, avatarIcon } = payload || {};
+      if (!userId || !username) {
+        return res.status(400).json({ error: "Brak userId lub nicku." });
+      }
+
+      const cleanUser = String(username).trim().toLowerCase().replace(/^@/, "");
+      if (!/^[a-z0-9_]{3,20}$/.test(cleanUser)) {
+        return res.status(400).json({ error: "Nick musi mieć 3-20 znaków (małe litery, cyfry lub _)." });
+      }
+
+      // Check if username is already taken by someone else
+      const checkRes = await fetch(`${SUPABASE_URL}/rest/v1/profiles?username=eq.${encodeURIComponent(cleanUser)}&id=neq.${encodeURIComponent(userId)}&select=id`, { headers });
+      if (checkRes.ok) {
+        const existing = await checkRes.json();
+        if (Array.isArray(existing) && existing.length > 0) {
+          return res.status(400).json({ error: "Ten nick jest już zajęty. Wybierz inny." });
+        }
+      }
+
+      // Update in profiles table (upsert)
+      try {
+        const updateData = {
+          id: userId,
+          username: cleanUser,
+          updated_at: new Date().toISOString()
+        };
+        if (displayName) updateData.display_name = displayName;
+        if (avatarIcon) updateData.avatar_icon = avatarIcon;
+
+        await fetch(`${SUPABASE_URL}/rest/v1/profiles`, {
+          method: "POST",
+          headers: { ...headers, "Prefer": "resolution=merge-duplicates" },
+          body: JSON.stringify(updateData)
+        });
+      } catch (e) {
+        console.warn("Profiles upsert note:", e);
+      }
+
+      // Update auth user metadata via Admin API
+      try {
+        await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(userId)}`, {
+          method: "PUT",
+          headers,
+          body: JSON.stringify({
+            user_metadata: {
+              username: cleanUser,
+              username_custom: true,
+              display_name: displayName || cleanUser,
+              avatar_icon: avatarIcon || "🍺"
+            }
+          })
+        });
+      } catch (e) {
+        console.warn("Admin metadata update note:", e);
+      }
+
+      return res.status(200).json({
+        success: true,
+        username: cleanUser,
+        message: "Twój nick został pomyślnie zapisany!"
+      });
     }
 
     return res.status(400).json({ error: `Nieznana akcja API: ${action}` });

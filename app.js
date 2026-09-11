@@ -4685,6 +4685,7 @@
 
     // Initialize Auth & Social Modals
     initAuthModal();
+    initOnboardingUsernameModal();
     initProfileModal();
     initCommunityModal();
     initPublicProfileModal();
@@ -4838,13 +4839,25 @@
       currentProfile = {
         id: currentUser.id,
         username: fallbackUsername,
-        display_name: meta.display_name || fallbackUsername,
+        display_name: meta.display_name || meta.full_name || meta.name || fallbackUsername,
         avatar_icon: meta.avatar_icon || "🍺",
         bio: "Warszawski poszukiwacz dobrego i taniego piwa 🍻",
         visited_venues: visitedVenues,
         favorite_venues: favoriteVenues
       };
       syncUserDataToCloud();
+    }
+
+    // Check if user needs to choose a custom username (e.g. after first Google OAuth login)
+    const userMeta = currentUser.user_metadata || {};
+    const hasCustomUsername = userMeta.username_custom === true ||
+      (currentProfile && currentProfile.username_custom === true) ||
+      localStorage.getItem("poilepiwko_username_custom_" + currentUser.id) === "true";
+
+    if (!hasCustomUsername && typeof window.__openOnboardingUsername === "function") {
+      setTimeout(() => {
+        window.__openOnboardingUsername(currentUser);
+      }, 400);
     }
 
     updateAuthUI();
@@ -5284,6 +5297,191 @@
     }
   }
 
+  function initOnboardingUsernameModal() {
+    const modal = document.getElementById("onboarding-username-modal");
+    const form = document.getElementById("form-onboarding-username");
+    const usernameInput = document.getElementById("onboarding-username");
+    const usernameHint = document.getElementById("onboarding-username-hint");
+    const displayNameInput = document.getElementById("onboarding-display-name");
+    const avatarPicker = document.getElementById("onboarding-avatar-picker");
+    const errorMsg = document.getElementById("onboarding-error-msg");
+    const submitBtn = document.getElementById("btn-submit-onboarding");
+
+    let selectedAvatar = "🍺";
+
+    if (avatarPicker) {
+      const btns = avatarPicker.querySelectorAll(".avatar-option");
+      btns.forEach(btn => {
+        btn.addEventListener("click", () => {
+          btns.forEach(b => b.classList.remove("selected"));
+          btn.classList.add("selected");
+          selectedAvatar = btn.getAttribute("data-avatar") || "🍺";
+        });
+      });
+    }
+
+    // Debounced username check
+    let debounceTimer = null;
+    if (usernameInput) {
+      usernameInput.addEventListener("input", () => {
+        const val = usernameInput.value.trim().toLowerCase().replace(/^@/, "");
+        usernameInput.value = val;
+        clearTimeout(debounceTimer);
+        if (!val) {
+          if (usernameHint) {
+            usernameHint.textContent = "3-20 liter, cyfr lub podkreślenie (_)";
+            usernameHint.style.color = "var(--text-muted)";
+          }
+          return;
+        }
+        if (!/^[a-z0-9_]{3,20}$/.test(val)) {
+          if (usernameHint) {
+            usernameHint.textContent = "Nick musi mieć 3-20 znaków (małe litery, cyfry, _)";
+            usernameHint.style.color = "#f87171";
+          }
+          return;
+        }
+
+        if (usernameHint) {
+          usernameHint.textContent = "Sprawdzanie dostępności...";
+          usernameHint.style.color = "var(--text-muted)";
+        }
+
+        debounceTimer = setTimeout(async () => {
+          try {
+            const res = await fetch("/api/auth", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                action: "check-username",
+                payload: { username: val }
+              })
+            });
+            const data = await res.json();
+            if (usernameHint) {
+              if (data.available) {
+                usernameHint.textContent = `✓ ${data.message || "Nick jest wolny!"}`;
+                usernameHint.style.color = "#4ade80";
+              } else {
+                usernameHint.textContent = `✕ ${data.message || "Nick jest już zajęty."}`;
+                usernameHint.style.color = "#f87171";
+              }
+            }
+          } catch (e) {
+            if (usernameHint) {
+              usernameHint.textContent = "Nie udało się sprawdzić nicku.";
+              usernameHint.style.color = "var(--text-muted)";
+            }
+          }
+        }, 350);
+      });
+    }
+
+    function openOnboarding(user) {
+      if (!modal || !user) return;
+      const meta = user.user_metadata || {};
+      const fallbackName = meta.full_name || meta.name || meta.display_name || "";
+      const suggestedUser = (meta.username || (user.email ? user.email.split("@")[0] : "piwosz")).toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 20);
+
+      if (usernameInput) usernameInput.value = suggestedUser;
+      if (displayNameInput) displayNameInput.value = fallbackName || suggestedUser;
+      if (errorMsg) errorMsg.style.display = "none";
+
+      modal.style.display = "flex";
+      modal.classList.add("active");
+    }
+
+    window.__openOnboardingUsername = openOnboarding;
+
+    if (form) {
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (!currentUser) return;
+
+        const valUser = usernameInput ? usernameInput.value.trim().toLowerCase().replace(/^@/, "") : "";
+        const valName = displayNameInput ? displayNameInput.value.trim() : valUser;
+
+        if (!valUser || !/^[a-z0-9_]{3,20}$/.test(valUser)) {
+          if (errorMsg) {
+            errorMsg.textContent = "Wpisz poprawny nick (3-20 znaków: małe litery, cyfry lub _).";
+            errorMsg.style.display = "block";
+          }
+          return;
+        }
+
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = "<span>⏳ Zapisywanie...</span>";
+        }
+        if (errorMsg) errorMsg.style.display = "none";
+
+        try {
+          // 1. Call API to set username
+          const res = await fetch("/api/auth", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "set-username",
+              payload: {
+                userId: currentUser.id,
+                username: valUser,
+                displayName: valName,
+                avatarIcon: selectedAvatar
+              }
+            })
+          });
+
+          const data = await res.json();
+          if (!res.ok || !data.success) {
+            throw new Error(data.error || "Nie udało się zapisać nicku.");
+          }
+
+          // 2. Update local profile
+          if (currentProfile) {
+            currentProfile.username = valUser;
+            currentProfile.display_name = valName;
+            currentProfile.avatar_icon = selectedAvatar;
+            currentProfile.username_custom = true;
+          }
+
+          // 3. Mark as custom in Supabase auth user
+          if (supabaseClient && supabaseClient.auth) {
+            await supabaseClient.auth.updateUser({
+              data: {
+                username: valUser,
+                username_custom: true,
+                display_name: valName,
+                avatar_icon: selectedAvatar
+              }
+            }).catch(e => console.warn("updateUser note:", e));
+          }
+
+          try {
+            localStorage.setItem("poilepiwko_username_custom_" + currentUser.id, "true");
+          } catch (e) {}
+
+          modal.classList.remove("active");
+          modal.style.display = "none";
+
+          updateAuthUI();
+          if (typeof showAppToast === "function") {
+            showAppToast(`Witaj, @${valUser}! 🍻`, "Twój profil piwosza został pomyślnie skonfigurowany.", "🎉");
+          }
+        } catch (err) {
+          if (errorMsg) {
+            errorMsg.textContent = err.message || "Błąd zapisu.";
+            errorMsg.style.display = "block";
+          }
+        } finally {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = "<span>🎉 Zapisz i dołącz do mapy</span>";
+          }
+        }
+      });
+    }
+  }
+
   function initProfileModal() {
     const modal = document.getElementById("profile-modal");
     const btnClose = document.getElementById("btn-close-profile");
@@ -5326,11 +5524,13 @@
       if (valDistrict) valDistrict.textContent = currentProfile.favorite_district || "Cała Warszawa";
 
       // Populate edit form
+      const editUser = document.getElementById("edit-username");
       const editName = document.getElementById("edit-display-name");
       const editBio = document.getElementById("edit-bio");
       const editBeer = document.getElementById("edit-fav-beer");
       const editDist = document.getElementById("edit-fav-district");
 
+      if (editUser) editUser.value = currentProfile.username || "";
       if (editName) editName.value = currentProfile.display_name || "";
       if (editBio) editBio.value = currentProfile.bio || "";
       if (editBeer) editBeer.value = currentProfile.favorite_beer || "";
@@ -5425,12 +5625,40 @@
 
     // Form Edit Submit
     if (formEdit) {
-      formEdit.addEventListener("submit", (e) => {
+      formEdit.addEventListener("submit", async (e) => {
         e.preventDefault();
+        const editUserInput = document.getElementById("edit-username");
+        const editUsername = editUserInput ? editUserInput.value.trim().toLowerCase().replace(/^@/, "") : "";
         const editName = document.getElementById("edit-display-name").value.trim();
         const editBio = document.getElementById("edit-bio").value.trim();
         const editBeer = document.getElementById("edit-fav-beer").value.trim();
         const editDist = document.getElementById("edit-fav-district").value.trim();
+
+        if (editUsername && currentProfile && editUsername !== currentProfile.username) {
+          try {
+            const uRes = await fetch("/api/auth", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                action: "set-username",
+                payload: {
+                  userId: currentUser.id,
+                  username: editUsername,
+                  displayName: editName,
+                  avatarIcon: editSelectedAvatar
+                }
+              })
+            });
+            const uData = await uRes.json();
+            if (uRes.ok && uData.success) {
+              currentProfile.username = editUsername;
+            } else {
+              showAppToast("Uwaga", uData.error || "Nie udało się zmienić nicku.", "⚠️");
+            }
+          } catch (err) {
+            console.warn("Change username error:", err);
+          }
+        }
 
         syncUserDataToCloud({
           displayName: editName,

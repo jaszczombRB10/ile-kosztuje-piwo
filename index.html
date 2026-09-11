@@ -1355,6 +1355,58 @@
     </div>
   </div>
 
+  <!-- Modal: Wybór nicku po pierwszym logowaniu przez Google -->
+  <div class="modal-backdrop" id="onboarding-username-modal" style="display:none; z-index: 10050;">
+    <div class="modal-card auth-modal-card">
+      <div class="modal-head">
+        <div class="modal-head-title">
+          <div class="modal-icon-badge">🍻</div>
+          <div>
+            <h2>Witaj w poilepiwko!</h2>
+            <p class="modal-head-sub">Wybierz swój unikalny nick i awatar piwosza</p>
+          </div>
+        </div>
+      </div>
+
+      <form id="form-onboarding-username" class="auth-form" style="margin-top: 14px;">
+        <div class="form-group">
+          <label for="onboarding-username" class="form-label">Twój unikalny nick (@username)</label>
+          <div class="input-with-prefix">
+            <span class="input-prefix">@</span>
+            <input type="text" id="onboarding-username" required placeholder="np. piwosz_mokotow" autocomplete="username" maxlength="20" />
+          </div>
+          <div class="input-hint" id="onboarding-username-hint">3-20 liter, cyfr lub podkreślenie (_)</div>
+        </div>
+
+        <div class="form-group">
+          <label for="onboarding-display-name" class="form-label">Nazwa wyświetlana / Imię</label>
+          <input type="text" id="onboarding-display-name" class="form-input" required placeholder="np. Krystian" maxlength="30" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Wybierz swój awatar</label>
+          <div class="avatar-picker" id="onboarding-avatar-picker">
+            <button type="button" class="avatar-option selected" data-avatar="🍺">🍺</button>
+            <button type="button" class="avatar-option" data-avatar="🍻">🍻</button>
+            <button type="button" class="avatar-option" data-avatar="🦁">🦁</button>
+            <button type="button" class="avatar-option" data-avatar="🧜‍♀️">🧜‍♀️</button>
+            <button type="button" class="avatar-option" data-avatar="👑">👑</button>
+            <button type="button" class="avatar-option" data-avatar="🦊">🦊</button>
+            <button type="button" class="avatar-option" data-avatar="⚡">⚡</button>
+            <button type="button" class="avatar-option" data-avatar="🕶️">🕶️</button>
+            <button type="button" class="avatar-option" data-avatar="🦉">🦉</button>
+          </div>
+        </div>
+
+        <div class="auth-error-msg" id="onboarding-error-msg" style="display:none;"></div>
+
+        <button type="submit" class="btn-primary btn-auth-submit" id="btn-submit-onboarding" style="margin-top: 6px;">
+          <span>🎉 Zapisz i dołącz do mapy</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
   <!-- User Profile Modal -->
   <div class="modal-backdrop" id="profile-modal">
     <div class="modal-card modal-card-wide profile-modal-card">
@@ -1418,6 +1470,14 @@
 
       <!-- Collapsible Profile Edit Form -->
       <form id="form-edit-profile" class="profile-edit-form" style="display:none;">
+        <div class="form-group">
+          <label for="edit-username" class="form-label">Twój unikalny nick (@username)</label>
+          <div class="input-with-prefix">
+            <span class="input-prefix">@</span>
+            <input type="text" id="edit-username" required placeholder="twoj_nick" autocomplete="username" maxlength="20" />
+          </div>
+          <div class="input-hint" id="edit-username-hint">3-20 liter, cyfr lub podkreślenie (_)</div>
+        </div>
         <div class="form-group">
           <label for="edit-display-name" class="form-label">Nazwa wyświetlana</label>
           <input type="text" id="edit-display-name" class="form-input" required maxlength="30" />
