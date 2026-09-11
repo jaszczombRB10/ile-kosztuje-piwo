@@ -123,8 +123,69 @@
 
   <!-- App Body: Map & Controls -->
   <div class="app-body">
-    
-    <!-- Floating Map Search & Filters -->
+
+    <!-- Mobile Floating Top Controls (Inspired by VadKostarOlen) -->
+    <div class="mobile-floating-top" id="mobile-floating-top">
+      <button type="button" class="fab-top-btn" id="btn-top-filter" title="Filtruj ceny i lokale">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="4" y1="21" x2="4" y2="14"></line>
+          <line x1="4" y1="10" x2="4" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12" y2="3"></line>
+          <line x1="20" y1="21" x2="20" y2="16"></line>
+          <line x1="20" y1="12" x2="20" y2="3"></line>
+          <line x1="1" y1="14" x2="7" y2="14"></line>
+          <line x1="9" y1="8" x2="15" y2="8"></line>
+          <line x1="17" y1="16" x2="23" y2="16"></line>
+        </svg>
+        <span class="fab-badge-dot" id="top-filter-dot" style="display:none;"></span>
+      </button>
+
+      <button type="button" class="fab-time-pill" id="btn-top-time" title="Aktualny czas w Warszawie · kliknij, aby przełączyć otwarte teraz">
+        <span class="time-pill-clock">🕒</span>
+        <span class="time-pill-val" id="top-time-clock">12:25</span>
+        <span class="time-pill-edit">✎</span>
+      </button>
+
+      <button type="button" class="fab-top-btn" id="btn-top-search" title="Szukaj lokalu lub piwa">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Mobile Search Sheet / Quick Results -->
+    <div class="mobile-search-sheet" id="mobile-search-sheet" style="display:none;">
+      <div class="mobile-search-bar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" id="mobile-search-input" placeholder="Szukaj baru, ulicy, piwa (np. Pawilony, Namysłów)..." autocomplete="off" />
+        <button type="button" id="btn-close-mobile-search" class="btn-close-search">✕</button>
+      </div>
+      <div class="mobile-search-quick-districts" id="mobile-search-districts">
+        <span class="m-dist-chip active" data-dist="all">Wszystkie</span>
+        <span class="m-dist-chip" data-dist="Pawilony">🔥 Pawilony</span>
+        <span class="m-dist-chip" data-dist="Bulwary">🌊 Bulwary</span>
+        <span class="m-dist-chip" data-dist="Śródmieście">Śródmieście</span>
+        <span class="m-dist-chip" data-dist="Mokotów">Mokotów</span>
+        <span class="m-dist-chip" data-dist="Wola">Wola</span>
+        <span class="m-dist-chip" data-dist="Praga Północ">Praga</span>
+      </div>
+      <div class="mobile-search-results" id="mobile-search-results">
+        <!-- Live matching venues rendered here -->
+      </div>
+    </div>
+
+    <!-- Floating Add Bar Pill (Bottom Left) -->
+    <button type="button" class="floating-add-pill" id="btn-floating-add" title="Dodaj nowy bar lub cenę" onclick="window.__openAddModal ? window.__openAddModal() : null">
+      <span class="pill-plus">+</span>
+      <span>ADD</span>
+    </button>
+
+    <!-- Floating Map Search & Filters (Desktop) -->
     <div class="map-overlay">
       <div class="overlay-panel">
         <div class="search-row">
@@ -844,25 +905,67 @@
 
   <!-- Mobile Bottom Navigation Bar (Native App Dock) -->
   <nav class="mobile-bottom-nav" id="mobile-bottom-nav" aria-label="Nawigacja dolna">
-    <button type="button" class="nav-item" id="nav-btn-compass" data-target="compass">
-      <span class="nav-icon">🧭</span>
-      <span class="nav-label">Kompas</span>
+    <button type="button" class="nav-item" id="nav-btn-explore" data-target="explore" title="Odkrywaj i szukaj barów">
+      <span class="nav-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </span>
+      <span class="nav-label">EXPLORE</span>
     </button>
-    <button type="button" class="nav-item" id="nav-btn-pubcrawl" data-target="pubcrawl">
-      <span class="nav-icon">🍻</span>
-      <span class="nav-label">Pub Crawl</span>
+    <button type="button" class="nav-item" id="nav-btn-ranking" data-target="ranking" title="Ranking i Znajomi">
+      <span class="nav-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+      </span>
+      <span class="nav-label">FRIENDS</span>
     </button>
-    <button type="button" class="nav-item" id="nav-btn-ranking" data-target="ranking">
-      <span class="nav-icon">🏆</span>
-      <span class="nav-label">Ranking</span>
+    <button type="button" class="nav-item nav-item-hero" id="nav-btn-hero-compass" data-target="compass" title="Piwny Kompas – Radar GPS na 1 klik">
+      <div class="hero-ring">
+        <svg width="32" height="32" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6 13L10 4L16 10" stroke="#f97316" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M30 13L26 4L20 10" stroke="#f97316" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M8 11L10 6L14 10" stroke="#fb923c" stroke-width="1.2" stroke-linecap="round"/>
+          <path d="M28 11L26 6L22 10" stroke="#fb923c" stroke-width="1.2" stroke-linecap="round"/>
+          <path d="M5 16C5 25 10 31 18 31C26 31 31 25 31 16C31 12 28 10 18 10C8 10 5 12 5 16Z" stroke="#f97316" stroke-width="2.2" stroke-linejoin="round"/>
+          <rect x="7" y="14" width="10" height="7" rx="3" fill="#13211f" stroke="#f97316" stroke-width="2"/>
+          <rect x="19" y="14" width="10" height="7" rx="3" fill="#13211f" stroke="#f97316" stroke-width="2"/>
+          <path d="M17 17H19" stroke="#f97316" stroke-width="2" stroke-linecap="round"/>
+          <path d="M5 16L7 17" stroke="#f97316" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M31 16L29 17" stroke="#f97316" stroke-width="1.8" stroke-linecap="round"/>
+          <line x1="9" y1="16" x2="11" y2="19" stroke="#fb923c" stroke-width="1.2" stroke-linecap="round"/>
+          <line x1="21" y1="16" x2="23" y2="19" stroke="#fb923c" stroke-width="1.2" stroke-linecap="round"/>
+          <path d="M16.5 24C16.5 24 17.2 25 18 25C18.8 25 19.5 24 19.5 24" stroke="#f97316" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M18 25V27M18 27C16 27 14.5 26.2 14.5 26.2M18 27C20 27 21.5 26.2 21.5 26.2" stroke="#f97316" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </div>
     </button>
-    <button type="button" class="nav-item" id="nav-btn-barometer" data-target="barometer">
-      <span class="nav-icon">📊</span>
-      <span class="nav-label">Barometr</span>
+    <button type="button" class="nav-item" id="nav-btn-pubcrawl" data-target="pubcrawl" title="Trasa barowa i gry">
+      <span class="nav-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+          <path d="M16 8h.01"></path>
+          <path d="M8 8h.01"></path>
+          <path d="M8 16h.01"></path>
+          <path d="M16 16h.01"></path>
+          <path d="M12 12h.01"></path>
+        </svg>
+      </span>
+      <span class="nav-label">GAMES</span>
     </button>
-    <button type="button" class="nav-item nav-item-add" id="nav-btn-add" data-target="add" onclick="window.__openAddModal ? window.__openAddModal() : null">
-      <span class="nav-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="4" x2="12" y2="20"></line><line x1="4" y1="12" x2="20" y2="12"></line></svg></span>
-      <span class="nav-label">Dodaj bar</span>
+    <button type="button" class="nav-item" id="nav-btn-profile" data-target="profile" title="Mój profil i konto">
+      <span class="nav-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+      </span>
+      <span class="nav-label">PROFILE</span>
     </button>
   </nav>
 

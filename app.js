@@ -844,6 +844,15 @@
       if (count > 0) btn.classList.add("has-filters");
       else btn.classList.remove("has-filters");
     }
+    const topDot = document.getElementById("top-filter-dot");
+    if (topDot) {
+      topDot.style.display = count > 0 ? "block" : "none";
+    }
+    const btnTopFilter = document.getElementById("btn-top-filter");
+    if (btnTopFilter) {
+      if (count > 0) btnTopFilter.classList.add("has-filters");
+      else btnTopFilter.classList.remove("has-filters");
+    }
   }
 
   function syncQuickChipsWithFilterState() {
@@ -873,6 +882,11 @@
       if (isActive) c.classList.add("active");
       else c.classList.remove("active");
     });
+    const btnTopTime = document.getElementById("btn-top-time");
+    if (btnTopTime) {
+      if (filterState.openNow) btnTopTime.classList.add("active-open-now");
+      else btnTopTime.classList.remove("active-open-now");
+    }
     updateFilterBadge();
   }
 
@@ -1387,6 +1401,8 @@
     if (commModal) commModal.style.display = "none";
     const pubProfModal = document.getElementById("public-profile-modal");
     if (pubProfModal) pubProfModal.style.display = "none";
+    const mobileSearchSheet = document.getElementById("mobile-search-sheet");
+    if (mobileSearchSheet) mobileSearchSheet.style.display = "none";
 
     // If venue is hidden by current district or filter chip, reset to show all so marker exists
     if (!activeMarkers.some(m => m._venueData && m._venueData.id === venue.id)) {
@@ -2597,6 +2613,7 @@
     const chipOpenCompass = document.getElementById("chip-open-compass");
     const btnCompassFloat = document.getElementById("btn-compass-float");
     const navBtnCompass = document.getElementById("nav-btn-compass");
+    const navBtnHeroCompass = document.getElementById("nav-btn-hero-compass");
 
     let currentCompassFilter = "cheapest"; // "cheapest" | "nearest" | "craft" | "open"
     let currentCompassTargets = [];
@@ -2911,6 +2928,9 @@
     }
     if (navBtnCompass) {
       navBtnCompass.addEventListener("click", openCompass);
+    }
+    if (navBtnHeroCompass && navBtnHeroCompass !== navBtnCompass) {
+      navBtnHeroCompass.addEventListener("click", openCompass);
     }
 
     // Filter Pills
@@ -3962,14 +3982,17 @@
       }
     });
 
-    // Live Clock for Header (Vad Kostar Ölen Style)
+    // Live Clock for Header & Mobile Top Pill (Vad Kostar Ölen Style)
     function updateLiveClock() {
-      const clockEl = document.getElementById("live-clock-time");
-      if (!clockEl) return;
       const now = new Date();
       const hh = String(now.getHours()).padStart(2, "0");
       const mm = String(now.getMinutes()).padStart(2, "0");
-      clockEl.textContent = `${hh}:${mm}`;
+
+      const clockEl = document.getElementById("live-clock-time");
+      if (clockEl) clockEl.textContent = `${hh}:${mm}`;
+
+      const topClockEl = document.getElementById("top-time-clock");
+      if (topClockEl) topClockEl.textContent = `${hh}:${mm}`;
 
       // Refresh Happy Hours modal countdowns if active
       const hhModal = document.getElementById("happyhour-modal");
@@ -3998,6 +4021,188 @@
       });
     }
 
+    // Mobile Top Floating Controls & Search Sheet (Ultra-Clean Full-Bleed Map Experience)
+    function initMobileControls() {
+      // 1. Top Filter Modal Button
+      const btnTopFilter = document.getElementById("btn-top-filter");
+      if (btnTopFilter) {
+        btnTopFilter.addEventListener("click", (e) => {
+          e.preventDefault();
+          openFilterModal();
+        });
+      }
+
+      // 2. Top Time Pill (Quick toggle "Otwarte teraz")
+      const btnTopTime = document.getElementById("btn-top-time");
+      if (btnTopTime) {
+        btnTopTime.addEventListener("click", () => {
+          filterState.openNow = !filterState.openNow;
+          syncQuickChipsWithFilterState();
+          renderMarkers();
+          if (typeof showAppToast === "function") {
+            showAppToast(
+              filterState.openNow ? "Otwarte teraz" : "Wszystkie lokale",
+              filterState.openNow ? "Pokazuję bary otwarte o tej porze" : "Pokazuję wszystkie lokale na mapie",
+              "🕒"
+            );
+          }
+        });
+      }
+
+      // 3. Mobile Search Sheet & Live Search
+      const btnTopSearch = document.getElementById("btn-top-search");
+      const mobileSearchSheet = document.getElementById("mobile-search-sheet");
+      const mobileSearchInput = document.getElementById("mobile-search-input");
+      const btnCloseMobileSearch = document.getElementById("btn-close-mobile-search");
+      const mobileSearchResults = document.getElementById("mobile-search-results");
+      const mobileDistChips = document.querySelectorAll("#mobile-search-districts .m-dist-chip");
+
+      let mobileSelectedDistrict = "all";
+
+      function openMobileSearchSheet() {
+        if (!mobileSearchSheet) return;
+        mobileSearchSheet.style.display = "flex";
+        renderMobileSearchResults();
+        if (mobileSearchInput) {
+          setTimeout(() => {
+            mobileSearchInput.focus();
+            mobileSearchInput.select();
+          }, 120);
+        }
+      }
+
+      function closeMobileSearchSheet() {
+        if (!mobileSearchSheet) return;
+        mobileSearchSheet.style.display = "none";
+        if (window.__clearBottomNavActive) window.__clearBottomNavActive();
+      }
+
+      window.__openMobileSearch = openMobileSearchSheet;
+      window.__closeMobileSearch = closeMobileSearchSheet;
+
+      if (btnTopSearch) {
+        btnTopSearch.addEventListener("click", () => {
+          if (mobileSearchSheet && mobileSearchSheet.style.display === "flex") {
+            closeMobileSearchSheet();
+          } else {
+            openMobileSearchSheet();
+          }
+        });
+      }
+
+      if (btnCloseMobileSearch) {
+        btnCloseMobileSearch.addEventListener("click", closeMobileSearchSheet);
+      }
+
+      // District filter chips inside search sheet
+      mobileDistChips.forEach(chip => {
+        chip.addEventListener("click", () => {
+          mobileDistChips.forEach(c => c.classList.remove("active"));
+          chip.classList.add("active");
+          mobileSelectedDistrict = chip.getAttribute("data-dist") || "all";
+          renderMobileSearchResults();
+        });
+      });
+
+      function renderMobileSearchResults() {
+        if (!mobileSearchResults) return;
+        const q = (mobileSearchInput ? mobileSearchInput.value : "").trim().toLowerCase();
+
+        let matches = allVenues.filter(venue => {
+          // District check
+          if (mobileSelectedDistrict !== "all") {
+            const vDist = (venue.district || "").toLowerCase();
+            const targetDist = mobileSelectedDistrict.toLowerCase();
+            if (mobileSelectedDistrict === "Pawilony") {
+              if (vDist !== "pawilony") return false;
+            } else if (mobileSelectedDistrict === "Bulwary") {
+              if (!vDist.includes("bulwary")) return false;
+            } else {
+              if (vDist !== targetDist && !vDist.includes(targetDist)) return false;
+            }
+          }
+
+          // Search query check
+          if (q) {
+            const nameMatch = venue.name && venue.name.toLowerCase().includes(q);
+            const oldNameMatch = venue.old_name && venue.old_name.toLowerCase().includes(q);
+            const distMatch = venue.district && venue.district.toLowerCase().includes(q);
+            const addrMatch = venue.address && venue.address.toLowerCase().includes(q);
+            const beerMatch = venue.beer_name && venue.beer_name.toLowerCase().includes(q);
+            if (!nameMatch && !oldNameMatch && !distMatch && !addrMatch && !beerMatch) {
+              return false;
+            }
+          }
+
+          return true;
+        });
+
+        // Sort: lowest price first
+        matches.sort((a, b) => {
+          const pA = a.beer_price_pln != null ? a.beer_price_pln : 999;
+          const pB = b.beer_price_pln != null ? b.beer_price_pln : 999;
+          return pA - pB;
+        });
+
+        const topMatches = matches.slice(0, 30);
+
+        if (topMatches.length === 0) {
+          mobileSearchResults.innerHTML = `
+            <div style="text-align:center; padding: 24px 12px; color: #94a3b8; font-size: 0.85rem;">
+              Brak lokali dla wybranego filtra. Spróbuj innej nazwy lub dzielnicy.
+            </div>`;
+          return;
+        }
+
+        mobileSearchResults.innerHTML = topMatches.map(v => {
+          const priceDisplay = v.beer_price_pln != null ? `${v.beer_price_pln.toFixed(2)} zł` : "–";
+          const subText = `${escapeHtml(v.address || v.district || '')}${v.beer_name ? ' · ' + escapeHtml(v.beer_name) : ''}`;
+          return `
+            <div class="m-search-item" data-id="${escapeHtml(v.id)}">
+              <div class="m-search-item-info">
+                <div class="m-search-name">${escapeHtml(v.name)}</div>
+                <div class="m-search-sub">${subText}</div>
+              </div>
+              <div class="m-search-price">${priceDisplay}</div>
+            </div>`;
+        }).join("");
+
+        mobileSearchResults.querySelectorAll(".m-search-item").forEach(item => {
+          item.addEventListener("click", () => {
+            const id = item.getAttribute("data-id");
+            if (id && window.__zoomToVenue) {
+              closeMobileSearchSheet();
+              window.__zoomToVenue(id);
+            }
+          });
+        });
+      }
+
+      if (mobileSearchInput) {
+        mobileSearchInput.addEventListener("input", renderMobileSearchResults);
+        mobileSearchInput.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            const firstItem = mobileSearchResults.querySelector(".m-search-item");
+            if (firstItem) {
+              firstItem.click();
+            }
+          }
+        });
+      }
+
+      // 4. Floating Add Bar Pill
+      const btnFloatingAdd = document.getElementById("btn-floating-add");
+      if (btnFloatingAdd) {
+        btnFloatingAdd.addEventListener("click", (e) => {
+          e.preventDefault();
+          if (typeof openAddModal === "function") openAddModal();
+          else if (window.__openAddModal) window.__openAddModal();
+        });
+      }
+    }
+    initMobileControls();
+
     // Mobile Bottom Navigation Bar Actions (Native App Dock)
     const bottomNavItems = document.querySelectorAll(".mobile-bottom-nav .nav-item");
     function clearBottomNavActive() {
@@ -4011,34 +4216,67 @@
         clearBottomNavActive();
         item.classList.add("active");
 
-        if (target === "compass") {
+        if (target === "explore") {
+          const mSearchSheet = document.getElementById("mobile-search-sheet");
+          if (mSearchSheet && mSearchSheet.style.display === "flex") {
+            mSearchSheet.style.display = "none";
+            item.classList.remove("active");
+          } else {
+            if (window.__openMobileSearch) window.__openMobileSearch();
+          }
+        } else if (target === "compass") {
           if (drawer) drawer.classList.remove("open");
           if (baroModal) baroModal.classList.remove("active");
           closeModal();
           if (window.__closePubCrawl) window.__closePubCrawl();
+          if (window.__closeMobileSearch) window.__closeMobileSearch();
           if (window.__openCompass) window.__openCompass();
         } else if (target === "pubcrawl") {
           if (drawer) drawer.classList.remove("open");
           if (baroModal) baroModal.classList.remove("active");
           closeModal();
           if (window.__closeCompass) window.__closeCompass();
+          if (window.__closeMobileSearch) window.__closeMobileSearch();
           if (window.__openPubCrawl) window.__openPubCrawl();
         } else if (target === "ranking") {
           if (baroModal) baroModal.classList.remove("active");
           if (window.__closePubCrawl) window.__closePubCrawl();
           if (window.__closeCompass) window.__closeCompass();
+          if (window.__closeMobileSearch) window.__closeMobileSearch();
           if (tabCheapest) tabCheapest.click();
           if (drawer) drawer.classList.add("open");
+        } else if (target === "profile") {
+          if (drawer) drawer.classList.remove("open");
+          if (baroModal) baroModal.classList.remove("active");
+          closeModal();
+          if (window.__closePubCrawl) window.__closePubCrawl();
+          if (window.__closeCompass) window.__closeCompass();
+          if (window.__closeMobileSearch) window.__closeMobileSearch();
+          if (currentUser && currentProfile) {
+            if (window.__openMyProfile) window.__openMyProfile();
+          } else {
+            if (window.__openAuth) {
+              window.__openAuth();
+            } else {
+              const authModal = document.getElementById("auth-modal");
+              if (authModal) {
+                authModal.classList.add("active");
+                authModal.style.display = "flex";
+              }
+            }
+          }
         } else if (target === "barometer") {
           if (drawer) drawer.classList.remove("open");
           if (window.__closePubCrawl) window.__closePubCrawl();
           if (window.__closeCompass) window.__closeCompass();
+          if (window.__closeMobileSearch) window.__closeMobileSearch();
           if (btnBarometer) btnBarometer.click();
         } else if (target === "add") {
           if (drawer) drawer.classList.remove("open");
           if (baroModal) baroModal.classList.remove("active");
           if (window.__closePubCrawl) window.__closePubCrawl();
           if (window.__closeCompass) window.__closeCompass();
+          if (window.__closeMobileSearch) window.__closeMobileSearch();
           openAddModal();
           setTimeout(() => item.classList.remove("active"), 250);
         }

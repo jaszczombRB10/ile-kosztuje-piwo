@@ -2067,6 +2067,13 @@ header {
   cursor: pointer;
 }
 
+/* Mobile Floating Controls (Hidden on desktop) */
+.mobile-floating-top,
+.floating-add-pill,
+.mobile-search-sheet {
+  display: none;
+}
+
 /* Mobile Bottom Navigation Bar (Hidden on desktop) */
 .mobile-bottom-nav {
   display: none;
@@ -2076,74 +2083,220 @@ header {
 /* Mobile Responsive Overhaul (Smartphones < 640px)                          */
 /* ========================================================================== */
 @media (max-width: 640px) {
-  /* Top header cleanup - clean, single line, no clipping */
-  .header-actions {
+  /* Clean Full-Bleed Map Layout on Mobile (Inspired by Vad Kostar Ölen) */
+  header,
+  .ticker-bar,
+  .map-overlay,
+  .fab-stack-right,
+  .fab-compass-float,
+  .btn-mobile-search-toggle,
+  .fab-add-bar,
+  .legend-pill,
+  .leaflet-control-zoom {
     display: none !important;
   }
 
-  .header-top {
-    padding: 8px 12px;
-    gap: 8px;
+  .app-body {
+    height: 100vh !important;
+    height: 100dvh !important;
+    overflow: hidden !important;
+    position: relative !important;
   }
 
-  .logo-wrap {
-    gap: 7px;
-    flex-shrink: 0;
-    min-width: 0;
+  #map {
+    position: fixed !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    height: 100dvh !important;
+    z-index: 1 !important;
   }
 
-  .logo-icon {
-    font-size: 22px;
-  }
-
-  .logo-title {
-    font-size: 1.05rem;
-    white-space: nowrap;
-  }
-
-  /* Live clock badge hidden on mobile (device OS clock is right above in the status bar) */
-  .live-clock-badge {
-    display: none !important;
-  }
-
-  .header-center {
-    margin-left: auto;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .badge-legal-18 {
-    padding: 0 8px;
-    height: 34px;
-    box-sizing: border-box;
-    font-size: 0.72rem;
-    border-radius: 9px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    white-space: nowrap;
-  }
-
-  .btn-mobile-search-toggle {
-    display: flex;
-    width: 34px;
-    height: 34px;
-    border-radius: 9px;
-    font-size: 14px;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
-
+  /* Venue Card Popup on mobile */
   .venue-card {
     width: 290px;
     max-width: calc(100vw - 36px);
     padding: 14px 14px 12px 14px;
   }
 
-  /* Native iPhone TabBar (iOS Human Interface Guidelines) */
+  /* Top Floating Glass Controls */
+  .mobile-floating-top {
+    display: flex !important;
+    position: fixed;
+    top: calc(12px + env(safe-area-inset-top, 14px));
+    left: 14px;
+    right: 14px;
+    z-index: 950;
+    align-items: center;
+    justify-content: space-between;
+    pointer-events: none;
+  }
+
+  .mobile-floating-top > * {
+    pointer-events: auto;
+  }
+
+  .fab-top-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(14, 23, 21, 0.85);
+    background: -webkit-linear-gradient(bottom, rgba(12, 20, 18, 0.94), rgba(16, 26, 23, 0.84));
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    color: #cbd5e1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.55);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    -webkit-appearance: none;
+    appearance: none;
+    position: relative;
+    padding: 0;
+  }
+
+  .fab-top-btn:active {
+    transform: scale(0.92);
+    background: rgba(249, 115, 22, 0.25);
+    border-color: #f97316;
+  }
+
+  .fab-top-btn.has-filters {
+    border-color: #f97316;
+    color: #f97316;
+    box-shadow: 0 0 14px rgba(249, 115, 22, 0.45);
+  }
+
+  .fab-badge-dot {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #f97316;
+    border: 1.5px solid #0d1615;
+    box-shadow: 0 0 6px #f97316;
+  }
+
+  .fab-time-pill {
+    background: rgba(14, 23, 21, 0.85);
+    background: -webkit-linear-gradient(bottom, rgba(12, 20, 18, 0.94), rgba(16, 26, 23, 0.84));
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 999px;
+    padding: 7px 16px;
+    font-size: 13px;
+    font-weight: 800;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.55);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    -webkit-appearance: none;
+    appearance: none;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  }
+
+  .fab-time-pill .time-pill-clock {
+    font-size: 15px;
+  }
+
+  .fab-time-pill .time-pill-edit {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-left: 2px;
+  }
+
+  .fab-time-pill:active {
+    transform: scale(0.94);
+  }
+
+  .fab-time-pill.active-open-now {
+    border-color: #22c55e;
+    color: #4ade80;
+    box-shadow: 0 0 14px rgba(34, 197, 94, 0.35);
+  }
+
+  /* Floating Add Bar Pill (Bottom Left) */
+  .floating-add-pill {
+    display: inline-flex !important;
+    position: fixed;
+    bottom: calc(58px + env(safe-area-inset-bottom, 20px));
+    left: 14px;
+    z-index: 920;
+    background: rgba(14, 23, 21, 0.88);
+    background: -webkit-linear-gradient(bottom, rgba(12, 20, 18, 0.94), rgba(16, 26, 23, 0.85));
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 999px;
+    padding: 7px 14px;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    align-items: center;
+    gap: 6px;
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.65);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .floating-add-pill .pill-plus {
+    color: #f97316;
+    font-size: 14px;
+    font-weight: 900;
+    line-height: 1;
+  }
+
+  .floating-add-pill:active {
+    transform: scale(0.92);
+    border-color: #f97316;
+  }
+
+  /* Floating Locate Button (Bottom Right) */
+  .fab-locate-float {
+    bottom: calc(56px + env(safe-area-inset-bottom, 20px)) !important;
+    right: 14px !important;
+    left: auto !important;
+    width: 48px !important;
+    height: 48px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: rgba(14, 23, 21, 0.88) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    border: 2px solid #f97316 !important;
+    box-shadow: 0 0 16px rgba(249, 115, 22, 0.4), 0 4px 16px rgba(0, 0, 0, 0.65) !important;
+    z-index: 920 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+  }
+
+  .fab-locate-float:active {
+    transform: scale(0.92) !important;
+  }
+
+  .fab-locate-float span:not(.locate-icon) {
+    display: none !important;
+  }
+
+  /* Native iPhone TabBar */
   .mobile-bottom-nav {
     display: flex;
     position: fixed;
@@ -2151,7 +2304,6 @@ header {
     left: 0;
     right: 0;
     width: 100%;
-    /* Native iOS TabBar content: 49px + hardware safe area inset */
     height: calc(49px + env(safe-area-inset-bottom, 20px));
     padding-top: 4px;
     padding-bottom: env(safe-area-inset-bottom, 20px);
@@ -2161,7 +2313,7 @@ header {
     background: -webkit-linear-gradient(bottom, rgba(12, 20, 18, 0.95), rgba(16, 26, 23, 0.82));
     backdrop-filter: blur(25px) saturate(190%);
     -webkit-backdrop-filter: blur(25px) saturate(190%);
-    border-top: 0.5px solid rgba(255, 255, 255, 0.16); /* Native Apple 0.5px hairline */
+    border-top: 0.5px solid rgba(255, 255, 255, 0.16);
     z-index: 9990;
     align-items: stretch;
     justify-content: space-around;
@@ -2175,7 +2327,7 @@ header {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start; /* Strict top anchor - prevents any vertical misalignment */
+    justify-content: flex-start;
     height: 44px;
     background: none;
     border: none;
@@ -2208,9 +2360,9 @@ header {
   }
 
   .nav-label {
-    font-size: 10px; /* Native iOS 10pt TabBar label */
-    font-weight: 500;
-    letter-spacing: -0.2px;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro", -apple-system-body, sans-serif;
     color: inherit;
     white-space: nowrap;
@@ -2227,114 +2379,186 @@ header {
   }
 
   .nav-item.active .nav-label {
-    font-weight: 600;
+    font-weight: 700;
+    color: #fb923c;
   }
 
-  .nav-item.nav-item-add {
-    color: #cbd5e1;
-  }
-
-  .nav-item.nav-item-add .nav-icon {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #f97316, #ea580c);
-    color: #ffffff;
+  /* Center Hero Mascot Button */
+  .nav-item.nav-item-hero {
+    position: relative;
+    top: -14px;
+    height: 56px;
+    min-width: 56px;
+    max-width: 56px;
+    margin: 0 4px;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 8px rgba(249, 115, 22, 0.45);
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    z-index: 10;
   }
 
-  .nav-item.nav-item-add svg {
-    display: block;
+  .nav-item.nav-item-hero .hero-ring {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: #111e1c;
+    background: radial-gradient(circle, #1a2e2a 0%, #0d1715 100%);
+    border: 2.5px solid #f97316;
+    box-shadow: 0 0 18px rgba(249, 115, 22, 0.55), 0 4px 14px rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .fab-add-bar {
-    display: none !important;
+  .nav-item.nav-item-hero:active .hero-ring {
+    transform: scale(0.90);
+    box-shadow: 0 0 24px rgba(249, 115, 22, 0.85);
   }
 
-  /* Compact map overlay */
-  .map-overlay {
-    top: 8px;
-    left: 8px;
-    right: 8px;
-    padding: 8px 10px;
+  /* Mobile Search Sheet */
+  .mobile-search-sheet {
+    position: fixed;
+    top: calc(10px + env(safe-area-inset-top, 14px));
+    left: 12px;
+    right: 12px;
+    z-index: 10010;
+    background: rgba(15, 24, 22, 0.97);
+    backdrop-filter: blur(25px) saturate(180%);
+    -webkit-backdrop-filter: blur(25px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 18px;
+    padding: 12px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: calc(85dvh - env(safe-area-inset-bottom, 20px));
+    max-height: calc(85vh - env(safe-area-inset-bottom, 20px));
+    animation: slideDownSearch 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes slideDownSearch {
+    from { opacity: 0; transform: translateY(-16px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .mobile-search-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    padding: 8px 12px;
+  }
+
+  .mobile-search-bar input {
+    flex: 1;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 0.92rem;
+    outline: none;
+  }
+
+  .mobile-search-bar input::placeholder {
+    color: #64748b;
+    font-size: 0.82rem;
+  }
+
+  .btn-close-search {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    border: none;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  .mobile-search-quick-districts {
+    display: flex;
+    align-items: center;
     gap: 6px;
-    max-height: 48vh;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-  }
-
-  .map-overlay.collapsed-mobile {
-    display: none;
-  }
-
-  .search-box-row {
-    margin-bottom: 2px;
-  }
-
-  .search-input {
-    font-size: 0.8rem;
-    padding: 8px 32px 8px 32px;
-  }
-
-  .district-select-box select {
-    font-size: 0.78rem;
-    padding: 7px 10px;
-  }
-
-  .filter-row {
     overflow-x: auto;
-    flex-wrap: nowrap;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 4px;
-    gap: 5px;
+    padding-bottom: 2px;
     scrollbar-width: none;
   }
+  .mobile-search-quick-districts::-webkit-scrollbar { display: none; }
 
-  .filter-row::-webkit-scrollbar {
-    display: none;
-  }
-
-  .filter-chip {
-    white-space: nowrap;
-    padding: 5px 10px;
-    font-size: 0.72rem;
+  .m-dist-chip {
     flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    font-size: 0.74rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+    cursor: pointer;
   }
 
-  /* Hide legend pill on mobile so it doesn't cover map prices */
-  .legend-pill {
-    display: none !important;
+  .m-dist-chip.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
   }
 
-  /* Hide Leaflet zoom +/- on mobile (pinch to zoom is native and clean) */
-  .leaflet-control-zoom {
-    display: none !important;
+  .mobile-search-results {
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 45vh;
+    padding-right: 2px;
   }
 
-  /* Floating locate button: compact 44px circular target button on mobile (like Google/Apple Maps) */
-  .fab-locate-float {
-    bottom: calc(62px + env(safe-area-inset-bottom, 20px));
-    right: 14px;
-    left: auto;
-    width: 44px;
-    height: 44px;
-    padding: 0;
-    border-radius: 50%;
+  .m-search-item {
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    background: rgba(18, 26, 25, 0.94);
-    backdrop-filter: blur(10px);
-    border: 1.5px solid rgba(255, 255, 255, 0.22);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.65);
-    z-index: 950;
+    justify-content: space-between;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: all 0.15s ease;
   }
 
-  .fab-locate-float span:not(.locate-icon) {
-    display: none !important;
+  .m-search-item:active {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .m-search-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .m-search-name {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .m-search-sub {
+    font-size: 0.72rem;
+    color: #94a3b8;
+  }
+
+  .m-search-price {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #22c55e;
   }
 
   /* Modal optimization on mobile: full scrollability & reachability */
