@@ -2425,6 +2425,17 @@ header {
     box-shadow: 0 0 24px rgba(249, 115, 22, 0.85);
   }
 
+  .hero-syrenka-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+
   /* Mobile Search Sheet */
   .mobile-search-sheet {
     position: fixed;

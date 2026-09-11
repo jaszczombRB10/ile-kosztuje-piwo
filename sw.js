@@ -1,4 +1,4 @@
-const CACHE_NAME = "poilepiwko-v39";
+const CACHE_NAME = "poilepiwko-v40";
 
 const STATIC_ASSETS = [
   "./",
@@ -16,7 +16,8 @@ const STATIC_ASSETS = [
   "./data/venues.json",
   "./icons/icon.svg",
   "./icons/icon-192.png",
-  "./icons/icon-512.png"
+  "./icons/icon-512.png",
+  "./icons/syrenka-hero.png"
 ];
 
 // Install Event: Cache Core Shell
