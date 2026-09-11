@@ -4724,6 +4724,42 @@
     return { title: "Początkujący Piwosz 🦊", level: 1 };
   }
 
+  function calculateRankProgress(visitedCount) {
+    const ranks = [
+      { min: 0, title: "Początkujący Piwosz 🦊", nextMin: 5, nextTitle: "Miejski Eksplorator 🦁" },
+      { min: 5, title: "Miejski Eksplorator 🦁", nextMin: 10, nextTitle: "Bywalec Pawilonów 🍻" },
+      { min: 10, title: "Bywalec Pawilonów 🍻", nextMin: 25, nextTitle: "Piwny Koneser 🍺" },
+      { min: 25, title: "Piwny Koneser 🍺", nextMin: 50, nextTitle: "Warszawska Legenda 👑" },
+      { min: 50, title: "Warszawska Legenda 👑", nextMin: 100, nextTitle: "Mistrz Piwnych Szlaków ⚡" }
+    ];
+
+    let current = ranks[0];
+    for (const r of ranks) {
+      if (visitedCount >= r.min) current = r;
+    }
+
+    if (visitedCount >= 100) {
+      return {
+        percent: 100,
+        currentTitle: "Mistrz Piwnych Szlaków ⚡",
+        nextTitle: "Maksymalna ranga osiągnięta! 👑",
+        remaining: 0
+      };
+    }
+
+    const range = current.nextMin - current.min;
+    const progressInTier = Math.max(0, visitedCount - current.min);
+    const percent = Math.min(100, Math.max(5, Math.round((progressInTier / range) * 100)));
+    const remaining = current.nextMin - visitedCount;
+
+    return {
+      percent,
+      currentTitle: current.title,
+      nextTitle: `Następny cel: ${current.nextTitle} (jeszcze ${remaining} ${remaining === 1 ? 'bar' : (remaining < 5 ? 'bary' : 'barów')})`,
+      remaining
+    };
+  }
+
   function formatTimeAgo(isoString) {
     if (!isoString) return "niedawno";
     const date = new Date(isoString);
@@ -4803,6 +4839,9 @@
         const data = await res.json();
         if (data.profile) {
           currentProfile = data.profile;
+          if (data.userNumber) {
+            currentProfile.user_number = data.userNumber;
+          }
           if (Array.isArray(data.followingIds)) {
             myFollowingIds = data.followingIds;
           }
@@ -4841,7 +4880,9 @@
         username: fallbackUsername,
         display_name: meta.display_name || meta.full_name || meta.name || fallbackUsername,
         avatar_icon: meta.avatar_icon || "🍺",
+        user_number: "#000001",
         bio: "Warszawski poszukiwacz dobrego i taniego piwa 🍻",
+        vibe_tags: "Kraft, Ogródki, Pub Quiz",
         visited_venues: visitedVenues,
         favorite_venues: favoriteVenues
       };
@@ -4887,6 +4928,7 @@
         if (extra.bio !== undefined) currentProfile.bio = extra.bio;
         if (extra.favoriteBeer !== undefined) currentProfile.favorite_beer = extra.favoriteBeer;
         if (extra.favoriteDistrict !== undefined) currentProfile.favorite_district = extra.favoriteDistrict;
+        if (extra.vibeTags !== undefined) currentProfile.vibe_tags = extra.vibeTags;
         updateAuthUI();
       }
     }).catch(err => console.warn("Sync to cloud error:", err));
@@ -5502,6 +5544,7 @@
       const heroAvatar = document.getElementById("prof-hero-avatar");
       const heroName = document.getElementById("prof-hero-name");
       const heroHandle = document.getElementById("prof-hero-handle");
+      const userNumEl = document.getElementById("prof-user-number");
       const rankTitle = document.getElementById("prof-rank-title");
       const statVisited = document.getElementById("prof-stat-visited");
       const statBadges = document.getElementById("prof-stat-badges");
@@ -5510,18 +5553,61 @@
       const bioDisplay = document.getElementById("prof-bio-display");
       const valBeer = document.getElementById("prof-val-beer");
       const valDistrict = document.getElementById("prof-val-district");
+      const valVibe = document.getElementById("prof-val-vibe");
 
       if (heroAvatar) heroAvatar.textContent = currentProfile.avatar_icon || "🍺";
       if (heroName) heroName.textContent = currentProfile.display_name || currentProfile.username;
       if (heroHandle) heroHandle.textContent = `@${currentProfile.username}`;
+      if (userNumEl) userNumEl.textContent = currentProfile.user_number || "#000001";
       if (rankTitle) rankTitle.textContent = rank.title;
       if (statVisited) statVisited.textContent = visitedVenues.length;
       if (statBadges) statBadges.textContent = loadUnlockedBadges().length;
       if (statFavorites) statFavorites.textContent = favoriteVenues.length;
       if (statFriends) statFriends.textContent = myFollowingIds.length;
-      if (bioDisplay) bioDisplay.textContent = currentProfile.bio || "Brak opisu.";
+      if (bioDisplay) bioDisplay.textContent = currentProfile.bio || "Warszawski poszukiwacz dobrego i taniego piwa 🍻";
       if (valBeer) valBeer.textContent = currentProfile.favorite_beer || "Wszystkie dobre!";
       if (valDistrict) valDistrict.textContent = currentProfile.favorite_district || "Cała Warszawa";
+      if (valVibe) valVibe.textContent = currentProfile.vibe_tags || "Kraft, Ogródki, Pub Quiz";
+
+      // Progress bar (Goin' style: "Get the most out of poilepiwko")
+      const rankProg = calculateRankProgress(visitedVenues.length);
+      const progressFill = document.getElementById("prof-progress-fill");
+      const progressPercent = document.getElementById("prof-progress-percent");
+      const progressTarget = document.getElementById("prof-progress-target");
+
+      if (progressFill) progressFill.style.width = `${rankProg.percent}%`;
+      if (progressPercent) progressPercent.textContent = `${rankProg.percent}%`;
+      if (progressTarget) progressTarget.textContent = rankProg.nextTitle;
+
+      // Achievements list (Goin' style)
+      const achievementsList = document.getElementById("prof-achievements-list");
+      if (achievementsList) {
+        const vMap = {};
+        if (Array.isArray(allVenues)) {
+          allVenues.forEach(v => { vMap[v.id] = v; });
+        }
+        achievementsList.innerHTML = PASSPORT_BADGES.map(badge => {
+          let evaluation = { unlocked: false, progress: "0/1" };
+          try {
+            if (typeof badge.check === "function") {
+              evaluation = badge.check(visitedVenues, vMap);
+            }
+          } catch (e) {}
+          const isUnlocked = evaluation.unlocked;
+
+          return `
+            <div class="achievement-card ${isUnlocked ? 'unlocked' : ''}">
+              <div class="achievement-icon-bubble">
+                <span>${isUnlocked ? (badge.icon || '🎖️') : '🔒'}</span>
+              </div>
+              <div class="achievement-info">
+                <div class="achievement-title">${escapeHtml(badge.name)} ${isUnlocked ? '✅' : `<span style="font-size:0.72rem;opacity:0.75;font-weight:normal;">(${evaluation.progress})</span>`}</div>
+                <div class="achievement-sub">${escapeHtml(badge.desc)}</div>
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
 
       // Populate edit form
       const editUser = document.getElementById("edit-username");
@@ -5529,12 +5615,14 @@
       const editBio = document.getElementById("edit-bio");
       const editBeer = document.getElementById("edit-fav-beer");
       const editDist = document.getElementById("edit-fav-district");
+      const editVibe = document.getElementById("edit-vibe-tags");
 
       if (editUser) editUser.value = currentProfile.username || "";
       if (editName) editName.value = currentProfile.display_name || "";
       if (editBio) editBio.value = currentProfile.bio || "";
       if (editBeer) editBeer.value = currentProfile.favorite_beer || "";
       if (editDist) editDist.value = currentProfile.favorite_district || "";
+      if (editVibe) editVibe.value = currentProfile.vibe_tags || "";
 
       editSelectedAvatar = currentProfile.avatar_icon || "🍺";
       if (editAvatarPicker) {
@@ -5633,6 +5721,8 @@
         const editBio = document.getElementById("edit-bio").value.trim();
         const editBeer = document.getElementById("edit-fav-beer").value.trim();
         const editDist = document.getElementById("edit-fav-district").value.trim();
+        const editVibeInput = document.getElementById("edit-vibe-tags");
+        const editVibeTags = editVibeInput ? editVibeInput.value.trim() : "";
 
         if (editUsername && currentProfile && editUsername !== currentProfile.username) {
           try {
@@ -5645,7 +5735,11 @@
                   userId: currentUser.id,
                   username: editUsername,
                   displayName: editName,
-                  avatarIcon: editSelectedAvatar
+                  avatarIcon: editSelectedAvatar,
+                  bio: editBio,
+                  favoriteBeer: editBeer,
+                  favoriteDistrict: editDist,
+                  vibeTags: editVibeTags
                 }
               })
             });
@@ -5665,7 +5759,8 @@
           avatarIcon: editSelectedAvatar,
           bio: editBio,
           favoriteBeer: editBeer,
-          favoriteDistrict: editDist
+          favoriteDistrict: editDist,
+          vibeTags: editVibeTags
         });
 
         if (currentProfile) {
@@ -5674,6 +5769,7 @@
           currentProfile.bio = editBio;
           currentProfile.favorite_beer = editBeer;
           currentProfile.favorite_district = editDist;
+          currentProfile.vibe_tags = editVibeTags;
         }
 
         renderMyProfile();
@@ -6065,6 +6161,18 @@
         if (avatarEl) avatarEl.textContent = p.avatar_icon || "🍺";
         if (nameEl) nameEl.textContent = p.display_name || p.username;
         if (handleEl) handleEl.textContent = `@${p.username}`;
+
+        const pubUserNum = document.getElementById("pubprof-user-number");
+        if (pubUserNum) {
+          const uNum = data.userNumber || p.user_number;
+          if (uNum) {
+            pubUserNum.textContent = uNum;
+            pubUserNum.style.display = "inline-flex";
+          } else {
+            pubUserNum.style.display = "none";
+          }
+        }
+
         if (rankEl) rankEl.textContent = rank.title;
         if (statVisited) statVisited.textContent = (p.visited_venues || []).length;
         if (statFavorites) statFavorites.textContent = (p.favorite_venues || []).length;
@@ -6072,6 +6180,17 @@
         if (bioEl) bioEl.textContent = p.bio || "Brak opisu.";
         if (beerEl) beerEl.textContent = p.favorite_beer || "Wszystkie dobre!";
         if (distEl) distEl.textContent = p.favorite_district || "Warszawa";
+
+        const vibePill = document.getElementById("pubprof-pill-vibe");
+        const vibeVal = document.getElementById("pubprof-val-vibe");
+        if (vibePill && vibeVal) {
+          if (p.vibe_tags) {
+            vibeVal.textContent = p.vibe_tags;
+            vibePill.style.display = "inline-flex";
+          } else {
+            vibePill.style.display = "none";
+          }
+        }
 
         // Follow button state
         if (btnFollow) {

@@ -1407,65 +1407,113 @@
     </div>
   </div>
 
-  <!-- User Profile Modal -->
+  <!-- User Profile Modal (Goin' Inspired UI) -->
   <div class="modal-backdrop" id="profile-modal">
-    <div class="modal-card modal-card-wide profile-modal-card">
-      <div class="modal-head">
-        <div class="profile-hero-wrap">
-          <div class="profile-avatar-badge" id="prof-hero-avatar">🍺</div>
-          <div class="profile-hero-info">
-            <div class="profile-hero-names">
-              <h2 id="prof-hero-name">Mój Profil</h2>
-              <span class="profile-handle" id="prof-hero-handle">@username</span>
+    <div class="modal-card modal-card-goin profile-modal-card">
+      
+      <!-- Top Navigation & Close -->
+      <div class="goin-modal-header">
+        <div class="goin-header-brand">
+          <span class="brand-pill">🍺 poilepiwko</span>
+        </div>
+        <button type="button" class="modal-close" id="btn-close-profile" aria-label="Zamknij profil">✕</button>
+      </div>
+
+      <!-- Hero Banner (Goin' Style) -->
+      <div class="profile-goin-hero">
+        <div class="goin-hero-content">
+          <div class="goin-hero-left">
+            <div class="goin-name-row">
+              <h2 id="prof-hero-name">Krystian</h2>
+              <span class="user-num-badge" id="prof-user-number" title="Twój numer wczesnego piwosza w poilepiwko">#000001</span>
             </div>
-            <div class="profile-rank-pill" id="prof-hero-rank">
-              <span>👑 Ranga: </span><strong id="prof-rank-title">Nowicjusz</strong>
+            <div class="goin-handle-row">
+              <span class="profile-handle" id="prof-hero-handle">@jaszczomb</span>
+              <span class="profile-rank-tag" id="prof-rank-title">Początkujący Piwosz</span>
+            </div>
+
+            <p class="goin-bio-text" id="prof-bio-display">Warszawski poszukiwacz dobrego i taniego piwa 🍻</p>
+
+            <!-- Tags List with clean icons (Goin' style) -->
+            <div class="goin-tags-list">
+              <div class="goin-tag-item" id="prof-tag-beer-wrap">
+                <span class="goin-tag-icon">🍺</span>
+                <span class="goin-tag-val" id="prof-val-beer">Wszystkie dobre!</span>
+              </div>
+              <div class="goin-tag-item" id="prof-tag-dist-wrap">
+                <span class="goin-tag-icon">📍</span>
+                <span class="goin-tag-val" id="prof-val-district">Cała Warszawa</span>
+              </div>
+              <div class="goin-tag-item" id="prof-tag-vibe-wrap">
+                <span class="goin-tag-icon">❤️</span>
+                <span class="goin-tag-val" id="prof-val-vibe">Kraft, Ogródki, Pub Quiz</span>
+              </div>
+            </div>
+
+            <!-- Edit profile pill button -->
+            <button type="button" class="btn-goin-edit" id="btn-toggle-edit-profile">
+              <span>Edit profile</span>
+            </button>
+          </div>
+
+          <div class="goin-hero-right">
+            <div class="goin-avatar-frame">
+              <div class="goin-avatar-badge" id="prof-hero-avatar">🍻</div>
             </div>
           </div>
         </div>
-        <button type="button" class="modal-close" id="btn-close-profile">✕</button>
       </div>
 
-      <!-- Quick Stats Grid -->
-      <div class="profile-stats-grid">
-        <div class="profile-stat-box">
-          <div class="stat-num" id="prof-stat-visited">0</div>
-          <div class="stat-lbl">Odwiedzonych barów</div>
+      <!-- Floating Stats Card (Goin' Style) -->
+      <div class="profile-goin-stats">
+        <div class="goin-stat-col">
+          <div class="goin-stat-icon-wrap icon-visited">🍺</div>
+          <div class="goin-stat-info">
+            <span class="goin-stat-num" id="prof-stat-visited">0</span>
+            <span class="goin-stat-label">odwiedzonych barów</span>
+          </div>
         </div>
-        <div class="profile-stat-box">
-          <div class="stat-num" id="prof-stat-badges">0</div>
-          <div class="stat-lbl">Odznak paszportu</div>
-        </div>
-        <div class="profile-stat-box">
-          <div class="stat-num" id="prof-stat-favorites">0</div>
-          <div class="stat-lbl">Ulubionych miejsc</div>
-        </div>
-        <div class="profile-stat-box">
-          <div class="stat-num" id="prof-stat-friends">0</div>
-          <div class="stat-lbl">Znajomych</div>
-        </div>
-      </div>
-
-      <!-- Profile Bio & Preferences -->
-      <div class="profile-details-section">
-        <div class="profile-bio-text" id="prof-bio-display">Warszawski poszukiwacz dobrego i taniego piwa 🍻</div>
-        <div class="profile-meta-pills">
-          <span class="profile-pill" id="prof-pill-beer">🍺 Ulubione: <strong id="prof-val-beer">--</strong></span>
-          <span class="profile-pill" id="prof-pill-district">📍 Rewir: <strong id="prof-val-district">--</strong></span>
+        <div class="goin-stat-divider"></div>
+        <div class="goin-stat-col">
+          <div class="goin-stat-icon-wrap icon-badges">🎖️</div>
+          <div class="goin-stat-info">
+            <span class="goin-stat-num" id="prof-stat-badges">0</span>
+            <span class="goin-stat-label">odznak paszportu</span>
+          </div>
         </div>
       </div>
 
-      <!-- Profile Actions -->
-      <div class="profile-action-buttons">
-        <button type="button" class="btn-profile-action" id="btn-open-community-from-profile">
-          <span>👥 Piwni Znajomi & Feed</span>
-        </button>
-        <button type="button" class="btn-profile-action" id="btn-share-my-profile">
-          <span>📤 Udostępnij profil</span>
-        </button>
-        <button type="button" class="btn-profile-action btn-edit-profile-toggle" id="btn-toggle-edit-profile">
-          <span>✏️ Edytuj profil</span>
-        </button>
+      <!-- Mini quick badges (Favorites & Friends) -->
+      <div class="profile-mini-stats">
+        <div class="mini-stat-pill">
+          <span>❤️ Ulubione: <strong id="prof-stat-favorites">0</strong></span>
+        </div>
+        <div class="mini-stat-pill">
+          <span>👥 Obserwowani: <strong id="prof-stat-friends">0</strong></span>
+        </div>
+      </div>
+
+      <!-- Level & Progress Section (Goin' Style: "Get the most out of poilepiwko") -->
+      <div class="profile-goin-progress-card">
+        <div class="progress-card-head">
+          <span class="progress-title">Get the most out of poilepiwko</span>
+          <span class="progress-info-icon" title="Odwiedzaj bary i zdobywaj kolejne rangi warszawskiego piwosza!">ℹ️</span>
+        </div>
+        <div class="goin-progress-bar-track">
+          <div class="goin-progress-bar-fill" id="prof-progress-fill" style="width: 16%;"></div>
+        </div>
+        <div class="progress-card-foot">
+          <span class="progress-percent" id="prof-progress-percent">16%</span>
+          <span class="progress-target" id="prof-progress-target">Następna ranga: Koneser Kraftu</span>
+        </div>
+      </div>
+
+      <!-- Achievements Section (Goin' Style) -->
+      <div class="profile-goin-achievements">
+        <div class="achievements-section-title">Achievements</div>
+        <div class="achievements-list" id="prof-achievements-list">
+          <!-- Injected via JavaScript dynamically -->
+        </div>
       </div>
 
       <!-- Collapsible Profile Edit Form -->
@@ -1483,7 +1531,7 @@
           <input type="text" id="edit-display-name" class="form-input" required maxlength="30" />
         </div>
         <div class="form-group">
-          <label class="form-label">Zmień awatar</label>
+          <label class="form-label">Wybierz swój awatar</label>
           <div class="avatar-picker" id="edit-avatar-picker">
             <button type="button" class="avatar-option" data-avatar="🍺">🍺</button>
             <button type="button" class="avatar-option" data-avatar="🍻">🍻</button>
@@ -1510,18 +1558,34 @@
             <input type="text" id="edit-fav-district" class="form-input" placeholder="np. Śródmieście, Pawilony" maxlength="40" />
           </div>
         </div>
+        <div class="form-group">
+          <label for="edit-vibe-tags" class="form-label">Zainteresowania / Vibe (oddziel przecinkami)</label>
+          <input type="text" id="edit-vibe-tags" class="form-input" placeholder="np. Kraft, Ogródki, Pub Quiz, Bilard" maxlength="60" />
+        </div>
         <div style="display:flex;gap:8px;margin-top:10px;">
           <button type="submit" class="btn-primary" style="flex:1;">Zapisz zmiany</button>
           <button type="button" class="btn-secondary" id="btn-cancel-edit-profile">Anuluj</button>
         </div>
       </form>
 
-      <!-- Bottom Logout Button -->
-      <div class="profile-footer-bar">
-        <button type="button" class="btn-logout" id="btn-logout">
-          <span>🚪 Wyloguj się</span>
-        </button>
+      <!-- Action Buttons & Logout -->
+      <div class="goin-profile-footer">
+        <div class="profile-action-buttons">
+          <button type="button" class="btn-profile-action" id="btn-open-community-from-profile">
+            <span>👥 Piwni Znajomi & Feed</span>
+          </button>
+          <button type="button" class="btn-profile-action" id="btn-share-my-profile">
+            <span>📤 Udostępnij profil</span>
+          </button>
+        </div>
+
+        <div class="profile-footer-bar">
+          <button type="button" class="btn-logout" id="btn-logout">
+            <span>🚪 Wyloguj się</span>
+          </button>
+        </div>
       </div>
+
     </div>
   </div>
 
@@ -1585,7 +1649,10 @@
           <div class="profile-avatar-badge" id="pubprof-avatar">🍺</div>
           <div class="profile-hero-info">
             <div class="profile-hero-names">
-              <h2 id="pubprof-name">Profil Użytkownika</h2>
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <h2 id="pubprof-name">Profil Użytkownika</h2>
+                <span class="user-num-badge" id="pubprof-user-number" style="display:none;">#000001</span>
+              </div>
               <span class="profile-handle" id="pubprof-handle">@username</span>
             </div>
             <div class="profile-rank-pill">
@@ -1616,6 +1683,7 @@
         <div class="profile-meta-pills">
           <span class="profile-pill" id="pubprof-pill-beer">🍺 Ulubione: <strong id="pubprof-val-beer">--</strong></span>
           <span class="profile-pill" id="pubprof-pill-district">📍 Rewir: <strong id="pubprof-val-district">--</strong></span>
+          <span class="profile-pill" id="pubprof-pill-vibe" style="display:none;">❤️ Vibe: <strong id="pubprof-val-vibe">--</strong></span>
         </div>
       </div>
 

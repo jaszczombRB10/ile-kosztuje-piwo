@@ -207,9 +207,29 @@ module.exports = async (req, res) => {
         }
       } catch (e) {}
 
+      // Calculate user sequence number (e.g. #000001) based on registration order
+      let userNumber = "#000001";
+      try {
+        if (profile.created_at) {
+          const countRes = await fetch(`${SUPABASE_URL}/rest/v1/profiles?created_at=lte.${encodeURIComponent(profile.created_at)}&select=id`, {
+            headers: { ...headers, "Prefer": "count=exact" }
+          });
+          const contentRange = countRes.headers.get("content-range");
+          if (contentRange && contentRange.includes("/")) {
+            const count = parseInt(contentRange.split("/")[1], 10);
+            if (!isNaN(count) && count > 0) {
+              userNumber = "#" + String(count).padStart(6, "0");
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("User number count error:", e);
+      }
+
       return res.status(200).json({
         success: true,
         profile,
+        userNumber,
         stats: {
           followersCount,
           followingCount,
@@ -325,7 +345,7 @@ module.exports = async (req, res) => {
     // 8. Sync Visited & Favorite Venues to Cloud Profile
     // =========================================================================
     if (action === "sync-profile") {
-      const { userId, visitedVenues, favoriteVenues, bio, favoriteBeer, favoriteDistrict, displayName, avatarIcon } = payload || {};
+      const { userId, visitedVenues, favoriteVenues, bio, favoriteBeer, favoriteDistrict, displayName, avatarIcon, vibeTags } = payload || {};
       if (!userId) {
         return res.status(400).json({ error: "Brak userId." });
       }
@@ -338,6 +358,7 @@ module.exports = async (req, res) => {
       if (favoriteDistrict !== undefined) updateData.favorite_district = favoriteDistrict;
       if (displayName !== undefined) updateData.display_name = displayName;
       if (avatarIcon !== undefined) updateData.avatar_icon = avatarIcon;
+      if (vibeTags !== undefined) updateData.vibe_tags = vibeTags;
 
       const patchRes = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}`, {
         method: "PATCH",
@@ -357,7 +378,7 @@ module.exports = async (req, res) => {
     // 9. Set / Change Username (e.g. after Google OAuth or in settings)
     // =========================================================================
     if (action === "set-username") {
-      const { userId, username, displayName, avatarIcon } = payload || {};
+      const { userId, username, displayName, avatarIcon, vibeTags } = payload || {};
       if (!userId || !username) {
         return res.status(400).json({ error: "Brak userId lub nicku." });
       }
@@ -385,6 +406,7 @@ module.exports = async (req, res) => {
         };
         if (displayName) updateData.display_name = displayName;
         if (avatarIcon) updateData.avatar_icon = avatarIcon;
+        if (vibeTags !== undefined) updateData.vibe_tags = vibeTags;
 
         await fetch(`${SUPABASE_URL}/rest/v1/profiles`, {
           method: "POST",
@@ -405,7 +427,8 @@ module.exports = async (req, res) => {
               username: cleanUser,
               username_custom: true,
               display_name: displayName || cleanUser,
-              avatar_icon: avatarIcon || "🍺"
+              avatar_icon: avatarIcon || "🍺",
+              vibe_tags: vibeTags || ""
             }
           })
         });
