@@ -2712,6 +2712,7 @@
       compassModal.classList.remove("active");
       compassModal.style.display = "none";
       stopGpsTracking();
+      if (window.__clearBottomNavActive) window.__clearBottomNavActive();
     }
 
     window.__openCompass = openCompass;
@@ -2896,7 +2897,10 @@
     const btnCloseDrawer = document.getElementById("btn-close-drawer");
 
     btnRanking.addEventListener("click", () => drawer.classList.toggle("open"));
-    btnCloseDrawer.addEventListener("click", () => drawer.classList.remove("open"));
+    btnCloseDrawer.addEventListener("click", () => {
+      drawer.classList.remove("open");
+      if (window.__clearBottomNavActive) window.__clearBottomNavActive();
+    });
 
     // Feature A: Ranking Tabs (Najtańsze vs Najbliżej vs Byłem vs Ulubione)
     const tabCheapest = document.getElementById("tab-rank-cheapest");
@@ -2958,11 +2962,17 @@
       });
     }
     if (btnCloseBaro && baroModal) {
-      btnCloseBaro.addEventListener("click", () => baroModal.classList.remove("active"));
+      btnCloseBaro.addEventListener("click", () => {
+        baroModal.classList.remove("active");
+        if (window.__clearBottomNavActive) window.__clearBottomNavActive();
+      });
     }
     if (baroModal) {
       baroModal.addEventListener("click", (e) => {
-        if (e.target === baroModal) baroModal.classList.remove("active");
+        if (e.target === baroModal) {
+          baroModal.classList.remove("active");
+          if (window.__clearBottomNavActive) window.__clearBottomNavActive();
+        }
       });
     }
 
@@ -3710,20 +3720,18 @@
 
     // Mobile Bottom Navigation Bar Actions (Native App Dock)
     const bottomNavItems = document.querySelectorAll(".mobile-bottom-nav .nav-item");
+    function clearBottomNavActive() {
+      bottomNavItems.forEach(btn => btn.classList.remove("active"));
+    }
+    window.__clearBottomNavActive = clearBottomNavActive;
+
     bottomNavItems.forEach(item => {
       item.addEventListener("click", () => {
         const target = item.getAttribute("data-target");
-        bottomNavItems.forEach(btn => btn.classList.remove("active"));
+        clearBottomNavActive();
         item.classList.add("active");
 
-        if (target === "map") {
-          if (drawer) drawer.classList.remove("open");
-          if (baroModal) baroModal.classList.remove("active");
-          closeModal();
-          if (window.__closePubCrawl) window.__closePubCrawl();
-          if (window.__closeCompass) window.__closeCompass();
-          if (map) map.flyTo(WARSAW_CENTER, 13, { duration: 0.8 });
-        } else if (target === "compass") {
+        if (target === "compass") {
           if (drawer) drawer.classList.remove("open");
           if (baroModal) baroModal.classList.remove("active");
           closeModal();
@@ -3752,6 +3760,7 @@
           if (window.__closePubCrawl) window.__closePubCrawl();
           if (window.__closeCompass) window.__closeCompass();
           openAddModal();
+          setTimeout(() => item.classList.remove("active"), 250);
         }
       });
     });
@@ -4001,6 +4010,7 @@
 
       function closeModalWindow() {
         if (crawlModal) crawlModal.classList.remove("active");
+        if (window.__clearBottomNavActive) window.__clearBottomNavActive();
       }
 
       window.__openPubCrawl = openModal;
