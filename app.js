@@ -3196,11 +3196,31 @@
     const drawer = document.getElementById("ranking-drawer");
     const btnCloseDrawer = document.getElementById("btn-close-drawer");
 
-    btnRanking.addEventListener("click", () => drawer.classList.toggle("open"));
-    btnCloseDrawer.addEventListener("click", () => {
+    function openRankingDrawer() {
+      if (!drawer) return;
+      drawer.classList.add("open");
+      document.body.classList.add("drawer-open");
+    }
+
+    function closeRankingDrawer() {
+      if (!drawer) return;
       drawer.classList.remove("open");
+      document.body.classList.remove("drawer-open");
       if (window.__clearBottomNavActive) window.__clearBottomNavActive();
-    });
+    }
+
+    window.__openRankingDrawer = openRankingDrawer;
+    window.__closeRankingDrawer = closeRankingDrawer;
+
+    if (btnRanking) {
+      btnRanking.addEventListener("click", () => {
+        if (drawer.classList.contains("open")) closeRankingDrawer();
+        else openRankingDrawer();
+      });
+    }
+    if (btnCloseDrawer) {
+      btnCloseDrawer.addEventListener("click", closeRankingDrawer);
+    }
 
     // Feature A: Ranking Tabs (Najtańsze vs Najbliżej vs Byłem vs Ulubione)
     const tabCheapest = document.getElementById("tab-rank-cheapest");
@@ -4213,7 +4233,7 @@
         item.classList.add("active");
 
         if (target === "promos" || target === "happyhour") {
-          if (drawer) drawer.classList.remove("open");
+          if (window.__closeRankingDrawer) window.__closeRankingDrawer();
           if (baroModal) baroModal.classList.remove("active");
           closeModal();
           if (window.__closePubCrawl) window.__closePubCrawl();
@@ -4235,10 +4255,17 @@
           if (window.__closePubCrawl) window.__closePubCrawl();
           if (window.__closeCompass) window.__closeCompass();
           if (window.__closeMobileSearch) window.__closeMobileSearch();
-          if (tabCheapest) tabCheapest.click();
-          if (drawer) drawer.classList.add("open");
+          if (drawer) {
+            if (drawer.classList.contains("open")) {
+              if (window.__closeRankingDrawer) window.__closeRankingDrawer();
+              item.classList.remove("active");
+            } else {
+              if (tabCheapest) tabCheapest.click();
+              if (window.__openRankingDrawer) window.__openRankingDrawer();
+            }
+          }
         } else if (target === "compass") {
-          if (drawer) drawer.classList.remove("open");
+          if (window.__closeRankingDrawer) window.__closeRankingDrawer();
           if (baroModal) baroModal.classList.remove("active");
           if (window.__closeHappyHours) window.__closeHappyHours();
           closeModal();
@@ -4246,7 +4273,7 @@
           if (window.__closeMobileSearch) window.__closeMobileSearch();
           if (window.__openCompass) window.__openCompass();
         } else if (target === "pubcrawl") {
-          if (drawer) drawer.classList.remove("open");
+          if (window.__closeRankingDrawer) window.__closeRankingDrawer();
           if (baroModal) baroModal.classList.remove("active");
           if (window.__closeHappyHours) window.__closeHappyHours();
           closeModal();
@@ -4254,7 +4281,7 @@
           if (window.__closeMobileSearch) window.__closeMobileSearch();
           if (window.__openPubCrawl) window.__openPubCrawl();
         } else if (target === "profile") {
-          if (drawer) drawer.classList.remove("open");
+          if (window.__closeRankingDrawer) window.__closeRankingDrawer();
           if (baroModal) baroModal.classList.remove("active");
           if (window.__closeHappyHours) window.__closeHappyHours();
           closeModal();
@@ -4275,14 +4302,14 @@
             }
           }
         } else if (target === "barometer") {
-          if (drawer) drawer.classList.remove("open");
+          if (window.__closeRankingDrawer) window.__closeRankingDrawer();
           if (window.__closeHappyHours) window.__closeHappyHours();
           if (window.__closePubCrawl) window.__closePubCrawl();
           if (window.__closeCompass) window.__closeCompass();
           if (window.__closeMobileSearch) window.__closeMobileSearch();
           if (btnBarometer) btnBarometer.click();
         } else if (target === "add") {
-          if (drawer) drawer.classList.remove("open");
+          if (window.__closeRankingDrawer) window.__closeRankingDrawer();
           if (baroModal) baroModal.classList.remove("active");
           if (window.__closeHappyHours) window.__closeHappyHours();
           if (window.__closePubCrawl) window.__closePubCrawl();
