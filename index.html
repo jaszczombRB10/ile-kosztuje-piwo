@@ -47,6 +47,10 @@
           <span class="passport-icon">🎖️</span>
           <span id="passport-header-count">0/524</span>
         </button>
+        <button type="button" class="badge-auth" id="btn-user-auth" title="Zaloguj się lub zobacz swój profil">
+          <span id="auth-header-avatar">👤</span>
+          <span class="auth-header-text" id="auth-header-label">Konto</span>
+        </button>
         <button type="button" class="badge-legal-18" id="btn-open-legal" title="Informacje prawne, weryfikacja 18+ i polityka prywatności">
           🔞 18+
         </button>
@@ -73,6 +77,10 @@
         <button id="btn-ranking-toggle" class="btn-secondary">
           <span>🏆</span>
           <span class="btn-text">Ranking</span>
+        </button>
+        <button id="btn-community-toggle" class="btn-secondary" title="Społeczność, Piwni Znajomi i Feed aktywności">
+          <span>👥</span>
+          <span class="btn-text">Znajomi</span>
         </button>
         <button id="btn-open-report" class="btn-report" title="Dodaj nowy lokal lub zaktualizuj cenę" onclick="window.__openAddModal ? window.__openAddModal() : null">
           <span>➕</span>
@@ -876,6 +884,328 @@
           <button type="button" id="btn-reset-passport" class="btn-passport-reset">
             🗑️ Wyczyść historię
           </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auth Modal: Login / Register / Reset Password -->
+  <div class="modal-backdrop" id="auth-modal" style="display:none;">
+    <div class="modal-card auth-modal-card">
+      <div class="modal-head">
+        <div class="modal-head-title">
+          <div class="modal-icon-badge">🍺</div>
+          <div>
+            <h2 id="auth-modal-title">Konto Poilepiwko</h2>
+            <p class="modal-head-sub" id="auth-modal-sub">Dołącz do społeczności warszawskich piwoszy!</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close" id="btn-close-auth">✕</button>
+      </div>
+
+      <!-- Auth Tabs: Logowanie vs Rejestracja -->
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab active" id="tab-auth-login">Zaloguj się</button>
+        <button type="button" class="auth-tab" id="tab-auth-register">Załóż konto</button>
+      </div>
+
+      <!-- Form 1: Logowanie -->
+      <form id="form-auth-login" class="auth-form">
+        <div class="form-group">
+          <label for="login-email">Adres e-mail</label>
+          <input type="email" id="login-email" required placeholder="twoj@email.pl" autocomplete="email" />
+        </div>
+        <div class="form-group">
+          <div class="label-with-link">
+            <label for="login-password">Hasło</label>
+            <a href="#" id="link-forgot-pass" class="auth-sublink">Zapomniałeś hasła?</a>
+          </div>
+          <input type="password" id="login-password" required placeholder="••••••••" autocomplete="current-password" />
+        </div>
+        <div class="auth-error-msg" id="login-error-msg" style="display:none;"></div>
+        <button type="submit" class="btn-primary btn-auth-submit" id="btn-submit-login">
+          <span>🚀 Zaloguj się</span>
+        </button>
+      </form>
+
+      <!-- Form 2: Rejestracja -->
+      <form id="form-auth-register" class="auth-form" style="display:none;">
+        <div class="form-group">
+          <label for="reg-username">Twój unikalny nick (@username)</label>
+          <div class="input-with-prefix">
+            <span class="input-prefix">@</span>
+            <input type="text" id="reg-username" required placeholder="piwosz_mokotow" autocomplete="username" maxlength="20" />
+          </div>
+          <div class="input-hint" id="reg-username-hint">3-20 liter, cyfr lub podkreślenie (_)</div>
+        </div>
+        <div class="form-group">
+          <label for="reg-display-name">Nazwa wyświetlana / Imię</label>
+          <input type="text" id="reg-display-name" required placeholder="np. Bartek" maxlength="30" />
+        </div>
+        <div class="form-group">
+          <label>Wybierz swój piwny awatar</label>
+          <div class="avatar-picker" id="reg-avatar-picker">
+            <button type="button" class="avatar-option selected" data-avatar="🍺">🍺</button>
+            <button type="button" class="avatar-option" data-avatar="🍻">🍻</button>
+            <button type="button" class="avatar-option" data-avatar="🦁">🦁</button>
+            <button type="button" class="avatar-option" data-avatar="🧜‍♀️">🧜‍♀️</button>
+            <button type="button" class="avatar-option" data-avatar="👑">👑</button>
+            <button type="button" class="avatar-option" data-avatar="🦊">🦊</button>
+            <button type="button" class="avatar-option" data-avatar="⚡">⚡</button>
+            <button type="button" class="avatar-option" data-avatar="🕶️">🕶️</button>
+            <button type="button" class="avatar-option" data-avatar="🦉">🦉</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="reg-email">Adres e-mail</label>
+          <input type="email" id="reg-email" required placeholder="twoj@email.pl" autocomplete="email" />
+        </div>
+        <div class="form-group">
+          <label for="reg-password">Hasło (min. 6 znaków)</label>
+          <input type="password" id="reg-password" required placeholder="••••••••" autocomplete="new-password" minlength="6" />
+        </div>
+        <div class="auth-error-msg" id="reg-error-msg" style="display:none;"></div>
+        <button type="submit" class="btn-primary btn-auth-submit" id="btn-submit-register">
+          <span>✨ Utwórz konto</span>
+        </button>
+      </form>
+
+      <!-- Form 3: Przypomnienie hasła -->
+      <form id="form-auth-forgot" class="auth-form" style="display:none;">
+        <div class="form-group">
+          <label for="forgot-email">Adres e-mail Twojego konta</label>
+          <input type="email" id="forgot-email" required placeholder="twoj@email.pl" autocomplete="email" />
+        </div>
+        <div class="auth-error-msg" id="forgot-error-msg" style="display:none;"></div>
+        <div class="auth-success-msg" id="forgot-success-msg" style="display:none;"></div>
+        <button type="submit" class="btn-primary btn-auth-submit" id="btn-submit-forgot">
+          <span>📩 Wyślij link resetujący</span>
+        </button>
+        <button type="button" class="btn-secondary btn-back-to-login" id="btn-back-to-login" style="width:100%;margin-top:8px;">
+          ← Wróć do logowania
+        </button>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- User Profile Modal -->
+  <div class="modal-backdrop" id="profile-modal" style="display:none;">
+    <div class="modal-card modal-card-wide profile-modal-card">
+      <div class="modal-head">
+        <div class="profile-hero-wrap">
+          <div class="profile-avatar-badge" id="prof-hero-avatar">🍺</div>
+          <div class="profile-hero-info">
+            <div class="profile-hero-names">
+              <h2 id="prof-hero-name">Mój Profil</h2>
+              <span class="profile-handle" id="prof-hero-handle">@username</span>
+            </div>
+            <div class="profile-rank-pill" id="prof-hero-rank">
+              <span>👑 Ranga: </span><strong id="prof-rank-title">Nowicjusz</strong>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="modal-close" id="btn-close-profile">✕</button>
+      </div>
+
+      <!-- Quick Stats Grid -->
+      <div class="profile-stats-grid">
+        <div class="profile-stat-box">
+          <div class="stat-num" id="prof-stat-visited">0</div>
+          <div class="stat-lbl">Odwiedzonych barów</div>
+        </div>
+        <div class="profile-stat-box">
+          <div class="stat-num" id="prof-stat-badges">0</div>
+          <div class="stat-lbl">Odznak paszportu</div>
+        </div>
+        <div class="profile-stat-box">
+          <div class="stat-num" id="prof-stat-favorites">0</div>
+          <div class="stat-lbl">Ulubionych miejsc</div>
+        </div>
+        <div class="profile-stat-box">
+          <div class="stat-num" id="prof-stat-friends">0</div>
+          <div class="stat-lbl">Znajomych</div>
+        </div>
+      </div>
+
+      <!-- Profile Bio & Preferences -->
+      <div class="profile-details-section">
+        <div class="profile-bio-text" id="prof-bio-display">Warszawski poszukiwacz dobrego i taniego piwa 🍻</div>
+        <div class="profile-meta-pills">
+          <span class="profile-pill" id="prof-pill-beer">🍺 Ulubione: <strong id="prof-val-beer">--</strong></span>
+          <span class="profile-pill" id="prof-pill-district">📍 Rewir: <strong id="prof-val-district">--</strong></span>
+        </div>
+      </div>
+
+      <!-- Profile Actions -->
+      <div class="profile-action-buttons">
+        <button type="button" class="btn-profile-action" id="btn-open-community-from-profile">
+          <span>👥 Piwni Znajomi & Feed</span>
+        </button>
+        <button type="button" class="btn-profile-action" id="btn-share-my-profile">
+          <span>📤 Udostępnij profil</span>
+        </button>
+        <button type="button" class="btn-profile-action btn-edit-profile-toggle" id="btn-toggle-edit-profile">
+          <span>✏️ Edytuj profil</span>
+        </button>
+      </div>
+
+      <!-- Collapsible Profile Edit Form -->
+      <form id="form-edit-profile" class="profile-edit-form" style="display:none;">
+        <div class="form-group">
+          <label for="edit-display-name">Nazwa wyświetlana</label>
+          <input type="text" id="edit-display-name" required maxlength="30" />
+        </div>
+        <div class="form-group">
+          <label>Zmień awatar</label>
+          <div class="avatar-picker" id="edit-avatar-picker">
+            <button type="button" class="avatar-option" data-avatar="🍺">🍺</button>
+            <button type="button" class="avatar-option" data-avatar="🍻">🍻</button>
+            <button type="button" class="avatar-option" data-avatar="🦁">🦁</button>
+            <button type="button" class="avatar-option" data-avatar="🧜‍♀️">🧜‍♀️</button>
+            <button type="button" class="avatar-option" data-avatar="👑">👑</button>
+            <button type="button" class="avatar-option" data-avatar="🦊">🦊</button>
+            <button type="button" class="avatar-option" data-avatar="⚡">⚡</button>
+            <button type="button" class="avatar-option" data-avatar="🕶️">🕶️</button>
+            <button type="button" class="avatar-option" data-avatar="🦉">🦉</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="edit-bio">O mnie / Bio</label>
+          <textarea id="edit-bio" rows="2" maxlength="160" placeholder="Kilka słów o Twoich piwnych gustach..."></textarea>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="edit-fav-beer">Ulubione piwo</label>
+            <input type="text" id="edit-fav-beer" placeholder="np. Namysłów, IPA" maxlength="40" />
+          </div>
+          <div class="form-group">
+            <label for="edit-fav-district">Ulubiona dzielnica</label>
+            <input type="text" id="edit-fav-district" placeholder="np. Śródmieście, Pawilony" maxlength="40" />
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <button type="submit" class="btn-primary" style="flex:1;">Zapisz zmiany</button>
+          <button type="button" class="btn-secondary" id="btn-cancel-edit-profile">Anuluj</button>
+        </div>
+      </form>
+
+      <!-- Bottom Logout Button -->
+      <div class="profile-footer-bar">
+        <button type="button" class="btn-logout" id="btn-logout">
+          <span>🚪 Wyloguj się</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Community & Friends Modal ("Untappd + Strava dla Warszawy") -->
+  <div class="modal-backdrop" id="community-modal" style="display:none;">
+    <div class="modal-card modal-card-wide community-modal-card">
+      <div class="modal-head">
+        <div class="modal-head-title">
+          <div class="modal-icon-badge">👥</div>
+          <div>
+            <h2>Piwni Znajomi</h2>
+            <p class="modal-head-sub">Sprawdź, kto gdzie pije w Warszawie i śledź znajomych!</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close" id="btn-close-community">✕</button>
+      </div>
+
+      <!-- Community Tabs -->
+      <div class="community-tabs">
+        <button type="button" class="comm-tab active" id="tab-comm-feed">⚡ Aktywność (Feed)</button>
+        <button type="button" class="comm-tab" id="tab-comm-search">🔍 Szukaj znajomych</button>
+        <button type="button" class="comm-tab" id="tab-comm-following">❤️ Obserwowani (<span id="comm-following-badge">0</span>)</button>
+      </div>
+
+      <!-- Tab 1: Feed aktywności -->
+      <div class="comm-tab-pane" id="pane-comm-feed">
+        <div class="feed-header-banner">
+          <span>🍻 Ostatnie wyjścia na piwo w Warszawie</span>
+        </div>
+        <div class="comm-feed-list" id="comm-feed-list">
+          <!-- Injected via JS -->
+        </div>
+      </div>
+
+      <!-- Tab 2: Wyszukiwarka znajomych -->
+      <div class="comm-tab-pane" id="pane-comm-search" style="display:none;">
+        <div class="user-search-wrap">
+          <input type="text" id="input-search-friends" placeholder="Wpisz nick lub imię znajomego (np. @marek)..." />
+          <button type="button" id="btn-run-search-friends" class="btn-primary">Szukaj</button>
+        </div>
+        <div class="search-results-list" id="comm-search-results">
+          <div class="empty-state-hint">Wpisz nick lub imię znajomego, aby go znaleźć i zaobserwować.</div>
+        </div>
+      </div>
+
+      <!-- Tab 3: Lista obserwowanych znajomych -->
+      <div class="comm-tab-pane" id="pane-comm-following" style="display:none;">
+        <div class="following-list" id="comm-following-list">
+          <!-- Injected via JS -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Public User Card Modal (Podgląd profilu innego użytkownika / znajomego) -->
+  <div class="modal-backdrop" id="public-profile-modal" style="display:none;">
+    <div class="modal-card public-profile-card">
+      <div class="modal-head">
+        <div class="profile-hero-wrap">
+          <div class="profile-avatar-badge" id="pubprof-avatar">🍺</div>
+          <div class="profile-hero-info">
+            <div class="profile-hero-names">
+              <h2 id="pubprof-name">Profil Użytkownika</h2>
+              <span class="profile-handle" id="pubprof-handle">@username</span>
+            </div>
+            <div class="profile-rank-pill">
+              <strong id="pubprof-rank">Warszawski Poszukiwacz</strong>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="modal-close" id="btn-close-public-profile">✕</button>
+      </div>
+
+      <div class="profile-stats-grid">
+        <div class="profile-stat-box">
+          <div class="stat-num" id="pubprof-stat-visited">0</div>
+          <div class="stat-lbl">Odwiedzone</div>
+        </div>
+        <div class="profile-stat-box">
+          <div class="stat-num" id="pubprof-stat-favorites">0</div>
+          <div class="stat-lbl">Ulubione</div>
+        </div>
+        <div class="profile-stat-box">
+          <div class="stat-num" id="pubprof-stat-followers">0</div>
+          <div class="stat-lbl">Obserwujący</div>
+        </div>
+      </div>
+
+      <div class="profile-details-section">
+        <div class="profile-bio-text" id="pubprof-bio">--</div>
+        <div class="profile-meta-pills">
+          <span class="profile-pill" id="pubprof-pill-beer">🍺 Ulubione: <strong id="pubprof-val-beer">--</strong></span>
+          <span class="profile-pill" id="pubprof-pill-district">📍 Rewir: <strong id="pubprof-val-district">--</strong></span>
+        </div>
+      </div>
+
+      <div class="pubprof-actions">
+        <button type="button" class="btn-primary" id="btn-pubprof-follow-toggle">
+          <span>➕ Obserwuj znajomego</span>
+        </button>
+        <button type="button" class="btn-secondary" id="btn-pubprof-share">
+          <span>📤 Udostępnij profil</span>
+        </button>
+      </div>
+
+      <div class="pubprof-recent-activity">
+        <div class="pubprof-section-title">Ostatnie wizyty:</div>
+        <div id="pubprof-recent-list" class="pubprof-checkins-list">
+          <!-- Injected via JS -->
         </div>
       </div>
     </div>

@@ -74,6 +74,11 @@
   const FAVORITES_STORAGE_KEY = "poilepiwko_favorite_venues";
   let favoriteVenues = loadFavoriteVenues();
 
+  // Supabase Auth & Community Social State
+  let currentUser = null;
+  let currentProfile = null;
+  let myFollowingIds = [];
+
   function loadFavoriteVenues() {
     try {
       const raw = localStorage.getItem(FAVORITES_STORAGE_KEY);
@@ -155,6 +160,7 @@
         supabaseClient = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
         console.log("⚡ Supabase connected successfully!");
         setupSupabaseRealtime();
+        setupSupabaseAuth();
       } catch (err) {
         console.warn("Supabase init error:", err);
       }
@@ -1201,6 +1207,10 @@
     if (passportModal) {
       passportModal.classList.remove("active");
     }
+    const commModal = document.getElementById("community-modal");
+    if (commModal) commModal.style.display = "none";
+    const pubProfModal = document.getElementById("public-profile-modal");
+    if (pubProfModal) pubProfModal.style.display = "none";
 
     // If venue is hidden by current district or filter chip, reset to show all so marker exists
     if (!activeMarkers.some(m => m._venueData && m._venueData.id === venue.id)) {
@@ -2151,6 +2161,28 @@
     if (passportModal && passportModal.classList.contains("active")) {
       renderPassportModal();
     }
+
+    // Cloud Check-in & Sync if authenticated
+    if (currentUser) {
+      if (isNowVisited) {
+        fetch("/api/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "record-checkin",
+            payload: {
+              userId: currentUser.id,
+              venueId: venue.id,
+              venueName: venue.name,
+              district: venue.district,
+              beerName: venue.beer_name,
+              beerPrice: venue.beer_price_pln
+            }
+          })
+        }).catch(err => console.warn("Check-in cloud sync note:", err));
+      }
+      syncUserDataToCloud();
+    }
   };
 
   // Toggle Favorite Venue (stored in localStorage)
@@ -2167,6 +2199,11 @@
     }
     saveFavoriteVenues(favoriteVenues);
     updateFavoriteCounters();
+
+    // Cloud Favorites Sync if authenticated
+    if (currentUser) {
+      syncUserDataToCloud();
+    }
 
     // Update button in popup if currently open
     const btn = document.querySelector(`.btn-fav-toggle[data-id="${venueId}"]`);
@@ -2253,11 +2290,19 @@
   }
 
   function checkUrlHash() {
-    const raw = decodeURIComponent(window.location.hash.replace(/^#/, "").trim().toLowerCase());
+    const raw = decodeURIComponent(window.location.hash.replace(/^#/, "").trim());
     if (!raw) return;
+    if (raw.startsWith("@")) {
+      const username = raw.slice(1).trim();
+      if (username && window.__openUserProfile) {
+        window.__openUserProfile(username);
+      }
+      return;
+    }
+    const lower = raw.toLowerCase();
     const target = allVenues.find(v => 
-      (v.slug && v.slug.toLowerCase() === raw) || 
-      (v.id && v.id.toLowerCase() === raw)
+      (v.slug && v.slug.toLowerCase() === lower) || 
+      (v.id && v.id.toLowerCase() === lower)
     );
     if (target) {
       window.__zoomToVenue(target.id);
@@ -2532,6 +2577,14 @@
         if (window.__closeIosInstall) window.__closeIosInstall();
         if (window.__closeHappyHours) window.__closeHappyHours();
         if (window.__closePassport) window.__closePassport();
+        const authModal = document.getElementById("auth-modal");
+        if (authModal) authModal.style.display = "none";
+        const profModal = document.getElementById("profile-modal");
+        if (profModal) profModal.style.display = "none";
+        const commModal = document.getElementById("community-modal");
+        if (commModal) commModal.style.display = "none";
+        const pubProfModal = document.getElementById("public-profile-modal");
+        if (pubProfModal) pubProfModal.style.display = "none";
       }
     });
 
@@ -3609,6 +3662,33 @@
     initHappyHours();
     initPassport();
 
+    // User Auth Button (Header badge)
+    const btnUserAuth = document.getElementById("btn-user-auth");
+    if (btnUserAuth) {
+      btnUserAuth.addEventListener("click", () => {
+        if (currentUser && currentProfile) {
+          if (window.__openMyProfile) window.__openMyProfile();
+        } else {
+          const authModal = document.getElementById("auth-modal");
+          if (authModal) authModal.style.display = "flex";
+        }
+      });
+    }
+
+    // Community Toggle Button (Header actions)
+    const btnCommunityToggle = document.getElementById("btn-community-toggle");
+    if (btnCommunityToggle) {
+      btnCommunityToggle.addEventListener("click", () => {
+        if (window.__openCommunity) window.__openCommunity();
+      });
+    }
+
+    // Initialize Auth & Social Modals
+    initAuthModal();
+    initProfileModal();
+    initCommunityModal();
+    initPublicProfileModal();
+
     // Deep linking: listen to URL hash changes
     window.addEventListener("hashchange", checkUrlHash);
   }
@@ -3629,6 +3709,1098 @@
       '"': "&quot;",
       "'": "&#39;"
     }[c]));
+  }
+
+  // ==========================================================================
+  // AUTHENTICATION, USER PROFILES & SOCIAL COMMUNITY ("Untappd + Strava dla Warszawy")
+  // ==========================================================================
+
+  function calculateUserRank(visitedCount) {
+    if (visitedCount >= 50) return { title: "Warszawska Legenda 👑", level: 5 };
+    if (visitedCount >= 25) return { title: "Piwny Koneser 🍺", level: 4 };
+    if (visitedCount >= 10) return { title: "Bywalec Pawilonów 🍻", level: 3 };
+    if (visitedCount >= 5) return { title: "Miejski Eksplorator 🦁", level: 2 };
+    return { title: "Początkujący Piwosz 🦊", level: 1 };
+  }
+
+  function formatTimeAgo(isoString) {
+    if (!isoString) return "niedawno";
+    const date = new Date(isoString);
+    const now = new Date();
+    const diffSec = Math.floor((now - date) / 1000);
+    if (diffSec < 60) return "przed chwilą";
+    const diffMin = Math.floor(diffSec / 60);
+    if (diffMin < 60) return `${diffMin} min temu`;
+    const diffHours = Math.floor(diffMin / 60);
+    if (diffHours < 24) return `${diffHours} godz. temu`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays === 1) return "wczoraj";
+    if (diffDays < 7) return `${diffDays} dni temu`;
+    return date.toLocaleDateString("pl-PL", { day: "numeric", month: "short" });
+  }
+
+  function setupSupabaseAuth() {
+    if (!supabaseClient || !supabaseClient.auth) return;
+
+    supabaseClient.auth.getSession().then(({ data }) => {
+      if (data && data.session && data.session.user) {
+        currentUser = data.session.user;
+        fetchAndSyncUserProfile();
+      } else {
+        currentUser = null;
+        currentProfile = null;
+        myFollowingIds = [];
+        updateAuthUI();
+      }
+    }).catch(err => {
+      console.warn("Supabase getSession error:", err);
+    });
+
+    supabaseClient.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state change:", event, session?.user?.email);
+      if (session && session.user) {
+        currentUser = session.user;
+        await fetchAndSyncUserProfile();
+      } else {
+        currentUser = null;
+        currentProfile = null;
+        myFollowingIds = [];
+        updateAuthUI();
+      }
+    });
+  }
+
+  async function fetchAndSyncUserProfile() {
+    if (!currentUser) return;
+
+    try {
+      const res = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "get-profile",
+          payload: { userId: currentUser.id }
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.profile) {
+          currentProfile = data.profile;
+          if (Array.isArray(data.followingIds)) {
+            myFollowingIds = data.followingIds;
+          }
+
+          // Lossless merge with localStorage
+          const cloudVisited = Array.isArray(currentProfile.visited_venues) ? currentProfile.visited_venues : [];
+          const mergedVisited = Array.from(new Set([...visitedVenues, ...cloudVisited]));
+          if (mergedVisited.length > visitedVenues.length || mergedVisited.length > cloudVisited.length) {
+            visitedVenues = mergedVisited;
+            saveVisitedVenues(visitedVenues);
+          }
+
+          const cloudFavs = Array.isArray(currentProfile.favorite_venues) ? currentProfile.favorite_venues : [];
+          const mergedFavs = Array.from(new Set([...favoriteVenues, ...cloudFavs]));
+          if (mergedFavs.length > favoriteVenues.length || mergedFavs.length > cloudFavs.length) {
+            favoriteVenues = mergedFavs;
+            saveFavoriteVenues(favoriteVenues);
+          }
+
+          // If local had items missing in cloud, sync up
+          if (mergedVisited.length > cloudVisited.length || mergedFavs.length > cloudFavs.length) {
+            syncUserDataToCloud();
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("Error fetching user profile:", err);
+    }
+
+    if (!currentProfile) {
+      // Fallback profile if record not fetched
+      const meta = currentUser.user_metadata || {};
+      const fallbackUsername = meta.username || (currentUser.email ? currentUser.email.split("@")[0].toLowerCase().replace(/[^a-z0-9_]/g, "") : "piwosz");
+      currentProfile = {
+        id: currentUser.id,
+        username: fallbackUsername,
+        display_name: meta.display_name || fallbackUsername,
+        avatar_icon: meta.avatar_icon || "🍺",
+        bio: "Warszawski poszukiwacz dobrego i taniego piwa 🍻",
+        visited_venues: visitedVenues,
+        favorite_venues: favoriteVenues
+      };
+      syncUserDataToCloud();
+    }
+
+    updateAuthUI();
+    updatePassportCounters();
+    updateFavoriteCounters();
+    renderMarkers();
+  }
+
+  function syncUserDataToCloud(extra = {}) {
+    if (!currentUser) return;
+    fetch("/api/auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "sync-profile",
+        payload: {
+          userId: currentUser.id,
+          visitedVenues: visitedVenues,
+          favoriteVenues: favoriteVenues,
+          ...extra
+        }
+      })
+    }).then(r => r.json()).then(data => {
+      if (data.success && currentProfile) {
+        if (extra.displayName) currentProfile.display_name = extra.displayName;
+        if (extra.avatarIcon) currentProfile.avatar_icon = extra.avatarIcon;
+        if (extra.bio !== undefined) currentProfile.bio = extra.bio;
+        if (extra.favoriteBeer !== undefined) currentProfile.favorite_beer = extra.favoriteBeer;
+        if (extra.favoriteDistrict !== undefined) currentProfile.favorite_district = extra.favoriteDistrict;
+        updateAuthUI();
+      }
+    }).catch(err => console.warn("Sync to cloud error:", err));
+  }
+
+  function updateAuthUI() {
+    const btnAuth = document.getElementById("btn-user-auth");
+    if (!btnAuth) return;
+
+    if (currentUser && currentProfile) {
+      btnAuth.classList.remove("badge-guest");
+      btnAuth.classList.add("badge-logged-in");
+      const icon = currentProfile.avatar_icon || "🍺";
+      const name = currentProfile.username ? `@${currentProfile.username}` : (currentProfile.display_name || "Mój profil");
+      btnAuth.innerHTML = `<span class="auth-avatar">${icon}</span><span class="badge-text">${escapeHtml(name)}</span>`;
+      btnAuth.title = `Zalogowano jako @${currentProfile.username}`;
+    } else {
+      btnAuth.classList.remove("badge-logged-in");
+      btnAuth.classList.add("badge-guest");
+      btnAuth.innerHTML = `<span>👤</span><span class="badge-text">Zaloguj się</span>`;
+      btnAuth.title = "Zaloguj się lub załóż konto piwosza";
+    }
+
+    const commFollowingBadge = document.getElementById("comm-following-badge");
+    if (commFollowingBadge) {
+      commFollowingBadge.textContent = myFollowingIds.length;
+    }
+  }
+
+  function initAuthModal() {
+    const modal = document.getElementById("auth-modal");
+    const btnClose = document.getElementById("btn-close-auth");
+    const tabLogin = document.getElementById("tab-auth-login");
+    const tabRegister = document.getElementById("tab-auth-register");
+    const formLogin = document.getElementById("form-auth-login");
+    const formRegister = document.getElementById("form-auth-register");
+    const formForgot = document.getElementById("form-auth-forgot");
+    const linkForgot = document.getElementById("link-forgot-pass");
+    const btnBackToLogin = document.getElementById("btn-back-to-login");
+    const regAvatarPicker = document.getElementById("reg-avatar-picker");
+    const regUsernameInput = document.getElementById("reg-username");
+    const regUsernameHint = document.getElementById("reg-username-hint");
+    const loginErrorMsg = document.getElementById("login-error-msg");
+    const regErrorMsg = document.getElementById("reg-error-msg");
+    const forgotErrorMsg = document.getElementById("forgot-error-msg");
+    const forgotSuccessMsg = document.getElementById("forgot-success-msg");
+
+    let selectedAvatar = "🍺";
+
+    function showTab(tab) {
+      if (loginErrorMsg) loginErrorMsg.style.display = "none";
+      if (regErrorMsg) regErrorMsg.style.display = "none";
+      if (forgotErrorMsg) forgotErrorMsg.style.display = "none";
+      if (forgotSuccessMsg) forgotSuccessMsg.style.display = "none";
+
+      if (tab === "login") {
+        if (tabLogin) tabLogin.classList.add("active");
+        if (tabRegister) tabRegister.classList.remove("active");
+        if (formLogin) formLogin.style.display = "block";
+        if (formRegister) formRegister.style.display = "none";
+        if (formForgot) formForgot.style.display = "none";
+      } else if (tab === "register") {
+        if (tabRegister) tabRegister.classList.add("active");
+        if (tabLogin) tabLogin.classList.remove("active");
+        if (formRegister) formRegister.style.display = "block";
+        if (formLogin) formLogin.style.display = "none";
+        if (formForgot) formForgot.style.display = "none";
+      } else if (tab === "forgot") {
+        if (formLogin) formLogin.style.display = "none";
+        if (formRegister) formRegister.style.display = "none";
+        if (formForgot) formForgot.style.display = "block";
+      }
+    }
+
+    if (tabLogin) tabLogin.addEventListener("click", () => showTab("login"));
+    if (tabRegister) tabRegister.addEventListener("click", () => showTab("register"));
+    if (linkForgot) {
+      linkForgot.addEventListener("click", (e) => {
+        e.preventDefault();
+        showTab("forgot");
+      });
+    }
+    if (btnBackToLogin) {
+      btnBackToLogin.addEventListener("click", () => showTab("login"));
+    }
+
+    if (btnClose && modal) {
+      btnClose.addEventListener("click", () => { modal.style.display = "none"; });
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) modal.style.display = "none";
+      });
+    }
+
+    // Avatar selector
+    if (regAvatarPicker) {
+      const btns = regAvatarPicker.querySelectorAll(".avatar-option");
+      btns.forEach(btn => {
+        btn.addEventListener("click", () => {
+          btns.forEach(b => b.classList.remove("selected"));
+          btn.classList.add("selected");
+          selectedAvatar = btn.getAttribute("data-avatar") || "🍺";
+        });
+      });
+    }
+
+    // Debounced username availability check
+    let debounceTimer = null;
+    if (regUsernameInput) {
+      regUsernameInput.addEventListener("input", () => {
+        const val = regUsernameInput.value.trim().toLowerCase().replace(/^@/, "");
+        regUsernameInput.value = val;
+        clearTimeout(debounceTimer);
+        if (!val) {
+          if (regUsernameHint) {
+            regUsernameHint.textContent = "3-20 liter, cyfr lub podkreślenie (_)";
+            regUsernameHint.style.color = "var(--text-muted)";
+          }
+          return;
+        }
+        if (!/^[a-z0-9_]{3,20}$/.test(val)) {
+          if (regUsernameHint) {
+            regUsernameHint.textContent = "Nick musi mieć 3-20 znaków (małe litery, cyfry, _)";
+            regUsernameHint.style.color = "#f87171";
+          }
+          return;
+        }
+
+        if (regUsernameHint) {
+          regUsernameHint.textContent = "Sprawdzanie dostępności...";
+          regUsernameHint.style.color = "var(--text-muted)";
+        }
+
+        debounceTimer = setTimeout(async () => {
+          try {
+            const res = await fetch("/api/auth", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                action: "check-username",
+                payload: { username: val }
+              })
+            });
+            const data = await res.json();
+            if (regUsernameHint) {
+              if (data.available) {
+                regUsernameHint.textContent = `✓ ${data.message || "Nick jest wolny!"}`;
+                regUsernameHint.style.color = "#4ade80";
+              } else {
+                regUsernameHint.textContent = `✕ ${data.message || "Nick jest już zajęty."}`;
+                regUsernameHint.style.color = "#f87171";
+              }
+            }
+          } catch (e) {
+            if (regUsernameHint) {
+              regUsernameHint.textContent = "Nie udało się sprawdzić nicku.";
+              regUsernameHint.style.color = "var(--text-muted)";
+            }
+          }
+        }, 350);
+      });
+    }
+
+    // Login Form Submit
+    if (formLogin) {
+      formLogin.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const emailInput = document.getElementById("login-email");
+        const passInput = document.getElementById("login-password");
+        const submitBtn = document.getElementById("btn-submit-login");
+
+        const rawLogin = emailInput ? emailInput.value.trim() : "";
+        const password = passInput ? passInput.value : "";
+
+        if (loginErrorMsg) loginErrorMsg.style.display = "none";
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = "<span>⏳ Logowanie...</span>";
+        }
+
+        try {
+          if (!supabaseClient || !supabaseClient.auth) {
+            throw new Error("Klient Supabase nie jest gotowy.");
+          }
+
+          if (!rawLogin.includes("@")) {
+            throw new Error("Wpisz adres e-mail przypisany do Twojego konta (np. jan@gmail.com).");
+          }
+
+          const { data, error } = await supabaseClient.auth.signInWithPassword({
+            email: rawLogin,
+            password: password
+          });
+
+          if (error) {
+            let msg = error.message;
+            if (msg.includes("Invalid login credentials")) {
+              msg = "Nieprawidłowy adres e-mail lub hasło.";
+            } else if (msg.includes("Email not confirmed")) {
+              msg = "Adres e-mail nie został jeszcze potwierdzony.";
+            }
+            throw new Error(msg);
+          }
+
+          if (modal) modal.style.display = "none";
+          showAppToast("Zalogowano pomyślnie!", "Witaj z powrotem w poilepiwko!", "🍻");
+        } catch (err) {
+          if (loginErrorMsg) {
+            loginErrorMsg.textContent = err.message || "Błąd logowania.";
+            loginErrorMsg.style.display = "block";
+          }
+        } finally {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = "<span>🚀 Zaloguj się</span>";
+          }
+        }
+      });
+    }
+
+    // Register Form Submit
+    if (formRegister) {
+      formRegister.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const usernameInput = document.getElementById("reg-username");
+        const displayNameInput = document.getElementById("reg-display-name");
+        const emailInput = document.getElementById("reg-email");
+        const passInput = document.getElementById("reg-password");
+        const submitBtn = document.getElementById("btn-submit-register");
+
+        const username = usernameInput ? usernameInput.value.trim().toLowerCase().replace(/^@/, "") : "";
+        const displayName = displayNameInput ? displayNameInput.value.trim() : "";
+        const email = emailInput ? emailInput.value.trim() : "";
+        const password = passInput ? passInput.value : "";
+
+        if (regErrorMsg) regErrorMsg.style.display = "none";
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = "<span>⏳ Tworzenie profilu...</span>";
+        }
+
+        try {
+          const res = await fetch("/api/auth", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "register",
+              payload: {
+                username,
+                displayName: displayName || username,
+                email,
+                password,
+                avatarIcon: selectedAvatar,
+                visitedVenues,
+                favoriteVenues
+              }
+            })
+          });
+
+          const data = await res.json();
+          if (!res.ok || !data.success) {
+            throw new Error(data.error || "Błąd podczas rejestracji.");
+          }
+
+          // Auto sign-in now that user is auto-confirmed
+          if (supabaseClient && supabaseClient.auth) {
+            const { error: signInErr } = await supabaseClient.auth.signInWithPassword({
+              email,
+              password
+            });
+            if (signInErr) {
+              console.warn("Auto sign-in note:", signInErr);
+            }
+          }
+
+          if (modal) modal.style.display = "none";
+          showAppToast(`Witaj @${username}! 🎉`, "Twoje konto piwosza jest już aktywne!", selectedAvatar);
+        } catch (err) {
+          if (regErrorMsg) {
+            regErrorMsg.textContent = err.message || "Błąd rejestracji.";
+            regErrorMsg.style.display = "block";
+          }
+        } finally {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = "<span>✨ Utwórz konto</span>";
+          }
+        }
+      });
+    }
+
+    // Forgot Password Form Submit
+    if (formForgot) {
+      formForgot.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const emailInput = document.getElementById("forgot-email");
+        const submitBtn = document.getElementById("btn-submit-forgot");
+        const email = emailInput ? emailInput.value.trim() : "";
+
+        if (forgotErrorMsg) forgotErrorMsg.style.display = "none";
+        if (forgotSuccessMsg) forgotSuccessMsg.style.display = "none";
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = "<span>⏳ Wysyłanie...</span>";
+        }
+
+        try {
+          if (!supabaseClient || !supabaseClient.auth) {
+            throw new Error("Klient Supabase niedostępny.");
+          }
+          const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+            redirectTo: window.location.origin
+          });
+          if (error) throw error;
+          if (forgotSuccessMsg) {
+            forgotSuccessMsg.textContent = "Link do zresetowania hasła został wysłany na Twój e-mail!";
+            forgotSuccessMsg.style.display = "block";
+          }
+        } catch (err) {
+          if (forgotErrorMsg) {
+            forgotErrorMsg.textContent = err.message || "Błąd wysyłania linku resetującego.";
+            forgotErrorMsg.style.display = "block";
+          }
+        } finally {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = "<span>📩 Wyślij link resetujący</span>";
+          }
+        }
+      });
+    }
+  }
+
+  function initProfileModal() {
+    const modal = document.getElementById("profile-modal");
+    const btnClose = document.getElementById("btn-close-profile");
+    const btnLogout = document.getElementById("btn-logout");
+    const btnShareMyProfile = document.getElementById("btn-share-my-profile");
+    const btnOpenCommFromProf = document.getElementById("btn-open-community-from-profile");
+    const btnToggleEdit = document.getElementById("btn-toggle-edit-profile");
+    const btnCancelEdit = document.getElementById("btn-cancel-edit-profile");
+    const formEdit = document.getElementById("form-edit-profile");
+    const editAvatarPicker = document.getElementById("edit-avatar-picker");
+
+    let editSelectedAvatar = "🍺";
+
+    function renderMyProfile() {
+      if (!currentProfile) return;
+      const rank = calculateUserRank(visitedVenues.length);
+
+      const heroAvatar = document.getElementById("prof-hero-avatar");
+      const heroName = document.getElementById("prof-hero-name");
+      const heroHandle = document.getElementById("prof-hero-handle");
+      const rankTitle = document.getElementById("prof-rank-title");
+      const statVisited = document.getElementById("prof-stat-visited");
+      const statBadges = document.getElementById("prof-stat-badges");
+      const statFavorites = document.getElementById("prof-stat-favorites");
+      const statFriends = document.getElementById("prof-stat-friends");
+      const bioDisplay = document.getElementById("prof-bio-display");
+      const valBeer = document.getElementById("prof-val-beer");
+      const valDistrict = document.getElementById("prof-val-district");
+
+      if (heroAvatar) heroAvatar.textContent = currentProfile.avatar_icon || "🍺";
+      if (heroName) heroName.textContent = currentProfile.display_name || currentProfile.username;
+      if (heroHandle) heroHandle.textContent = `@${currentProfile.username}`;
+      if (rankTitle) rankTitle.textContent = rank.title;
+      if (statVisited) statVisited.textContent = visitedVenues.length;
+      if (statBadges) statBadges.textContent = loadUnlockedBadges().length;
+      if (statFavorites) statFavorites.textContent = favoriteVenues.length;
+      if (statFriends) statFriends.textContent = myFollowingIds.length;
+      if (bioDisplay) bioDisplay.textContent = currentProfile.bio || "Brak opisu.";
+      if (valBeer) valBeer.textContent = currentProfile.favorite_beer || "Wszystkie dobre!";
+      if (valDistrict) valDistrict.textContent = currentProfile.favorite_district || "Cała Warszawa";
+
+      // Populate edit form
+      const editName = document.getElementById("edit-display-name");
+      const editBio = document.getElementById("edit-bio");
+      const editBeer = document.getElementById("edit-fav-beer");
+      const editDist = document.getElementById("edit-fav-district");
+
+      if (editName) editName.value = currentProfile.display_name || "";
+      if (editBio) editBio.value = currentProfile.bio || "";
+      if (editBeer) editBeer.value = currentProfile.favorite_beer || "";
+      if (editDist) editDist.value = currentProfile.favorite_district || "";
+
+      editSelectedAvatar = currentProfile.avatar_icon || "🍺";
+      if (editAvatarPicker) {
+        const btns = editAvatarPicker.querySelectorAll(".avatar-option");
+        btns.forEach(b => {
+          if (b.getAttribute("data-avatar") === editSelectedAvatar) {
+            b.classList.add("selected");
+          } else {
+            b.classList.remove("selected");
+          }
+        });
+      }
+    }
+
+    window.__openMyProfile = function () {
+      if (!currentUser) {
+        const authModal = document.getElementById("auth-modal");
+        if (authModal) authModal.style.display = "flex";
+        return;
+      }
+      renderMyProfile();
+      if (modal) modal.style.display = "flex";
+    };
+
+    if (btnClose && modal) {
+      btnClose.addEventListener("click", () => { modal.style.display = "none"; });
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) modal.style.display = "none";
+      });
+    }
+
+    if (btnOpenCommFromProf) {
+      btnOpenCommFromProf.addEventListener("click", () => {
+        if (modal) modal.style.display = "none";
+        if (window.__openCommunity) window.__openCommunity();
+      });
+    }
+
+    if (btnShareMyProfile) {
+      btnShareMyProfile.addEventListener("click", () => {
+        if (!currentProfile) return;
+        const url = `${window.location.origin}/#@${currentProfile.username}`;
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(url).then(() => {
+            showAppToast("Skopiowano link do profilu!", url, "📤");
+          }).catch(() => {
+            prompt("Skopiuj link do Twojego profilu:", url);
+          });
+        } else {
+          prompt("Skopiuj link do Twojego profilu:", url);
+        }
+      });
+    }
+
+    // Toggle edit form
+    if (btnToggleEdit && formEdit) {
+      btnToggleEdit.addEventListener("click", () => {
+        const isHidden = formEdit.style.display === "none";
+        formEdit.style.display = isHidden ? "block" : "none";
+      });
+    }
+    if (btnCancelEdit && formEdit) {
+      btnCancelEdit.addEventListener("click", () => {
+        formEdit.style.display = "none";
+      });
+    }
+
+    // Edit Avatar Picker
+    if (editAvatarPicker) {
+      const btns = editAvatarPicker.querySelectorAll(".avatar-option");
+      btns.forEach(btn => {
+        btn.addEventListener("click", () => {
+          btns.forEach(b => b.classList.remove("selected"));
+          btn.classList.add("selected");
+          editSelectedAvatar = btn.getAttribute("data-avatar") || "🍺";
+        });
+      });
+    }
+
+    // Form Edit Submit
+    if (formEdit) {
+      formEdit.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const editName = document.getElementById("edit-display-name").value.trim();
+        const editBio = document.getElementById("edit-bio").value.trim();
+        const editBeer = document.getElementById("edit-fav-beer").value.trim();
+        const editDist = document.getElementById("edit-fav-district").value.trim();
+
+        syncUserDataToCloud({
+          displayName: editName,
+          avatarIcon: editSelectedAvatar,
+          bio: editBio,
+          favoriteBeer: editBeer,
+          favoriteDistrict: editDist
+        });
+
+        if (currentProfile) {
+          currentProfile.display_name = editName;
+          currentProfile.avatar_icon = editSelectedAvatar;
+          currentProfile.bio = editBio;
+          currentProfile.favorite_beer = editBeer;
+          currentProfile.favorite_district = editDist;
+        }
+
+        renderMyProfile();
+        updateAuthUI();
+        formEdit.style.display = "none";
+        showAppToast("Profil zaktualizowany!", "Nowe dane są już widoczne dla znajomych.", "✨");
+      });
+    }
+
+    // Logout
+    if (btnLogout) {
+      btnLogout.addEventListener("click", async () => {
+        if (!confirm("Czy na pewno chcesz się wylogować?")) return;
+        try {
+          if (supabaseClient && supabaseClient.auth) {
+            await supabaseClient.auth.signOut();
+          }
+        } catch (e) {}
+        currentUser = null;
+        currentProfile = null;
+        myFollowingIds = [];
+        updateAuthUI();
+        if (modal) modal.style.display = "none";
+        showAppToast("Wylogowano pomyślnie.", "Do zobaczenia przy barze!", "👋");
+      });
+    }
+  }
+
+  function initCommunityModal() {
+    const modal = document.getElementById("community-modal");
+    const btnClose = document.getElementById("btn-close-community");
+    const tabFeed = document.getElementById("tab-comm-feed");
+    const tabSearch = document.getElementById("tab-comm-search");
+    const tabFollowing = document.getElementById("tab-comm-following");
+    const paneFeed = document.getElementById("pane-comm-feed");
+    const paneSearch = document.getElementById("pane-comm-search");
+    const paneFollowing = document.getElementById("pane-comm-following");
+    const feedList = document.getElementById("comm-feed-list");
+    const searchInput = document.getElementById("input-search-friends");
+    const btnRunSearch = document.getElementById("btn-run-search-friends");
+    const searchResults = document.getElementById("comm-search-results");
+    const followingList = document.getElementById("comm-following-list");
+
+    function switchTab(tab) {
+      [tabFeed, tabSearch, tabFollowing].forEach(t => t && t.classList.remove("active"));
+      [paneFeed, paneSearch, paneFollowing].forEach(p => p && (p.style.display = "none"));
+
+      if (tab === "feed") {
+        if (tabFeed) tabFeed.classList.add("active");
+        if (paneFeed) paneFeed.style.display = "block";
+        loadFeed();
+      } else if (tab === "search") {
+        if (tabSearch) tabSearch.classList.add("active");
+        if (paneSearch) paneSearch.style.display = "block";
+        if (searchInput) searchInput.focus();
+      } else if (tab === "following") {
+        if (tabFollowing) tabFollowing.classList.add("active");
+        if (paneFollowing) paneFollowing.style.display = "block";
+        loadFollowingList();
+      }
+    }
+
+    if (tabFeed) tabFeed.addEventListener("click", () => switchTab("feed"));
+    if (tabSearch) tabSearch.addEventListener("click", () => switchTab("search"));
+    if (tabFollowing) tabFollowing.addEventListener("click", () => switchTab("following"));
+
+    window.__openCommunity = function (initialTab = "feed") {
+      if (modal) modal.style.display = "flex";
+      switchTab(initialTab);
+    };
+
+    if (btnClose && modal) {
+      btnClose.addEventListener("click", () => { modal.style.display = "none"; });
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) modal.style.display = "none";
+      });
+    }
+
+    // Load Live Activity Feed
+    async function loadFeed() {
+      if (!feedList) return;
+      feedList.innerHTML = `<div class="loading-state-hint">Ładowanie aktywności... 🍻</div>`;
+
+      try {
+        const res = await fetch("/api/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "get-feed",
+            payload: { userId: currentUser ? currentUser.id : null }
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok || !data.feed || data.feed.length === 0) {
+          feedList.innerHTML = `
+            <div class="empty-state-card">
+              <div class="empty-icon">🍻</div>
+              <div class="empty-title">Cisza w kuflach...</div>
+              <p class="empty-sub">Bądź pierwszym, który oznaczy wizytę w barze przyciskiem „Byłem tu!” lub zaobserwuj innych piwoszy!</p>
+            </div>
+          `;
+          return;
+        }
+
+        feedList.innerHTML = data.feed.map(item => {
+          const author = item.author || { username: "piwosz", display_name: "Piwosz", avatar_icon: "🍺" };
+          const priceFormatted = item.beer_price ? `${Number(item.beer_price).toFixed(2)} zł` : "";
+          const timeAgo = formatTimeAgo(item.created_at);
+
+          return `
+            <div class="feed-item-card">
+              <div class="feed-avatar" onclick="window.__openUserProfile('${escapeHtml(author.username)}')">${escapeHtml(author.avatar_icon || "🍺")}</div>
+              <div class="feed-content">
+                <div class="feed-top-row">
+                  <span class="feed-author" onclick="window.__openUserProfile('${escapeHtml(author.username)}')">${escapeHtml(author.display_name || author.username)}</span>
+                  <span class="feed-handle">@${escapeHtml(author.username)}</span>
+                  <span class="feed-dot">•</span>
+                  <span class="feed-time">${escapeHtml(timeAgo)}</span>
+                </div>
+                <div class="feed-action-text">
+                  wypił(a) piwo w 
+                  <a href="javascript:void(0)" class="feed-venue-link" onclick="window.__zoomToVenue('${escapeHtml(item.venue_id)}')">
+                    📍 ${escapeHtml(item.venue_name || "Lokal w Warszawie")}
+                  </a>
+                </div>
+                <div class="feed-details-pill">
+                  <span>🍺 ${escapeHtml(item.beer_name || "Piwo z kranu")}</span>
+                  ${priceFormatted ? `<strong class="feed-price">${priceFormatted}</strong>` : ""}
+                  ${item.district ? `<span class="feed-district">(${escapeHtml(item.district)})</span>` : ""}
+                </div>
+              </div>
+            </div>
+          `;
+        }).join("");
+      } catch (err) {
+        feedList.innerHTML = `<div class="error-state-hint">Nie udało się pobrać feedu. Sprawdź połączenie.</div>`;
+      }
+    }
+
+    // Search Friends
+    async function searchFriends() {
+      const q = searchInput ? searchInput.value.trim() : "";
+      if (!q) return;
+      if (searchResults) searchResults.innerHTML = `<div class="loading-state-hint">Szukanie piwoszy... 🔍</div>`;
+
+      try {
+        const res = await fetch("/api/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "search-users",
+            payload: { query: q }
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok || !data.users || data.users.length === 0) {
+          if (searchResults) {
+            searchResults.innerHTML = `<div class="empty-state-hint">Nie znaleziono piwoszy pasujących do "${escapeHtml(q)}".</div>`;
+          }
+          return;
+        }
+
+        if (searchResults) {
+          searchResults.innerHTML = data.users.map(u => {
+            const isMe = currentUser && currentUser.id === u.id;
+            const isFollowing = myFollowingIds.includes(u.id);
+            const visitedCount = Array.isArray(u.visited_venues) ? u.visited_venues.length : 0;
+
+            return `
+              <div class="user-search-card">
+                <div class="user-card-avatar" onclick="window.__openUserProfile('${escapeHtml(u.username)}')">${escapeHtml(u.avatar_icon || "🍺")}</div>
+                <div class="user-card-info" onclick="window.__openUserProfile('${escapeHtml(u.username)}')">
+                  <div class="user-card-name">${escapeHtml(u.display_name || u.username)}</div>
+                  <div class="user-card-handle">@${escapeHtml(u.username)} • <span>🎖️ ${visitedCount} lokali</span></div>
+                  ${u.bio ? `<div class="user-card-bio">${escapeHtml(u.bio)}</div>` : ""}
+                </div>
+                <div class="user-card-action">
+                  ${isMe ? `<span class="badge-me">To Ty</span>` : `
+                    <button type="button" class="btn-follow-toggle ${isFollowing ? "following" : ""}" data-user-id="${u.id}" onclick="window.__toggleFollowUser('${u.id}', this)">
+                      ${isFollowing ? "✓ Obserwujesz" : "➕ Obserwuj"}
+                    </button>
+                  `}
+                </div>
+              </div>
+            `;
+          }).join("");
+        }
+      } catch (err) {
+        if (searchResults) searchResults.innerHTML = `<div class="error-state-hint">Błąd podczas wyszukiwania.</div>`;
+      }
+    }
+
+    if (btnRunSearch) btnRunSearch.addEventListener("click", searchFriends);
+    if (searchInput) {
+      searchInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          searchFriends();
+        }
+      });
+    }
+
+    // Load Following List
+    async function loadFollowingList() {
+      if (!followingList) return;
+      if (!currentUser) {
+        followingList.innerHTML = `
+          <div class="empty-state-hint">
+            Zaloguj się, aby zobaczyć listę obserwowanych piwoszy.
+          </div>
+        `;
+        return;
+      }
+
+      if (myFollowingIds.length === 0) {
+        followingList.innerHTML = `
+          <div class="empty-state-card">
+            <div class="empty-icon">👥</div>
+            <div class="empty-title">Nie obserwujesz jeszcze nikogo</div>
+            <p class="empty-sub">Przejdź do zakładki „Szukaj znajomych”, aby znaleźć swoich piwnych kompanów!</p>
+          </div>
+        `;
+        return;
+      }
+
+      followingList.innerHTML = `<div class="loading-state-hint">Ładowanie listy znajomych...</div>`;
+
+      try {
+        const res = await fetch("/api/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "search-users",
+            payload: { query: "" }
+          })
+        });
+        const data = await res.json();
+        const users = (data.users || []).filter(u => myFollowingIds.includes(u.id));
+
+        if (users.length === 0) {
+          followingList.innerHTML = `<div class="empty-state-hint">Obserwujesz ${myFollowingIds.length} osób.</div>`;
+          return;
+        }
+
+        followingList.innerHTML = users.map(u => `
+          <div class="user-search-card">
+            <div class="user-card-avatar" onclick="window.__openUserProfile('${escapeHtml(u.username)}')">${escapeHtml(u.avatar_icon || "🍺")}</div>
+            <div class="user-card-info" onclick="window.__openUserProfile('${escapeHtml(u.username)}')">
+              <div class="user-card-name">${escapeHtml(u.display_name || u.username)}</div>
+              <div class="user-card-handle">@${escapeHtml(u.username)}</div>
+            </div>
+            <div class="user-card-action">
+              <button type="button" class="btn-follow-toggle following" data-user-id="${u.id}" onclick="window.__toggleFollowUser('${u.id}', this)">
+                ✓ Obserwujesz
+              </button>
+            </div>
+          </div>
+        `).join("");
+      } catch (err) {
+        followingList.innerHTML = `<div class="error-state-hint">Nie udało się załadować listy.</div>`;
+      }
+    }
+  }
+
+  // Global Follow / Unfollow Toggle
+  window.__toggleFollowUser = async function (targetUserId, btnEl) {
+    if (!currentUser) {
+      showAppToast("Zaloguj się!", "Musisz mieć konto, aby obserwować znajomych.", "🔒");
+      const authModal = document.getElementById("auth-modal");
+      if (authModal) authModal.style.display = "flex";
+      return;
+    }
+
+    if (btnEl) btnEl.disabled = true;
+
+    try {
+      const res = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "toggle-follow",
+          payload: {
+            followerId: currentUser.id,
+            followingId: targetUserId
+          }
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        if (data.isFollowing) {
+          if (!myFollowingIds.includes(targetUserId)) myFollowingIds.push(targetUserId);
+          if (btnEl) {
+            btnEl.classList.add("following");
+            btnEl.textContent = "✓ Obserwujesz";
+          }
+          showAppToast("Obserwujesz użytkownika!", "Jego check-iny pojawią się w Twoim feedzie.", "❤️");
+        } else {
+          myFollowingIds = myFollowingIds.filter(id => id !== targetUserId);
+          if (btnEl) {
+            btnEl.classList.remove("following");
+            btnEl.textContent = "➕ Obserwuj";
+          }
+          showAppToast("Przestałeś obserwować użytkownika.", "", "🤍");
+        }
+
+        const commFollowingBadge = document.getElementById("comm-following-badge");
+        if (commFollowingBadge) commFollowingBadge.textContent = myFollowingIds.length;
+        const profStatFriends = document.getElementById("prof-stat-friends");
+        if (profStatFriends) profStatFriends.textContent = myFollowingIds.length;
+      }
+    } catch (err) {
+      console.warn("Toggle follow error:", err);
+    } finally {
+      if (btnEl) btnEl.disabled = false;
+    }
+  };
+
+  function initPublicProfileModal() {
+    const modal = document.getElementById("public-profile-modal");
+    const btnClose = document.getElementById("btn-close-public-profile");
+    const btnFollow = document.getElementById("btn-pubprof-follow-toggle");
+    const btnShare = document.getElementById("btn-pubprof-share");
+
+    let currentViewedProfile = null;
+
+    window.__openUserProfile = async function (username) {
+      if (!username) return;
+      const cleanUser = username.trim().toLowerCase().replace(/^@/, "");
+
+      // If viewing self, open own profile modal
+      if (currentProfile && currentProfile.username && currentProfile.username.toLowerCase() === cleanUser) {
+        if (window.__openMyProfile) window.__openMyProfile();
+        return;
+      }
+
+      if (modal) modal.style.display = "flex";
+
+      const avatarEl = document.getElementById("pubprof-avatar");
+      const nameEl = document.getElementById("pubprof-name");
+      const handleEl = document.getElementById("pubprof-handle");
+      const rankEl = document.getElementById("pubprof-rank");
+      const statVisited = document.getElementById("pubprof-stat-visited");
+      const statFavorites = document.getElementById("pubprof-stat-favorites");
+      const statFollowers = document.getElementById("pubprof-stat-followers");
+      const bioEl = document.getElementById("pubprof-bio");
+      const beerEl = document.getElementById("pubprof-val-beer");
+      const distEl = document.getElementById("pubprof-val-district");
+      const recentList = document.getElementById("pubprof-recent-list");
+
+      if (nameEl) nameEl.textContent = "Ładowanie...";
+      if (handleEl) handleEl.textContent = `@${cleanUser}`;
+      if (recentList) recentList.innerHTML = `<div class="loading-state-hint">Pobieranie profilu... 🍺</div>`;
+
+      try {
+        const res = await fetch("/api/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "get-profile",
+            payload: { username: cleanUser }
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok || !data.profile) {
+          if (nameEl) nameEl.textContent = "Nie znaleziono profilu";
+          if (recentList) recentList.innerHTML = `<div class="empty-state-hint">Użytkownik @${cleanUser} nie istnieje w bazie.</div>`;
+          return;
+        }
+
+        const p = data.profile;
+        currentViewedProfile = p;
+        const rank = calculateUserRank((p.visited_venues || []).length);
+
+        if (avatarEl) avatarEl.textContent = p.avatar_icon || "🍺";
+        if (nameEl) nameEl.textContent = p.display_name || p.username;
+        if (handleEl) handleEl.textContent = `@${p.username}`;
+        if (rankEl) rankEl.textContent = rank.title;
+        if (statVisited) statVisited.textContent = (p.visited_venues || []).length;
+        if (statFavorites) statFavorites.textContent = (p.favorite_venues || []).length;
+        if (statFollowers) statFollowers.textContent = data.stats?.followersCount || 0;
+        if (bioEl) bioEl.textContent = p.bio || "Brak opisu.";
+        if (beerEl) beerEl.textContent = p.favorite_beer || "Wszystkie dobre!";
+        if (distEl) distEl.textContent = p.favorite_district || "Warszawa";
+
+        // Follow button state
+        if (btnFollow) {
+          const isFollowing = myFollowingIds.includes(p.id);
+          btnFollow.className = isFollowing ? "btn-secondary" : "btn-primary";
+          btnFollow.innerHTML = isFollowing ? "<span>✓ Obserwujesz (odznacz)</span>" : "<span>➕ Obserwuj znajomego</span>";
+        }
+
+        // Recent checkins
+        if (recentList) {
+          if (!data.recentCheckins || data.recentCheckins.length === 0) {
+            recentList.innerHTML = `<div class="empty-state-hint">Brak zarejestrowanych wizyt w barach.</div>`;
+          } else {
+            recentList.innerHTML = data.recentCheckins.map(c => `
+              <div class="pubprof-checkin-item">
+                <div class="checkin-venue" onclick="window.__zoomToVenue('${escapeHtml(c.venue_id)}')">
+                  📍 ${escapeHtml(c.venue_name)}
+                </div>
+                <div class="checkin-meta">
+                  <span>🍺 ${escapeHtml(c.beer_name)} (${Number(c.beer_price).toFixed(2)} zł)</span>
+                  <span>•</span>
+                  <span>${formatTimeAgo(c.created_at)}</span>
+                </div>
+              </div>
+            `).join("");
+          }
+        }
+      } catch (err) {
+        if (nameEl) nameEl.textContent = "Błąd pobierania";
+        if (recentList) recentList.innerHTML = `<div class="error-state-hint">Nie udało się pobrać danych profilu.</div>`;
+      }
+    };
+
+    if (btnClose && modal) {
+      btnClose.addEventListener("click", () => { modal.style.display = "none"; });
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) modal.style.display = "none";
+      });
+    }
+
+    if (btnFollow) {
+      btnFollow.addEventListener("click", async () => {
+        if (!currentViewedProfile) return;
+        await window.__toggleFollowUser(currentViewedProfile.id, null);
+        const isFollowing = myFollowingIds.includes(currentViewedProfile.id);
+        btnFollow.className = isFollowing ? "btn-secondary" : "btn-primary";
+        btnFollow.innerHTML = isFollowing ? "<span>✓ Obserwujesz (odznacz)</span>" : "<span>➕ Obserwuj znajomego</span>";
+        const statFollowers = document.getElementById("pubprof-stat-followers");
+        if (statFollowers) {
+          const cur = parseInt(statFollowers.textContent, 10) || 0;
+          statFollowers.textContent = isFollowing ? cur + 1 : Math.max(0, cur - 1);
+        }
+      });
+    }
+
+    if (btnShare) {
+      btnShare.addEventListener("click", () => {
+        if (!currentViewedProfile) return;
+        const url = `${window.location.origin}/#@${currentViewedProfile.username}`;
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(url).then(() => {
+            showAppToast("Skopiowano link do profilu!", url, "📤");
+          }).catch(() => {
+            prompt("Skopiuj link do profilu:", url);
+          });
+        } else {
+          prompt("Skopiuj link do profilu:", url);
+        }
+      });
+    }
   }
 
   const FALLBACK_VENUES = [
