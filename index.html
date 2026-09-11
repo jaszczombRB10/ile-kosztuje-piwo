@@ -86,6 +86,10 @@
           <span>👥</span>
           <span class="btn-text">Znajomi</span>
         </button>
+        <button id="btn-pubquiz-header" class="btn-secondary" title="Warszawski Pub Quiz – sprawdź swoją wiedzę barową">
+          <span>🧠</span>
+          <span class="btn-text">Pub Quiz</span>
+        </button>
         <button id="btn-open-report" class="btn-report" title="Dodaj nowy lokal lub zaktualizuj cenę" onclick="window.__openAddModal ? window.__openAddModal() : null">
           <span>➕</span>
           <span class="btn-text-report">Dodaj bar</span>
@@ -144,6 +148,10 @@
       <button type="button" class="fab-brand-pill" id="btn-top-brand" title="poilepiwko.pl – Pokaż całą Warszawę">
         <span class="brand-pill-icon">🍺</span>
         <span class="brand-pill-text">poilepiwko<span class="brand-pill-tld">.pl</span></span>
+      </button>
+
+      <button type="button" class="fab-top-btn" id="btn-top-pubquiz" title="Warszawski Pub Quiz – Zagraj teraz!">
+        <span>🧠</span>
       </button>
 
       <button type="button" class="fab-top-btn" id="btn-top-search" title="Szukaj lokalu lub piwa">
@@ -1413,10 +1421,11 @@
       
       <!-- Top Navigation & Close -->
       <div class="goin-modal-header">
+        <div class="goin-header-drag-bar" aria-hidden="true"></div>
         <div class="goin-header-brand">
           <span class="brand-pill">🍺 poilepiwko</span>
         </div>
-        <button type="button" class="modal-close" id="btn-close-profile" aria-label="Zamknij profil">✕</button>
+        <button type="button" class="modal-close-goin" id="btn-close-profile" aria-label="Zamknij profil" title="Zamknij profil i wróć do mapy">✕</button>
       </div>
 
       <!-- Hero Banner (Goin' Style) -->
@@ -1571,6 +1580,9 @@
       <!-- Action Buttons & Logout -->
       <div class="goin-profile-footer">
         <div class="profile-action-buttons">
+          <button type="button" class="btn-profile-action btn-profile-quiz" id="btn-open-pubquiz-from-profile">
+            <span>🧠 Zagraj w Pub Quiz</span>
+          </button>
           <button type="button" class="btn-profile-action" id="btn-open-community-from-profile">
             <span>👥 Piwni Znajomi & Feed</span>
           </button>
@@ -1580,8 +1592,162 @@
         </div>
 
         <div class="profile-footer-bar">
+          <button type="button" class="btn-profile-back" id="btn-close-profile-bottom">
+            <span>✕ Wróć do mapy</span>
+          </button>
           <button type="button" class="btn-logout" id="btn-logout">
             <span>🚪 Wyloguj się</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Warszawski Pub Quiz Modal -->
+  <div class="modal-backdrop" id="pubquiz-modal">
+    <div class="modal-card modal-card-goin pubquiz-modal-card">
+      
+      <!-- Top Navigation & Close -->
+      <div class="goin-modal-header">
+        <div class="goin-header-drag-bar" aria-hidden="true"></div>
+        <div class="goin-header-brand">
+          <span class="brand-pill">🧠 Pub Quiz</span>
+        </div>
+        <button type="button" class="modal-close-goin" id="btn-close-pubquiz" aria-label="Zamknij Pub Quiz" title="Zamknij Pub Quiz i wróć do mapy">✕</button>
+      </div>
+
+      <!-- Hero Banner -->
+      <div class="pubquiz-hero">
+        <div class="pubquiz-hero-badge">🍺 WARSZAWA & KRAFT</div>
+        <h2>Warszawski Pub Quiz</h2>
+        <p>Sprawdź swoją wiedzę o stylach piwa, warszawskich lokalach i nocnych legendach!</p>
+        
+        <div class="pubquiz-nav-tabs">
+          <button type="button" class="pubquiz-tab-pill active" id="tab-btn-quiz-game">🎮 Zagraj w Quiz</button>
+          <button type="button" class="pubquiz-tab-pill" id="tab-btn-quiz-venues">📍 Gdzie na quiz na żywo?</button>
+        </div>
+      </div>
+
+      <!-- Tab 1: Interactive Quiz Game -->
+      <div class="pubquiz-tab-pane" id="pubquiz-pane-game">
+        
+        <!-- Screen 1: Start / Lobby -->
+        <div id="quiz-screen-start" class="quiz-screen">
+          <div class="quiz-lobby-card">
+            <div class="quiz-lobby-icon">🎯</div>
+            <h3>Wybierz kategorię pytań:</h3>
+            <div class="quiz-cat-grid">
+              <button type="button" class="quiz-cat-btn active" data-cat="all">
+                <span class="quiz-cat-ico">🎲</span>
+                <div class="quiz-cat-text">
+                  <strong>Mix Pytań</strong>
+                  <small>Wszystko o piwie, barach i Warszawie</small>
+                </div>
+              </button>
+              <button type="button" class="quiz-cat-btn" data-cat="beer">
+                <span class="quiz-cat-ico">🍺</span>
+                <div class="quiz-cat-text">
+                  <strong>Style & Kraft</strong>
+                  <small>Chmiele, IBU, gatunki, sensoryka</small>
+                </div>
+              </button>
+              <button type="button" class="quiz-cat-btn" data-cat="warsaw">
+                <span class="quiz-cat-ico">🏙️</span>
+                <div class="quiz-cat-text">
+                  <strong>Warszawska Noc</strong>
+                  <small>Pawilony, bary, historia i mosty</small>
+                </div>
+              </button>
+            </div>
+
+            <div class="quiz-lobby-meta">
+              <div class="quiz-meta-pill">
+                <span>🏆 Rekord: <strong id="quiz-highscore-val">0/5</strong></span>
+              </div>
+              <div class="quiz-meta-pill">
+                <span>⏱️ Czas: <strong>20s / pytanie</strong></span>
+              </div>
+            </div>
+
+            <button type="button" class="btn-primary btn-quiz-cta" id="btn-quiz-start-game">
+              <span>🚀 Rozpocznij rundę (5 pytań)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Screen 2: Active Question Play -->
+        <div id="quiz-screen-play" class="quiz-screen" style="display:none;">
+          <div class="quiz-play-header">
+            <span class="quiz-step-tag" id="quiz-step-tag">Pytanie 1 / 5</span>
+            <span class="quiz-timer-pill" id="quiz-timer-pill">⏱️ 20s</span>
+          </div>
+
+          <div class="quiz-progress-track">
+            <div class="quiz-progress-fill" id="quiz-progress-fill" style="width: 20%;"></div>
+          </div>
+
+          <div class="quiz-card-question">
+            <div class="quiz-q-category" id="quiz-q-category">Piwna Wiedza</div>
+            <h3 class="quiz-q-title" id="quiz-q-title">Ładowanie pytania...</h3>
+          </div>
+
+          <div class="quiz-options-list" id="quiz-options-list">
+            <!-- 4 options -->
+          </div>
+
+          <div class="quiz-feedback-banner" id="quiz-feedback-banner" style="display:none;">
+            <span class="quiz-feedback-ico" id="quiz-feedback-ico">💡</span>
+            <div class="quiz-feedback-msg" id="quiz-feedback-msg">Odpowiedź</div>
+          </div>
+
+          <button type="button" class="btn-primary btn-quiz-next" id="btn-quiz-next-btn" style="display:none;">
+            <span>Następne pytanie →</span>
+          </button>
+        </div>
+
+        <!-- Screen 3: Round Results -->
+        <div id="quiz-screen-results" class="quiz-screen" style="display:none;">
+          <div class="quiz-result-hero">
+            <div class="quiz-result-badge-ico" id="quiz-res-ico">👑</div>
+            <h3 id="quiz-res-title">Mistrz Warszawskiego Pub Quizu!</h3>
+            <div class="quiz-res-score-box">
+              <span class="quiz-res-num" id="quiz-res-num">5</span><span class="quiz-res-total">/5</span>
+            </div>
+            <p class="quiz-res-sub" id="quiz-res-sub">Znasz warszawskie piwa i lokale jak nikt inny!</p>
+
+            <div class="quiz-unlocked-notice" id="quiz-unlocked-notice" style="display:none;">
+              <span>🎉 Odblokowano odznakę w Paszporcie: <strong>Mistrz Pub Quizu 🧠</strong>!</span>
+            </div>
+
+            <div class="quiz-res-actions">
+              <button type="button" class="btn-primary" id="btn-quiz-restart">
+                <span>🔄 Zagraj kolejną rundę</span>
+              </button>
+              <button type="button" class="btn-secondary" id="btn-quiz-share-res">
+                <span>📤 Udostępnij wynik</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Tab 2: Venues with Live Pub Quizzes in Warsaw -->
+      <div class="pubquiz-tab-pane" id="pubquiz-pane-venues" style="display:none;">
+        <div class="pubquiz-venues-intro">
+          <p>Szukasz rywalizacji na żywo ze znajomymi przy kuflu piwa? Oto popularne warszawskie lokale organizujące cykliczne Pub Quizy:</p>
+        </div>
+        <div class="pubquiz-venues-list" id="pubquiz-venues-cards">
+          <!-- Dynamic venue cards -->
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="goin-profile-footer">
+        <div class="profile-footer-bar">
+          <button type="button" class="btn-profile-back" id="btn-close-pubquiz-bottom">
+            <span>✕ Wróć do mapy</span>
           </button>
         </div>
       </div>

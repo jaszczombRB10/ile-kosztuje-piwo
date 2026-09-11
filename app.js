@@ -2117,6 +2117,16 @@
       check: (visited, vMap) => {
         return { unlocked: visited.length >= 20, progress: `${Math.min(visited.length, 20)}/20` };
       }
+    },
+    {
+      id: "pubquiz_master",
+      name: "Mistrz Pub Quizu",
+      icon: "🧠",
+      desc: "Zdobądź komplet punktów (5/5) w Warszawskim Pub Quizie",
+      check: (visited, vMap) => {
+        const won = localStorage.getItem("poilepiwko_pubquiz_won") === "true";
+        return { unlocked: won, progress: won ? "5/5" : "0/5" };
+      }
     }
   ];
 
@@ -4689,6 +4699,7 @@
     initProfileModal();
     initCommunityModal();
     initPublicProfileModal();
+    initPubQuizModal();
 
     // Deep linking: listen to URL hash changes
     window.addEventListener("hashchange", checkUrlHash);
@@ -5663,6 +5674,29 @@
       });
     }
 
+    const btnCloseBottom = document.getElementById("btn-close-profile-bottom");
+    if (btnCloseBottom) {
+      btnCloseBottom.addEventListener("click", () => { window.__closeMyProfile(); });
+    }
+
+    const btnOpenQuizFromProf = document.getElementById("btn-open-pubquiz-from-profile");
+    if (btnOpenQuizFromProf) {
+      btnOpenQuizFromProf.addEventListener("click", () => {
+        window.__closeMyProfile();
+        if (window.__openPubQuiz) window.__openPubQuiz();
+      });
+    }
+
+    const tagVibeWrap = document.getElementById("prof-tag-vibe-wrap");
+    if (tagVibeWrap) {
+      tagVibeWrap.style.cursor = "pointer";
+      tagVibeWrap.title = "Kliknij, aby zagrać w Warszawski Pub Quiz!";
+      tagVibeWrap.addEventListener("click", () => {
+        window.__closeMyProfile();
+        if (window.__openPubQuiz) window.__openPubQuiz();
+      });
+    }
+
     if (btnOpenCommFromProf) {
       btnOpenCommFromProf.addEventListener("click", () => {
         if (modal) modal.style.display = "none";
@@ -6276,6 +6310,676 @@
         }
       });
     }
+  }
+
+  function initPubQuizModal() {
+    const modal = document.getElementById("pubquiz-modal");
+    const btnOpenHeader = document.getElementById("btn-pubquiz-header");
+    const btnOpenTop = document.getElementById("btn-top-pubquiz");
+    const btnClose = document.getElementById("btn-close-pubquiz");
+    const btnCloseBottom = document.getElementById("btn-close-pubquiz-bottom");
+
+    const tabBtnGame = document.getElementById("tab-btn-quiz-game");
+    const tabBtnVenues = document.getElementById("tab-btn-quiz-venues");
+    const paneGame = document.getElementById("pubquiz-pane-game");
+    const paneVenues = document.getElementById("pubquiz-pane-venues");
+
+    // Screens
+    const screenStart = document.getElementById("quiz-screen-start");
+    const screenPlay = document.getElementById("quiz-screen-play");
+    const screenResults = document.getElementById("quiz-screen-results");
+
+    // Start Screen Elements
+    const catBtns = document.querySelectorAll(".quiz-cat-btn");
+    const highscoreVal = document.getElementById("quiz-highscore-val");
+    const btnStartGame = document.getElementById("btn-quiz-start-game");
+
+    // Play Screen Elements
+    const stepTag = document.getElementById("quiz-step-tag");
+    const timerPill = document.getElementById("quiz-timer-pill");
+    const progressFill = document.getElementById("quiz-progress-fill");
+    const qCategory = document.getElementById("quiz-q-category");
+    const qTitle = document.getElementById("quiz-q-title");
+    const optionsList = document.getElementById("quiz-options-list");
+    const feedbackBanner = document.getElementById("quiz-feedback-banner");
+    const feedbackIco = document.getElementById("quiz-feedback-ico");
+    const feedbackMsg = document.getElementById("quiz-feedback-msg");
+    const btnNext = document.getElementById("btn-quiz-next-btn");
+
+    // Results Screen Elements
+    const resIco = document.getElementById("quiz-res-ico");
+    const resTitle = document.getElementById("quiz-res-title");
+    const resNum = document.getElementById("quiz-res-num");
+    const resSub = document.getElementById("quiz-res-sub");
+    const unlockedNotice = document.getElementById("quiz-unlocked-notice");
+    const btnRestart = document.getElementById("btn-quiz-restart");
+    const btnShare = document.getElementById("btn-quiz-share-res");
+
+    // Venues Screen
+    const venuesContainer = document.getElementById("pubquiz-venues-cards");
+
+    // Questions Database
+    const PUB_QUIZ_QUESTIONS = [
+      {
+        id: 1,
+        cat: "beer",
+        catName: "Style & Kraft 🍺",
+        q: "Co dokładnie oznacza wskaźnik IBU na etykiecie piwa kraftowego?",
+        options: [
+          "International Bitterness Units (poziom goryczki)",
+          "Index of Beer Unpasteurized (stopień pasteryzacji)",
+          "Imperial Brewing Union (certyfikat jakości)",
+          "Intensity of Barley Usage (ilość słodu)"
+        ],
+        correct: 0,
+        fact: "IBU mierzy zawartość izo-alfa-kwasów z chmielu. Czyste lagery mają zwykle 10-20 IBU, a mocne AIPA nawet 70-100 IBU!"
+      },
+      {
+        id: 2,
+        cat: "beer",
+        catName: "Style & Kraft 🍺",
+        q: "Z jakiego słodu tradycyjnie warzy się polskie Piwo Grodziskie?",
+        options: [
+          "Pszenicznego wędzonego dymem dębowym",
+          "Jęczmiennego palonego",
+          "Żytniego karmelowego",
+          "Owsianego prażonego"
+        ],
+        correct: 0,
+        fact: "Piwo Grodziskie to jedyny w 100% rdzenny polski styl piwa, zwany ze względu na musowanie i szlachetność 'polskim szampanem'!"
+      },
+      {
+        id: 3,
+        cat: "beer",
+        catName: "Style & Kraft 🍺",
+        q: "Który styl piwa jest historycznie nazywany 'Polskim Czarnym Złotem'?",
+        options: [
+          "Porter Bałtycki",
+          "Milk Stout",
+          "Koźlak Dubeltowy",
+          "Czarny Bez Ale"
+        ],
+        correct: 0,
+        fact: "Porter Bałtycki to piwo dolnej fermentacji o potężnym, czekoladowo-śliwkowym aromacie. Polska jest uznawana za światową stolicę tego stylu!"
+      },
+      {
+        id: 4,
+        cat: "beer",
+        catName: "Style & Kraft 🍺",
+        q: "Jaki amerykański chmiel zapoczątkował światową rewolucję kraftową aromatem cytrusów i grejpfruta?",
+        options: [
+          "Cascade",
+          "Lubelski",
+          "Saaz (Żatecki)",
+          "Hallertau"
+        ],
+        correct: 0,
+        fact: "Chmiel Cascade, wprowadzony w USA w latach 70., dał początek kultowemu stylowi American Pale Ale (APA)!"
+      },
+      {
+        id: 5,
+        cat: "beer",
+        catName: "Style & Kraft 🍺",
+        q: "W jakiej temperaturze najlepiej serwować mocne piwa ciemne (np. Imperial Stout / Porter)?",
+        options: [
+          "12°C - 16°C (nieco chłodniejsze niż temperatura pokojowa)",
+          "0°C - 2°C (prosto z zamrażalnika)",
+          "6°C - 8°C (lodówkowa)",
+          "Powyżej 25°C (na ciepło)"
+        ],
+        correct: 0,
+        fact: "Zbyt mocne zmrożenie ciemnego kraftu 'zamyka' aromaty palonej kawy, czekolady i suszonych owoców!"
+      },
+      {
+        id: 6,
+        cat: "beer",
+        catName: "Style & Kraft 🍺",
+        q: "Co oznacza termin 'chmielenie na zimno' (Dry Hopping)?",
+        options: [
+          "Dodanie chmielu do leżakującego piwa w celu podbicia aromatu",
+          "Zamrażanie szyszek chmielu przed wrzuceniem do kotła",
+          "Używanie wyłącznie chmielu z mroźnych rejonów świata",
+          "Podawanie piwa w zmrożonym kuflu"
+        ],
+        correct: 0,
+        fact: "Chmielenie na zimno nie zwiększa goryczki, lecz uwalnia wspaniałe, świeże olejki eteryczne z chmielu."
+      },
+      {
+        id: 7,
+        cat: "beer",
+        catName: "Style & Kraft 🍺",
+        q: "Czym charakteryzuje się styl New England IPA (NEIPA / Hazy IPA)?",
+        options: [
+          "Soczystym smakiem tropików, mętną barwą i gładką, niską goryczką",
+          "Smakiem wędzonej śliwki i wysoką kwasowością",
+          "Absolutną klarownością i smakiem palonego karmelu",
+          "Brakem gazu i drożdży"
+        ],
+        correct: 0,
+        fact: "NEIPA to hit ostatnich lat – dzięki płatkom owsianym i chmieleniu późnymi dawkami smakuje jak świeży sok z owoców tropikalnych!"
+      },
+      {
+        id: 8,
+        cat: "beer",
+        catName: "Style & Kraft 🍺",
+        q: "Który składnik NIE występował w bawarskim prawie czystości Reinheitsgebot z 1516 roku?",
+        options: [
+          "Drożdże (nie znano jeszcze ich mikrobiologicznej natury)",
+          "Woda",
+          "Chmiel",
+          "Słód jęczmienny"
+        ],
+        correct: 0,
+        fact: "W 1516 roku drożdży jeszcze nie wymieniono, bo myślano, że fermentacja zachodzi samoistnie. Drożdże dodano dopiero po badaniach Ludwika Pasteura!"
+      },
+      {
+        id: 9,
+        cat: "warsaw",
+        catName: "Warszawska Noc 🏙️",
+        q: "Gdzie w Warszawie znajduje się słynne zagłębie barowe zwane 'Pawilonami'?",
+        options: [
+          "Na tyłach Nowego Światu i ulicy Foksal",
+          "Przy Placu Zbawiciela",
+          "Na Bulwarach Wiślanych",
+          "Przy Dworcu Wileńskim"
+        ],
+        correct: 0,
+        fact: "Pawilony powstały w latach 70. jako rzemieślnicze warsztaty szewców i krawców, a z czasem stały się kultowym zagłębiem pubów studenckich!"
+      },
+      {
+        id: 10,
+        cat: "warsaw",
+        catName: "Warszawska Noc 🏙️",
+        q: "Który warszawski most słynie z letnich spotkań przy piwku na betonowych schodkach nad Wisłą?",
+        options: [
+          "Most Poniatowskiego",
+          "Most Świętokrzyski",
+          "Most Śląsko-Dąbrowski",
+          "Most Gdański"
+        ],
+        correct: 0,
+        fact: "Schodki pod Mostem Poniatowskiego i Bulwary Flotylli Wiślanej to latem jedno z najpopularniejszych miejsc spotkań w stolicy!"
+      },
+      {
+        id: 11,
+        cat: "warsaw",
+        catName: "Warszawska Noc 🏙️",
+        q: "W której dzielnicy Warszawy znajdują się historyczne dawne Browary Haberbusch i Schiele?",
+        options: [
+          "Wola",
+          "Mokotów",
+          "Żoliborz",
+          "Targówek"
+        ],
+        correct: 0,
+        fact: "Zakłady Haberbusch i Schiele na Woli były w XIX i XX wieku największym producentem piwa w całym Królestwie Polskim!"
+      },
+      {
+        id: 12,
+        cat: "warsaw",
+        catName: "Warszawska Noc 🏙️",
+        q: "Która ulica w Śródmieściu Południowym jest uznawana za nieoficjalną 'stolicę warszawskiego kraftu'?",
+        options: [
+          "Nowogrodzka",
+          "Marszałkowska",
+          "Krucza",
+          "Miodowa"
+        ],
+        correct: 0,
+        fact: "Przy ul. Nowogrodzkiej działa zagłębie pionierskich multitapów, m.in. Kufle i Kapsle, Jabeerwocky czy Drugie Dno!"
+      },
+      {
+        id: 13,
+        cat: "warsaw",
+        catName: "Warszawska Noc 🏙️",
+        q: "Jaki kultowy praski lokal przy ul. Ząbkowskiej słynie z wystroju vintage, starych maszyn do szycia i klimatu retro?",
+        options: [
+          "W Oparach Absurdu",
+          "Łysy Pingwin",
+          "Sens Nonsensu",
+          "Skład Butelek"
+        ],
+        correct: 0,
+        fact: "W Oparach Absurdu przy Ząbkowskiej to wizytówka klimatu praskiej bohemy z dywanami, antykami i świetnym piwem!"
+      },
+      {
+        id: 14,
+        cat: "warsaw",
+        catName: "Warszawska Noc 🏙️",
+        q: "Jak w gwarze warszawskiej nazywano tradycyjny zestaw biesiadny: dwa kieliszki i zimne nóżki?",
+        options: [
+          "Lorneta z meduzą",
+          "Szabla z ogórkiem",
+          "Karafka z karpiem",
+          "Kielich z pyzą"
+        ],
+        correct: 0,
+        fact: "'Lorneta z meduzą' to absolutna klasyka warszawskiej gastronomii okresu PRL i knajp z tradycjami!"
+      },
+      {
+        id: 15,
+        cat: "warsaw",
+        catName: "Warszawska Noc 🏙️",
+        q: "W którym roku otwarto zrewitalizowaną Halę Koszyki z restauracjami i barami?",
+        options: [
+          "2016",
+          "2010",
+          "2020",
+          "2005"
+        ],
+        correct: 0,
+        fact: "Otwarta jesienią 2016 roku Hala Koszyki zapoczątkowała modę na food halle w Warszawie!"
+      },
+      {
+        id: 16,
+        cat: "warsaw",
+        catName: "Warszawska Noc 🏙️",
+        q: "Jak nazywa się plac w Warszawie, zwany pieszczotliwie 'Placem Hipstera' z licznymi ogródkami barowymi?",
+        options: [
+          "Plac Zbawiciela",
+          "Plac Trzech Krzyży",
+          "Plac Bankowy",
+          "Plac Konstytucji"
+        ],
+        correct: 0,
+        fact: "Plac Zbawiciela z 'Planem B', 'Karmą' i 'Charlotte' to jedno z najżywszych miejsc spotkań towarzyskich w Warszawie!"
+      },
+      {
+        id: 17,
+        cat: "culture",
+        catName: "Kultura Barowa & Ciekawostki 💡",
+        q: "Co oznacza zamówienie 'kolejki' przy barze?",
+        options: [
+          "Postawienie rundy trunków dla wszystkich przyjaciół przy stoliku",
+          "Ustawienie się w kolejce po piwo",
+          "Zamówienie najtańszego piwa z nalewaka",
+          "Rezerwację stolika na następny dzień"
+        ],
+        correct: 0,
+        fact: "Stawianie kolejki to międzynarodowy i polski rytuał gościnności – w dobrym tonie jest, by w trakcie wieczoru kolejkę postawił każdy!"
+      },
+      {
+        id: 18,
+        cat: "culture",
+        catName: "Kultura Barowa & Ciekawostki 💡",
+        q: "Dlaczego według starego barowego przesądu należy patrzeć w oczy podczas wznoszenia toastu?",
+        options: [
+          "Aby okazać szczerość i uniknąć '7 lat nieszczęścia'",
+          "Żeby nie rozlać piwa na stół",
+          "Bo nakazywały to dawne przepisy policyjne",
+          "Żeby sprawdzić czy nikt nie pije wody"
+        ],
+        correct: 0,
+        fact: "Tradycja wywodzi się ze średniowiecza, gdy patrzenie w oczy i mocne uderzanie pucharami miało gwarantować, że napój nie jest zatruty!"
+      },
+      {
+        id: 19,
+        cat: "culture",
+        catName: "Kultura Barowa & Ciekawostki 💡",
+        q: "Jaki polski dodatek do jasnego piwa podawanego z rurką dziwi turystów z zagranicy?",
+        options: [
+          "Słodki sok malinowy lub imbirowy",
+          "Sól morska i limonka",
+          "Czosnek i chrzan",
+          "Mleko skondensowane"
+        ],
+        correct: 0,
+        fact: "'Piwo z sokiem' to unikalny polski fenomen barowy, obecny w menu pubów od dziesięcioleci!"
+      },
+      {
+        id: 20,
+        cat: "culture",
+        catName: "Kultura Barowa & Ciekawostki 💡",
+        q: "Co w slangu oznacza termin 'Pub Crawl'?",
+        options: [
+          "Trasa barowa polegająca na odwiedzeniu kilku lokali jednego wieczoru",
+          "Czyszczenie instalacji nalewaka piwnego",
+          "Zamawianie wyłącznie ciemnych piw",
+          "Zawody w najszybszym wypiciu pół litra"
+        ],
+        correct: 0,
+        fact: "Pub Crawl to świetny sposób na poznanie nocnego życia miasta i odkrycie ukrytych barowych perełek!"
+      }
+    ];
+
+    const LIVE_QUIZ_VENUES = [
+      {
+        name: "Drugie Dno Craft Beer Camp",
+        day: "Poniedziałki & Środy 19:30",
+        address: "Nowogrodzka 4, Śródmieście",
+        desc: "Jeden z najpopularniejszych Pub Quizów w Warszawie! Dziesiątki kranów kraftowych, energiczna rywalizacja drużynowa i nagrody.",
+        venueId: "srodmiescie-drugie-dno",
+        lat: 52.2294,
+        lng: 21.0182
+      },
+      {
+        name: "Beer Station Centrum",
+        day: "Czwartki 20:00",
+        address: "Lwowska 17, Śródmieście Południowe",
+        desc: "Quizy tematyczne: filmowe, muzyczne i wiedzy ogólnej. Doskonała selekcja piw i przyjazny, pubowy klimat.",
+        venueId: "srodmiescie-beer-station",
+        lat: 52.2223,
+        lng: 21.0125
+      },
+      {
+        name: "Shamrock Irish Pub",
+        day: "Wtorki 20:00",
+        address: "Zgoda 5, Śródmieście",
+        desc: "Prawdziwy wyspiarski pub z tradycyjnym Pub Quizem, świeżym Guinnessem i biesiadną atmosferą.",
+        venueId: "srodmiescie-shamrock",
+        lat: 52.2341,
+        lng: 21.0129
+      },
+      {
+        name: "Hoppiness Beer & Food",
+        day: "Środy 19:00",
+        address: "Chmielna 24, Śródmieście",
+        desc: "Świetna lokalizacja w centrum, wyśmienite burgery, autorskie krafty i zacięta walka o puchar wiedzy.",
+        venueId: "srodmiescie-hoppiness",
+        lat: 52.2326,
+        lng: 21.0152
+      },
+      {
+        name: "Kufle i Kapsle",
+        day: "Niedziele 18:30",
+        address: "Nowogrodzka 25, Śródmieście Południowe",
+        desc: "Pionierzy polskiego kraftu. Cykliczne pub quizy dla koneserów piwa, sensoryki i ciekawostek o stylach.",
+        venueId: "srodmiescie-kufle-i-kapsle",
+        lat: 52.2289,
+        lng: 21.0135
+      }
+    ];
+
+    // State
+    let selectedCategory = "all";
+    let activeQuestions = [];
+    let currentQuestionIdx = 0;
+    let currentScore = 0;
+    let timerInterval = null;
+    let timerSeconds = 20;
+    let hasAnswered = false;
+
+    function getHighscore() {
+      return parseInt(localStorage.getItem("poilepiwko_pubquiz_highscore") || "0", 10);
+    }
+    function updateHighscoreDisplay() {
+      if (highscoreVal) highscoreVal.textContent = `${getHighscore()}/5`;
+    }
+
+    function switchQuizTab(tab) {
+      if (tab === "game") {
+        if (tabBtnGame) tabBtnGame.classList.add("active");
+        if (tabBtnVenues) tabBtnVenues.classList.remove("active");
+        if (paneGame) paneGame.style.display = "block";
+        if (paneVenues) paneVenues.style.display = "none";
+      } else {
+        if (tabBtnGame) tabBtnGame.classList.remove("active");
+        if (tabBtnVenues) tabBtnVenues.classList.add("active");
+        if (paneGame) paneGame.style.display = "none";
+        if (paneVenues) paneVenues.style.display = "block";
+        renderLiveVenues();
+      }
+    }
+
+    if (tabBtnGame) tabBtnGame.addEventListener("click", () => switchQuizTab("game"));
+    if (tabBtnVenues) tabBtnVenues.addEventListener("click", () => switchQuizTab("venues"));
+
+    function renderLiveVenues() {
+      if (!venuesContainer) return;
+      venuesContainer.innerHTML = LIVE_QUIZ_VENUES.map(v => `
+        <div class="pubquiz-venue-card">
+          <div class="venue-card-head">
+            <span class="venue-card-title">${escapeHtml(v.name)}</span>
+            <span class="venue-day-badge">${escapeHtml(v.day)}</span>
+          </div>
+          <div class="venue-card-details">
+            <span>📍 ${escapeHtml(v.address)}</span>
+            <span>🍺 ${escapeHtml(v.desc)}</span>
+          </div>
+          <button type="button" class="btn-venue-show-map" data-lat="${v.lat}" data-lng="${v.lng}" data-name="${escapeHtml(v.name)}">
+            📍 Pokaż na mapie
+          </button>
+        </div>
+      `).join("");
+
+      venuesContainer.querySelectorAll(".btn-venue-show-map").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const lat = parseFloat(btn.getAttribute("data-lat"));
+          const lng = parseFloat(btn.getAttribute("data-lng"));
+          window.__closePubQuiz();
+          if (map && !isNaN(lat) && !isNaN(lng)) {
+            map.flyTo([lat, lng], 16, { animate: true, duration: 1 });
+            showAppToast("Lokalizacja Pub Quizu", btn.getAttribute("data-name"), "📍");
+          }
+        });
+      });
+    }
+
+    catBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        catBtns.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        selectedCategory = btn.getAttribute("data-cat") || "all";
+      });
+    });
+
+    function startRound() {
+      let pool = PUB_QUIZ_QUESTIONS;
+      if (selectedCategory !== "all") {
+        pool = PUB_QUIZ_QUESTIONS.filter(q => q.cat === selectedCategory);
+        if (pool.length < 5) pool = PUB_QUIZ_QUESTIONS;
+      }
+
+      const shuffled = [...pool].sort(() => 0.5 - Math.random());
+      activeQuestions = shuffled.slice(0, 5);
+      currentQuestionIdx = 0;
+      currentScore = 0;
+
+      if (screenStart) screenStart.style.display = "none";
+      if (screenResults) screenResults.style.display = "none";
+      if (screenPlay) screenPlay.style.display = "block";
+
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      if (timerInterval) clearInterval(timerInterval);
+      hasAnswered = false;
+
+      const q = activeQuestions[currentQuestionIdx];
+      if (!q) {
+        showResults();
+        return;
+      }
+
+      const qNum = currentQuestionIdx + 1;
+      if (stepTag) stepTag.textContent = `Pytanie ${qNum} z 5`;
+      if (progressFill) progressFill.style.width = `${(qNum / 5) * 100}%`;
+      if (qCategory) qCategory.textContent = q.catName;
+      if (qTitle) qTitle.textContent = q.q;
+
+      if (feedbackBanner) feedbackBanner.style.display = "none";
+      if (btnNext) btnNext.style.display = "none";
+
+      const letters = ["A", "B", "C", "D"];
+      if (optionsList) {
+        optionsList.innerHTML = q.options.map((opt, i) => `
+          <button type="button" class="quiz-option-btn" data-idx="${i}">
+            <span class="quiz-option-letter">${letters[i]}</span>
+            <span>${escapeHtml(opt)}</span>
+          </button>
+        `).join("");
+
+        optionsList.querySelectorAll(".quiz-option-btn").forEach(btn => {
+          btn.addEventListener("click", () => {
+            if (hasAnswered) return;
+            const chosenIdx = parseInt(btn.getAttribute("data-idx"), 10);
+            handleAnswer(chosenIdx);
+          });
+        });
+      }
+
+      timerSeconds = 20;
+      if (timerPill) timerPill.textContent = `⏱️ ${timerSeconds}s`;
+      timerInterval = setInterval(() => {
+        timerSeconds--;
+        if (timerPill) timerPill.textContent = `⏱️ ${timerSeconds}s`;
+        if (timerSeconds <= 0) {
+          clearInterval(timerInterval);
+          if (!hasAnswered) {
+            handleAnswer(-1);
+          }
+        }
+      }, 1000);
+    }
+
+    function handleAnswer(chosenIdx) {
+      hasAnswered = true;
+      if (timerInterval) clearInterval(timerInterval);
+
+      const q = activeQuestions[currentQuestionIdx];
+      const isCorrect = chosenIdx === q.correct;
+      if (isCorrect) currentScore++;
+
+      const allBtns = optionsList ? optionsList.querySelectorAll(".quiz-option-btn") : [];
+      allBtns.forEach((b, idx) => {
+        b.disabled = true;
+        if (idx === q.correct) {
+          b.classList.add("correct");
+        } else if (idx === chosenIdx) {
+          b.classList.add("wrong");
+        }
+      });
+
+      if (feedbackBanner && feedbackMsg && feedbackIco) {
+        feedbackBanner.style.display = "flex";
+        if (chosenIdx === -1) {
+          feedbackIco.textContent = "⏱️";
+          feedbackMsg.innerHTML = `<strong>Czas minął!</strong> Poprawna odpowiedź: <em>${escapeHtml(q.options[q.correct])}</em>. ${escapeHtml(q.fact)}`;
+        } else if (isCorrect) {
+          feedbackIco.textContent = "🎉";
+          feedbackMsg.innerHTML = `<strong>Brawo! Trafiona odpowiedź!</strong> ${escapeHtml(q.fact)}`;
+        } else {
+          feedbackIco.textContent = "💡";
+          feedbackMsg.innerHTML = `<strong>Niestety pomyłka!</strong> Poprawna odpowiedź: <em>${escapeHtml(q.options[q.correct])}</em>. ${escapeHtml(q.fact)}`;
+        }
+      }
+
+      if (btnNext) {
+        btnNext.style.display = "block";
+        btnNext.querySelector("span").textContent = currentQuestionIdx === 4 ? "Zobacz wyniki końcowe 🏆" : "Następne pytanie →";
+      }
+    }
+
+    if (btnNext) {
+      btnNext.addEventListener("click", () => {
+        if (currentQuestionIdx < 4) {
+          currentQuestionIdx++;
+          renderQuestion();
+        } else {
+          showResults();
+        }
+      });
+    }
+
+    function showResults() {
+      if (timerInterval) clearInterval(timerInterval);
+      if (screenPlay) screenPlay.style.display = "none";
+      if (screenResults) screenResults.style.display = "block";
+
+      if (resNum) resNum.textContent = currentScore;
+
+      const prevHigh = getHighscore();
+      if (currentScore > prevHigh) {
+        localStorage.setItem("poilepiwko_pubquiz_highscore", currentScore);
+        updateHighscoreDisplay();
+      }
+
+      if (currentScore === 5) {
+        if (resIco) resIco.textContent = "👑";
+        if (resTitle) resTitle.textContent = "Mistrz Warszawskiego Pub Quizu!";
+        if (resSub) resSub.textContent = "Fenomenalnie! Komplet 5/5 punktów! Warszawa i krafty nie mają przed Tobą żadnych tajemnic.";
+
+        const alreadyWon = localStorage.getItem("poilepiwko_pubquiz_won") === "true";
+        localStorage.setItem("poilepiwko_pubquiz_won", "true");
+        if (unlockedNotice) unlockedNotice.style.display = "block";
+
+        const unlockedBadges = loadUnlockedBadges();
+        if (!unlockedBadges.includes("pubquiz_master")) {
+          unlockedBadges.push("pubquiz_master");
+          saveUnlockedBadges(unlockedBadges);
+          showAppToast("Odblokowano Odznakę Paszportu!", "Mistrz Pub Quizu 🧠 (5/5 pkt)", "👑", 5000);
+        }
+        updatePassportCounters();
+      } else if (currentScore >= 3) {
+        if (resIco) resIco.textContent = "🍻";
+        if (resTitle) resTitle.textContent = "Doświadczony Piwosz!";
+        if (resSub) resSub.textContent = `Świetny wynik (${currentScore}/5)! Jeszcze chwila treningu przy barze i zdobędziesz koronę mistrza.`;
+        if (unlockedNotice) unlockedNotice.style.display = "none";
+      } else {
+        if (resIco) resIco.textContent = "🎓";
+        if (resTitle) resTitle.textContent = "Praktykant na Pawilonach";
+        if (resSub) resSub.textContent = `Wynik: ${currentScore}/5. Każda barowa wiedza wymaga praktyki – zagraj jeszcze raz!`;
+        if (unlockedNotice) unlockedNotice.style.display = "none";
+      }
+    }
+
+    if (btnStartGame) btnStartGame.addEventListener("click", startRound);
+    if (btnRestart) {
+      btnRestart.addEventListener("click", () => {
+        if (screenResults) screenResults.style.display = "none";
+        if (screenStart) screenStart.style.display = "block";
+        updateHighscoreDisplay();
+      });
+    }
+
+    if (btnShare) {
+      btnShare.addEventListener("click", () => {
+        const text = `🧠 Mój wynik w Warszawskim Pub Quizie na poilepiwko.pl: ${currentScore}/5! Sprawdź czy znasz warszawskie bary lepiej: ${window.location.origin}`;
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(text).then(() => {
+            showAppToast("Skopiowano wynik!", "Możesz wkleić go znajomym na Messengerze lub WhatsAppie!", "📤");
+          }).catch(() => {
+            prompt("Skopiuj tekst z wynikiem:", text);
+          });
+        } else {
+          prompt("Skopiuj tekst z wynikiem:", text);
+        }
+      });
+    }
+
+    window.__openPubQuiz = function () {
+      if (modal) {
+        modal.classList.add("active");
+        modal.style.display = "flex";
+      }
+      switchQuizTab("game");
+      if (screenResults) screenResults.style.display = "none";
+      if (screenPlay) screenPlay.style.display = "none";
+      if (screenStart) screenStart.style.display = "block";
+      updateHighscoreDisplay();
+    };
+
+    window.__closePubQuiz = function () {
+      if (timerInterval) clearInterval(timerInterval);
+      if (modal) {
+        modal.classList.remove("active");
+        modal.style.display = "none";
+      }
+    };
+
+    if (btnOpenHeader) btnOpenHeader.addEventListener("click", window.__openPubQuiz);
+    if (btnOpenTop) btnOpenTop.addEventListener("click", window.__openPubQuiz);
+    if (btnClose) btnClose.addEventListener("click", window.__closePubQuiz);
+    if (btnCloseBottom) btnCloseBottom.addEventListener("click", window.__closePubQuiz);
+
+    if (modal) {
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) window.__closePubQuiz();
+      });
+    }
+
+    updateHighscoreDisplay();
   }
 
   const FALLBACK_VENUES = [
