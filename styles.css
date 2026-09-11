@@ -3602,6 +3602,28 @@ header {
   color: #fb923c;
 }
 
+.active-crawl-step-indicator {
+  font-size: 0.82rem;
+  color: #fff;
+  line-height: 1.25;
+}
+
+.active-crawl-step-indicator strong {
+  color: #fb923c;
+}
+
+.active-crawl-step-indicator .crawl-current-name {
+  color: #fff;
+  font-weight: 800;
+}
+
+.active-crawl-step-indicator .crawl-current-price {
+  color: #4ade80;
+  font-weight: 800;
+  font-size: 0.76rem;
+  margin-left: 2px;
+}
+
 .active-crawl-sub {
   font-size: 0.72rem;
   color: #94a3b8;
@@ -3613,6 +3635,32 @@ header {
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
+}
+
+.btn-crawl-action-checkin {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 6px 13px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.45);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.btn-crawl-action-checkin:hover {
+  transform: translateY(-1px) scale(1.03);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.65);
+}
+
+.btn-crawl-action-checkin:active {
+  transform: scale(0.96);
 }
 
 .btn-crawl-action-gmaps {
@@ -3683,6 +3731,19 @@ header {
 @keyframes pulse-crawl-marker {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.1); box-shadow: 0 0 22px rgba(249, 115, 22, 1), 0 4px 12px rgba(0, 0, 0, 0.9); }
+}
+
+.crawl-marker-badge.visited-stop {
+  background: linear-gradient(135deg, #16a34a 0%, #10b981 100%) !important;
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.8), 0 3px 8px rgba(0, 0, 0, 0.7) !important;
+  animation: none !important;
+}
+
+.crawl-marker-badge.active-stop {
+  background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%) !important;
+  box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.5), 0 0 24px rgba(249, 115, 22, 0.95) !important;
+  transform: scale(1.18);
+  animation: pulse-crawl-marker 1.2s infinite ease-in-out !important;
 }
 
 /* ==========================================================================
@@ -6522,6 +6583,31 @@ header {
   align-items: flex-end;
 }
 
+.fab-roulette-float {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #f43f5e 0%, #ec4899 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(244, 63, 94, 0.45);
+  transition: all 0.2s ease;
+}
+.fab-roulette-float:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 6px 22px rgba(244, 63, 94, 0.65);
+}
+.fab-roulette-float:active {
+  transform: scale(0.96);
+}
+
 .fab-pubquiz-float {
   display: flex;
   align-items: center;
@@ -7010,10 +7096,12 @@ header {
 }
 
 @media (max-width: 640px) {
+  .fab-roulette-float span:not(.roulette-float-icon),
   .fab-pubquiz-float span:not(.quiz-float-icon),
   .fab-compass-float span:not(.compass-icon) {
     display: none !important;
   }
+  .fab-roulette-float,
   .fab-pubquiz-float,
   .fab-compass-float {
     width: 44px;
@@ -7626,4 +7714,635 @@ header {
 .story-actions-bar button {
   padding: 12px 8px;
   font-size: 0.82rem;
+}
+
+/* ==========================================================================
+   🎲 Piwna Ruletka ("Wylosuj bar na dziś")
+   ========================================================================== */
+.modal-card-roulette {
+  max-width: 480px;
+  width: 92%;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  background: rgba(15, 20, 32, 0.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1.5px solid rgba(244, 63, 94, 0.35);
+  border-radius: 24px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), 0 0 35px rgba(244, 63, 94, 0.2);
+  box-sizing: border-box;
+  overflow: hidden;
+  animation: modalScaleIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-icon-roulette {
+  background: linear-gradient(135deg, #f43f5e, #ec4899) !important;
+}
+
+.roulette-body {
+  padding: 16px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  max-height: calc(92vh - 80px);
+}
+
+.roulette-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.roulette-group-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.roulette-chips-scroll {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 2px;
+}
+
+.roulette-chips-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.roulette-chip {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.roulette-chip:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.roulette-chip.active {
+  background: rgba(244, 63, 94, 0.22);
+  border-color: #f43f5e;
+  color: #fda4af;
+  font-weight: 800;
+  box-shadow: 0 0 12px rgba(244, 63, 94, 0.35);
+}
+
+/* Slot machine drum stage */
+.roulette-slot-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 4px 0 6px;
+}
+
+.roulette-indicator-top,
+.roulette-indicator-bottom {
+  font-size: 13px;
+  line-height: 1;
+  color: #f43f5e;
+  text-shadow: 0 0 8px #f43f5e;
+  z-index: 5;
+  animation: pulseIndicator 1.2s infinite ease-in-out;
+}
+
+.roulette-indicator-top {
+  margin-bottom: 3px;
+}
+
+.roulette-indicator-bottom {
+  margin-top: 3px;
+}
+
+@keyframes pulseIndicator {
+  0%, 100% { transform: translateY(0); opacity: 0.9; }
+  50% { transform: translateY(2px); opacity: 1; text-shadow: 0 0 14px #f43f5e; }
+}
+
+.roulette-drum-viewport {
+  width: 100%;
+  height: 94px;
+  background: linear-gradient(180deg, #0b0f19 0%, #151b2c 50%, #0b0f19 100%);
+  border: 1.5px solid rgba(244, 63, 94, 0.4);
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 8px 16px rgba(0, 0, 0, 0.8), inset 0 -8px 16px rgba(0, 0, 0, 0.8), 0 0 20px rgba(244, 63, 94, 0.15);
+}
+
+.roulette-drum-viewport::before,
+.roulette-drum-viewport::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 24px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.roulette-drum-viewport::before {
+  top: 0;
+  background: linear-gradient(to bottom, rgba(11, 15, 25, 0.9), transparent);
+}
+
+.roulette-drum-viewport::after {
+  bottom: 0;
+  background: linear-gradient(to top, rgba(11, 15, 25, 0.9), transparent);
+}
+
+.roulette-drum-reel {
+  display: flex;
+  flex-direction: column;
+  will-change: transform;
+}
+
+.roulette-reel-card {
+  height: 94px;
+  min-height: 94px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 0 16px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.roulette-reel-idle .reel-idle-icon {
+  font-size: 26px;
+  margin-bottom: 2px;
+}
+
+.roulette-reel-idle .reel-idle-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.roulette-reel-idle .reel-idle-desc {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.roulette-item-title {
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 90%;
+  line-height: 1.2;
+}
+
+.roulette-item-meta {
+  font-size: 0.78rem;
+  color: #fb923c;
+  font-weight: 700;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.roulette-item-price {
+  color: #4ade80;
+  font-weight: 800;
+}
+
+/* Result Card */
+.roulette-result-card {
+  background: linear-gradient(135deg, rgba(244, 63, 94, 0.14) 0%, rgba(168, 85, 247, 0.12) 100%);
+  border: 1.5px solid rgba(244, 63, 94, 0.55);
+  border-radius: 18px;
+  padding: 16px 18px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 25px rgba(244, 63, 94, 0.25);
+  animation: rouletteResultIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes rouletteResultIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.roulette-result-badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 900;
+  color: #fda4af;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  background: rgba(244, 63, 94, 0.25);
+  padding: 3px 9px;
+  border-radius: 999px;
+  margin-bottom: 6px;
+}
+
+.roulette-result-name {
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: #fff;
+  margin: 2px 0 6px;
+  line-height: 1.2;
+}
+
+.roulette-result-price-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.roulette-price-pill {
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  color: #4ade80;
+  font-size: 0.88rem;
+  font-weight: 900;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.roulette-beer-name {
+  color: #94a3b8;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.roulette-result-meta {
+  font-size: 0.76rem;
+  color: #cbd5e1;
+  margin-bottom: 8px;
+}
+
+.roulette-result-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.roulette-tag-chip {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #e2e8f0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.roulette-result-buttons {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 8px;
+}
+
+.btn-roulette-action-map {
+  background: linear-gradient(135deg, #f43f5e 0%, #ec4899 100%) !important;
+  color: #fff !important;
+  border: none !important;
+  padding: 10px 14px !important;
+  font-size: 0.82rem !important;
+  font-weight: 800 !important;
+  border-radius: 12px !important;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(244, 63, 94, 0.45);
+  transition: all 0.15s ease;
+}
+
+.btn-roulette-action-map:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(244, 63, 94, 0.65);
+}
+
+.btn-roulette-action-share {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: #fff !important;
+  padding: 10px 12px !important;
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  border-radius: 12px !important;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-roulette-action-share:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* Spin Button */
+.roulette-spin-container {
+  margin-top: 4px;
+}
+
+.btn-spin-roulette {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #f43f5e 0%, #ec4899 50%, #d946ef 100%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  padding: 13px 20px;
+  border-radius: 14px;
+  font-size: 0.95rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  box-shadow: 0 6px 24px rgba(244, 63, 94, 0.5);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-spin-roulette:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 30px rgba(244, 63, 94, 0.7);
+}
+
+.btn-spin-roulette:active {
+  transform: scale(0.97);
+}
+
+.btn-spin-roulette:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-spin-roulette .spin-dice {
+  font-size: 1.25rem;
+  animation: bounceDice 1s infinite alternate;
+}
+
+@keyframes bounceDice {
+  from { transform: translateY(0) rotate(0deg); }
+  to { transform: translateY(-3px) rotate(15deg); }
+}
+
+/* ==========================================================================
+   🗺️ Pub Crawl Live Tracker & Celebration Modal
+   ========================================================================== */
+.modal-card-celebration {
+  position: relative;
+  max-width: 480px;
+  width: 92%;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #0d121f;
+  border: 1.5px solid rgba(250, 204, 21, 0.45);
+  border-radius: 24px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.9), 0 0 35px rgba(250, 204, 21, 0.2);
+  box-sizing: border-box;
+  overflow: hidden;
+  padding: 24px 20px 20px;
+  animation: modalScaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.celebration-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.celebration-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  overflow-y: auto;
+  max-height: calc(92vh - 60px);
+}
+
+.celebration-trophy-badge {
+  font-size: 52px;
+  line-height: 1;
+  margin-bottom: 8px;
+  animation: bounceTrophy 1.3s infinite ease-in-out;
+}
+
+@keyframes bounceTrophy {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-8px) scale(1.1); text-shadow: 0 0 20px rgba(250, 204, 21, 0.8); }
+}
+
+.celebration-title {
+  font-size: 1.45rem;
+  font-weight: 900;
+  color: #fff;
+  margin: 0 0 4px;
+  line-height: 1.2;
+}
+
+.celebration-sub {
+  font-size: 0.82rem;
+  color: #94a3b8;
+  margin: 0 0 16px;
+  max-width: 90%;
+}
+
+.celebration-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 14px;
+}
+
+.celebration-stat-box {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 10px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.celebration-stat-box .stat-num {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: #fb923c;
+}
+
+.celebration-stat-box .stat-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #94a3b8;
+  margin-top: 2px;
+  text-transform: uppercase;
+}
+
+.celebration-badge-card {
+  width: 100%;
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.12), rgba(249, 115, 22, 0.12));
+  border: 1px solid rgba(234, 179, 8, 0.35);
+  border-radius: 14px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  box-sizing: border-box;
+  margin-bottom: 14px;
+}
+
+.celebration-badge-card .badge-icon-wrap {
+  font-size: 28px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.celebration-badge-card .badge-tag {
+  font-size: 0.65rem;
+  font-weight: 900;
+  color: #facc15;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.celebration-badge-card .badge-name {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #fff;
+  margin: 1px 0;
+}
+
+.celebration-badge-card .badge-desc {
+  font-size: 0.72rem;
+  color: #cbd5e1;
+  line-height: 1.25;
+}
+
+.celebration-stops-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.celebration-stop-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 0.78rem;
+  text-align: left;
+}
+
+.celebration-stop-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.celebration-stop-check {
+  color: #4ade80;
+  font-weight: 900;
+  font-size: 0.9rem;
+}
+
+.celebration-stop-name {
+  color: #fff;
+  font-weight: 700;
+}
+
+.celebration-stop-price {
+  color: #4ade80;
+  font-weight: 800;
+  font-size: 0.76rem;
+}
+
+.celebration-actions {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.btn-celebration-share {
+  background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%) !important;
+  color: #fff !important;
+  border: none !important;
+  padding: 12px 18px !important;
+  font-size: 0.86rem !important;
+  font-weight: 900 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 18px rgba(245, 158, 11, 0.45);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-celebration-share:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(245, 158, 11, 0.65);
+}
+
+.btn-celebration-story {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: #fff !important;
+  padding: 10px 16px !important;
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  border-radius: 12px !important;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-celebration-story:hover {
+  background: rgba(255, 255, 255, 0.14) !important;
+}
+
+.btn-celebration-close {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px;
+  transition: color 0.15s;
+}
+
+.btn-celebration-close:hover {
+  color: #fff;
 }

@@ -1682,8 +1682,165 @@
     resultBox.style.display = "block";
   }
 
+  let activeCrawlStep = 0;
+  let crawlMarkerInstances = [];
+  let lastCompletedCrawlRoute = null;
+
+  function updateCrawlStepUI() {
+    if (!activeCrawlRoute || !activeCrawlRoute.stops.length) return;
+    const activeStepIndicator = document.getElementById("crawl-active-step-indicator");
+    const activeSub = document.getElementById("crawl-active-sub");
+    const checkinLabel = document.getElementById("crawl-checkin-label");
+    const activeGmaps = document.getElementById("btn-crawl-active-gmaps");
+
+    const totalStops = activeCrawlRoute.stops.length;
+    const currentStop = activeCrawlRoute.stops[activeCrawlStep];
+    if (!currentStop) return;
+
+    if (activeStepIndicator) {
+      activeStepIndicator.innerHTML = `📍 Przystanek <strong>${activeCrawlStep + 1}</strong> z <strong>${totalStops}</strong>: <span class="crawl-current-name">${escapeHtml(currentStop.venue.name)}</span> <span class="crawl-current-price">(${currentStop.venue.beer_price_pln.toFixed(2)} zł)</span>`;
+    }
+    if (activeSub) {
+      activeSub.textContent = `Koszt trasy: ~${activeCrawlRoute.totalCost.toFixed(2)} zł · śr. ${activeCrawlRoute.avgPrice.toFixed(2)} zł/piwo`;
+    }
+    if (checkinLabel) {
+      if (activeCrawlStep >= totalStops - 1) {
+        checkinLabel.textContent = "🏆 Wypite! Zakończ 🎉";
+      } else {
+        checkinLabel.textContent = "Wypite! Kolejny →";
+      }
+    }
+    if (activeGmaps) {
+      activeGmaps.href = `https://www.google.com/maps/dir/?api=1&destination=${currentStop.venue.latitude},${currentStop.venue.longitude}&travelmode=walking`;
+    }
+
+    // Refresh marker DOM classes
+    crawlMarkerInstances.forEach((markerObj, idx) => {
+      const el = markerObj.marker.getElement();
+      if (!el) return;
+      const badge = el.querySelector(".crawl-marker-badge");
+      if (!badge) return;
+
+      badge.classList.remove("visited-stop", "active-stop");
+      if (idx < activeCrawlStep) {
+        badge.classList.add("visited-stop");
+        badge.textContent = "✓";
+      } else if (idx === activeCrawlStep) {
+        badge.classList.add("active-stop");
+        badge.textContent = `${idx + 1}`;
+      } else {
+        badge.textContent = `${idx + 1}`;
+      }
+    });
+  }
+
+  function advancePubCrawlStep() {
+    if (!activeCrawlRoute || !activeCrawlRoute.stops.length) return;
+    const currentStop = activeCrawlRoute.stops[activeCrawlStep];
+    if (!currentStop) return;
+
+    // Stamp passport if not visited
+    if (!visitedVenues.includes(currentStop.venue.id)) {
+      toggleVisitedVenue(currentStop.venue.id);
+    }
+
+    // Trigger toast & cheer sound
+    if (typeof triggerCheersAnimation === "function") {
+      triggerCheersAnimation(`Wypite w: ${currentStop.venue.name}! 🍻`);
+    }
+
+    if (activeCrawlStep < activeCrawlRoute.stops.length - 1) {
+      activeCrawlStep++;
+      updateCrawlStepUI();
+      const nextStop = activeCrawlRoute.stops[activeCrawlStep];
+      if (map && nextStop) {
+        map.flyTo([nextStop.venue.latitude, nextStop.venue.longitude], 16, { duration: 0.9 });
+        setTimeout(() => {
+          if (crawlMarkerInstances[activeCrawlStep]) {
+            crawlMarkerInstances[activeCrawlStep].marker.openPopup();
+          }
+        }, 950);
+      }
+    } else {
+      // Completed last stop!
+      lastCompletedCrawlRoute = activeCrawlRoute;
+      clearCrawlFromMap();
+      openCrawlCompleteModal(lastCompletedCrawlRoute);
+    }
+  }
+
+  function openCrawlCompleteModal(route) {
+    if (!route || !route.stops.length) return;
+    const modal = document.getElementById("crawl-complete-modal");
+    if (!modal) return;
+
+    const stopsCountEl = document.getElementById("crawl-done-stops-count");
+    const costEl = document.getElementById("crawl-done-cost");
+    const distEl = document.getElementById("crawl-done-dist");
+    const listEl = document.getElementById("crawl-done-stops-list");
+
+    if (stopsCountEl) stopsCountEl.textContent = route.stops.length;
+    if (costEl) costEl.textContent = `~${route.totalCost.toFixed(2)} zł`;
+    if (distEl) {
+      distEl.textContent = route.totalDistance >= 1000 
+        ? `${(route.totalDistance / 1000).toFixed(1)} km` 
+        : `${Math.round(route.totalDistance)} m`;
+    }
+
+    if (listEl) {
+      listEl.innerHTML = route.stops.map((s, idx) => `
+        <div class="celebration-stop-item">
+          <div class="celebration-stop-left">
+            <span class="celebration-stop-check">✓</span>
+            <span class="celebration-stop-name">${idx + 1}. ${escapeHtml(s.venue.name)}</span>
+          </div>
+          <span class="celebration-stop-price">${s.venue.beer_price_pln.toFixed(2)} zł</span>
+        </div>
+      `).join("");
+    }
+
+    modal.style.display = "flex";
+
+    // Trigger celebratory sound & canvas confetti
+    if (typeof playFanfareChime === "function") playFanfareChime();
+    if (typeof launchConfetti === "function") launchConfetti("crawl-confetti-canvas", 3500);
+
+    // Vibrate triumphal pattern
+    if (navigator.vibrate) {
+      try { navigator.vibrate([100, 50, 100, 50, 200]); } catch (e) {}
+    }
+  }
+
+  function shareCompletedCrawl(route) {
+    if (!route || !route.stops.length) return;
+    const stopsText = route.stops.map((s, i) => `${i + 1}. ${s.venue.name} (${s.venue.beer_price_pln.toFixed(2)} zł)`).join("\n");
+    const distText = route.totalDistance >= 1000 ? (route.totalDistance / 1000).toFixed(1) + " km" : Math.round(route.totalDistance) + " m";
+    const text = `🏆 Właśnie pokonaliśmy Pub Crawl na poilepiwko.pl!\n` +
+      `Zaliczone bary (${route.stops.length}):\n${stopsText}\n` +
+      `🚶 Spacer: ~${distText} | Koszt piwek: ~${route.totalCost.toFixed(2)} zł\n` +
+      `Kto podejmie wyzwanie? Sprawdź na https://poilepiwko.pl! 🍻`;
+
+    if (navigator.share) {
+      navigator.share({
+        title: "Pub Crawl Ukończony! - poilepiwko",
+        text: text
+      }).catch(() => {});
+    } else if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => {
+        alert("📋 Podsumowanie Pub Crawlu skopiowane do schowka!");
+      }).catch(() => {
+        prompt("Skopiuj podsumowanie:", text);
+      });
+    } else {
+      prompt("Skopiuj podsumowanie:", text);
+    }
+  }
+
   function showCrawlOnMap(route) {
     if (!map || !route || !route.stops.length) return;
+    activeCrawlRoute = route;
+    activeCrawlStep = 0;
+    crawlMarkerInstances = [];
 
     if (!crawlMapLayer) {
       crawlMapLayer = L.layerGroup().addTo(map);
@@ -1710,12 +1867,23 @@
       lineJoin: "round"
     }).addTo(crawlMapLayer);
 
-    // Numbered stop markers
+    // Numbered stop markers with live status
     route.stops.forEach((stop, idx) => {
       const v = stop.venue;
+      const isVisited = idx < activeCrawlStep;
+      const isActive = idx === activeCrawlStep;
+      let badgeClass = "crawl-marker-badge";
+      let badgeContent = `${idx + 1}`;
+      if (isVisited) {
+        badgeClass += " visited-stop";
+        badgeContent = "✓";
+      } else if (isActive) {
+        badgeClass += " active-stop";
+      }
+
       const badgeIcon = L.divIcon({
         className: "crawl-marker-wrap",
-        html: `<div class="crawl-marker-badge">${idx + 1}</div>`,
+        html: `<div class="${badgeClass}">${badgeContent}</div>`,
         iconSize: [32, 32],
         iconAnchor: [16, 16],
         popupAnchor: [0, -18]
@@ -1731,31 +1899,21 @@
         </div>
       `;
 
-      L.marker([v.latitude, v.longitude], { icon: badgeIcon })
+      const marker = L.marker([v.latitude, v.longitude], { icon: badgeIcon })
         .addTo(crawlMapLayer)
         .bindPopup(popupHtml);
+
+      crawlMarkerInstances.push({ marker, stop, idx });
     });
 
     map.fitBounds(mainPoly.getBounds(), { padding: [60, 60], maxZoom: 16 });
 
     const activeBar = document.getElementById("active-crawl-bar");
-    const activeSummary = document.getElementById("crawl-active-summary");
-    const activeSub = document.getElementById("crawl-active-sub");
-    const activeGmaps = document.getElementById("btn-crawl-active-gmaps");
-
-    if (activeSummary) {
-      const distText = route.totalDistance >= 1000 ? (route.totalDistance / 1000).toFixed(1) + " km" : Math.round(route.totalDistance) + " m";
-      activeSummary.textContent = `${route.stops.length} bary (${distText})`;
-    }
-    if (activeSub) {
-      activeSub.textContent = `Koszt: ~${route.totalCost.toFixed(2)} zł · śr. ${route.avgPrice.toFixed(2)} zł/piwo`;
-    }
-    if (activeGmaps) {
-      activeGmaps.href = buildGoogleMapsDirectionsUrl(route.stops.map(s => s.venue));
-    }
     if (activeBar) {
       activeBar.style.display = "flex";
     }
+
+    updateCrawlStepUI();
 
     if (window.__closePubCrawl) window.__closePubCrawl();
   }
@@ -1764,6 +1922,7 @@
     if (crawlMapLayer) {
       crawlMapLayer.clearLayers();
     }
+    crawlMarkerInstances = [];
     const activeBar = document.getElementById("active-crawl-bar");
     if (activeBar) {
       activeBar.style.display = "none";
@@ -4659,6 +4818,42 @@
       if (btnActiveClear) {
         btnActiveClear.addEventListener("click", clearCrawlFromMap);
       }
+
+      // Active Next Stop Checkin Button
+      const btnCheckinNext = document.getElementById("btn-crawl-checkin-next");
+      if (btnCheckinNext) {
+        btnCheckinNext.addEventListener("click", () => {
+          advancePubCrawlStep();
+        });
+      }
+
+      // Crawl Completion Modal Controls
+      const completeModal = document.getElementById("crawl-complete-modal");
+      const btnCloseComplete = document.getElementById("btn-close-crawl-complete");
+      const btnFinishShare = document.getElementById("btn-crawl-finish-share");
+      const btnFinishStory = document.getElementById("btn-crawl-finish-story");
+
+      if (btnCloseComplete && completeModal) {
+        btnCloseComplete.addEventListener("click", () => {
+          completeModal.style.display = "none";
+        });
+      }
+      if (completeModal) {
+        completeModal.addEventListener("click", (e) => {
+          if (e.target === completeModal) completeModal.style.display = "none";
+        });
+      }
+      if (btnFinishShare) {
+        btnFinishShare.addEventListener("click", () => {
+          if (lastCompletedCrawlRoute) shareCompletedCrawl(lastCompletedCrawlRoute);
+        });
+      }
+      if (btnFinishStory) {
+        btnFinishStory.addEventListener("click", () => {
+          if (completeModal) completeModal.style.display = "none";
+          if (window.__openStoryCardModal) window.__openStoryCardModal();
+        });
+      }
     }
     initPubCrawl();
     initHappyHours();
@@ -4717,6 +4912,7 @@
     initCommunityModal();
     initPublicProfileModal();
     initPubQuizModal();
+    initRouletteModal();
     initStoryCardModal();
 
     // Deep linking: listen to URL hash changes
@@ -6494,6 +6690,352 @@
     }, 1850);
   }
   window.__triggerCheers = triggerCheersAnimation;
+
+  // Web Audio Synthesizer: Tick click for spinning roulette
+  function playRouletteTick() {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(650, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(920, ctx.currentTime + 0.025);
+      gain.gain.setValueAtTime(0.18, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.03);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.035);
+    } catch (e) {}
+  }
+
+  // Web Audio Synthesizer: Fanfare chime for winning roulette & Pub Crawl victory
+  function playFanfareChime() {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+      notes.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "triangle";
+        const start = ctx.currentTime + idx * 0.09;
+        osc.frequency.setValueAtTime(freq, start);
+        gain.gain.setValueAtTime(0, start);
+        gain.gain.linearRampToValueAtTime(0.24, start + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + 0.38);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(start);
+        osc.stop(start + 0.4);
+      });
+    } catch (e) {}
+  }
+
+  // Lightweight Canvas Confetti Engine (Zero dependencies)
+  function launchConfetti(canvasId, durationMs = 3500) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    canvas.width = canvas.offsetWidth || 440;
+    canvas.height = canvas.offsetHeight || 500;
+
+    const particles = [];
+    const colors = ["#f59e0b", "#f43f5e", "#10b981", "#3b82f6", "#a855f7", "#ec4899", "#fbbf24", "#38bdf8"];
+    for (let i = 0; i < 80; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * -canvas.height * 0.6,
+        size: Math.random() * 8 + 4,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        vx: (Math.random() - 0.5) * 3.5,
+        vy: Math.random() * 4 + 2.5,
+        rotation: Math.random() * 360,
+        rotSpeed: (Math.random() - 0.5) * 8
+      });
+    }
+
+    const startTime = performance.now();
+    function render(now) {
+      if (now - startTime > durationMs) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        return;
+      }
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.rotation += p.rotSpeed;
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rotation * Math.PI) / 180);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.65);
+        ctx.restore();
+      });
+      requestAnimationFrame(render);
+    }
+    requestAnimationFrame(render);
+  }
+
+  // 🎲 Piwna Ruletka Controller ("Wylosuj bar na dziś")
+  function initRouletteModal() {
+    const modal = document.getElementById("roulette-modal");
+    const btnFloat = document.getElementById("btn-roulette-float");
+    const btnClose = document.getElementById("btn-close-roulette");
+    const btnSpin = document.getElementById("btn-spin-roulette");
+    const spinText = document.getElementById("spin-roulette-text");
+    const reel = document.getElementById("roulette-drum-reel");
+    const resultCard = document.getElementById("roulette-result-card");
+    const resName = document.getElementById("roulette-result-name");
+    const resPrice = document.getElementById("roulette-result-price");
+    const resBeer = document.getElementById("roulette-result-beer");
+    const resAddress = document.getElementById("roulette-result-address");
+    const resDist = document.getElementById("roulette-result-dist");
+    const resTags = document.getElementById("roulette-result-tags");
+    const btnGotoMap = document.getElementById("btn-roulette-goto-map");
+    const btnShare = document.getElementById("btn-roulette-share");
+
+    let currentDistrictFilter = "all";
+    let currentVibeFilter = "all";
+    let isSpinning = false;
+    let currentWinner = null;
+
+    function openModal() {
+      if (!modal) return;
+      modal.classList.add("active");
+      modal.style.display = "flex";
+      if (window.__clearBottomNavActive) window.__clearBottomNavActive();
+    }
+
+    function closeModal() {
+      if (!modal) return;
+      modal.classList.remove("active");
+      modal.style.display = "none";
+    }
+
+    window.__openRoulette = openModal;
+    window.__closeRoulette = closeModal;
+
+    if (btnFloat) btnFloat.addEventListener("click", openModal);
+    if (btnClose) btnClose.addEventListener("click", closeModal);
+    if (modal) {
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) closeModal();
+      });
+    }
+
+    // Filter Chips: District
+    const distChips = document.querySelectorAll("#roulette-district-chips .roulette-chip");
+    distChips.forEach(chip => {
+      chip.addEventListener("click", () => {
+        distChips.forEach(c => c.classList.remove("active"));
+        chip.classList.add("active");
+        currentDistrictFilter = chip.getAttribute("data-district") || "all";
+      });
+    });
+
+    // Filter Chips: Vibe
+    const vibeChips = document.querySelectorAll("#roulette-vibe-chips .roulette-chip");
+    vibeChips.forEach(chip => {
+      chip.addEventListener("click", () => {
+        vibeChips.forEach(c => c.classList.remove("active"));
+        chip.classList.add("active");
+        currentVibeFilter = chip.getAttribute("data-vibe") || "all";
+      });
+    });
+
+    function getCandidates() {
+      const list = allVenues.filter(v => {
+        if (currentDistrictFilter !== "all") {
+          const vDist = (v.district || "").toLowerCase();
+          const target = currentDistrictFilter.toLowerCase();
+          const matches = vDist.includes(target) ||
+            (target === "pawilony" && ((v.name && v.name.toLowerCase().includes("pawilony")) || vDist === "pawilony")) ||
+            (target === "bulwary" && ((v.address && v.address.toLowerCase().includes("bulwar")) || vDist === "bulwary"));
+          if (!matches) return false;
+        }
+
+        if (currentVibeFilter === "cheap") {
+          if (typeof v.beer_price_pln !== "number" || v.beer_price_pln > 12.0) return false;
+        } else if (currentVibeFilter === "craft") {
+          if (!v.is_craft) return false;
+        } else if (currentVibeFilter === "garden") {
+          const hasG = v.has_garden || (v.tags && (v.tags.includes("ogródek") || v.tags.includes("garden")));
+          if (!hasG) return false;
+        } else if (currentVibeFilter === "happy") {
+          if (!v.happy_hour && !v.happy_hour_rule) return false;
+        } else if (currentVibeFilter === "nonalco") {
+          if (!v.has_non_alcoholic && !v.non_alcoholic) return false;
+        }
+        return true;
+      });
+
+      return list.length > 0 ? list : allVenues;
+    }
+
+    // Spin function
+    function spinRoulette() {
+      if (isSpinning || !reel) return;
+      isSpinning = true;
+      if (btnSpin) btnSpin.disabled = true;
+      if (spinText) spinText.textContent = "LOSOWANIE...";
+      if (resultCard) resultCard.style.display = "none";
+
+      const candidates = getCandidates();
+      const winner = candidates[Math.floor(Math.random() * candidates.length)];
+      currentWinner = winner;
+
+      // Build sequence of 22 items ending on winner
+      const sequence = [];
+      for (let i = 0; i < 21; i++) {
+        sequence.push(candidates[Math.floor(Math.random() * candidates.length)]);
+      }
+      sequence.push(winner);
+
+      reel.innerHTML = sequence.map((v) => `
+        <div class="roulette-reel-card">
+          <div class="roulette-item-title">${escapeHtml(v.name)}</div>
+          <div class="roulette-item-meta">
+            <span>📍 ${escapeHtml(v.district || 'Warszawa')}</span>
+            <span>•</span>
+            <span class="roulette-item-price">🍺 ${v.beer_price_pln.toFixed(2)} zł</span>
+          </div>
+        </div>
+      `).join("");
+
+      // Reset reel offset immediately
+      reel.style.transition = "none";
+      reel.style.transform = "translateY(0)";
+      void reel.offsetHeight; // force reflow
+
+      const cardHeight = 94;
+      const targetOffset = (sequence.length - 1) * cardHeight;
+
+      // Start scrolling animation
+      reel.style.transition = "transform 2.4s cubic-bezier(0.12, 0.88, 0.22, 1)";
+      reel.style.transform = `translateY(-${targetOffset}px)`;
+
+      // Audio ticks schedule (accelerates then decelerates)
+      const tickDelays = [40, 90, 150, 220, 300, 390, 490, 600, 730, 880, 1050, 1250, 1480, 1750, 2050, 2300];
+      tickDelays.forEach(d => {
+        setTimeout(() => {
+          if (isSpinning) {
+            playRouletteTick();
+            if (navigator.vibrate) {
+              try { navigator.vibrate(20); } catch (e) {}
+            }
+          }
+        }, d);
+      });
+
+      // End of spin
+      setTimeout(() => {
+        isSpinning = false;
+        if (btnSpin) btnSpin.disabled = false;
+        if (spinText) spinText.textContent = "🔄 ZAKRĘĆ PONOWNIE!";
+
+        playFanfareChime();
+        if (navigator.vibrate) {
+          try { navigator.vibrate([60, 40, 80]); } catch (e) {}
+        }
+
+        // Display Winner Card
+        if (resName) resName.textContent = winner.name;
+        if (resPrice) resPrice.textContent = `🍺 ${winner.beer_price_pln.toFixed(2)} zł`;
+        if (resBeer) resBeer.textContent = winner.beer_name || "Piwo z kranu";
+        if (resAddress) resAddress.textContent = winner.address || winner.district || "Warszawa";
+
+        if (resDist) {
+          if (userLocation) {
+            const d = calculateDistanceKm(userLocation[0], userLocation[1], winner.latitude, winner.longitude);
+            resDist.textContent = d >= 1 ? `${d.toFixed(1)} km stąd` : `${Math.round(d * 1000)} m stąd`;
+            resDist.style.display = "inline";
+          } else {
+            resDist.style.display = "none";
+          }
+        }
+
+        if (resTags) {
+          const tags = [];
+          if (winner.is_craft) tags.push("⭐ Kraft");
+          if (winner.has_garden || (winner.tags && winner.tags.includes("ogródek"))) tags.push("🌿 Ogródek");
+          if (winner.happy_hour || winner.happy_hour_rule) tags.push("⚡ Happy Hour");
+          if (winner.has_non_alcoholic || winner.non_alcoholic) tags.push("🌱 0.0%");
+          if (winner.beer_price_pln <= 12.0) tags.push("💸 Tanie piwko");
+          resTags.innerHTML = tags.map(t => `<span class="roulette-tag-chip">${t}</span>`).join("");
+        }
+
+        if (resultCard) {
+          resultCard.style.display = "block";
+          resultCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+      }, 2450);
+    }
+
+    if (btnSpin) {
+      btnSpin.addEventListener("click", spinRoulette);
+    }
+
+    // Go to map
+    if (btnGotoMap) {
+      btnGotoMap.addEventListener("click", () => {
+        if (!currentWinner) return;
+        closeModal();
+        if (window.__zoomToVenue) {
+          window.__zoomToVenue(currentWinner.id);
+        }
+      });
+    }
+
+    // Share Winner
+    if (btnShare) {
+      btnShare.addEventListener("click", () => {
+        if (!currentWinner) return;
+        const text = `🎲 Piwna Ruletka poilepiwko wylosowała bar na dziś:\n` +
+          `📍 ${currentWinner.name} (${currentWinner.district || 'Warszawa'})\n` +
+          `🍺 ${currentWinner.beer_name || 'Piwo'}: ${currentWinner.beer_price_pln.toFixed(2)} zł\n` +
+          (currentWinner.address ? `Adres: ${currentWinner.address}\n` : "") +
+          `Idziemy na piwko? Sprawdź na https://poilepiwko.pl 🍻`;
+
+        if (navigator.share) {
+          navigator.share({
+            title: "Piwna Ruletka - poilepiwko",
+            text: text
+          }).catch(() => {});
+        } else if (navigator.clipboard) {
+          navigator.clipboard.writeText(text).then(() => {
+            alert("📋 Wylosowany bar skopiowany do schowka! Możesz wysłać ekipie.");
+          }).catch(() => {
+            prompt("Skopiuj wiadomość dla ekipy:", text);
+          });
+        } else {
+          prompt("Skopiuj wiadomość dla ekipy:", text);
+        }
+      });
+    }
+
+    // Shake to spin detection
+    let lastShakeTime = 0;
+    window.addEventListener("devicemotion", (e) => {
+      if (!modal || modal.style.display === "none" || isSpinning) return;
+      const acc = e.accelerationIncludingGravity;
+      if (!acc) return;
+      const now = Date.now();
+      if (now - lastShakeTime < 1500) return;
+      const speed = Math.abs(acc.x || 0) + Math.abs(acc.y || 0) + Math.abs(acc.z || 0);
+      if (speed > 26) {
+        lastShakeTime = now;
+        spinRoulette();
+      }
+    });
+  }
 
   function initPubQuizModal() {
     const modal = document.getElementById("pubquiz-modal");

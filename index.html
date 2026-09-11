@@ -270,18 +270,28 @@
     <!-- Active Crawl Floating Banner on Map -->
     <div id="active-crawl-bar" class="active-crawl-bar" style="display: none;">
       <div class="active-crawl-info">
-        <div class="active-crawl-title">🍻 Trasa aktywna: <strong id="crawl-active-summary">3 bary (850 m)</strong></div>
+        <div class="active-crawl-step-indicator" id="crawl-active-step-indicator">
+          📍 Przystanek <strong>1</strong> z <strong>3</strong>: <span class="crawl-current-name">Wczytywanie...</span>
+        </div>
         <div class="active-crawl-sub" id="crawl-active-sub">Łączny koszt: ~34 zł · śr. 11.30 zł</div>
       </div>
       <div class="active-crawl-actions">
-        <a href="#" id="btn-crawl-active-gmaps" target="_blank" rel="noopener" class="btn-crawl-action-gmaps">🧭 Google Maps</a>
-        <button type="button" id="btn-crawl-active-details" class="btn-crawl-action-details">📋 Trasa</button>
+        <button type="button" id="btn-crawl-checkin-next" class="btn-crawl-action-checkin" title="Zalicz obecny lokal i przejdź do następnego">
+          <span class="crawl-checkin-icon">🍺</span>
+          <span id="crawl-checkin-label">Wypite! Kolejny →</span>
+        </button>
+        <a href="#" id="btn-crawl-active-gmaps" target="_blank" rel="noopener" class="btn-crawl-action-gmaps" title="Prowadź w Google Maps">🧭</a>
+        <button type="button" id="btn-crawl-active-details" class="btn-crawl-action-details" title="Szczegóły trasy">📋</button>
         <button type="button" id="btn-crawl-clear" class="btn-crawl-action-clear" title="Zakończ trasę">✕</button>
       </div>
     </div>
 
     <!-- Floating Action Buttons -->
     <div class="fab-stack-right">
+      <button type="button" id="btn-roulette-float" class="fab-roulette-float" title="Piwna Ruletka – Wylosuj bar na dziś!">
+        <span class="roulette-float-icon">🎲</span>
+        <span>Ruletka</span>
+      </button>
       <button type="button" id="btn-pubquiz-float" class="fab-pubquiz-float" title="Warszawski Pub Quiz – Zagraj teraz!">
         <span class="quiz-float-icon">🧠</span>
         <span>Pub Quiz</span>
@@ -1993,6 +2003,153 @@
         <button type="button" class="btn-secondary btn-story-share" id="btn-story-share">
           <span>📤 Udostępnij</span>
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Piwna Ruletka ("Wylosuj bar na dziś") -->
+  <div class="modal-backdrop" id="roulette-modal" style="display:none; z-index: 10250;">
+    <div class="modal-card modal-card-roulette">
+      <div class="modal-head">
+        <div class="modal-head-title">
+          <div class="modal-icon-badge modal-icon-roulette">🎲</div>
+          <div>
+            <h2>Piwna Ruletka</h2>
+            <p class="modal-head-sub">Nie wiesz gdzie iść? Zdaj się na los warszawskiej nocy!</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close" id="btn-close-roulette" aria-label="Zamknij Ruletkę">✕</button>
+      </div>
+
+      <div class="roulette-body">
+        <!-- Quick Filter Chips -->
+        <div class="roulette-filter-group">
+          <span class="roulette-group-label">📍 Dzielnica:</span>
+          <div class="roulette-chips-scroll" id="roulette-district-chips">
+            <button type="button" class="roulette-chip active" data-district="all">Wszystkie</button>
+            <button type="button" class="roulette-chip" data-district="Śródmieście">Śródmieście</button>
+            <button type="button" class="roulette-chip" data-district="Pawilony">🔥 Pawilony</button>
+            <button type="button" class="roulette-chip" data-district="Mokotów">Mokotów</button>
+            <button type="button" class="roulette-chip" data-district="Praga">🎨 Praga</button>
+            <button type="button" class="roulette-chip" data-district="Wola">Wola</button>
+            <button type="button" class="roulette-chip" data-district="Bulwary">🌊 Bulwary</button>
+            <button type="button" class="roulette-chip" data-district="Żoliborz">Żoliborz</button>
+          </div>
+        </div>
+
+        <div class="roulette-filter-group">
+          <span class="roulette-group-label">⭐ Klimat:</span>
+          <div class="roulette-chips-scroll" id="roulette-vibe-chips">
+            <button type="button" class="roulette-chip active" data-vibe="all">Dowolny</button>
+            <button type="button" class="roulette-chip" data-vibe="cheap">Tanie (≤ 12 zł) 💸</button>
+            <button type="button" class="roulette-chip" data-vibe="craft">Kraft / Craft 🍺</button>
+            <button type="button" class="roulette-chip" data-vibe="garden">Z ogródkiem 🌿</button>
+            <button type="button" class="roulette-chip" data-vibe="happy">Happy Hour ⚡</button>
+            <button type="button" class="roulette-chip" data-vibe="nonalco">0.0% / Bezalko 🌱</button>
+          </div>
+        </div>
+
+        <!-- Slot Machine Drum Stage -->
+        <div class="roulette-slot-stage">
+          <div class="roulette-indicator-top">▼</div>
+          <div class="roulette-drum-viewport" id="roulette-drum-viewport">
+            <div class="roulette-drum-reel" id="roulette-drum-reel">
+              <div class="roulette-reel-card roulette-reel-idle">
+                <div class="reel-idle-icon">🎰</div>
+                <div class="reel-idle-title">Kliknij „ZAKRĘĆ RULETKĄ”</div>
+                <div class="reel-idle-desc">Wylosujemy dla Ciebie i ekipy idealny lokal!</div>
+              </div>
+            </div>
+          </div>
+          <div class="roulette-indicator-bottom">▲</div>
+        </div>
+
+        <!-- Result Card (reveals on landing) -->
+        <div class="roulette-result-card" id="roulette-result-card" style="display: none;">
+          <div class="roulette-result-badge">🎉 TWÓJ WYLOSOWANY BAR</div>
+          <h3 class="roulette-result-name" id="roulette-result-name">Bar</h3>
+          <div class="roulette-result-price-line">
+            <span class="roulette-price-pill" id="roulette-result-price">🍺 12.00 zł</span>
+            <span class="roulette-beer-name" id="roulette-result-beer">Piwo</span>
+          </div>
+          <div class="roulette-result-meta" id="roulette-result-meta">
+            📍 <span id="roulette-result-address">Śródmieście</span> · <span id="roulette-result-dist">-- m stąd</span>
+          </div>
+          <div class="roulette-result-tags" id="roulette-result-tags"></div>
+
+          <div class="roulette-result-buttons">
+            <button type="button" class="btn-primary btn-roulette-action-map" id="btn-roulette-goto-map">
+              <span>📍 Pokaż na mapie & Idziemy!</span>
+            </button>
+            <button type="button" class="btn-secondary btn-roulette-action-share" id="btn-roulette-share" title="Wyślij ekipie">
+              <span>📤 Wyślij ekipie</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Spin Trigger Button -->
+        <div class="roulette-spin-container">
+          <button type="button" class="btn-spin-roulette" id="btn-spin-roulette">
+            <span class="spin-dice">🎲</span>
+            <span id="spin-roulette-text">ZAKRĘĆ BĘBNEM!</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Pub Crawl Ukończony (Ekran Triumfu) -->
+  <div class="modal-backdrop" id="crawl-complete-modal" style="display:none; z-index: 10300;">
+    <div class="modal-card modal-card-celebration">
+      <!-- Lightweight zero-dependency celebration canvas for confetti -->
+      <canvas id="crawl-confetti-canvas" class="celebration-canvas"></canvas>
+
+      <div class="celebration-content">
+        <div class="celebration-trophy-badge">🏆</div>
+        <h2 class="celebration-title">Pub Crawl Ukończony!</h2>
+        <p class="celebration-sub">Gratulacje! Przetrwaliście całą trasę barową po Warszawie! 🍻</p>
+
+        <!-- Stats Grid -->
+        <div class="celebration-stats-grid">
+          <div class="celebration-stat-box">
+            <span class="stat-num" id="crawl-done-stops-count">3</span>
+            <span class="stat-label">Bary zaliczone</span>
+          </div>
+          <div class="celebration-stat-box">
+            <span class="stat-num" id="crawl-done-cost">~36 zł</span>
+            <span class="stat-label">Koszt piwka</span>
+          </div>
+          <div class="celebration-stat-box">
+            <span class="stat-num" id="crawl-done-dist">~1.1 km</span>
+            <span class="stat-label">Dystans spaceru</span>
+          </div>
+        </div>
+
+        <!-- Passport Stamps Notice -->
+        <div class="celebration-badge-card">
+          <div class="badge-icon-wrap">🚀</div>
+          <div class="badge-info">
+            <div class="badge-tag">PASZPORT PIWOSZA</div>
+            <div class="badge-name">Pieczątki wbite & Odznaka Pub Crawler!</div>
+            <div class="badge-desc">Wszystkie bary z trasy zostały pomyślnie dodane do Twojego profilu!</div>
+          </div>
+        </div>
+
+        <!-- Visited Bars List -->
+        <div class="celebration-stops-list" id="crawl-done-stops-list"></div>
+
+        <!-- Actions -->
+        <div class="celebration-actions">
+          <button type="button" class="btn-primary btn-celebration-share" id="btn-crawl-finish-share">
+            <span>📤 Udostępnij sukces ekipie</span>
+          </button>
+          <button type="button" class="btn-secondary btn-celebration-story" id="btn-crawl-finish-story">
+            <span>📸 Karta na Story</span>
+          </button>
+          <button type="button" class="btn-ghost btn-celebration-close" id="btn-close-crawl-complete">
+            ✕ Zamknij
+          </button>
+        </div>
       </div>
     </div>
   </div>
