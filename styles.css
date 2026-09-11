@@ -2529,6 +2529,18 @@ header {
     color: #fff;
   }
 
+  .m-dist-chip.chip-find-friends {
+    background: rgba(59, 130, 246, 0.22);
+    border-color: rgba(96, 165, 250, 0.5);
+    color: #93c5fd;
+    font-weight: 700;
+  }
+  .m-dist-chip.chip-find-friends:hover,
+  .m-dist-chip.chip-find-friends:active {
+    background: rgba(59, 130, 246, 0.4);
+    color: #ffffff;
+  }
+
   .mobile-search-results {
     overflow-y: auto;
     display: flex;
@@ -4978,6 +4990,45 @@ header {
   transform: scale(0.92) !important;
 }
 
+.goin-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  z-index: 60;
+}
+
+.btn-header-share {
+  width: 42px !important;
+  height: 42px !important;
+  min-width: 42px !important;
+  min-height: 42px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.16) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.35) !important;
+  color: #ffffff !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45) !important;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  -webkit-tap-highlight-color: transparent !important;
+  touch-action: manipulation !important;
+}
+
+.btn-header-share:hover {
+  background: rgba(249, 115, 22, 0.35) !important;
+  border-color: #f97316 !important;
+  color: #fb923c !important;
+  transform: scale(1.06) !important;
+}
+
+.btn-header-share:active {
+  background: rgba(249, 115, 22, 0.6) !important;
+  transform: scale(0.92) !important;
+}
+
 .brand-pill {
   background: rgba(249, 115, 22, 0.15);
   color: #fb923c;
@@ -5101,28 +5152,89 @@ header {
   font-weight: 600;
 }
 
-.btn-goin-edit {
-  background: #ffffff;
-  color: #0f172a;
-  border: none;
-  padding: 7px 18px;
-  border-radius: 999px;
-  font-size: 0.8rem;
+/* Prominent Profile Quick Actions Bar (Top of Profile) */
+.profile-hero-actions-bar {
+  display: grid;
+  grid-template-columns: 1fr 1.25fr 0.85fr;
+  gap: 8px;
+  margin-top: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.btn-hero-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 8px;
+  border-radius: 12px;
+  font-size: 0.76rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  white-space: nowrap;
   font-family: inherit;
-}
-
-.btn-goin-edit:hover {
-  background: #f1f5f9;
-  transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  -webkit-tap-highlight-color: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #ffffff;
 }
 
-.btn-goin-edit:active {
-  transform: scale(0.96);
+.btn-hero-action-icon {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.btn-hero-action.btn-hero-share {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 16px rgba(249, 115, 22, 0.45);
+}
+
+.btn-hero-action.btn-hero-share:hover {
+  background: linear-gradient(135deg, #fb923c 0%, #f97316 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(249, 115, 22, 0.6);
+}
+
+.btn-hero-action.btn-hero-search {
+  background: rgba(59, 130, 246, 0.22);
+  color: #93c5fd;
+  border-color: rgba(96, 165, 250, 0.45);
+}
+
+.btn-hero-action.btn-hero-search:hover {
+  background: rgba(59, 130, 246, 0.35);
+  color: #ffffff;
+  border-color: #60a5fa;
+  transform: translateY(-1px);
+}
+
+.btn-hero-action.btn-hero-edit {
+  background: rgba(255, 255, 255, 0.12);
+  color: #f1f5f9;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.btn-hero-action.btn-hero-edit:hover {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.btn-hero-action:active {
+  transform: scale(0.95);
+}
+
+@media (max-width: 360px) {
+  .profile-hero-actions-bar {
+    grid-template-columns: 1fr 1fr;
+  }
+  .btn-hero-action.btn-hero-edit {
+    grid-column: span 2;
+  }
 }
 
 /* Avatar Frame */

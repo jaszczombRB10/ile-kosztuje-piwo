@@ -4693,6 +4693,23 @@
       });
     }
 
+    // Mobile Top Community Button (👥 in floating top bar)
+    const btnTopCommunity = document.getElementById("btn-top-community");
+    if (btnTopCommunity) {
+      btnTopCommunity.addEventListener("click", () => {
+        if (window.__openCommunity) window.__openCommunity("search");
+      });
+    }
+
+    // "Szukaj znajomych" chip in mobile search sheet
+    const chipSearchFriends = document.getElementById("chip-search-friends");
+    if (chipSearchFriends) {
+      chipSearchFriends.addEventListener("click", () => {
+        if (window.__closeMobileSearch) window.__closeMobileSearch();
+        if (window.__openCommunity) window.__openCommunity("search");
+      });
+    }
+
     // Initialize Auth & Social Modals
     initAuthModal();
     initOnboardingUsernameModal();
@@ -5693,24 +5710,51 @@
 
     if (btnOpenCommFromProf) {
       btnOpenCommFromProf.addEventListener("click", () => {
-        if (modal) modal.style.display = "none";
+        if (modal) { modal.classList.remove("active"); modal.style.display = "none"; }
         if (window.__openCommunity) window.__openCommunity();
       });
     }
 
-    if (btnShareMyProfile) {
-      btnShareMyProfile.addEventListener("click", () => {
-        if (!currentProfile) return;
-        const url = `${window.location.origin}/#@${currentProfile.username}`;
-        if (navigator.clipboard) {
-          navigator.clipboard.writeText(url).then(() => {
-            showAppToast("Skopiowano link do profilu!", url, "📤");
-          }).catch(() => {
-            prompt("Skopiuj link do Twojego profilu:", url);
-          });
-        } else {
+    // Share profile helper function (reused by multiple buttons)
+    function shareMyProfileLink() {
+      if (!currentProfile) return;
+      const url = `${window.location.origin}/#@${currentProfile.username}`;
+      if (navigator.share) {
+        navigator.share({ title: `${currentProfile.display_name || currentProfile.username} na poilepiwko`, url: url }).catch(() => {});
+      } else if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(() => {
+          showAppToast("Skopiowano link do profilu!", url, "📤");
+        }).catch(() => {
           prompt("Skopiuj link do Twojego profilu:", url);
-        }
+        });
+      } else {
+        prompt("Skopiuj link do Twojego profilu:", url);
+      }
+    }
+
+    // Hero share button (prominent in profile)
+    if (btnShareMyProfile) {
+      btnShareMyProfile.addEventListener("click", shareMyProfileLink);
+    }
+
+    // Header share button (circle icon in goin-modal-header)
+    const btnShareHeader = document.getElementById("btn-share-profile-header");
+    if (btnShareHeader) {
+      btnShareHeader.addEventListener("click", shareMyProfileLink);
+    }
+
+    // Bottom share button (in footer)
+    const btnShareBottom = document.getElementById("btn-share-my-profile-bottom");
+    if (btnShareBottom) {
+      btnShareBottom.addEventListener("click", shareMyProfileLink);
+    }
+
+    // Search Friends button (in hero bar) — opens Community modal on "search" tab
+    const btnSearchFriendsHero = document.getElementById("btn-search-friends-hero");
+    if (btnSearchFriendsHero) {
+      btnSearchFriendsHero.addEventListener("click", () => {
+        if (modal) { modal.classList.remove("active"); modal.style.display = "none"; }
+        if (window.__openCommunity) window.__openCommunity("search");
       });
     }
 

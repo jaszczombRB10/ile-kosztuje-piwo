@@ -154,6 +154,10 @@
         <span>🧠</span>
       </button>
 
+      <button type="button" class="fab-top-btn" id="btn-top-community" title="Piwni Znajomi i Wyszukiwarka">
+        <span>👥</span>
+      </button>
+
       <button type="button" class="fab-top-btn" id="btn-top-search" title="Szukaj lokalu lub piwa">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="8"></circle>
@@ -180,6 +184,7 @@
         <span class="m-dist-chip" data-dist="Mokotów">Mokotów</span>
         <span class="m-dist-chip" data-dist="Wola">Wola</span>
         <span class="m-dist-chip" data-dist="Praga Północ">Praga</span>
+        <span class="m-dist-chip chip-find-friends" id="chip-search-friends">👥 Szukaj znajomych</span>
       </div>
       <div class="mobile-search-results" id="mobile-search-results">
         <!-- Live matching venues rendered here -->
@@ -1429,7 +1434,16 @@
         <div class="goin-header-brand">
           <span class="brand-pill">🍺 poilepiwko</span>
         </div>
-        <button type="button" class="modal-close-goin" id="btn-close-profile" aria-label="Zamknij profil" title="Zamknij profil i wróć do mapy">✕</button>
+        <div class="goin-header-actions">
+          <button type="button" class="btn-header-share" id="btn-share-profile-header" aria-label="Udostępnij profil" title="Udostępnij swój profil">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+              <polyline points="16 6 12 2 8 6"></polyline>
+              <line x1="12" y1="2" x2="12" y2="15"></line>
+            </svg>
+          </button>
+          <button type="button" class="modal-close-goin" id="btn-close-profile" aria-label="Zamknij profil" title="Zamknij profil i wróć do mapy">✕</button>
+        </div>
       </div>
 
       <!-- Hero Banner (Goin' Style) -->
@@ -1462,11 +1476,6 @@
                 <span class="goin-tag-val" id="prof-val-vibe">Kraft, Ogródki, Pub Quiz</span>
               </div>
             </div>
-
-            <!-- Edit profile pill button -->
-            <button type="button" class="btn-goin-edit" id="btn-toggle-edit-profile">
-              <span>Edit profile</span>
-            </button>
           </div>
 
           <div class="goin-hero-right">
@@ -1474,6 +1483,22 @@
               <div class="goin-avatar-badge" id="prof-hero-avatar">🍻</div>
             </div>
           </div>
+        </div>
+
+        <!-- Prominent Profile Quick Actions Bar (Immediately Visible Without Scrolling) -->
+        <div class="profile-hero-actions-bar">
+          <button type="button" class="btn-hero-action btn-hero-share" id="btn-share-my-profile" title="Udostępnij link do Twojego profilu">
+            <span class="btn-hero-action-icon">📤</span>
+            <span>Udostępnij</span>
+          </button>
+          <button type="button" class="btn-hero-action btn-hero-search" id="btn-search-friends-hero" title="Wyszukaj znajomych po nicku">
+            <span class="btn-hero-action-icon">🔍</span>
+            <span>Szukaj znajomych</span>
+          </button>
+          <button type="button" class="btn-hero-action btn-hero-edit" id="btn-toggle-edit-profile" title="Edytuj profil i preferencje">
+            <span class="btn-hero-action-icon">✏️</span>
+            <span>Edytuj</span>
+          </button>
         </div>
       </div>
 
@@ -1533,9 +1558,9 @@
       <div class="goin-profile-footer">
         <div class="profile-action-buttons">
           <button type="button" class="btn-profile-action" id="btn-open-community-from-profile">
-            <span>👥 Znajomi & Feed</span>
+            <span>👥 Znajomi & Puls Miasta</span>
           </button>
-          <button type="button" class="btn-profile-action" id="btn-share-my-profile">
+          <button type="button" class="btn-profile-action" id="btn-share-my-profile-bottom">
             <span>📤 Udostępnij profil</span>
           </button>
         </div>
