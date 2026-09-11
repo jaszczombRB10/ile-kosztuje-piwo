@@ -1728,6 +1728,43 @@
                   <small>Pawilony, bary, historia i mosty</small>
                 </div>
               </button>
+              <button type="button" class="quiz-cat-btn" data-cat="culture">
+                <span class="quiz-cat-ico">💡</span>
+                <div class="quiz-cat-text">
+                  <strong>Kultura Barowa & Ciekawostki</strong>
+                  <small>Zwyczaje, toasty, historia i fakty</small>
+                </div>
+              </button>
+            </div>
+
+            <!-- Quiz Settings: Question Count & Timer -->
+            <div class="quiz-settings-wrap">
+              <div class="quiz-setting-row">
+                <div class="quiz-setting-label">
+                  <span>🔢 Liczba pytań:</span>
+                  <span class="quiz-setting-val" id="quiz-val-qcount">5 pytań</span>
+                </div>
+                <div class="quiz-setting-pills" id="quiz-qcount-pills">
+                  <button type="button" class="quiz-pill-btn" data-count="3">3</button>
+                  <button type="button" class="quiz-pill-btn active" data-count="5">5</button>
+                  <button type="button" class="quiz-pill-btn" data-count="10">10</button>
+                  <button type="button" class="quiz-pill-btn" data-count="15">15</button>
+                </div>
+              </div>
+
+              <div class="quiz-setting-row">
+                <div class="quiz-setting-label">
+                  <span>⏱️ Czas na pytanie:</span>
+                  <span class="quiz-setting-val" id="quiz-val-time">20s</span>
+                </div>
+                <div class="quiz-setting-pills" id="quiz-time-pills">
+                  <button type="button" class="quiz-pill-btn" data-time="10">10s</button>
+                  <button type="button" class="quiz-pill-btn" data-time="15">15s</button>
+                  <button type="button" class="quiz-pill-btn active" data-time="20">20s</button>
+                  <button type="button" class="quiz-pill-btn" data-time="30">30s</button>
+                  <button type="button" class="quiz-pill-btn" data-time="0">Bez limitu</button>
+                </div>
+              </div>
             </div>
 
             <div class="quiz-lobby-meta">
@@ -1735,12 +1772,12 @@
                 <span>🏆 Rekord: <strong id="quiz-highscore-val">0/5</strong></span>
               </div>
               <div class="quiz-meta-pill">
-                <span>⏱️ Czas: <strong>20s / pytanie</strong></span>
+                <span>⏱️ Tryb: <strong id="quiz-meta-time-val">20s / pytanie</strong></span>
               </div>
             </div>
 
             <button type="button" class="btn-primary btn-quiz-cta" id="btn-quiz-start-game">
-              <span>🚀 Rozpocznij rundę (5 pytań)</span>
+              <span>🚀 Rozpocznij rundę (<span id="quiz-btn-count-label">5 pytań</span>)</span>
             </button>
           </div>
         </div>

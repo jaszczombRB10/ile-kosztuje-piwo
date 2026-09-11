@@ -2302,10 +2302,10 @@
       id: "pubquiz_master",
       name: "Mistrz Pub Quizu",
       icon: "🧠",
-      desc: "Zdobądź komplet punktów (5/5) w Warszawskim Pub Quizie",
+      desc: "Zdobądź komplet 100% punktów w Warszawskim Pub Quizie (min. 5 pytań)",
       check: (visited, vMap) => {
         const won = localStorage.getItem("poilepiwko_pubquiz_won") === "true";
-        return { unlocked: won, progress: won ? "5/5" : "0/5" };
+        return { unlocked: won, progress: won ? "100%" : "0%" };
       }
     }
   ];
@@ -7114,6 +7114,12 @@
     const catBtns = document.querySelectorAll(".quiz-cat-btn");
     const highscoreVal = document.getElementById("quiz-highscore-val");
     const btnStartGame = document.getElementById("btn-quiz-start-game");
+    const valQCount = document.getElementById("quiz-val-qcount");
+    const valTime = document.getElementById("quiz-val-time");
+    const btnCountLabel = document.getElementById("quiz-btn-count-label");
+    const metaTimeVal = document.getElementById("quiz-meta-time-val");
+    const qcountPills = document.querySelectorAll("#quiz-qcount-pills .quiz-pill-btn");
+    const timePills = document.querySelectorAll("#quiz-time-pills .quiz-pill-btn");
 
     // Play Screen Elements
     const stepTag = document.getElementById("quiz-step-tag");
@@ -7420,6 +7426,286 @@
         ],
         correct: 0,
         fact: "Pub Crawl to świetny sposób na poznanie nocnego życia miasta i odkrycie ukrytych barowych perełek!"
+      },
+      {
+        id: 21,
+        cat: "beer",
+        catName: "Style & Kraft 🍺",
+        q: "Czym jest 'ekstrakt początkowy' (stopnie Blg / Plato) podawany na butelce piwa?",
+        options: [
+          "Zawartością cukrów ze słodu w brzeczce przed fermentacją",
+          "Końcową zawartością czystego alkoholu",
+          "Wskaźnikiem kwasowości i goryczki",
+          "Ilością użytych gatunków chmielu"
+        ],
+        correct: 0,
+        fact: "Stopnie Ballinga (°Blg) lub Plato określają gęstość brzeczki – im wyższy ekstrakt, tym piwo jest treściwsze i ma potencjał na więcej alkoholu!"
+      },
+      {
+        id: 22,
+        cat: "beer",
+        catName: "Style & Kraft 🍺",
+        q: "Co charakteryzuje tradycyjne niemieckie piwo w stylu 'Gose'?",
+        options: [
+          "Lekka kwasowość oraz dodatek soli i kolendry",
+          "Potężna goryczka i czarny jak smoła kolor",
+          "Słodki smak miodu pitnego i brak bąbelków",
+          "Użycie wyłącznie słodu palonego"
+        ],
+        correct: 0,
+        fact: "Gose to historyczny styl z Lipska i Goslar – orzeźwiające, lekko słone i kwaskowate, doskonałe na upalne letnie dni!"
+      },
+      {
+        id: 23,
+        cat: "beer",
+        catName: "Style & Kraft 🍺",
+        q: "Co oznacza skrót 'DDH' na puszkach nowoczesnych piw kraftowych?",
+        options: [
+          "Double Dry Hopped (podwójnie chmielone na zimno)",
+          "Direct Delivery Hop (chmiel prosto z plantacji)",
+          "Dark Draft Honey (ciemne miodowe z kranu)",
+          "Double Density Hazy (podwójna mętność)"
+        ],
+        correct: 0,
+        fact: "DDH to technika dodawania podwójnej porcji aromatycznego chmielu na etapie leżakowania, dająca potężną bombę cytrusów i owoców tropikalnych!"
+      },
+      {
+        id: 24,
+        cat: "beer",
+        catName: "Style & Kraft 🍺",
+        q: "Który styl piwa fermentowany jest spontanicznie dzikimi drożdżami w otwartych kadziach?",
+        options: [
+          "Lambic / Wild Ale",
+          "Klasyczny Pilsner",
+          "Koźlak Majowy (Maibock)",
+          "Dry Stout"
+        ],
+        correct: 0,
+        fact: "Lambiki powstają w dolinie rzeki Zenne w Belgii, gdzie brzeczka stygnie na otwartym poddaszu i łapie dzikie drożdże z powietrza!"
+      },
+      {
+        id: 25,
+        cat: "beer",
+        catName: "Style & Kraft 🍺",
+        q: "Co to jest 'laktoza' dodawana do piw typu Milk Stout lub Pastry Sour?",
+        options: [
+          "Cukier mleczny niefermentowany przez drożdże piwne, dający słodycz i gładkość",
+          "Zsiadłe mleko dodawane do gotującej się brzeczki",
+          "Pianotwórczy ekstrakt z białka serwatkowego",
+          "Naturalny barwnik rozjaśniający ciemne piwo"
+        ],
+        correct: 0,
+        fact: "Drożdże piwne nie potrafią strawić laktozy, dzięki czemu piwo zyskuje deserowy, aksamitny profil i kremową teksturę!"
+      },
+      {
+        id: 26,
+        cat: "beer",
+        catName: "Style & Kraft 🍺",
+        q: "W którym mieście w 1842 roku uwarzono pierwszego na świecie jasnego, klarownego Pilsnera?",
+        options: [
+          "Pilzno (Czechy)",
+          "Monachium (Niemcy)",
+          "Bruksela (Belgia)",
+          "Żywiec (Polska)"
+        ],
+        correct: 0,
+        fact: "Josef Groll uwarzył pierwszego Pilsnera w browarze Měšťanský pivovar w Pilźnie. Do dziś Pilsner Urquell wyznacza kanon tego stylu!"
+      },
+      {
+        id: 27,
+        cat: "beer",
+        catName: "Style & Kraft 🍺",
+        q: "Czym jest 'Session IPA'?",
+        options: [
+          "Lżejszą, bardzo pijalną wersją IPA o zawartości alkoholu ok. 3.5% - 4.5%",
+          "Mocarnym Imperial IPA o zawartości alkoholu powyżej 10%",
+          "Piwem leżakowanym w beczkach po szkockiej whisky",
+          "Piwem warzonym wyłącznie podczas festiwali piwnych"
+        ],
+        correct: 0,
+        fact: "'Session' w piwowarstwie oznacza piwa stworzone do wielogodzinnych spotkań towarzyskich – lekkie w alkoholu, ale pełne aromatu chmielu!"
+      },
+      {
+        id: 28,
+        cat: "beer",
+        catName: "Style & Kraft 🍺",
+        q: "Jaki gatunek drożdży odpowiada za fermentację tradycyjnych piw typu Ale (górna fermentacja)?",
+        options: [
+          "Saccharomyces cerevisiae",
+          "Saccharomyces pastorianus",
+          "Lactobacillus brevis",
+          "Candida utilis"
+        ],
+        correct: 0,
+        fact: "Saccharomyces cerevisiae pracują w wyższych temperaturach (16-24°C), tworząc owocowe estry i przyprawowe fenole!"
+      },
+      {
+        id: 29,
+        cat: "beer",
+        catName: "Style & Kraft 🍺",
+        q: "Co charakteryzuje piwo leżakowane w technologii 'Nitro' (z azotem, jak Guinness)?",
+        options: [
+          "Aksamitna, gęsta piana i hipnotyzujący efekt kaskadowy bąbelków opadających w dół",
+          "Silne nagazowanie szczypiące w język jak woda sodowa",
+          "Brak jakiejkolwiek piany",
+          "Metaliczny posmak żelaza"
+        ],
+        correct: 0,
+        fact: "Pęcherzyki azotu są znacznie mniejsze niż dwutlenku węgla, co daje kremową pianę przypominającą ubitą śmietankę!"
+      },
+      {
+        id: 30,
+        cat: "warsaw",
+        catName: "Warszawska Noc 🏙️",
+        q: "Który kultowy klubo-pub w Parku Pole Mokotowskie słynie z ogromnego grilla i ogródka?",
+        options: [
+          "Lolek Grill & Bar",
+          "Zielona Gęś",
+          "Bolek",
+          "Plan B"
+        ],
+        correct: 0,
+        fact: "Pub Lolek na Polu Mokotowskim od dziesięcioleci gromadzi warszawiaków na wielkie biesiady z karkówką i piwem pod chmurką!"
+      },
+      {
+        id: 31,
+        cat: "warsaw",
+        catName: "Warszawska Noc 🏙️",
+        q: "W którym gmachu w Warszawie mieścił się słynny multitap 'Cuda na Kiju'?",
+        options: [
+          "Dawny Dom Partii (KC PZPR) przy Rondzie de Gaulle'a",
+          "Pałac Kultury i Nauki",
+          "Hala Mirowska",
+          "Zamek Królewski"
+        ],
+        correct: 0,
+        fact: "'Cuda na Kiju' powstały w przeszklonym pawilonie dawnej siedziby KC PZPR, tworząc niezwykły kontrast popkulturowy!"
+      },
+      {
+        id: 32,
+        cat: "warsaw",
+        catName: "Warszawska Noc 🏙️",
+        q: "Gdzie w Warszawie w dawnej wytwórni wódek powstało centrum kulturalno-gastronomiczne z barami?",
+        options: [
+          "Centrum Praskie Koneser",
+          "Fabryka Norblina",
+          "Elektrownia Powiśle",
+          "Stacja Muzeum"
+        ],
+        correct: 0,
+        fact: "Koneser na Pradze-Północ to odrestaurowana neogotycka fabryka z XIX wieku, gdzie dziś tętni życie towarzyskie i piwne!"
+      },
+      {
+        id: 33,
+        cat: "warsaw",
+        catName: "Warszawska Noc 🏙️",
+        q: "Który warszawski festiwal piwny odbywa się na stadionie Legii Warszawa przy ul. Łazienkowskiej?",
+        options: [
+          "Warszawski Festiwal Piwa (WFP)",
+          "Beer Geek Madness",
+          "Chmielaki Krasnostawskie",
+          "Silesia Beer Fest"
+        ],
+        correct: 0,
+        fact: "WFP to jeden z najważniejszych i najbardziej prestiżowych festiwali piw rzemieślniczych w całej Europie Środkowej!"
+      },
+      {
+        id: 34,
+        cat: "warsaw",
+        catName: "Warszawska Noc 🏙️",
+        q: "W której dzielnicy Warszawy znajduje się historyczny Fort Bema z popularnymi lokalami i ogródkami?",
+        options: [
+          "Bemowo",
+          "Bielany",
+          "Wola",
+          "Żoliborz"
+        ],
+        correct: 0,
+        fact: "Fort Bema otoczony fosą to ulubione miejsce spacerów i spotkań mieszkańców zachodniej Warszawy!"
+      },
+      {
+        id: 35,
+        cat: "warsaw",
+        catName: "Warszawska Noc 🏙️",
+        q: "Co warszawiacy mają na myśli, mówiąc w letni piątkowy wieczór 'idziemy na Schodki'?",
+        options: [
+          "Spotkanie towarzyskie na betonowych schodkach Bulwarów Wiślanych",
+          "Wejście schodami na taras widokowy Pałacu Kultury",
+          "Zejście do stacji Metra Centrum ('Patelnia')",
+          "Pojście do piwnicy na Starym Mieście"
+        ],
+        correct: 0,
+        fact: "Schodki nad Wisłą to letnia stolica warszawskiego chilloutu, gdzie spotykają się tysiące studentów i młodych ludzi!"
+      },
+      {
+        id: 36,
+        cat: "culture",
+        catName: "Kultura Barowa & Ciekawostki 💡",
+        q: "Co to jest 'Multitap' w nowoczesnej kulturze barowej?",
+        options: [
+          "Pub posiadający wiele kranów (nalewaków) z rotacyjną ofertą piw rzemieślniczych",
+          "Kran podający jednocześnie piwo i wino",
+          "Bar samoobsługowy bez personelu",
+          "Specjalny kran do mycia kufli barowych"
+        ],
+        correct: 0,
+        fact: "W warszawskich multitapach (np. Jabeerwocky, Kufle i Kapsle) można znaleźć od 12 do nawet 30 kranów z piwami z całego świata!"
+      },
+      {
+        id: 37,
+        cat: "culture",
+        catName: "Kultura Barowa & Ciekawostki 💡",
+        q: "Które szkło jest tradycyjnie polecane do degustacji belgijskich piw klasztornych (Trapistów)?",
+        options: [
+          "Kielich (Chalice lub Goblet) o szerokiej czaszy",
+          "Wysoka, wąska szklanka do pszenicy",
+          "Gruby kufel z uchem (Mass)",
+          "Plastikowy kubek jednorazowy"
+        ],
+        correct: 0,
+        fact: "Szeroka czasza kielicha pozwala uwolnić bogate aromaty przypraw, suszonych śliwek i ciemnych owoców charakterystyczne dla belgijskich piw!"
+      },
+      {
+        id: 38,
+        cat: "culture",
+        catName: "Kultura Barowa & Ciekawostki 💡",
+        q: "Dlaczego tradycyjny kufel do piwa ma grube ucho?",
+        options: [
+          "Aby dłoń nie ogrzewała schłodzonego piwa przez ścianki naczynia",
+          "Żeby kufel był cięższy podczas wznoszenia toastów",
+          "Dla ułatwienia wieszania na haku pod barem",
+          "Bo dawniej szkło było zbyt kruche"
+        ],
+        correct: 0,
+        fact: "Trzymając kufel za ucho, izolujemy piwo od ciepła naszej dłoni, co pozwala cieszyć się optymalną temperaturą trunku znacznie dłużej!"
+      },
+      {
+        id: 39,
+        cat: "culture",
+        catName: "Kultura Barowa & Ciekawostki 💡",
+        q: "Co w sensoryce piwnej oznacza pojęcie 'Gushing'?",
+        options: [
+          "Gwałtowne, samoistne wystrzelenie piany z butelki tuż po jej otwarciu",
+          "Opadanie piany w szklance poniżej minuty",
+          "Mętność piwa wywołana niską temperaturą",
+          "Pojawienie się osadu drożdżowego na dnie"
+        ],
+        correct: 0,
+        fact: "Gushing to piwny gejzer – spowodowany zbyt wysokim nagazowaniem, zakażeniem mikrobiologicznym lub poruszeniem butelki!"
+      },
+      {
+        id: 40,
+        cat: "culture",
+        catName: "Kultura Barowa & Ciekawostki 💡",
+        q: "Co oznacza popularne barowe hasło 'piwny brzuszek' i skąd wzięło się to pojęcie?",
+        options: [
+          "Z faktu, że piwo pobudza apetyt na kaloryczne przekąski, a alkohol spowalnia metabolizm",
+          "Z bezpośredniej zawartości tłuszczu w piwie",
+          "Z ilości drożdży pęczniejących w żołądku",
+          "Z połykania bąbelków dwutlenku węgla"
+        ],
+        correct: 0,
+        fact: "Samo piwo nie zawiera tłuszczu, ale chmiel pobudza wydzielanie kwasów żołądkowych, wywołując wilczy apetyt na pizzę, orzeszki czy frytki!"
       }
     ];
 
@@ -7498,6 +7784,8 @@
 
     // State
     let selectedCategory = "all";
+    let selectedQuestionsCount = 5;
+    let selectedTimeLimit = 20; // in seconds, 0 = unlimited
     let selectedQuizDay = "all";
     let activeQuestions = [];
     let currentQuestionIdx = 0;
@@ -7506,12 +7794,54 @@
     let timerSeconds = 20;
     let hasAnswered = false;
 
-    function getHighscore() {
-      return parseInt(localStorage.getItem("poilepiwko_pubquiz_highscore") || "0", 10);
+    function formatQuestionCount(n) {
+      if (n === 1) return "1 pytanie";
+      if (n >= 2 && n <= 4) return `${n} pytania`;
+      return `${n} pytań`;
     }
+
+    function getHighscore(count = selectedQuestionsCount) {
+      const stored = localStorage.getItem(`poilepiwko_pubquiz_highscore_${count}`);
+      if (stored !== null) return parseInt(stored, 10);
+      if (count === 5) {
+        return parseInt(localStorage.getItem("poilepiwko_pubquiz_highscore") || "0", 10);
+      }
+      return 0;
+    }
+
     function updateHighscoreDisplay() {
-      if (highscoreVal) highscoreVal.textContent = `${getHighscore()}/5`;
+      if (highscoreVal) {
+        const hs = getHighscore(selectedQuestionsCount);
+        highscoreVal.textContent = `${hs}/${selectedQuestionsCount}`;
+      }
     }
+
+    function updateSettingsDisplay() {
+      if (valQCount) valQCount.textContent = formatQuestionCount(selectedQuestionsCount);
+      if (btnCountLabel) btnCountLabel.textContent = formatQuestionCount(selectedQuestionsCount);
+      if (valTime) valTime.textContent = selectedTimeLimit === 0 ? "Bez limitu" : `${selectedTimeLimit}s`;
+      if (metaTimeVal) metaTimeVal.textContent = selectedTimeLimit === 0 ? "Bez limitu" : `${selectedTimeLimit}s / pytanie`;
+      updateHighscoreDisplay();
+    }
+
+    // Pill selectors
+    qcountPills.forEach(pill => {
+      pill.addEventListener("click", () => {
+        qcountPills.forEach(p => p.classList.remove("active"));
+        pill.classList.add("active");
+        selectedQuestionsCount = parseInt(pill.getAttribute("data-count"), 10) || 5;
+        updateSettingsDisplay();
+      });
+    });
+
+    timePills.forEach(pill => {
+      pill.addEventListener("click", () => {
+        timePills.forEach(p => p.classList.remove("active"));
+        pill.classList.add("active");
+        selectedTimeLimit = parseInt(pill.getAttribute("data-time"), 10);
+        updateSettingsDisplay();
+      });
+    });
 
     function switchQuizTab(tab) {
       if (tab === "game") {
@@ -7611,11 +7941,33 @@
       let pool = PUB_QUIZ_QUESTIONS;
       if (selectedCategory !== "all") {
         pool = PUB_QUIZ_QUESTIONS.filter(q => q.cat === selectedCategory);
-        if (pool.length < 5) pool = PUB_QUIZ_QUESTIONS;
+        if (pool.length < selectedQuestionsCount) {
+          const others = PUB_QUIZ_QUESTIONS.filter(q => q.cat !== selectedCategory);
+          pool = [...pool, ...others];
+        }
       }
 
+      // Shuffle question pool and take selected count
       const shuffled = [...pool].sort(() => 0.5 - Math.random());
-      activeQuestions = shuffled.slice(0, 5);
+      const chosen = shuffled.slice(0, selectedQuestionsCount);
+
+      // SHUFFLE OPTIONS WITH FISHER-YATES:
+      // Guarantees that the correct answer is NOT always 'A', but evenly distributed among A, B, C, D!
+      activeQuestions = chosen.map(q => {
+        const correctText = q.options[q.correct];
+        const shuffledOptions = [...q.options];
+        for (let i = shuffledOptions.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffledOptions[i], shuffledOptions[j]] = [shuffledOptions[j], shuffledOptions[i]];
+        }
+        const newCorrectIdx = shuffledOptions.indexOf(correctText);
+        return {
+          ...q,
+          options: shuffledOptions,
+          correct: newCorrectIdx
+        };
+      });
+
       currentQuestionIdx = 0;
       currentScore = 0;
 
@@ -7636,9 +7988,10 @@
         return;
       }
 
+      const totalCount = activeQuestions.length;
       const qNum = currentQuestionIdx + 1;
-      if (stepTag) stepTag.textContent = `Pytanie ${qNum} z 5`;
-      if (progressFill) progressFill.style.width = `${(qNum / 5) * 100}%`;
+      if (stepTag) stepTag.textContent = `Pytanie ${qNum} z ${totalCount}`;
+      if (progressFill) progressFill.style.width = `${(qNum / totalCount) * 100}%`;
       if (qCategory) qCategory.textContent = q.catName;
       if (qTitle) qTitle.textContent = q.q;
 
@@ -7663,18 +8016,22 @@
         });
       }
 
-      timerSeconds = 20;
-      if (timerPill) timerPill.textContent = `⏱️ ${timerSeconds}s`;
-      timerInterval = setInterval(() => {
-        timerSeconds--;
+      if (selectedTimeLimit === 0) {
+        if (timerPill) timerPill.textContent = "⏱️ Bez limitu";
+      } else {
+        timerSeconds = selectedTimeLimit;
         if (timerPill) timerPill.textContent = `⏱️ ${timerSeconds}s`;
-        if (timerSeconds <= 0) {
-          clearInterval(timerInterval);
-          if (!hasAnswered) {
-            handleAnswer(-1);
+        timerInterval = setInterval(() => {
+          timerSeconds--;
+          if (timerPill) timerPill.textContent = `⏱️ ${timerSeconds}s`;
+          if (timerSeconds <= 0) {
+            clearInterval(timerInterval);
+            if (!hasAnswered) {
+              handleAnswer(-1);
+            }
           }
-        }
-      }, 1000);
+        }, 1000);
+      }
     }
 
     function handleAnswer(chosenIdx) {
@@ -7711,13 +8068,15 @@
 
       if (btnNext) {
         btnNext.style.display = "block";
-        btnNext.querySelector("span").textContent = currentQuestionIdx === 4 ? "Zobacz wyniki końcowe 🏆" : "Następne pytanie →";
+        const totalCount = activeQuestions.length;
+        btnNext.querySelector("span").textContent = currentQuestionIdx === totalCount - 1 ? "Zobacz wyniki końcowe 🏆" : "Następne pytanie →";
       }
     }
 
     if (btnNext) {
       btnNext.addEventListener("click", () => {
-        if (currentQuestionIdx < 4) {
+        const totalCount = activeQuestions.length;
+        if (currentQuestionIdx < totalCount - 1) {
           currentQuestionIdx++;
           renderQuestion();
         } else {
@@ -7731,39 +8090,55 @@
       if (screenPlay) screenPlay.style.display = "none";
       if (screenResults) screenResults.style.display = "block";
 
+      const totalCount = activeQuestions.length;
       if (resNum) resNum.textContent = currentScore;
+      const resTotal = document.querySelector(".quiz-res-total");
+      if (resTotal) resTotal.textContent = `/${totalCount}`;
 
-      const prevHigh = getHighscore();
+      const prevHigh = getHighscore(totalCount);
       if (currentScore > prevHigh) {
-        localStorage.setItem("poilepiwko_pubquiz_highscore", currentScore);
+        localStorage.setItem(`poilepiwko_pubquiz_highscore_${totalCount}`, currentScore);
+        if (totalCount === 5) {
+          localStorage.setItem("poilepiwko_pubquiz_highscore", currentScore);
+        }
         updateHighscoreDisplay();
       }
 
-      if (currentScore === 5) {
+      const ratio = currentScore / totalCount;
+      if (ratio === 1) {
         if (resIco) resIco.textContent = "👑";
         if (resTitle) resTitle.textContent = "Mistrz Warszawskiego Pub Quizu!";
-        if (resSub) resSub.textContent = "Fenomenalnie! Komplet 5/5 punktów! Warszawa i krafty nie mają przed Tobą żadnych tajemnic.";
+        if (resSub) resSub.textContent = `Fenomenalnie! Komplet ${currentScore}/${totalCount} punktów! Warszawa i krafty nie mają przed Tobą żadnych tajemnic.`;
 
-        const alreadyWon = localStorage.getItem("poilepiwko_pubquiz_won") === "true";
-        localStorage.setItem("poilepiwko_pubquiz_won", "true");
-        if (unlockedNotice) unlockedNotice.style.display = "block";
+        if (totalCount >= 5) {
+          const alreadyWon = localStorage.getItem("poilepiwko_pubquiz_won") === "true";
+          localStorage.setItem("poilepiwko_pubquiz_won", "true");
+          if (unlockedNotice) unlockedNotice.style.display = "block";
 
-        const unlockedBadges = loadUnlockedBadges();
-        if (!unlockedBadges.includes("pubquiz_master")) {
-          unlockedBadges.push("pubquiz_master");
-          saveUnlockedBadges(unlockedBadges);
-          showAppToast("Odblokowano Odznakę Paszportu!", "Mistrz Pub Quizu 🧠 (5/5 pkt)", "👑", 5000);
+          const unlockedBadges = loadUnlockedBadges();
+          if (!unlockedBadges.includes("pubquiz_master")) {
+            unlockedBadges.push("pubquiz_master");
+            saveUnlockedBadges(unlockedBadges);
+            showAppToast("Odblokowano Odznakę Paszportu!", `Mistrz Pub Quizu 🧠 (${currentScore}/${totalCount} pkt)`, "👑", 5000);
+          }
+          updatePassportCounters();
+        } else {
+          if (unlockedNotice) unlockedNotice.style.display = "none";
         }
-        updatePassportCounters();
-      } else if (currentScore >= 3) {
+      } else if (ratio >= 0.7) {
+        if (resIco) resIco.textContent = "🥇";
+        if (resTitle) resTitle.textContent = "Znakomity Piwoznawca!";
+        if (resSub) resSub.textContent = `Świetny wynik (${currentScore}/${totalCount})! Niewiele zabrakło do perfekcji.`;
+        if (unlockedNotice) unlockedNotice.style.display = "none";
+      } else if (ratio >= 0.4) {
         if (resIco) resIco.textContent = "🍻";
         if (resTitle) resTitle.textContent = "Doświadczony Piwosz!";
-        if (resSub) resSub.textContent = `Świetny wynik (${currentScore}/5)! Jeszcze chwila treningu przy barze i zdobędziesz koronę mistrza.`;
+        if (resSub) resSub.textContent = `Dobra runda (${currentScore}/${totalCount})! Kilka pytań było podchwytliwych, ale znasz warszawskie klimaty.`;
         if (unlockedNotice) unlockedNotice.style.display = "none";
       } else {
         if (resIco) resIco.textContent = "🎓";
         if (resTitle) resTitle.textContent = "Praktykant na Pawilonach";
-        if (resSub) resSub.textContent = `Wynik: ${currentScore}/5. Każda barowa wiedza wymaga praktyki – zagraj jeszcze raz!`;
+        if (resSub) resSub.textContent = `Wynik: ${currentScore}/${totalCount}. Każda barowa wiedza wymaga praktyki – zagraj jeszcze raz!`;
         if (unlockedNotice) unlockedNotice.style.display = "none";
       }
     }
@@ -7773,13 +8148,13 @@
       btnRestart.addEventListener("click", () => {
         if (screenResults) screenResults.style.display = "none";
         if (screenStart) screenStart.style.display = "block";
-        updateHighscoreDisplay();
+        updateSettingsDisplay();
       });
     }
 
     if (btnShare) {
       btnShare.addEventListener("click", () => {
-        const text = `🧠 Mój wynik w Warszawskim Pub Quizie na poilepiwko.pl: ${currentScore}/5! Sprawdź czy znasz warszawskie bary lepiej: ${window.location.origin}`;
+        const text = `🧠 Mój wynik w Warszawskim Pub Quizie na poilepiwko.pl: ${currentScore}/${activeQuestions.length}! Sprawdź czy znasz warszawskie bary lepiej: ${window.location.origin}`;
         if (navigator.clipboard) {
           navigator.clipboard.writeText(text).then(() => {
             showAppToast("Skopiowano wynik!", "Możesz wkleić go znajomym na Messengerze lub WhatsAppie!", "📤");
@@ -7791,6 +8166,8 @@
         }
       });
     }
+
+    updateSettingsDisplay();
 
     window.__openPubQuiz = function () {
       if (modal) {

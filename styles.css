@@ -6214,6 +6214,73 @@ header {
   margin-top: 1px;
 }
 
+.quiz-settings-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.quiz-setting-row {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.quiz-setting-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #94a3b8;
+  margin-bottom: 8px;
+}
+
+.quiz-setting-val {
+  color: #fbbf24;
+  font-weight: 700;
+  font-size: 0.78rem;
+}
+
+.quiz-setting-pills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.quiz-pill-btn {
+  flex: 1 1 auto;
+  min-width: 44px;
+  padding: 7px 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #cbd5e1;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  text-align: center;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.quiz-pill-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.quiz-pill-btn.active {
+  background: #f97316;
+  border-color: #f97316;
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(249, 115, 22, 0.4);
+  font-weight: 700;
+}
+
 .quiz-lobby-meta {
   display: flex;
   justify-content: center;
