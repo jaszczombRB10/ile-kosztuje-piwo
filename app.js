@@ -444,6 +444,27 @@
     return false;
   }
 
+  function isGardenVenue(venue) {
+    if (!venue) return false;
+    if (venue.has_garden === true) return true;
+    if (venue.tags && Array.isArray(venue.tags) && (venue.tags.includes("ogródek") || venue.tags.includes("garden") || venue.tags.includes("patio"))) return true;
+    const d = (venue.district || "").toLowerCase();
+    if (d === "bulwary" || d === "pawilony") return true;
+    const knownGardenSlugs = new Set([
+      "pub-lolek-pole-mokotowskie", "zielona-ges", "bolek", "bez-slowa", "wieczorny",
+      "pol-na-pul", "moko-tuff-pub", "singers", "boston-port", "bar-kepa-potocka",
+      "prochownia-zoliborz", "cuda-na-kiju", "wozownia-bar", "plan-b", "piotrus",
+      "hala-koszyki", "browary-warszawskie", "fabryka-norblina", "nocny-market",
+      "koneser", "hydrozagadka", "sklad-butelek", "w-oparach-absurdu", "bar-pacyfik",
+      "browar-warszawski", "pokoj-na-lato", "piano-bar", "tawerna-korsarz", "chmielobrody",
+      "jabeerwocky", "same-krafty"
+    ]);
+    if (venue.slug && knownGardenSlugs.has(venue.slug.toLowerCase())) return true;
+    const text = `${venue.name || ""} ${venue.address || ""} ${venue.slug || ""}`.toLowerCase();
+    const gardenKeywords = ["ogród", "garden", "park", "pole mokotowskie", "plaż", "letni", "taras", "patio", "plener", "dziedziniec", "barka", "skwer", "bulwar", "dąb", "wisł", "nadwisł", "wiata", "altana", "pod chmurką"];
+    return gardenKeywords.some(k => text.includes(k));
+  }
+
   // Determine Price Tier and Style
   function getPriceTier(price) {
     if (price <= 12.0) return { tier: "low", class: "marker-low", color: "#22c55e" };
@@ -6897,33 +6918,82 @@
       });
     });
 
-    function getCandidates() {
-      const list = allVenues.filter(v => {
-        if (currentDistrictFilter !== "all") {
-          const vDist = (v.district || "").toLowerCase();
-          const target = currentDistrictFilter.toLowerCase();
-          const matches = vDist.includes(target) ||
-            (target === "pawilony" && ((v.name && v.name.toLowerCase().includes("pawilony")) || vDist === "pawilony")) ||
-            (target === "bulwary" && ((v.address && v.address.toLowerCase().includes("bulwar")) || vDist === "bulwary"));
-          if (!matches) return false;
-        }
+    let lastSpinRelaxed = false;
 
+    function getCandidates() {
+      lastSpinRelaxed = false;
+
+      // 1. First, strictly filter by selected district
+      let districtPool = allVenues;
+      if (currentDistrictFilter !== "all") {
+        const target = currentDistrictFilter.toLowerCase().trim();
+        const targetNorm = target.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+        districtPool = allVenues.filter(v => {
+          const vDist = (v.district || "").toLowerCase();
+          const vDistNorm = vDist.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+          const vName = (v.name || "").toLowerCase();
+          const vAddr = (v.address || "").toLowerCase();
+
+          if (target === "pawilony") {
+            return vDist === "pawilony" || vName.includes("pawilony");
+          }
+          if (target === "bulwary") {
+            return vDist === "bulwary" || vAddr.includes("bulwar") || vAddr.includes("wioślarsk") || vAddr.includes("zaruskiego");
+          }
+          if (target === "praga") {
+            return vDist.includes("praga");
+          }
+
+          return vDistNorm.includes(targetNorm) || vDist.includes(target);
+        });
+
+        if (districtPool.length === 0) {
+          districtPool = allVenues;
+        }
+      }
+
+      // 2. If vibe is "all", return the district pool directly
+      if (currentVibeFilter === "all") {
+        return districtPool;
+      }
+
+      // 3. Filter districtPool by vibe
+      const vibeFiltered = districtPool.filter(v => {
         if (currentVibeFilter === "cheap") {
-          if (typeof v.beer_price_pln !== "number" || v.beer_price_pln > 12.0) return false;
-        } else if (currentVibeFilter === "craft") {
-          if (!v.is_craft) return false;
-        } else if (currentVibeFilter === "garden") {
-          const hasG = v.has_garden || (v.tags && (v.tags.includes("ogródek") || v.tags.includes("garden")));
-          if (!hasG) return false;
-        } else if (currentVibeFilter === "happy") {
-          if (!v.happy_hour && !v.happy_hour_rule) return false;
-        } else if (currentVibeFilter === "nonalco") {
-          if (!v.has_non_alcoholic && !v.non_alcoholic) return false;
+          return typeof v.beer_price_pln === "number" && v.beer_price_pln <= 12.0;
+        }
+        if (currentVibeFilter === "craft") {
+          return v.is_craft === true;
+        }
+        if (currentVibeFilter === "garden") {
+          return isGardenVenue(v);
+        }
+        if (currentVibeFilter === "happy") {
+          return !!(v.happy_hour || v.happy_hour_rule);
+        }
+        if (currentVibeFilter === "nonalco") {
+          return isNonAlcoholicVenue(v);
         }
         return true;
       });
 
-      return list.length > 0 ? list : allVenues;
+      // 4. If matching venues found, return them
+      if (vibeFiltered.length > 0) {
+        return vibeFiltered;
+      }
+
+      // 5. Fallback: If no venues matched the vibe within this district,
+      // ALWAYS STAY IN THE DISTRICT! Never return venues from another district!
+      lastSpinRelaxed = true;
+
+      if (currentVibeFilter === "cheap") {
+        // Sort by lowest price in this district so user gets the cheapest available in their chosen area
+        const sorted = [...districtPool].sort((a, b) => (a.beer_price_pln || 99) - (b.beer_price_pln || 99));
+        return sorted.slice(0, Math.min(6, sorted.length));
+      }
+
+      return districtPool;
     }
 
     // Spin function
@@ -7011,11 +7081,20 @@
         if (resTags) {
           const tags = [];
           if (winner.is_craft) tags.push("⭐ Kraft");
-          if (winner.has_garden || (winner.tags && winner.tags.includes("ogródek"))) tags.push("🌿 Ogródek");
+          if (isGardenVenue(winner)) tags.push("🌿 Ogródek");
           if (winner.happy_hour || winner.happy_hour_rule) tags.push("⚡ Happy Hour");
-          if (winner.has_non_alcoholic || winner.non_alcoholic) tags.push("🌱 0.0%");
+          if (isNonAlcoholicVenue(winner)) tags.push("🌱 0.0%");
           if (winner.beer_price_pln <= 12.0) tags.push("💸 Tanie piwko");
+          if (lastSpinRelaxed && currentDistrictFilter !== "all") {
+            tags.push(`📍 ${escapeHtml(winner.district || currentDistrictFilter)}`);
+          }
           resTags.innerHTML = tags.map(t => `<span class="roulette-tag-chip">${t}</span>`).join("");
+        }
+
+        if (lastSpinRelaxed && currentDistrictFilter !== "all") {
+          if (typeof showAppToast === "function") {
+            showAppToast("Piwna Ruletka", `Wylosowano lokal w wybranej dzielnicy: ${currentDistrictFilter}! 🍺`, "📍");
+          }
         }
 
         if (resultCard) {
