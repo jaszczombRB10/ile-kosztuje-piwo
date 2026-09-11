@@ -4201,6 +4201,29 @@
       });
     }
 
+    // Header "Więcej" Dropdown Toggle
+    const headerMoreWrap = document.getElementById("header-more-wrap");
+    const btnHeaderMore = document.getElementById("btn-header-more");
+    if (headerMoreWrap && btnHeaderMore) {
+      btnHeaderMore.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const isOpen = headerMoreWrap.classList.toggle("open");
+        btnHeaderMore.setAttribute("aria-expanded", isOpen ? "true" : "false");
+      });
+      document.addEventListener("click", (e) => {
+        if (!headerMoreWrap.contains(e.target)) {
+          headerMoreWrap.classList.remove("open");
+          btnHeaderMore.setAttribute("aria-expanded", "false");
+        }
+      });
+      headerMoreWrap.querySelectorAll(".more-menu-item").forEach(item => {
+        item.addEventListener("click", () => {
+          headerMoreWrap.classList.remove("open");
+          btnHeaderMore.setAttribute("aria-expanded", "false");
+        });
+      });
+    }
+
     // Toggle Mobile Search Overlay (Minimize / Expand)
     const btnToggleSearch = document.getElementById("btn-toggle-search");
     const mapOverlay = document.querySelector(".map-overlay");
@@ -6837,6 +6860,8 @@
     if (btnFloat) btnFloat.addEventListener("click", openModal);
     const btnTopRoulette = document.getElementById("btn-top-roulette");
     if (btnTopRoulette) btnTopRoulette.addEventListener("click", openModal);
+    const btnHeaderRoulette = document.getElementById("btn-roulette-header");
+    if (btnHeaderRoulette) btnHeaderRoulette.addEventListener("click", openModal);
     const chipSearchRoulette = document.getElementById("chip-search-roulette");
     if (chipSearchRoulette) {
       chipSearchRoulette.addEventListener("click", () => {

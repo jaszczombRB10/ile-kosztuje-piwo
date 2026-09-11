@@ -58,42 +58,65 @@
       
       <!-- Desktop Header Actions -->
       <div class="header-actions">
-        <button id="btn-locate-me" class="btn-secondary" title="Znajdź bary blisko mnie">
-          <span>📍</span>
-          <span class="btn-text">Blisko mnie</span>
-        </button>
-        <button id="btn-compass-header" class="btn-secondary btn-compass-header" title="Piwny Kompas – wskaż najbliższe tanie piwo">
-          <span>🧭</span>
-          <span class="btn-text">Kompas</span>
-        </button>
-        <button id="btn-happyhour-header" class="btn-secondary btn-hh-header" title="Aktualne promocje i kalendarz Happy Hours">
-          <span>⚡</span>
-          <span class="btn-text">Happy Hours</span>
-        </button>
-        <button id="btn-pubcrawl-header" class="btn-secondary" title="Generator trasy barowej (Pub Crawl)">
-          <span>🍻</span>
-          <span class="btn-text">Pub Crawl</span>
-        </button>
-        <button id="btn-barometer-toggle" class="btn-secondary" title="Barometr cenowy Warszawy">
-          <span>📊</span>
-          <span class="btn-text">Barometr</span>
-        </button>
-        <button id="btn-ranking-toggle" class="btn-secondary">
+        <button type="button" id="btn-ranking-toggle" class="btn-secondary" title="Ranking najtańszego piwa w Warszawie">
           <span>🏆</span>
           <span class="btn-text">Ranking</span>
         </button>
-        <button id="btn-community-toggle" class="btn-secondary" title="Społeczność, Piwni Znajomi i Feed aktywności">
+        <button type="button" id="btn-happyhour-header" class="btn-secondary btn-hh-header" title="Aktualne promocje i kalendarz Happy Hours">
+          <span>⚡</span>
+          <span class="btn-text">Happy Hours</span>
+        </button>
+        <button type="button" id="btn-pubcrawl-header" class="btn-secondary" title="Generator tras barowych (Pub Crawl)">
+          <span>🍻</span>
+          <span class="btn-text">Pub Crawl</span>
+        </button>
+        <button type="button" id="btn-roulette-header" class="btn-secondary btn-roulette-header" title="Piwna Ruletka – wylosuj bar na dziś!">
+          <span>🎲</span>
+          <span class="btn-text">Ruletka</span>
+        </button>
+        <button type="button" id="btn-community-toggle" class="btn-secondary" title="Społeczność, Piwni Znajomi i Feed aktywności">
           <span>👥</span>
           <span class="btn-text">Znajomi</span>
         </button>
-        <button id="btn-pubquiz-header" class="btn-secondary" title="Warszawski Pub Quiz – sprawdź swoją wiedzę barową">
-          <span>🧠</span>
-          <span class="btn-text">Pub Quiz</span>
-        </button>
-        <button id="btn-open-report" class="btn-report" title="Dodaj nowy lokal lub zaktualizuj cenę" onclick="window.__openAddModal ? window.__openAddModal() : null">
+
+        <!-- Dropdown: Więcej (Pub Quiz, Kompas, Barometr) -->
+        <div class="header-dropdown-wrap" id="header-more-wrap">
+          <button type="button" class="btn-secondary header-more-btn" id="btn-header-more" aria-haspopup="true" aria-expanded="false" title="Więcej narzędzi i gier">
+            <span>✨</span>
+            <span class="btn-text">Więcej</span>
+            <span class="more-chevron">▾</span>
+          </button>
+          <div class="header-more-menu" id="header-more-menu">
+            <button type="button" class="more-menu-item" id="btn-pubquiz-header" title="Warszawski Pub Quiz – sprawdź swoją wiedzę barową">
+              <span class="menu-item-icon">🧠</span>
+              <div class="menu-item-content">
+                <span class="menu-item-title">Pub Quiz</span>
+                <span class="menu-item-desc">Sprawdź wiedzę o warszawskich barach</span>
+              </div>
+            </button>
+            <button type="button" class="more-menu-item" id="btn-compass-header" title="Piwny Kompas – wskaż najbliższe tanie piwo">
+              <span class="menu-item-icon">🧭</span>
+              <div class="menu-item-content">
+                <span class="menu-item-title">Piwny Kompas</span>
+                <span class="menu-item-desc">Radar najbliższego taniego piwa</span>
+              </div>
+            </button>
+            <button type="button" class="more-menu-item" id="btn-barometer-toggle" title="Barometr cenowy Warszawy">
+              <span class="menu-item-icon">📊</span>
+              <div class="menu-item-content">
+                <span class="menu-item-title">Barometr Cen</span>
+                <span class="menu-item-desc">Średnie ceny w dzielnicach</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <button type="button" id="btn-open-report" class="btn-report" title="Dodaj nowy lokal lub zaktualizuj cenę" onclick="window.__openAddModal ? window.__openAddModal() : null">
           <span>➕</span>
           <span class="btn-text-report">Dodaj bar</span>
         </button>
+        <!-- Hidden button to keep backward-compatible ID for JS location updates -->
+        <button type="button" id="btn-locate-me" class="btn-locate-hidden" style="display:none;" aria-hidden="true"></button>
       </div>
 
       <!-- Mobile Search / Filters Toggle Icon -->

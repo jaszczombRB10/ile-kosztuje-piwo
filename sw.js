@@ -1,4 +1,4 @@
-const CACHE_NAME = "poilepiwko-v53";
+const CACHE_NAME = "poilepiwko-v54";
 
 const STATIC_ASSETS = [
   "./",

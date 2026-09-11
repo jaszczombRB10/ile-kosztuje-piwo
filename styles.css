@@ -110,7 +110,7 @@ header {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 7px;
 }
 
 .btn-report {
@@ -119,38 +119,155 @@ header {
   border: none;
   font-size: 0.82rem;
   font-weight: 700;
-  padding: 8px 15px;
+  padding: 7px 15px;
   border-radius: 999px;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 6px;
-  box-shadow: 0 4px 18px rgba(249, 115, 22, 0.3);
+  box-shadow: 0 4px 18px rgba(249, 115, 22, 0.35);
   transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  white-space: nowrap;
 }
 
 .btn-report:hover {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 6px 24px rgba(249, 115, 22, 0.45);
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 6px 24px rgba(249, 115, 22, 0.5);
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.07);
-  color: #e5e7eb;
-  border: 1px solid var(--border-subtle);
-  font-size: 0.82rem;
+  background: rgba(255, 255, 255, 0.06);
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 0.81rem;
   font-weight: 600;
-  padding: 8px 14px;
+  padding: 7px 12px;
   border-radius: 999px;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  transition: all 0.2s ease;
+  gap: 5px;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
 }
 
 .btn-secondary:hover {
   background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.24);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.btn-roulette-header:hover {
+  border-color: rgba(244, 63, 94, 0.5) !important;
+  color: #fda4af !important;
+  box-shadow: 0 0 14px rgba(244, 63, 94, 0.3) !important;
+}
+
+/* Header "Więcej" Dropdown */
+.header-dropdown-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.header-more-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.header-more-btn .more-chevron {
+  font-size: 9px;
+  opacity: 0.7;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.header-dropdown-wrap.open .header-more-btn .more-chevron {
+  transform: rotate(180deg);
+}
+
+.header-more-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 250px;
+  background: rgba(14, 23, 21, 0.96);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 14px;
+  padding: 6px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), 0 0 1px rgba(255, 255, 255, 0.2);
+  z-index: 9999;
+  flex-direction: column;
+  gap: 3px;
+  animation: dropdown-fade-in 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dropdown-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.header-dropdown-wrap.open .header-more-menu {
+  display: flex;
+}
+
+.more-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  background: none;
+  border: none;
+  border-radius: 10px;
+  color: #e2e8f0;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+}
+
+.more-menu-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  transform: translateX(2px);
+}
+
+.more-menu-item:active {
+  transform: scale(0.98);
+}
+
+.more-menu-item .menu-item-icon {
+  font-size: 18px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.more-menu-item .menu-item-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.more-menu-item .menu-item-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.more-menu-item .menu-item-desc {
+  font-size: 0.68rem;
+  color: #94a3b8;
+  font-weight: 500;
 }
 
 .btn-simulate-warsaw {
@@ -1990,22 +2107,28 @@ header {
   transform: translateY(0) scale(0.97);
 }
 
-/* Header Center Live Clock Badge */
+/* Header Center Live Status Capsule */
 .header-center {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 3px 6px;
+  border-radius: 999px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .live-clock-badge {
   display: flex;
   align-items: center;
-  gap: 6px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 4px 10px;
+  gap: 5px;
+  background: transparent;
+  border: none;
+  padding: 3px 8px;
   border-radius: 999px;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 700;
   color: #e2e8f0;
   cursor: default;
@@ -2013,44 +2136,105 @@ header {
 }
 
 .live-clock-badge:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .live-clock-badge .clock-icon {
   font-size: 0.85rem;
 }
 
-/* Floating My Location Button (Vad Kostar Ölen Style) */
+/* Floating My Location Button (Desktop Map Control) */
 .fab-locate-float {
   position: fixed;
-  bottom: calc(76px + env(safe-area-inset-bottom, 0px));
-  left: 14px;
-  z-index: 950;
+  bottom: 94px;
+  right: 14px;
+  left: auto;
+  z-index: 800;
   display: flex;
   align-items: center;
-  gap: 6px;
-  background: rgba(18, 26, 25, 0.92);
-  backdrop-filter: blur(10px);
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 8px;
+  background: rgba(14, 23, 21, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border: 1px solid rgba(255, 255, 255, 0.18);
   color: #fff;
-  padding: 8px 14px;
-  border-radius: 999px;
-  font-size: 0.78rem;
-  font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
-  transition: all 0.2s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.fab-locate-float span:not(.locate-icon) {
+  display: none;
+}
+
+.fab-locate-float .locate-icon {
+  font-size: 17px;
+  line-height: 1;
 }
 
 .fab-locate-float:hover {
-  background: rgba(30, 41, 40, 0.95);
+  background: rgba(255, 255, 255, 0.14);
   border-color: var(--primary);
-  transform: translateY(-2px);
+  transform: scale(1.06);
 }
 
 .fab-locate-float:active {
-  transform: translateY(0);
+  transform: scale(0.95);
+}
+
+/* Desktop Dark Leaflet Zoom Controls */
+.leaflet-bottom.leaflet-right {
+  bottom: 14px !important;
+  right: 14px !important;
+}
+
+.leaflet-bottom.leaflet-right .leaflet-control-zoom {
+  margin: 0 !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5) !important;
+  background: rgba(14, 23, 21, 0.92) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+}
+
+.leaflet-control-zoom a {
+  background-color: transparent !important;
+  color: #e2e8f0 !important;
+  width: 36px !important;
+  height: 36px !important;
+  line-height: 36px !important;
+  font-size: 18px !important;
+  transition: all 0.15s ease !important;
+}
+
+.leaflet-control-zoom a:hover {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  color: #fff !important;
+}
+
+.leaflet-control-zoom a:first-child {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+@media (min-width: 641px) {
+  /* On desktop, hide duplicate floating pills and the redundant floating add bar */
+  .fab-roulette-float,
+  .fab-pubquiz-float,
+  .fab-compass-float,
+  .fab-add-bar {
+    display: none !important;
+  }
+
+  .fab-stack-right {
+    position: static !important;
+    display: contents !important;
+  }
 }
 
 .btn-mobile-search-toggle {
@@ -2810,13 +2994,13 @@ header {
 
 /* 18+ Badge in Desktop Header */
 .badge-legal-18 {
-  background: rgba(249, 115, 22, 0.14);
+  background: rgba(249, 115, 22, 0.12);
   color: #f97316;
-  border: 1px solid rgba(249, 115, 22, 0.35);
-  font-size: 0.72rem;
+  border: 1px solid rgba(249, 115, 22, 0.3);
+  font-size: 0.7rem;
   font-weight: 800;
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 3px 8px;
+  border-radius: 999px;
   cursor: pointer;
   transition: all 0.2s ease;
   display: inline-flex;
