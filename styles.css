@@ -5370,19 +5370,23 @@ header {
 }
 
 .profile-action-buttons {
-  display: flex;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
   margin-bottom: 12px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .btn-profile-action {
-  flex: 1;
-  min-width: 130px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   color: #fff;
-  padding: 8px 12px;
-  border-radius: 10px;
+  padding: 10px 8px;
+  border-radius: 12px;
   font-size: 0.76rem;
   font-weight: 700;
   cursor: pointer;
@@ -5391,11 +5395,37 @@ header {
   align-items: center;
   justify-content: center;
   gap: 6px;
+  white-space: nowrap;
 }
 
 .btn-profile-action:hover {
   background: rgba(255, 255, 255, 0.16);
   border-color: rgba(255, 255, 255, 0.28);
+}
+
+/* Edit Profile Modal Dialog / Sheet */
+.modal-card-edit-profile {
+  max-width: 480px;
+  width: 92%;
+  max-height: 88vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background: #0f1e2c;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65);
+  animation: popInModal 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+@media (max-width: 480px) {
+  .modal-card-edit-profile {
+    width: 95%;
+    padding: 16px;
+    max-height: 86vh;
+    border-radius: 18px;
+  }
 }
 
 .profile-edit-form {
@@ -6269,6 +6299,27 @@ header {
   align-items: flex-end;
 }
 
+.fab-pubquiz-float {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #8b5cf6, #6366f1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(139, 92, 246, 0.5);
+  transition: all 0.2s ease;
+}
+.fab-pubquiz-float:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 6px 22px rgba(139, 92, 246, 0.65);
+}
+
 .fab-compass-float {
   display: flex;
   align-items: center;
@@ -6736,9 +6787,11 @@ header {
 }
 
 @media (max-width: 640px) {
+  .fab-pubquiz-float span:not(.quiz-float-icon),
   .fab-compass-float span:not(.compass-icon) {
     display: none !important;
   }
+  .fab-pubquiz-float,
   .fab-compass-float {
     width: 44px;
     height: 44px;

@@ -277,6 +277,10 @@
 
     <!-- Floating Action Buttons -->
     <div class="fab-stack-right">
+      <button type="button" id="btn-pubquiz-float" class="fab-pubquiz-float" title="Warszawski Pub Quiz – Zagraj teraz!">
+        <span class="quiz-float-icon">🧠</span>
+        <span>Pub Quiz</span>
+      </button>
       <button type="button" id="btn-compass-float" class="fab-compass-float" title="Uruchom Piwny Kompas (Radar)">
         <span class="compass-icon">🧭</span>
         <span>Kompas</span>
@@ -1525,8 +1529,45 @@
         </div>
       </div>
 
-      <!-- Collapsible Profile Edit Form -->
-      <form id="form-edit-profile" class="profile-edit-form" style="display:none;">
+      <!-- Action Buttons & Logout -->
+      <div class="goin-profile-footer">
+        <div class="profile-action-buttons">
+          <button type="button" class="btn-profile-action" id="btn-open-community-from-profile">
+            <span>👥 Znajomi & Feed</span>
+          </button>
+          <button type="button" class="btn-profile-action" id="btn-share-my-profile">
+            <span>📤 Udostępnij profil</span>
+          </button>
+        </div>
+
+        <div class="profile-footer-bar">
+          <button type="button" class="btn-profile-back" id="btn-close-profile-bottom">
+            <span>✕ Wróć do mapy</span>
+          </button>
+          <button type="button" class="btn-logout" id="btn-logout">
+            <span>🚪 Wyloguj się</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modal: Edycja profilu (Popup Modal Sheet) -->
+  <div class="modal-backdrop" id="edit-profile-modal" style="display:none; z-index: 10150;">
+    <div class="modal-card modal-card-edit-profile">
+      <div class="modal-head">
+        <div class="modal-head-title">
+          <div class="modal-icon-badge">✏️</div>
+          <div>
+            <h2>Edytuj profil</h2>
+            <p class="modal-head-sub">Zmień swój nick, bio, awatar i preferencje</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close" id="btn-close-edit-modal" aria-label="Zamknij okno edycji">✕</button>
+      </div>
+
+      <form id="form-edit-profile" class="profile-edit-form" style="margin-top: 14px;">
         <div class="form-group">
           <label for="edit-username" class="form-label">Twój unikalny nick (@username)</label>
           <div class="input-with-prefix">
@@ -1571,36 +1612,11 @@
           <label for="edit-vibe-tags" class="form-label">Zainteresowania / Vibe (oddziel przecinkami)</label>
           <input type="text" id="edit-vibe-tags" class="form-input" placeholder="np. Kraft, Ogródki, Pub Quiz, Bilard" maxlength="60" />
         </div>
-        <div style="display:flex;gap:8px;margin-top:10px;">
-          <button type="submit" class="btn-primary" style="flex:1;">Zapisz zmiany</button>
+        <div style="display:flex;gap:10px;margin-top:14px;">
+          <button type="submit" class="btn-primary" style="flex:1;">💾 Zapisz zmiany</button>
           <button type="button" class="btn-secondary" id="btn-cancel-edit-profile">Anuluj</button>
         </div>
       </form>
-
-      <!-- Action Buttons & Logout -->
-      <div class="goin-profile-footer">
-        <div class="profile-action-buttons">
-          <button type="button" class="btn-profile-action btn-profile-quiz" id="btn-open-pubquiz-from-profile">
-            <span>🧠 Zagraj w Pub Quiz</span>
-          </button>
-          <button type="button" class="btn-profile-action" id="btn-open-community-from-profile">
-            <span>👥 Piwni Znajomi & Feed</span>
-          </button>
-          <button type="button" class="btn-profile-action" id="btn-share-my-profile">
-            <span>📤 Udostępnij profil</span>
-          </button>
-        </div>
-
-        <div class="profile-footer-bar">
-          <button type="button" class="btn-profile-back" id="btn-close-profile-bottom">
-            <span>✕ Wróć do mapy</span>
-          </button>
-          <button type="button" class="btn-logout" id="btn-logout">
-            <span>🚪 Wyloguj się</span>
-          </button>
-        </div>
-      </div>
-
     </div>
   </div>
 

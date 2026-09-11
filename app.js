@@ -5544,6 +5544,8 @@
     const btnToggleEdit = document.getElementById("btn-toggle-edit-profile");
     const btnCancelEdit = document.getElementById("btn-cancel-edit-profile");
     const formEdit = document.getElementById("form-edit-profile");
+    const editModal = document.getElementById("edit-profile-modal");
+    const btnCloseEdit = document.getElementById("btn-close-edit-modal");
     const editAvatarPicker = document.getElementById("edit-avatar-picker");
 
     let editSelectedAvatar = "🍺";
@@ -5679,14 +5681,6 @@
       btnCloseBottom.addEventListener("click", () => { window.__closeMyProfile(); });
     }
 
-    const btnOpenQuizFromProf = document.getElementById("btn-open-pubquiz-from-profile");
-    if (btnOpenQuizFromProf) {
-      btnOpenQuizFromProf.addEventListener("click", () => {
-        window.__closeMyProfile();
-        if (window.__openPubQuiz) window.__openPubQuiz();
-      });
-    }
-
     const tagVibeWrap = document.getElementById("prof-tag-vibe-wrap");
     if (tagVibeWrap) {
       tagVibeWrap.style.cursor = "pointer";
@@ -5720,16 +5714,66 @@
       });
     }
 
-    // Toggle edit form
-    if (btnToggleEdit && formEdit) {
+    // Edit Profile Modal functions
+    window.__openEditProfileModal = function () {
+      if (!currentProfile) return;
+      const editUser = document.getElementById("edit-username");
+      const editName = document.getElementById("edit-display-name");
+      const editBio = document.getElementById("edit-bio");
+      const editBeer = document.getElementById("edit-fav-beer");
+      const editDist = document.getElementById("edit-fav-district");
+      const editVibe = document.getElementById("edit-vibe-tags");
+
+      if (editUser) editUser.value = currentProfile.username || "";
+      if (editName) editName.value = currentProfile.display_name || "";
+      if (editBio) editBio.value = currentProfile.bio || "";
+      if (editBeer) editBeer.value = currentProfile.favorite_beer || "";
+      if (editDist) editDist.value = currentProfile.favorite_district || "";
+      if (editVibe) editVibe.value = currentProfile.vibe_tags || "";
+
+      editSelectedAvatar = currentProfile.avatar_icon || "🍺";
+      if (editAvatarPicker) {
+        const btns = editAvatarPicker.querySelectorAll(".avatar-option");
+        btns.forEach(b => {
+          if (b.getAttribute("data-avatar") === editSelectedAvatar) {
+            b.classList.add("selected");
+          } else {
+            b.classList.remove("selected");
+          }
+        });
+      }
+
+      if (editModal) {
+        editModal.classList.add("active");
+        editModal.style.display = "flex";
+      }
+    };
+
+    window.__closeEditProfileModal = function () {
+      if (editModal) {
+        editModal.classList.remove("active");
+        editModal.style.display = "none";
+      }
+    };
+
+    if (btnToggleEdit) {
       btnToggleEdit.addEventListener("click", () => {
-        const isHidden = formEdit.style.display === "none";
-        formEdit.style.display = isHidden ? "block" : "none";
+        window.__openEditProfileModal();
       });
     }
-    if (btnCancelEdit && formEdit) {
+    if (btnCloseEdit) {
+      btnCloseEdit.addEventListener("click", () => {
+        window.__closeEditProfileModal();
+      });
+    }
+    if (btnCancelEdit) {
       btnCancelEdit.addEventListener("click", () => {
-        formEdit.style.display = "none";
+        window.__closeEditProfileModal();
+      });
+    }
+    if (editModal) {
+      editModal.addEventListener("click", (e) => {
+        if (e.target === editModal) window.__closeEditProfileModal();
       });
     }
 
@@ -5808,7 +5852,7 @@
 
         renderMyProfile();
         updateAuthUI();
-        formEdit.style.display = "none";
+        window.__closeEditProfileModal();
         showAppToast("Profil zaktualizowany!", "Nowe dane są już widoczne dla znajomych.", "✨");
       });
     }
@@ -6316,6 +6360,7 @@
     const modal = document.getElementById("pubquiz-modal");
     const btnOpenHeader = document.getElementById("btn-pubquiz-header");
     const btnOpenTop = document.getElementById("btn-top-pubquiz");
+    const btnOpenFloat = document.getElementById("btn-pubquiz-float");
     const btnClose = document.getElementById("btn-close-pubquiz");
     const btnCloseBottom = document.getElementById("btn-close-pubquiz-bottom");
 
@@ -6970,6 +7015,7 @@
 
     if (btnOpenHeader) btnOpenHeader.addEventListener("click", window.__openPubQuiz);
     if (btnOpenTop) btnOpenTop.addEventListener("click", window.__openPubQuiz);
+    if (btnOpenFloat) btnOpenFloat.addEventListener("click", window.__openPubQuiz);
     if (btnClose) btnClose.addEventListener("click", window.__closePubQuiz);
     if (btnCloseBottom) btnCloseBottom.addEventListener("click", window.__closePubQuiz);
 
