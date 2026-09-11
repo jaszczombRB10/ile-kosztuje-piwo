@@ -62,6 +62,10 @@
           <span>📍</span>
           <span class="btn-text">Blisko mnie</span>
         </button>
+        <button id="btn-compass-header" class="btn-secondary btn-compass-header" title="Piwny Kompas – wskaż najbliższe tanie piwo">
+          <span>🧭</span>
+          <span class="btn-text">Kompas</span>
+        </button>
         <button id="btn-happyhour-header" class="btn-secondary btn-hh-header" title="Aktualne promocje i kalendarz Happy Hours">
           <span>⚡</span>
           <span class="btn-text">Happy Hours</span>
@@ -170,6 +174,7 @@
 
         <div class="filter-row">
           <span class="filter-chip active" data-filter="all">Wszystkie</span>
+          <span class="filter-chip chip-compass" id="chip-open-compass" title="Uruchom Piwny Kompas (Radar)">🧭 Kompas</span>
           <span class="filter-chip chip-crawl" id="chip-open-pubcrawl" title="Wyznacz trasę barową (Pub Crawl)">🍻 Pub Crawl</span>
           <span class="filter-chip chip-open" data-filter="open-now">🟢 Otwarte teraz</span>
           <span class="filter-chip chip-favorites" data-filter="favorites" id="chip-filter-favorites" title="Pokaż Twoje ulubione bary">❤️ Ulubione (<span id="fav-count-badge">0</span>)</span>
@@ -199,11 +204,17 @@
       </div>
     </div>
 
-    <!-- Floating My Location Button (Vad Kostar Ölen style) -->
-    <button type="button" id="btn-locate-float" class="fab-locate-float" title="Pokaż moją pozycję na mapie">
-      <span class="locate-icon">🎯</span>
-      <span>Moja pozycja</span>
-    </button>
+    <!-- Floating Action Buttons -->
+    <div class="fab-stack-right">
+      <button type="button" id="btn-compass-float" class="fab-compass-float" title="Uruchom Piwny Kompas (Radar)">
+        <span class="compass-icon">🧭</span>
+        <span>Kompas</span>
+      </button>
+      <button type="button" id="btn-locate-float" class="fab-locate-float" title="Pokaż moją pozycję na mapie">
+        <span class="locate-icon">🎯</span>
+        <span>Moja pozycja</span>
+      </button>
+    </div>
 
     <!-- Bottom Left Legend -->
     <div class="legend-pill">
@@ -257,6 +268,110 @@
       </div>
     </div>
 
+  <!-- Beer Compass / Radar Modal -->
+  <div class="modal-backdrop compass-modal-backdrop" id="beer-compass-modal" style="display:none;">
+    <div class="modal-card compass-modal-card">
+      <div class="compass-modal-header">
+        <div class="compass-title-wrap">
+          <span class="compass-badge-icon">🧭</span>
+          <div>
+            <h2>Piwny Kompas</h2>
+            <p class="compass-sub-text" id="compass-status-text">Kalibrowanie radaru GPS...</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close" id="btn-close-compass">✕</button>
+      </div>
+
+      <!-- Filter Pills: Cheapest / Nearest / Craft / Open Now -->
+      <div class="compass-filter-pills" id="compass-vibe-pills">
+        <button type="button" class="compass-pill active" data-compass-filter="cheapest">🪙 Najtańsze (≤ 12 zł)</button>
+        <button type="button" class="compass-pill" data-compass-filter="nearest">⚡ Najbliżej</button>
+        <button type="button" class="compass-pill" data-compass-filter="craft">⭐ Kraft</button>
+        <button type="button" class="compass-pill" data-compass-filter="open">🟢 Otwarte</button>
+      </div>
+
+      <!-- Radar Visual Dial -->
+      <div class="compass-dial-container">
+        <div class="compass-radar-circle">
+          <div class="compass-radar-sweep"></div>
+          <div class="compass-cardinal compass-north">N</div>
+          <div class="compass-cardinal compass-east">E</div>
+          <div class="compass-cardinal compass-south">S</div>
+          <div class="compass-cardinal compass-west">W</div>
+          <div class="compass-rings">
+            <div class="ring ring-1"></div>
+            <div class="ring ring-2"></div>
+            <div class="ring ring-3"></div>
+          </div>
+          
+          <!-- Needle / Arrow pointing to bar -->
+          <div class="compass-needle-wrap" id="compass-needle">
+            <div class="needle-arrow">▲</div>
+            <div class="needle-beer-icon">🍺</div>
+            <div class="needle-line"></div>
+          </div>
+          
+          <div class="compass-center-core">
+            <span class="core-dot"></span>
+          </div>
+        </div>
+
+        <!-- Metric Floating HUD -->
+        <div class="compass-hud">
+          <div class="hud-box">
+            <span class="hud-label">DYSTANS</span>
+            <span class="hud-val" id="compass-dist-val">-- m</span>
+          </div>
+          <div class="hud-box">
+            <span class="hud-label">CZAS MARSZU</span>
+            <span class="hud-val" id="compass-time-val">-- min</span>
+          </div>
+          <div class="hud-box">
+            <span class="hud-label">CENA PIWA</span>
+            <span class="hud-val highlight" id="compass-price-val">-- zł</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Target Venue Card -->
+      <div class="compass-venue-panel" id="compass-venue-panel">
+        <div class="compass-panel-nav">
+          <button type="button" class="btn-compass-nav" id="btn-compass-prev" title="Poprzedni bar">◀</button>
+          <span class="compass-index-label" id="compass-target-index">Bar 1 z 5</span>
+          <button type="button" class="btn-compass-nav" id="btn-compass-next" title="Następny bar">▶</button>
+        </div>
+
+        <div class="compass-target-info">
+          <div class="target-name-row">
+            <h3 class="target-name" id="compass-target-name">Szukanie celu...</h3>
+            <span class="target-district-badge" id="compass-target-district">Warszawa</span>
+          </div>
+          <div class="target-meta-row">
+            <span class="target-beer" id="compass-target-beer">Piwo z kranu</span>
+            <span class="target-dot">•</span>
+            <span class="target-address" id="compass-target-address">...</span>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="compass-actions">
+          <a href="#" target="_blank" rel="noopener" class="btn-compass-action btn-gmaps" id="btn-compass-navigate">
+            <span>🚶 Prowadź (Nawigacja)</span>
+          </a>
+          <button type="button" class="btn-compass-action btn-show-map" id="btn-compass-zoom">
+            <span>🗺️ Na mapie</span>
+          </button>
+          <button type="button" class="btn-compass-action btn-stamp" id="btn-compass-stamp">
+            <span>🎖️ Byłem tu!</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Calibration & Compass Sensor Tip -->
+      <div class="compass-tip-bar" id="compass-tip-bar">
+        💡 <span>Obracaj telefonem – strzałka wskazuje kierunek marszu do lokalu.</span>
+      </div>
+    </div>
   </div>
 
   <!-- Pub Crawl Generator Modal (poilepiwko) -->
@@ -582,6 +697,10 @@
     <button type="button" class="nav-item active" id="nav-btn-map" data-target="map">
       <span class="nav-icon">🗺️</span>
       <span class="nav-label">Mapa</span>
+    </button>
+    <button type="button" class="nav-item" id="nav-btn-compass" data-target="compass">
+      <span class="nav-icon">🧭</span>
+      <span class="nav-label">Kompas</span>
     </button>
     <button type="button" class="nav-item" id="nav-btn-pubcrawl" data-target="pubcrawl">
       <span class="nav-icon">🍻</span>

@@ -2389,6 +2389,413 @@
     updatePassportCounters();
   }
 
+  // Azimuth / Bearing Calculator (in degrees from North: 0° = N, 90° = E, 180° = S, 270° = W)
+  function calculateBearing(lat1, lon1, lat2, lon2) {
+    const phi1 = (lat1 * Math.PI) / 180;
+    const phi2 = (lat2 * Math.PI) / 180;
+    const deltaLambda = ((lon2 - lon1) * Math.PI) / 180;
+
+    const y = Math.sin(deltaLambda) * Math.cos(phi2);
+    const x = Math.cos(phi1) * Math.sin(phi2) - Math.sin(phi1) * Math.cos(phi2) * Math.cos(deltaLambda);
+    const theta = Math.atan2(y, x);
+    return ((theta * 180) / Math.PI + 360) % 360;
+  }
+
+  // ==========================================================================
+  // PIWNY KOMPAS / BEER RADAR (1-Click Live Bearing & Distance)
+  // ==========================================================================
+  function initBeerCompass() {
+    const compassModal = document.getElementById("beer-compass-modal");
+    const btnClose = document.getElementById("btn-close-compass");
+    const statusText = document.getElementById("compass-status-text");
+    const needleWrap = document.getElementById("compass-needle");
+    const distVal = document.getElementById("compass-dist-val");
+    const timeVal = document.getElementById("compass-time-val");
+    const priceVal = document.getElementById("compass-price-val");
+    const targetName = document.getElementById("compass-target-name");
+    const targetDistrict = document.getElementById("compass-target-district");
+    const targetBeer = document.getElementById("compass-target-beer");
+    const targetAddress = document.getElementById("compass-target-address");
+    const targetIndexLabel = document.getElementById("compass-target-index");
+    const btnPrev = document.getElementById("btn-compass-prev");
+    const btnNext = document.getElementById("btn-compass-next");
+    const btnNavigate = document.getElementById("btn-compass-navigate");
+    const btnZoom = document.getElementById("btn-compass-zoom");
+    const btnStamp = document.getElementById("btn-compass-stamp");
+    const tipBar = document.getElementById("compass-tip-bar");
+    const filterPills = document.querySelectorAll("#compass-vibe-pills .compass-pill");
+
+    const btnCompassHeader = document.getElementById("btn-compass-header");
+    const chipOpenCompass = document.getElementById("chip-open-compass");
+    const btnCompassFloat = document.getElementById("btn-compass-float");
+    const navBtnCompass = document.getElementById("nav-btn-compass");
+
+    let currentCompassFilter = "cheapest"; // "cheapest" | "nearest" | "craft" | "open"
+    let currentCompassTargets = [];
+    let currentCompassIndex = 0;
+    let compassWatchId = null;
+    let deviceHeading = null;
+    let orientationHandlerAttached = false;
+
+    function getOriginCoords() {
+      if (userLocation && Array.isArray(userLocation) && userLocation.length === 2) {
+        return userLocation;
+      }
+      return WARSAW_CENTER;
+    }
+
+    function updateTargets() {
+      if (!allVenues || allVenues.length === 0) {
+        currentCompassTargets = [];
+        return;
+      }
+
+      const origin = getOriginCoords();
+      const candidates = allVenues.map(v => {
+        const distKm = calculateDistanceKm(origin[0], origin[1], v.latitude, v.longitude);
+        const distMeters = Math.round(distKm * 1000);
+        const bearing = calculateBearing(origin[0], origin[1], v.latitude, v.longitude);
+        return {
+          venue: v,
+          distKm,
+          distMeters,
+          bearing
+        };
+      });
+
+      if (currentCompassFilter === "cheapest") {
+        let cheapList = candidates.filter(item => item.venue.beer_price_pln <= 12.0);
+        if (cheapList.length === 0) {
+          cheapList = candidates.filter(item => item.venue.beer_price_pln <= 14.0);
+        }
+        if (cheapList.length === 0) {
+          cheapList = candidates.slice().sort((a, b) => a.venue.beer_price_pln - b.venue.beer_price_pln).slice(0, 10);
+        }
+        // Sort by lowest price first, then nearest distance
+        cheapList.sort((a, b) => (a.venue.beer_price_pln - b.venue.beer_price_pln) || (a.distMeters - b.distMeters));
+        currentCompassTargets = cheapList.slice(0, 5);
+      } else if (currentCompassFilter === "nearest") {
+        candidates.sort((a, b) => (a.distMeters - b.distMeters) || (a.venue.beer_price_pln - b.venue.beer_price_pln));
+        currentCompassTargets = candidates.slice(0, 5);
+      } else if (currentCompassFilter === "craft") {
+        let craftList = candidates.filter(item => item.venue.is_craft === true);
+        if (craftList.length === 0) craftList = candidates;
+        craftList.sort((a, b) => (a.distMeters - b.distMeters) || (a.venue.beer_price_pln - b.venue.beer_price_pln));
+        currentCompassTargets = craftList.slice(0, 5);
+      } else if (currentCompassFilter === "open") {
+        let openList = candidates.filter(item => isVenueOpen(item.venue));
+        if (openList.length === 0) openList = candidates;
+        openList.sort((a, b) => (a.distMeters - b.distMeters) || (a.venue.beer_price_pln - b.venue.beer_price_pln));
+        currentCompassTargets = openList.slice(0, 5);
+      }
+
+      if (currentCompassIndex >= currentCompassTargets.length) {
+        currentCompassIndex = 0;
+      }
+    }
+
+    function updateNeedle() {
+      if (!needleWrap) return;
+      if (!currentCompassTargets || currentCompassTargets.length === 0) {
+        needleWrap.style.transform = "rotate(0deg)";
+        return;
+      }
+      const target = currentCompassTargets[currentCompassIndex];
+      if (!target) return;
+
+      let rotation = target.bearing;
+      if (deviceHeading !== null && !isNaN(deviceHeading)) {
+        // Point arrow towards venue relative to current phone orientation
+        rotation = (target.bearing - deviceHeading + 360) % 360;
+      }
+      needleWrap.style.transform = `rotate(${rotation.toFixed(1)}deg)`;
+    }
+
+    function renderCurrentTarget() {
+      if (!currentCompassTargets || currentCompassTargets.length === 0) {
+        if (distVal) distVal.textContent = "--";
+        if (timeVal) timeVal.textContent = "--";
+        if (priceVal) priceVal.textContent = "--";
+        if (targetName) targetName.textContent = "Brak lokali";
+        if (targetDistrict) targetDistrict.textContent = "Warszawa";
+        if (targetBeer) targetBeer.textContent = "Brak pasujących piw";
+        if (targetAddress) targetAddress.textContent = "Spróbuj zmienić filtr radaru";
+        if (targetIndexLabel) targetIndexLabel.textContent = "0 z 0";
+        if (btnNavigate) btnNavigate.removeAttribute("href");
+        return;
+      }
+
+      const item = currentCompassTargets[currentCompassIndex];
+      const v = item.venue;
+
+      // Distance
+      if (distVal) {
+        if (item.distMeters < 1000) {
+          distVal.textContent = `${item.distMeters} m`;
+        } else {
+          distVal.textContent = `${(item.distMeters / 1000).toFixed(1)} km`;
+        }
+      }
+
+      // Walking time (80 m/min average speed)
+      if (timeVal) {
+        const minutes = Math.max(1, Math.round(item.distMeters / 80));
+        timeVal.textContent = `${minutes} min`;
+      }
+
+      // Price
+      if (priceVal) {
+        priceVal.textContent = `${v.beer_price_pln.toFixed(2)} zł`;
+      }
+
+      // Text Info
+      if (targetName) targetName.textContent = v.name;
+      if (targetDistrict) targetDistrict.textContent = v.district || "Warszawa";
+      if (targetBeer) {
+        const beerName = v.beer_name || (v.is_craft ? "Piwo rzemieślnicze" : "Piwo z kranu");
+        targetBeer.textContent = beerName;
+      }
+      if (targetAddress) targetAddress.textContent = v.address || "Warszawa";
+      if (targetIndexLabel) {
+        targetIndexLabel.textContent = `Bar ${currentCompassIndex + 1} z ${currentCompassTargets.length}`;
+      }
+
+      // Navigation Link
+      if (btnNavigate) {
+        btnNavigate.href = `https://www.google.com/maps/dir/?api=1&destination=${v.latitude},${v.longitude}&travelmode=walking`;
+      }
+
+      // Visited / Stamp button state
+      if (btnStamp) {
+        const visited = isVenueVisited(v.id);
+        btnStamp.innerHTML = visited ? "<span>✓ Odwiedzone</span>" : "<span>🎖️ Byłem tu!</span>";
+        btnStamp.classList.toggle("visited", visited);
+      }
+
+      // Update Needle
+      updateNeedle();
+    }
+
+    function handleDeviceOrientation(event) {
+      let heading = null;
+      if (typeof event.webkitCompassHeading !== "undefined" && event.webkitCompassHeading !== null) {
+        heading = event.webkitCompassHeading;
+      } else if (typeof event.alpha !== "undefined" && event.alpha !== null) {
+        heading = (360 - event.alpha) % 360;
+      }
+
+      if (heading !== null && !isNaN(heading)) {
+        deviceHeading = heading;
+        updateNeedle();
+
+        if (statusText) {
+          statusText.textContent = "Kompas skalibrowany • Radar aktywny";
+        }
+        if (tipBar) {
+          tipBar.innerHTML = "🧭 <span>Obracaj telefonem – strzałka wskazuje kierunek marszu do lokalu.</span>";
+        }
+      }
+    }
+
+    function setupOrientationSensor() {
+      if (orientationHandlerAttached) return;
+
+      if (typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function") {
+        DeviceOrientationEvent.requestPermission()
+          .then(res => {
+            if (res === "granted") {
+              window.addEventListener("deviceorientation", handleDeviceOrientation, true);
+              orientationHandlerAttached = true;
+            }
+          })
+          .catch(e => {
+            console.warn("DeviceOrientation permission note:", e);
+          });
+      } else if ("ondeviceorientationabsolute" in window) {
+        window.addEventListener("deviceorientationabsolute", handleDeviceOrientation, true);
+        window.addEventListener("deviceorientation", handleDeviceOrientation, true);
+        orientationHandlerAttached = true;
+      } else if ("ondeviceorientation" in window) {
+        window.addEventListener("deviceorientation", handleDeviceOrientation, true);
+        orientationHandlerAttached = true;
+      }
+    }
+
+    function startGpsTracking() {
+      if (!navigator.geolocation) {
+        if (!userLocation) setUserLocation(WARSAW_CENTER, true, true);
+        if (statusText) statusText.textContent = "Pozycja domyślna: Centrum Warszawy";
+        if (tipBar) tipBar.innerHTML = "💡 <span>Włącz GPS w telefonie, aby namierzać bary z dokładną odległością.</span>";
+        updateTargets();
+        renderCurrentTarget();
+        return;
+      }
+
+      // Immediate location request
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setUserLocation([pos.coords.latitude, pos.coords.longitude], false, false);
+          if (statusText) {
+            statusText.textContent = deviceHeading !== null ? "Kompas skalibrowany • Radar aktywny" : "GPS aktywny • Wskaźnik celu";
+          }
+          updateTargets();
+          renderCurrentTarget();
+        },
+        (err) => {
+          console.warn("Compass getCurrentPosition note:", err);
+          if (!userLocation) setUserLocation(WARSAW_CENTER, true, true);
+          if (statusText) statusText.textContent = "Pozycja domyślna: Centrum Warszawy";
+          if (tipBar) tipBar.innerHTML = "💡 <span>Włącz lokalizację w przeglądarce, aby kompas wskazywał bary od Ciebie.</span>";
+          updateTargets();
+          renderCurrentTarget();
+        },
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 4000 }
+      );
+
+      // Continuous watch while compass modal is open
+      if (!compassWatchId) {
+        compassWatchId = navigator.geolocation.watchPosition(
+          (pos) => {
+            setUserLocation([pos.coords.latitude, pos.coords.longitude], false, false);
+            updateTargets();
+            renderCurrentTarget();
+          },
+          (err) => {
+            console.warn("Compass watchPosition note:", err);
+          },
+          { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 }
+        );
+      }
+    }
+
+    function stopGpsTracking() {
+      if (compassWatchId !== null && navigator.geolocation) {
+        navigator.geolocation.clearWatch(compassWatchId);
+        compassWatchId = null;
+      }
+    }
+
+    function openCompass() {
+      if (!compassModal) return;
+
+      const drawer = document.getElementById("ranking-drawer");
+      if (drawer) drawer.classList.remove("open");
+      const baroModal = document.getElementById("barometer-modal");
+      if (baroModal) baroModal.classList.remove("active");
+      const crawlModal = document.getElementById("pubcrawl-modal");
+      if (crawlModal) crawlModal.classList.remove("active");
+      const hhModal = document.getElementById("happyhour-modal");
+      if (hhModal) hhModal.classList.remove("active");
+      const passModal = document.getElementById("passport-modal");
+      if (passModal) passModal.classList.remove("active");
+      closeModal();
+
+      compassModal.style.display = "flex";
+
+      if (statusText) statusText.textContent = "Kalibrowanie radaru GPS...";
+      if (tipBar) {
+        tipBar.innerHTML = deviceHeading !== null
+          ? "🧭 <span>Obracaj telefonem – strzałka wskazuje kierunek marszu do lokalu.</span>"
+          : "💡 <span>Strzałka wskazuje azymut lokalu względem Północy (N na tarczy).</span>";
+      }
+
+      setupOrientationSensor();
+      startGpsTracking();
+      updateTargets();
+      renderCurrentTarget();
+    }
+
+    function closeCompass() {
+      if (!compassModal) return;
+      compassModal.style.display = "none";
+      stopGpsTracking();
+    }
+
+    window.__openCompass = openCompass;
+    window.__closeCompass = closeCompass;
+    window.__refreshCompassTargets = function() {
+      if (compassModal && compassModal.style.display === "flex") {
+        updateTargets();
+        renderCurrentTarget();
+      }
+    };
+
+    if (btnClose) btnClose.addEventListener("click", closeCompass);
+    if (compassModal) {
+      compassModal.addEventListener("click", (e) => {
+        if (e.target === compassModal) closeCompass();
+      });
+    }
+
+    // Header, Chip & Float button listeners
+    if (btnCompassHeader) {
+      btnCompassHeader.addEventListener("click", openCompass);
+    }
+    if (chipOpenCompass) {
+      chipOpenCompass.addEventListener("click", openCompass);
+    }
+    if (btnCompassFloat) {
+      btnCompassFloat.addEventListener("click", openCompass);
+    }
+    if (navBtnCompass) {
+      navBtnCompass.addEventListener("click", openCompass);
+    }
+
+    // Filter Pills
+    filterPills.forEach(pill => {
+      pill.addEventListener("click", () => {
+        filterPills.forEach(p => p.classList.remove("active"));
+        pill.classList.add("active");
+        currentCompassFilter = pill.getAttribute("data-compass-filter") || "cheapest";
+        currentCompassIndex = 0;
+        updateTargets();
+        renderCurrentTarget();
+      });
+    });
+
+    // Carousel Navigation
+    if (btnPrev) {
+      btnPrev.addEventListener("click", () => {
+        if (currentCompassTargets.length > 0) {
+          currentCompassIndex = (currentCompassIndex - 1 + currentCompassTargets.length) % currentCompassTargets.length;
+          renderCurrentTarget();
+        }
+      });
+    }
+    if (btnNext) {
+      btnNext.addEventListener("click", () => {
+        if (currentCompassTargets.length > 0) {
+          currentCompassIndex = (currentCompassIndex + 1) % currentCompassTargets.length;
+          renderCurrentTarget();
+        }
+      });
+    }
+
+    // Zoom to Venue on Map
+    if (btnZoom) {
+      btnZoom.addEventListener("click", () => {
+        if (currentCompassTargets.length > 0 && currentCompassTargets[currentCompassIndex]) {
+          const v = currentCompassTargets[currentCompassIndex].venue;
+          closeCompass();
+          window.__zoomToVenue(v.id);
+        }
+      });
+    }
+
+    // Stamp / Visited action
+    if (btnStamp) {
+      btnStamp.addEventListener("click", () => {
+        if (currentCompassTargets.length > 0 && currentCompassTargets[currentCompassIndex]) {
+          const v = currentCompassTargets[currentCompassIndex].venue;
+          if (window.__toggleVisited) {
+            window.__toggleVisited(v.id);
+            renderCurrentTarget();
+          }
+        }
+      });
+    }
+  }
+
   // Setup UI Event Listeners
   function setupEventListeners() {
     // Geolocation ("Blisko mnie")
@@ -2577,6 +2984,7 @@
         if (window.__closeIosInstall) window.__closeIosInstall();
         if (window.__closeHappyHours) window.__closeHappyHours();
         if (window.__closePassport) window.__closePassport();
+        if (window.__closeCompass) window.__closeCompass();
         const authModal = document.getElementById("auth-modal");
         if (authModal) authModal.style.display = "none";
         const profModal = document.getElementById("profile-modal");
@@ -3306,25 +3714,36 @@
           if (baroModal) baroModal.classList.remove("active");
           closeModal();
           if (window.__closePubCrawl) window.__closePubCrawl();
+          if (window.__closeCompass) window.__closeCompass();
           if (map) map.flyTo(WARSAW_CENTER, 13, { duration: 0.8 });
-        } else if (target === "pubcrawl" || target === "compass") {
+        } else if (target === "compass") {
           if (drawer) drawer.classList.remove("open");
           if (baroModal) baroModal.classList.remove("active");
           closeModal();
+          if (window.__closePubCrawl) window.__closePubCrawl();
+          if (window.__openCompass) window.__openCompass();
+        } else if (target === "pubcrawl") {
+          if (drawer) drawer.classList.remove("open");
+          if (baroModal) baroModal.classList.remove("active");
+          closeModal();
+          if (window.__closeCompass) window.__closeCompass();
           if (window.__openPubCrawl) window.__openPubCrawl();
         } else if (target === "ranking") {
           if (baroModal) baroModal.classList.remove("active");
           if (window.__closePubCrawl) window.__closePubCrawl();
+          if (window.__closeCompass) window.__closeCompass();
           if (tabCheapest) tabCheapest.click();
           if (drawer) drawer.classList.add("open");
         } else if (target === "barometer") {
           if (drawer) drawer.classList.remove("open");
           if (window.__closePubCrawl) window.__closePubCrawl();
+          if (window.__closeCompass) window.__closeCompass();
           if (btnBarometer) btnBarometer.click();
         } else if (target === "add") {
           if (drawer) drawer.classList.remove("open");
           if (baroModal) baroModal.classList.remove("active");
           if (window.__closePubCrawl) window.__closePubCrawl();
+          if (window.__closeCompass) window.__closeCompass();
           openAddModal();
         }
       });
@@ -3661,6 +4080,7 @@
     initPubCrawl();
     initHappyHours();
     initPassport();
+    initBeerCompass();
 
     // User Auth Button (Header badge)
     const btnUserAuth = document.getElementById("btn-user-auth");
@@ -14864,6 +15284,7 @@
     updatePassportCounters();
     updateFavoriteCounters();
     renderMarkers();
+    if (window.__refreshCompassTargets) window.__refreshCompassTargets();
     setTimeout(checkUrlHash, 250);
   }
 
