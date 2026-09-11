@@ -2165,13 +2165,13 @@
     // Cloud Check-in & Sync if authenticated
     if (currentUser) {
       if (isNowVisited) {
+        // Send 100% anonymous price confirmation to the community pulse without tying to user identity
         fetch("/api/auth", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             action: "record-checkin",
             payload: {
-              userId: currentUser.id,
               venueId: venue.id,
               venueName: venue.name,
               district: venue.district,
@@ -2179,7 +2179,7 @@
               beerPrice: venue.beer_price_pln
             }
           })
-        }).catch(err => console.warn("Check-in cloud sync note:", err));
+        }).catch(err => console.warn("Price pulse note:", err));
       }
       syncUserDataToCloud();
     }
@@ -4450,22 +4450,20 @@
         }
 
         feedList.innerHTML = data.feed.map(item => {
-          const author = item.author || { username: "piwosz", display_name: "Piwosz", avatar_icon: "🍺" };
           const priceFormatted = item.beer_price ? `${Number(item.beer_price).toFixed(2)} zł` : "";
           const timeAgo = formatTimeAgo(item.created_at);
 
           return `
             <div class="feed-item-card">
-              <div class="feed-avatar" onclick="window.__openUserProfile('${escapeHtml(author.username)}')">${escapeHtml(author.avatar_icon || "🍺")}</div>
+              <div class="feed-avatar-anon">🍻</div>
               <div class="feed-content">
                 <div class="feed-top-row">
-                  <span class="feed-author" onclick="window.__openUserProfile('${escapeHtml(author.username)}')">${escapeHtml(author.display_name || author.username)}</span>
-                  <span class="feed-handle">@${escapeHtml(author.username)}</span>
+                  <span class="feed-author-anon">Potwierdzono cenę</span>
                   <span class="feed-dot">•</span>
                   <span class="feed-time">${escapeHtml(timeAgo)}</span>
                 </div>
                 <div class="feed-action-text">
-                  wypił(a) piwo w 
+                  Lokal: 
                   <a href="javascript:void(0)" class="feed-venue-link" onclick="window.__zoomToVenue('${escapeHtml(item.venue_id)}')">
                     📍 ${escapeHtml(item.venue_name || "Lokal w Warszawie")}
                   </a>
@@ -4694,11 +4692,11 @@
       const bioEl = document.getElementById("pubprof-bio");
       const beerEl = document.getElementById("pubprof-val-beer");
       const distEl = document.getElementById("pubprof-val-district");
-      const recentList = document.getElementById("pubprof-recent-list");
+      const badgesList = document.getElementById("pubprof-badges-list");
 
       if (nameEl) nameEl.textContent = "Ładowanie...";
       if (handleEl) handleEl.textContent = `@${cleanUser}`;
-      if (recentList) recentList.innerHTML = `<div class="loading-state-hint">Pobieranie profilu... 🍺</div>`;
+      if (badgesList) badgesList.innerHTML = `<div class="loading-state-hint">Pobieranie profilu... 🍺</div>`;
 
       try {
         const res = await fetch("/api/auth", {
@@ -4713,7 +4711,7 @@
         const data = await res.json();
         if (!res.ok || !data.profile) {
           if (nameEl) nameEl.textContent = "Nie znaleziono profilu";
-          if (recentList) recentList.innerHTML = `<div class="empty-state-hint">Użytkownik @${cleanUser} nie istnieje w bazie.</div>`;
+          if (badgesList) badgesList.innerHTML = `<div class="empty-state-hint">Użytkownik @${cleanUser} nie istnieje w bazie.</div>`;
           return;
         }
 
@@ -4739,20 +4737,28 @@
           btnFollow.innerHTML = isFollowing ? "<span>✓ Obserwujesz (odznacz)</span>" : "<span>➕ Obserwuj znajomego</span>";
         }
 
-        // Recent checkins
-        if (recentList) {
-          if (!data.recentCheckins || data.recentCheckins.length === 0) {
-            recentList.innerHTML = `<div class="empty-state-hint">Brak zarejestrowanych wizyt w barach.</div>`;
+        // Render unlocked badges safely without any location or timeline stalking
+        if (badgesList) {
+          const userVisited = Array.isArray(p.visited_venues) ? p.visited_venues : [];
+          const vMap = {};
+          allVenues.forEach(v => { vMap[v.id] = v; });
+          const unlocked = PASSPORT_BADGES.filter(b => {
+            try {
+              return b.check(userVisited, vMap).unlocked;
+            } catch (e) {
+              return false;
+            }
+          });
+
+          if (unlocked.length === 0) {
+            badgesList.innerHTML = `<div class="empty-state-hint">Użytkownik nie zdobył jeszcze żadnej odznaki.</div>`;
           } else {
-            recentList.innerHTML = data.recentCheckins.map(c => `
-              <div class="pubprof-checkin-item">
-                <div class="checkin-venue" onclick="window.__zoomToVenue('${escapeHtml(c.venue_id)}')">
-                  📍 ${escapeHtml(c.venue_name)}
-                </div>
-                <div class="checkin-meta">
-                  <span>🍺 ${escapeHtml(c.beer_name)} (${Number(c.beer_price).toFixed(2)} zł)</span>
-                  <span>•</span>
-                  <span>${formatTimeAgo(c.created_at)}</span>
+            badgesList.innerHTML = unlocked.map(b => `
+              <div class="pubprof-badge-chip">
+                <span class="badge-chip-icon">${escapeHtml(b.icon)}</span>
+                <div class="badge-chip-text">
+                  <div class="badge-chip-name">${escapeHtml(b.name)}</div>
+                  <div class="badge-chip-desc">${escapeHtml(b.desc)}</div>
                 </div>
               </div>
             `).join("");
@@ -4760,7 +4766,7 @@
         }
       } catch (err) {
         if (nameEl) nameEl.textContent = "Błąd pobierania";
-        if (recentList) recentList.innerHTML = `<div class="error-state-hint">Nie udało się pobrać danych profilu.</div>`;
+        if (badgesList) badgesList.innerHTML = `<div class="error-state-hint">Nie udało się pobrać danych profilu.</div>`;
       }
     };
 

@@ -26,10 +26,10 @@ ALTER TABLE public.profiles
     ADD CONSTRAINT username_format_check 
     CHECK (username ~* '^[a-z0-9_]{3,20}$');
 
--- 2. Tabela aktywności / check-inów (Historia wyjść na piwo w stylu Strava / Untappd)
+-- 2. Tabela aktywności / check-inów (Anonimowy puls cen w mieście)
 CREATE TABLE IF NOT EXISTS public.user_checkins (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
     venue_id TEXT NOT NULL,
     venue_name TEXT NOT NULL,
     district TEXT NOT NULL,
@@ -37,6 +37,9 @@ CREATE TABLE IF NOT EXISTS public.user_checkins (
     beer_price NUMERIC(5, 2) NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+
+-- Upewnij się, że user_id może być NULL (pełna anonimizacja)
+ALTER TABLE public.user_checkins ALTER COLUMN user_id DROP NOT NULL;
 
 -- 3. Tabela znajomych / obserwowanych (Relacje społecznościowe)
 CREATE TABLE IF NOT EXISTS public.follows (
@@ -83,9 +86,10 @@ ON public.user_checkins FOR SELECT
 USING (true);
 
 DROP POLICY IF EXISTS "Users can insert their own checkins" ON public.user_checkins;
-CREATE POLICY "Users can insert their own checkins" 
+DROP POLICY IF EXISTS "Checkins can be inserted anonymously or by users" ON public.user_checkins;
+CREATE POLICY "Checkins can be inserted anonymously or by users" 
 ON public.user_checkins FOR INSERT 
-WITH CHECK (auth.uid() = user_id);
+WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Users can delete their own checkins" ON public.user_checkins;
 CREATE POLICY "Users can delete their own checkins" 

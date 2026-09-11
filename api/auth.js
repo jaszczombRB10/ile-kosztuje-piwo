@@ -206,15 +206,6 @@ module.exports = async (req, res) => {
         }
       } catch (e) {}
 
-      // Get recent check-ins
-      let recentCheckins = [];
-      try {
-        const checkRes = await fetch(`${SUPABASE_URL}/rest/v1/user_checkins?user_id=eq.${profile.id}&order=created_at.desc&limit=10`, { headers });
-        if (checkRes.ok) {
-          recentCheckins = await checkRes.json();
-        }
-      } catch (e) {}
-
       return res.status(200).json({
         success: true,
         profile,
@@ -224,39 +215,18 @@ module.exports = async (req, res) => {
           visitedCount: Array.isArray(profile.visited_venues) ? profile.visited_venues.length : 0,
           favoriteCount: Array.isArray(profile.favorite_venues) ? profile.favorite_venues.length : 0
         },
-        followingIds,
-        recentCheckins: Array.isArray(recentCheckins) ? recentCheckins : []
+        followingIds
       });
     }
 
     // =========================================================================
-    // 5. Activity Feed ("Untappd + Strava dla Warszawy")
+    // 5. Activity Feed ("Anonimowy Puls Cen w Warszawie")
     // =========================================================================
     if (action === "get-feed") {
-      const userId = payload?.userId;
-      let targetUserIds = [];
-
-      if (userId) {
-        try {
-          const followingRes = await fetch(`${SUPABASE_URL}/rest/v1/follows?follower_id=eq.${encodeURIComponent(userId)}&select=following_id`, { headers });
-          if (followingRes.ok) {
-            const list = await followingRes.json();
-            if (Array.isArray(list) && list.length > 0) {
-              targetUserIds = list.map(item => item.following_id);
-            }
-          }
-        } catch (e) {}
-      }
-
-      // If user follows people, get their check-ins; otherwise get recent community check-ins
-      let queryUrl = `${SUPABASE_URL}/rest/v1/user_checkins?order=created_at.desc&limit=25`;
-      if (targetUserIds.length > 0) {
-        // Also include user's own check-ins
-        const allIds = [userId, ...targetUserIds].filter(Boolean);
-        queryUrl = `${SUPABASE_URL}/rest/v1/user_checkins?user_id=in.(${allIds.join(",")})&order=created_at.desc&limit=25`;
-      }
-
-      const checkRes = await fetch(queryUrl, { headers });
+      const checkRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/user_checkins?select=venue_id,venue_name,district,beer_name,beer_price,created_at&order=created_at.desc&limit=25`,
+        { headers }
+      );
       if (!checkRes.ok) {
         return res.status(200).json({ success: true, feed: [] });
       }
@@ -266,47 +236,32 @@ module.exports = async (req, res) => {
         return res.status(200).json({ success: true, feed: [] });
       }
 
-      // Fetch user profile previews for checkin authors
-      const authorIds = [...new Set(checkins.map(c => c.user_id))];
-      let authorsMap = {};
-      if (authorIds.length > 0) {
-        try {
-          const authorsRes = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=in.(${authorIds.join(",")})&select=id,username,display_name,avatar_icon`, { headers });
-          if (authorsRes.ok) {
-            const authorsList = await authorsRes.json();
-            if (Array.isArray(authorsList)) {
-              authorsList.forEach(a => { authorsMap[a.id] = a; });
-            }
-          }
-        } catch (e) {}
-      }
-
+      // Return 100% anonymized price confirmations without any user identity
       const feed = checkins.map(item => ({
-        ...item,
-        author: authorsMap[item.user_id] || {
-          username: "piwosz",
-          display_name: "Użytkownik",
-          avatar_icon: "🍺"
-        }
+        venue_id: item.venue_id,
+        venue_name: item.venue_name,
+        district: item.district,
+        beer_name: item.beer_name,
+        beer_price: item.beer_price,
+        created_at: item.created_at
       }));
 
       return res.status(200).json({ success: true, feed });
     }
 
     // =========================================================================
-    // 6. Record a Check-in (Visited Venue)
+    // 6. Record Anonymous Price Confirmation (Puls Miasta)
     // =========================================================================
     if (action === "record-checkin") {
-      const { userId, venueId, venueName, district, beerName, beerPrice } = payload || {};
-      if (!userId || !venueId) {
-        return res.status(400).json({ error: "Brak wymaganych danych check-in." });
+      const { venueId, venueName, district, beerName, beerPrice } = payload || {};
+      if (!venueId) {
+        return res.status(400).json({ error: "Brak identyfikatora lokalu." });
       }
 
       const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/user_checkins`, {
         method: "POST",
         headers,
         body: JSON.stringify({
-          user_id: userId,
           venue_id: venueId,
           venue_name: venueName || "Bar w Warszawie",
           district: district || "Warszawa",
@@ -317,7 +272,7 @@ module.exports = async (req, res) => {
 
       if (!insertRes.ok) {
         const errTxt = await insertRes.text();
-        return res.status(500).json({ error: "Błąd zapisu check-in", details: errTxt });
+        return res.status(500).json({ error: "Błąd zapisu potwierdzenia", details: errTxt });
       }
 
       return res.status(200).json({ success: true });
