@@ -2228,9 +2228,18 @@ header {
     font-weight: 700;
   }
 
-  .fab-brand-pill:active {
-    transform: scale(0.94);
-    border-color: #f97316;
+  .mobile-floating-top .fab-brand-pill {
+    position: absolute !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+  }
+
+  .mobile-floating-top .fab-brand-pill:active {
+    transform: translateX(-50%) scale(0.94) !important;
+  }
+
+  .mobile-floating-top #btn-top-search {
+    margin-left: auto !important;
   }
 
   /* Floating Add Bar Pill (Bottom Left) */
@@ -2384,21 +2393,33 @@ header {
     line-height: 1 !important;
   }
 
-  /* Hide duplicate pub quiz button in stack on mobile (already in top bar) */
+  /* Pub Quiz button in mobile floating action stack */
   .fab-pubquiz-float {
+    width: 44px !important;
+    height: 44px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: linear-gradient(135deg, #8b5cf6, #6366f1) !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.35) !important;
+    box-shadow: 0 4px 16px rgba(139, 92, 246, 0.5), 0 2px 6px rgba(0, 0, 0, 0.5) !important;
+    cursor: pointer !important;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+
+  .fab-pubquiz-float:active {
+    transform: scale(0.92) !important;
+  }
+
+  .fab-pubquiz-float span:not(.quiz-float-icon) {
     display: none !important;
   }
 
-  /* Top Bar Button: Ruletka */
-  .btn-top-roulette {
-    background: rgba(244, 63, 94, 0.2) !important;
-    border-color: rgba(244, 63, 94, 0.5) !important;
-    color: #fda4af !important;
-  }
-
-  .btn-top-roulette:active {
-    background: rgba(244, 63, 94, 0.4) !important;
-    transform: scale(0.92) !important;
+  .fab-pubquiz-float .quiz-float-icon {
+    font-size: 20px !important;
+    line-height: 1 !important;
   }
 
   /* Native iPhone TabBar */

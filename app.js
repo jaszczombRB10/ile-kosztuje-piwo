@@ -4400,8 +4400,18 @@
         const target = item.getAttribute("data-target");
         clearBottomNavActive();
         item.classList.add("active");
-
-        if (target === "promos" || target === "happyhour") {
+        if (target === "community" || target === "friends" || target === "spolecznosc") {
+          if (window.__closeRankingDrawer) window.__closeRankingDrawer();
+          if (baroModal) baroModal.classList.remove("active");
+          closeModal();
+          if (window.__closePubCrawl) window.__closePubCrawl();
+          if (window.__closeCompass) window.__closeCompass();
+          if (window.__closeMobileSearch) window.__closeMobileSearch();
+          if (window.__closeHappyHours) window.__closeHappyHours();
+          if (window.__openCommunity) {
+            window.__openCommunity("feed");
+          }
+        } else if (target === "promos" || target === "happyhour") {
           if (window.__closeRankingDrawer) window.__closeRankingDrawer();
           if (baroModal) baroModal.classList.remove("active");
           closeModal();
@@ -6199,6 +6209,7 @@
         modal.classList.remove("active");
         modal.style.display = "none";
       }
+      if (window.__clearBottomNavActive) window.__clearBottomNavActive();
     };
 
     if (btnClose && modal) {
