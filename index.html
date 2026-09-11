@@ -1550,11 +1550,22 @@
         </div>
       </div>
 
-      <!-- Achievements Section (Goin' Style) -->
+      <!-- Achievements Section (Collapsible Goin' Style) -->
       <div class="profile-goin-achievements">
-        <div class="achievements-section-title">Achievements</div>
-        <div class="achievements-list" id="prof-achievements-list">
-          <!-- Injected via JavaScript dynamically -->
+        <button type="button" class="achievements-section-toggle" id="btn-toggle-achievements" aria-expanded="false">
+          <div class="achievements-toggle-left">
+            <span class="achievements-section-title">🎖️ Osiągnięcia & Paszport</span>
+            <span class="achievements-count-badge" id="prof-achievements-count">0/8</span>
+          </div>
+          <div class="achievements-toggle-right">
+            <span class="achievements-toggle-hint" id="achievements-toggle-hint">Rozwiń</span>
+            <span class="achievements-chevron">▼</span>
+          </div>
+        </button>
+        <div class="achievements-collapse-wrapper" id="prof-achievements-wrapper">
+          <div class="achievements-list" id="prof-achievements-list">
+            <!-- Injected via JavaScript dynamically -->
+          </div>
         </div>
       </div>
 

@@ -5617,6 +5617,7 @@
         if (Array.isArray(allVenues)) {
           allVenues.forEach(v => { vMap[v.id] = v; });
         }
+        let unlockedCount = 0;
         achievementsList.innerHTML = PASSPORT_BADGES.map(badge => {
           let evaluation = { unlocked: false, progress: "0/1" };
           try {
@@ -5625,6 +5626,7 @@
             }
           } catch (e) {}
           const isUnlocked = evaluation.unlocked;
+          if (isUnlocked) unlockedCount++;
 
           return `
             <div class="achievement-card ${isUnlocked ? 'unlocked' : ''}">
@@ -5638,6 +5640,11 @@
             </div>
           `;
         }).join("");
+
+        const countBadge = document.getElementById("prof-achievements-count");
+        if (countBadge) {
+          countBadge.textContent = `${unlockedCount}/${PASSPORT_BADGES.length}`;
+        }
       }
 
       // Populate edit form
@@ -5766,6 +5773,20 @@
         if (window.__openStoryCardModal) {
           window.__openStoryCardModal();
         }
+      });
+    }
+
+    // Collapsible Achievements Toggle
+    const btnToggleAch = document.getElementById("btn-toggle-achievements");
+    const achWrapper = document.getElementById("prof-achievements-wrapper");
+    const achHint = document.getElementById("achievements-toggle-hint");
+
+    if (btnToggleAch && achWrapper) {
+      btnToggleAch.addEventListener("click", () => {
+        const isExpanded = achWrapper.classList.toggle("expanded");
+        btnToggleAch.classList.toggle("active", isExpanded);
+        btnToggleAch.setAttribute("aria-expanded", String(isExpanded));
+        if (achHint) achHint.textContent = isExpanded ? "Zwiń" : "Rozwiń";
       });
     }
 
