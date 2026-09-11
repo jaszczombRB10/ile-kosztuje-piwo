@@ -6824,6 +6824,16 @@
     window.__closeRoulette = closeModal;
 
     if (btnFloat) btnFloat.addEventListener("click", openModal);
+    const btnTopRoulette = document.getElementById("btn-top-roulette");
+    if (btnTopRoulette) btnTopRoulette.addEventListener("click", openModal);
+    const chipSearchRoulette = document.getElementById("chip-search-roulette");
+    if (chipSearchRoulette) {
+      chipSearchRoulette.addEventListener("click", () => {
+        const sheet = document.getElementById("mobile-search-sheet");
+        if (sheet) sheet.style.display = "none";
+        openModal();
+      });
+    }
     if (btnClose) btnClose.addEventListener("click", closeModal);
     if (modal) {
       modal.addEventListener("click", (e) => {

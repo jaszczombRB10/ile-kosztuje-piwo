@@ -2088,8 +2088,6 @@ header {
   header,
   .ticker-bar,
   .map-overlay,
-  .fab-stack-right,
-  .fab-compass-float,
   .btn-mobile-search-toggle,
   .fab-add-bar,
   .legend-pill,
@@ -2133,6 +2131,7 @@ header {
     z-index: 950;
     align-items: center;
     justify-content: space-between;
+    gap: 6px;
     pointer-events: none;
   }
 
@@ -2141,9 +2140,10 @@ header {
   }
 
   .fab-top-btn {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
+    font-size: 18px;
     background: rgba(14, 23, 21, 0.85);
     background: -webkit-linear-gradient(bottom, rgba(12, 20, 18, 0.94), rgba(16, 26, 23, 0.84));
     border: 1px solid rgba(255, 255, 255, 0.16);
@@ -2160,6 +2160,7 @@ header {
     appearance: none;
     position: relative;
     padding: 0;
+    flex-shrink: 0;
   }
 
   .fab-top-btn:active {
@@ -2271,13 +2272,91 @@ header {
     border-color: #f97316;
   }
 
-  /* Floating Locate Button (Bottom Right) */
-  .fab-locate-float {
-    bottom: calc(56px + env(safe-area-inset-bottom, 20px)) !important;
+  /* Mobile Floating Action Stack (Bottom Right on Map) */
+  .fab-stack-right {
+    display: flex !important;
+    position: fixed !important;
+    bottom: calc(64px + env(safe-area-inset-bottom, 20px)) !important;
     right: 14px !important;
     left: auto !important;
+    top: auto !important;
+    z-index: 920 !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    align-items: flex-end !important;
+    pointer-events: none !important;
+  }
+
+  .fab-stack-right > * {
+    pointer-events: auto !important;
+  }
+
+  /* Ruletka button - Glowing round neon circle button on map */
+  .fab-roulette-float {
     width: 48px !important;
     height: 48px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: linear-gradient(135deg, #f43f5e 0%, #ec4899 100%) !important;
+    border: 2px solid rgba(255, 255, 255, 0.45) !important;
+    box-shadow: 0 4px 18px rgba(244, 63, 94, 0.6), 0 2px 8px rgba(0, 0, 0, 0.6) !important;
+    cursor: pointer !important;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+
+  .fab-roulette-float:active {
+    transform: scale(0.92) !important;
+  }
+
+  .fab-roulette-float span:not(.roulette-float-icon) {
+    display: none !important;
+  }
+
+  .fab-roulette-float .roulette-float-icon {
+    font-size: 24px !important;
+    line-height: 1 !important;
+  }
+
+  /* Kompas button */
+  .fab-compass-float {
+    width: 44px !important;
+    height: 44px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.95), rgba(234, 88, 12, 0.95)) !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 0 3px 14px rgba(249, 115, 22, 0.5), 0 2px 6px rgba(0, 0, 0, 0.5) !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+  }
+
+  .fab-compass-float:active {
+    transform: scale(0.92) !important;
+  }
+
+  .fab-compass-float span:not(.compass-icon) {
+    display: none !important;
+  }
+
+  .fab-compass-float .compass-icon {
+    font-size: 20px !important;
+    line-height: 1 !important;
+  }
+
+  /* Locate GPS button */
+  .fab-locate-float {
+    position: static !important;
+    bottom: auto !important;
+    right: auto !important;
+    left: auto !important;
+    width: 44px !important;
+    height: 44px !important;
     padding: 0 !important;
     border-radius: 50% !important;
     display: flex !important;
@@ -2288,7 +2367,6 @@ header {
     -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
     border: 2px solid #f97316 !important;
     box-shadow: 0 0 16px rgba(249, 115, 22, 0.4), 0 4px 16px rgba(0, 0, 0, 0.65) !important;
-    z-index: 920 !important;
     cursor: pointer !important;
     transition: all 0.2s ease !important;
   }
@@ -2299,6 +2377,28 @@ header {
 
   .fab-locate-float span:not(.locate-icon) {
     display: none !important;
+  }
+
+  .fab-locate-float .locate-icon {
+    font-size: 20px !important;
+    line-height: 1 !important;
+  }
+
+  /* Hide duplicate pub quiz button in stack on mobile (already in top bar) */
+  .fab-pubquiz-float {
+    display: none !important;
+  }
+
+  /* Top Bar Button: Ruletka */
+  .btn-top-roulette {
+    background: rgba(244, 63, 94, 0.2) !important;
+    border-color: rgba(244, 63, 94, 0.5) !important;
+    color: #fda4af !important;
+  }
+
+  .btn-top-roulette:active {
+    background: rgba(244, 63, 94, 0.4) !important;
+    transform: scale(0.92) !important;
   }
 
   /* Native iPhone TabBar */
@@ -2642,12 +2742,15 @@ header {
   /* When ranking drawer or any modal is open on mobile, hide floating map controls completely */
   body.drawer-open .mobile-floating-top,
   body.drawer-open .floating-add-pill,
+  body.drawer-open .fab-stack-right,
   body.drawer-open .fab-locate-float,
   body:has(.sidebar-drawer.open) .mobile-floating-top,
   body:has(.sidebar-drawer.open) .floating-add-pill,
+  body:has(.sidebar-drawer.open) .fab-stack-right,
   body:has(.sidebar-drawer.open) .fab-locate-float,
   body:has(.modal-backdrop.active) .mobile-floating-top,
   body:has(.modal-backdrop.active) .floating-add-pill,
+  body:has(.modal-backdrop.active) .fab-stack-right,
   body:has(.modal-backdrop.active) .fab-locate-float {
     display: none !important;
     pointer-events: none !important;
