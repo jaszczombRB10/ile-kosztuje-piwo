@@ -1,4 +1,4 @@
-const CACHE_NAME = "poilepiwko-v55";
+const CACHE_NAME = "poilepiwko-v56";
 
 const STATIC_ASSETS = [
   "./",
@@ -20,7 +20,7 @@ const STATIC_ASSETS = [
   "./icons/syrenka-hero.png"
 ];
 
-// Install Event: Cache Core Shell
+// Install Event: Cache Core Shell and activate immediately
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -31,7 +31,7 @@ self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
 
-// Activate Event: Clear Old Caches
+// Activate Event: Clear Old Caches and claim clients
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
@@ -48,15 +48,46 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// Fetch Event: Stale-While-Revalidate Strategy
+// Fetch Event
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
   // Do not cache Supabase API calls, map tiles, serverless endpoints, or admin panel in Service Worker
-  if (url.origin.includes("supabase.co") || url.origin.includes("cartocdn.com") || url.pathname.startsWith("/rest/v1") || url.pathname.startsWith("/api/") || url.pathname.includes("admin")) {
+  if (
+    url.origin.includes("supabase.co") ||
+    url.origin.includes("cartocdn.com") ||
+    url.pathname.startsWith("/rest/v1") ||
+    url.pathname.startsWith("/api/") ||
+    url.pathname.includes("admin")
+  ) {
     return;
   }
 
+  // 1. Navigation / HTML Document requests: Network-First to guarantee immediate UI updates on mobile & desktop
+  const isNavigation =
+    event.request.mode === "navigate" ||
+    (event.request.method === "GET" &&
+      event.request.headers.get("accept") &&
+      event.request.headers.get("accept").includes("text/html"));
+
+  if (isNavigation) {
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseClone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+          }
+          return networkResponse;
+        })
+        .catch(() => {
+          return caches.match(event.request).then((cached) => cached || caches.match("./index.html"));
+        })
+    );
+    return;
+  }
+
+  // 2. Static Assets (CSS, JS, Images, Data): Stale-While-Revalidate
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       const fetchPromise = fetch(event.request)
@@ -69,10 +100,7 @@ self.addEventListener("fetch", (event) => {
           }
           return networkResponse;
         })
-        .catch(() => {
-          // Return cached response if offline
-          return cachedResponse;
-        });
+        .catch(() => cachedResponse);
 
       return cachedResponse || fetchPromise;
     })

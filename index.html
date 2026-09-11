@@ -1585,12 +1585,12 @@
       </div>
 
       <!-- Single Elegant Community Banner -->
-      <button type="button" class="profile-community-banner" id="btn-open-community-from-profile" title="Przejdź do feedu i szukaj osób">
+      <button type="button" class="profile-community-banner" id="btn-open-community-from-profile" title="Przejdź do znajomych i szukaj osób">
         <div class="comm-banner-left">
           <span class="comm-banner-icon">👥</span>
           <div class="comm-banner-text">
-            <span class="comm-banner-title">Piwni Znajomi & Puls Miasta</span>
-            <span class="comm-banner-sub">Feed aktywności cenowej i wyszukiwarka osób</span>
+            <span class="comm-banner-title">Piwni Znajomi</span>
+            <span class="comm-banner-sub">Szukaj znajomych i sprawdzaj ich profile</span>
           </div>
         </div>
         <span class="comm-banner-arrow">→</span>
@@ -1838,15 +1838,15 @@
     </div>
   </div>
 
-  <!-- Community & Friends Modal ("Untappd + Strava dla Warszawy") -->
+  <!-- Community & Friends Modal ("Piwni Znajomi") -->
   <div class="modal-backdrop" id="community-modal">
     <div class="modal-card modal-card-wide community-modal-card">
       <div class="modal-head">
         <div class="modal-head-title">
           <div class="modal-icon-badge">👥</div>
           <div>
-            <h2>Piwni Znajomi & Puls Miasta</h2>
-            <p class="modal-head-sub">Puls aktualności cenowych w Warszawie oraz znajomi bez śledzenia Twojej lokalizacji (100% prywatności).</p>
+            <h2>Piwni Znajomi</h2>
+            <p class="modal-head-sub">Wyszukuj znajomych, obserwuj ich profile i sprawdzaj zaliczone lokale (100% prywatności).</p>
           </div>
         </div>
         <button type="button" class="modal-close" id="btn-close-community">✕</button>
@@ -1854,23 +1854,12 @@
 
       <!-- Community Tabs -->
       <div class="community-tabs">
-        <button type="button" class="comm-tab active" id="tab-comm-feed">⚡ Puls Cen (Anonimowy)</button>
-        <button type="button" class="comm-tab" id="tab-comm-search">🔍 Szukaj znajomych</button>
+        <button type="button" class="comm-tab active" id="tab-comm-search">🔍 Szukaj znajomych</button>
         <button type="button" class="comm-tab" id="tab-comm-following">❤️ Obserwowani (<span id="comm-following-badge">0</span>)</button>
       </div>
 
-      <!-- Tab 1: Feed aktywności -->
-      <div class="comm-tab-pane" id="pane-comm-feed">
-        <div class="feed-header-banner">
-          <span>🍻 Ostatnio potwierdzone ceny w warszawskich lokalach (Anonimowy puls)</span>
-        </div>
-        <div class="comm-feed-list" id="comm-feed-list">
-          <!-- Injected via JS -->
-        </div>
-      </div>
-
-      <!-- Tab 2: Wyszukiwarka znajomych -->
-      <div class="comm-tab-pane" id="pane-comm-search" style="display:none;">
+      <!-- Tab 1: Wyszukiwarka znajomych -->
+      <div class="comm-tab-pane" id="pane-comm-search">
         <div class="user-search-wrap">
           <input type="text" id="input-search-friends" placeholder="Wpisz nick lub imię znajomego (np. @marek)..." />
           <button type="button" id="btn-run-search-friends" class="btn-primary">Szukaj</button>

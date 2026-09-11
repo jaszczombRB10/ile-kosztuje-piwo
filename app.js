@@ -4453,7 +4453,7 @@
           if (window.__closeMobileSearch) window.__closeMobileSearch();
           if (window.__closeHappyHours) window.__closeHappyHours();
           if (window.__openCommunity) {
-            window.__openCommunity("feed");
+            window.__openCommunity("search");
           }
         } else if (target === "promos" || target === "happyhour") {
           if (window.__closeRankingDrawer) window.__closeRankingDrawer();
@@ -6205,42 +6205,35 @@
   function initCommunityModal() {
     const modal = document.getElementById("community-modal");
     const btnClose = document.getElementById("btn-close-community");
-    const tabFeed = document.getElementById("tab-comm-feed");
     const tabSearch = document.getElementById("tab-comm-search");
     const tabFollowing = document.getElementById("tab-comm-following");
-    const paneFeed = document.getElementById("pane-comm-feed");
     const paneSearch = document.getElementById("pane-comm-search");
     const paneFollowing = document.getElementById("pane-comm-following");
-    const feedList = document.getElementById("comm-feed-list");
     const searchInput = document.getElementById("input-search-friends");
     const btnRunSearch = document.getElementById("btn-run-search-friends");
     const searchResults = document.getElementById("comm-search-results");
     const followingList = document.getElementById("comm-following-list");
 
     function switchTab(tab) {
-      [tabFeed, tabSearch, tabFollowing].forEach(t => t && t.classList.remove("active"));
-      [paneFeed, paneSearch, paneFollowing].forEach(p => p && (p.style.display = "none"));
+      [tabSearch, tabFollowing].forEach(t => t && t.classList.remove("active"));
+      [paneSearch, paneFollowing].forEach(p => p && (p.style.display = "none"));
 
-      if (tab === "feed") {
-        if (tabFeed) tabFeed.classList.add("active");
-        if (paneFeed) paneFeed.style.display = "block";
-        loadFeed();
-      } else if (tab === "search") {
-        if (tabSearch) tabSearch.classList.add("active");
-        if (paneSearch) paneSearch.style.display = "block";
-        if (searchInput) searchInput.focus();
-      } else if (tab === "following") {
+      if (tab === "following") {
         if (tabFollowing) tabFollowing.classList.add("active");
         if (paneFollowing) paneFollowing.style.display = "block";
         loadFollowingList();
+      } else {
+        // default "search"
+        if (tabSearch) tabSearch.classList.add("active");
+        if (paneSearch) paneSearch.style.display = "block";
+        if (searchInput) searchInput.focus();
       }
     }
 
-    if (tabFeed) tabFeed.addEventListener("click", () => switchTab("feed"));
     if (tabSearch) tabSearch.addEventListener("click", () => switchTab("search"));
     if (tabFollowing) tabFollowing.addEventListener("click", () => switchTab("following"));
 
-    window.__openCommunity = function (initialTab = "feed") {
+    window.__openCommunity = function (initialTab = "search") {
       if (modal) {
         modal.classList.add("active");
         modal.style.display = "flex";
@@ -6261,69 +6254,6 @@
       modal.addEventListener("click", (e) => {
         if (e.target === modal) window.__closeCommunity();
       });
-    }
-
-    // Load Live Activity Feed
-    async function loadFeed() {
-      if (!feedList) return;
-      feedList.innerHTML = `<div class="loading-state-hint">Ładowanie aktywności... 🍻</div>`;
-
-      try {
-        const res = await fetch("/api/auth", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "get-feed",
-            payload: { userId: currentUser ? currentUser.id : null }
-          })
-        });
-
-        const data = await res.json();
-        if (!res.ok || !data.feed || data.feed.length === 0) {
-          feedList.innerHTML = `
-            <div class="empty-state-card">
-              <div class="empty-icon">🍻</div>
-              <div class="empty-title">Cisza w kuflach...</div>
-              <p class="empty-sub">Bądź pierwszym, który oznaczy wizytę w barze przyciskiem „Byłem tu!” lub zaobserwuj innych piwoszy!</p>
-            </div>
-          `;
-          return;
-        }
-
-        feedList.innerHTML = data.feed.map(item => {
-          const priceFormatted = item.beer_price ? `${Number(item.beer_price).toFixed(2)} zł` : "";
-          const timeAgo = formatTimeAgo(item.created_at);
-
-          return `
-            <div class="feed-item-card">
-              <div class="feed-avatar-anon">🍻</div>
-              <div class="feed-content">
-                <div class="feed-top-row">
-                  <span class="feed-author-anon">Potwierdzono cenę</span>
-                  <span class="feed-dot">•</span>
-                  <span class="feed-time">${escapeHtml(timeAgo)}</span>
-                </div>
-                <div class="feed-action-text">
-                  Lokal: 
-                  <a href="javascript:void(0)" class="feed-venue-link" onclick="window.__zoomToVenue('${escapeHtml(item.venue_id)}')">
-                    📍 ${escapeHtml(item.venue_name || "Lokal w Warszawie")}
-                  </a>
-                </div>
-                <div class="feed-details-pill">
-                  <span>🍺 ${escapeHtml(item.beer_name || "Piwo z kranu")}</span>
-                  ${priceFormatted ? `<strong class="feed-price">${priceFormatted}</strong>` : ""}
-                  ${item.district ? `<span class="feed-district">(${escapeHtml(item.district)})</span>` : ""}
-                </div>
-                <button type="button" class="btn-feed-cheers" onclick="window.__triggerCheers('Wzniesiono toast za piwną Warszawę! 🍻'); event.stopPropagation();" title="Stuknij się kuflem!">
-                  <span>🍻 Na zdrowie!</span>
-                </button>
-              </div>
-            </div>
-          `;
-        }).join("");
-      } catch (err) {
-        feedList.innerHTML = `<div class="error-state-hint">Nie udało się pobrać feedu. Sprawdź połączenie.</div>`;
-      }
     }
 
     // Search Friends
@@ -18362,12 +18292,34 @@
     setupEventListeners();
     loadVenues();
 
-    // Register Service Worker for PWA
+    // Register Service Worker for PWA with automatic update detection
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener("controllerchange", () => {
+          if (!refreshing) {
+            refreshing = true;
+            window.location.reload();
+          }
+        });
+
         navigator.serviceWorker
           .register("sw.js")
-          .then((reg) => console.log("[PWA] ServiceWorker registered with scope:", reg.scope))
+          .then((reg) => {
+            console.log("[PWA] ServiceWorker registered with scope:", reg.scope);
+            try { reg.update(); } catch (e) {}
+            reg.addEventListener("updatefound", () => {
+              const newWorker = reg.installing;
+              if (newWorker) {
+                newWorker.addEventListener("statechange", () => {
+                  if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+                    console.log("[PWA] New version ready! Refreshing...");
+                    window.location.reload();
+                  }
+                });
+              }
+            });
+          })
           .catch((err) => console.warn("[PWA] ServiceWorker registration failed:", err));
       });
     }
