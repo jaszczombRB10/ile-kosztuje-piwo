@@ -1031,15 +1031,15 @@
       <!-- Form 1: Logowanie -->
       <form id="form-auth-login" class="auth-form">
         <div class="form-group">
-          <label for="login-email">Adres e-mail</label>
-          <input type="email" id="login-email" required placeholder="twoj@email.pl" autocomplete="email" />
+          <label for="login-email" class="form-label">Adres e-mail</label>
+          <input type="email" id="login-email" class="form-input" required placeholder="twoj@email.pl" autocomplete="email" />
         </div>
         <div class="form-group">
           <div class="label-with-link">
-            <label for="login-password">Hasło</label>
+            <label for="login-password" class="form-label">Hasło</label>
             <a href="#" id="link-forgot-pass" class="auth-sublink">Zapomniałeś hasła?</a>
           </div>
-          <input type="password" id="login-password" required placeholder="••••••••" autocomplete="current-password" />
+          <input type="password" id="login-password" class="form-input" required placeholder="••••••••" autocomplete="current-password" />
         </div>
         <div class="auth-error-msg" id="login-error-msg" style="display:none;"></div>
         <button type="submit" class="btn-primary btn-auth-submit" id="btn-submit-login">
@@ -1050,7 +1050,7 @@
       <!-- Form 2: Rejestracja -->
       <form id="form-auth-register" class="auth-form" style="display:none;">
         <div class="form-group">
-          <label for="reg-username">Twój unikalny nick (@username)</label>
+          <label for="reg-username" class="form-label">Twój unikalny nick (@username)</label>
           <div class="input-with-prefix">
             <span class="input-prefix">@</span>
             <input type="text" id="reg-username" required placeholder="piwosz_mokotow" autocomplete="username" maxlength="20" />
@@ -1058,11 +1058,11 @@
           <div class="input-hint" id="reg-username-hint">3-20 liter, cyfr lub podkreślenie (_)</div>
         </div>
         <div class="form-group">
-          <label for="reg-display-name">Nazwa wyświetlana / Imię</label>
-          <input type="text" id="reg-display-name" required placeholder="np. Bartek" maxlength="30" />
+          <label for="reg-display-name" class="form-label">Nazwa wyświetlana / Imię</label>
+          <input type="text" id="reg-display-name" class="form-input" required placeholder="np. Bartek" maxlength="30" />
         </div>
         <div class="form-group">
-          <label>Wybierz swój piwny awatar</label>
+          <label class="form-label">Wybierz swój piwny awatar</label>
           <div class="avatar-picker" id="reg-avatar-picker">
             <button type="button" class="avatar-option selected" data-avatar="🍺">🍺</button>
             <button type="button" class="avatar-option" data-avatar="🍻">🍻</button>
@@ -1076,12 +1076,12 @@
           </div>
         </div>
         <div class="form-group">
-          <label for="reg-email">Adres e-mail</label>
-          <input type="email" id="reg-email" required placeholder="twoj@email.pl" autocomplete="email" />
+          <label for="reg-email" class="form-label">Adres e-mail</label>
+          <input type="email" id="reg-email" class="form-input" required placeholder="twoj@email.pl" autocomplete="email" />
         </div>
         <div class="form-group">
-          <label for="reg-password">Hasło (min. 6 znaków)</label>
-          <input type="password" id="reg-password" required placeholder="••••••••" autocomplete="new-password" minlength="6" />
+          <label for="reg-password" class="form-label">Hasło (min. 6 znaków)</label>
+          <input type="password" id="reg-password" class="form-input" required placeholder="••••••••" autocomplete="new-password" minlength="6" />
         </div>
         <div class="auth-error-msg" id="reg-error-msg" style="display:none;"></div>
         <button type="submit" class="btn-primary btn-auth-submit" id="btn-submit-register">
@@ -1092,16 +1092,16 @@
       <!-- Form 3: Przypomnienie hasła -->
       <form id="form-auth-forgot" class="auth-form" style="display:none;">
         <div class="form-group">
-          <label for="forgot-email">Adres e-mail Twojego konta</label>
-          <input type="email" id="forgot-email" required placeholder="twoj@email.pl" autocomplete="email" />
+          <label for="forgot-email" class="form-label">Adres e-mail Twojego konta</label>
+          <input type="email" id="forgot-email" class="form-input" required placeholder="twoj@email.pl" autocomplete="email" />
         </div>
         <div class="auth-error-msg" id="forgot-error-msg" style="display:none;"></div>
         <div class="auth-success-msg" id="forgot-success-msg" style="display:none;"></div>
         <button type="submit" class="btn-primary btn-auth-submit" id="btn-submit-forgot">
-          <span>📩 Wyślij link resetujący</span>
+          <span>📧 Wyślij link do resetu</span>
         </button>
-        <button type="button" class="btn-secondary btn-back-to-login" id="btn-back-to-login" style="width:100%;margin-top:8px;">
-          ← Wróć do logowania
+        <button type="button" class="btn-secondary" id="btn-back-to-login" style="margin-top:8px;">
+          <span>← Wróć do logowania</span>
         </button>
       </form>
 
@@ -1172,11 +1172,11 @@
       <!-- Collapsible Profile Edit Form -->
       <form id="form-edit-profile" class="profile-edit-form" style="display:none;">
         <div class="form-group">
-          <label for="edit-display-name">Nazwa wyświetlana</label>
-          <input type="text" id="edit-display-name" required maxlength="30" />
+          <label for="edit-display-name" class="form-label">Nazwa wyświetlana</label>
+          <input type="text" id="edit-display-name" class="form-input" required maxlength="30" />
         </div>
         <div class="form-group">
-          <label>Zmień awatar</label>
+          <label class="form-label">Zmień awatar</label>
           <div class="avatar-picker" id="edit-avatar-picker">
             <button type="button" class="avatar-option" data-avatar="🍺">🍺</button>
             <button type="button" class="avatar-option" data-avatar="🍻">🍻</button>
@@ -1190,17 +1190,17 @@
           </div>
         </div>
         <div class="form-group">
-          <label for="edit-bio">O mnie / Bio</label>
-          <textarea id="edit-bio" rows="2" maxlength="160" placeholder="Kilka słów o Twoich piwnych gustach..."></textarea>
+          <label for="edit-bio" class="form-label">O mnie / Bio</label>
+          <textarea id="edit-bio" class="form-input" rows="2" maxlength="160" placeholder="Kilka słów o Twoich piwnych gustach..."></textarea>
         </div>
         <div class="form-row-2">
           <div class="form-group">
-            <label for="edit-fav-beer">Ulubione piwo</label>
-            <input type="text" id="edit-fav-beer" placeholder="np. Namysłów, IPA" maxlength="40" />
+            <label for="edit-fav-beer" class="form-label">Ulubione piwo</label>
+            <input type="text" id="edit-fav-beer" class="form-input" placeholder="np. Namysłów, IPA" maxlength="40" />
           </div>
           <div class="form-group">
-            <label for="edit-fav-district">Ulubiona dzielnica</label>
-            <input type="text" id="edit-fav-district" placeholder="np. Śródmieście, Pawilony" maxlength="40" />
+            <label for="edit-fav-district" class="form-label">Ulubiona dzielnica</label>
+            <input type="text" id="edit-fav-district" class="form-input" placeholder="np. Śródmieście, Pawilony" maxlength="40" />
           </div>
         </div>
         <div style="display:flex;gap:8px;margin-top:10px;">
