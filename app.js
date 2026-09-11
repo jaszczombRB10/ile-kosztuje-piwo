@@ -4032,19 +4032,15 @@
         });
       }
 
-      // 2. Top Time Pill (Quick toggle "Otwarte teraz")
-      const btnTopTime = document.getElementById("btn-top-time");
-      if (btnTopTime) {
-        btnTopTime.addEventListener("click", () => {
-          filterState.openNow = !filterState.openNow;
-          syncQuickChipsWithFilterState();
-          renderMarkers();
+      // 2. Top Brand Logo Pill (Center on Warsaw & show all)
+      const btnTopBrand = document.getElementById("btn-top-brand");
+      if (btnTopBrand) {
+        btnTopBrand.addEventListener("click", () => {
+          if (map) {
+            map.flyTo(WARSAW_CENTER, 12.5, { duration: 1.2 });
+          }
           if (typeof showAppToast === "function") {
-            showAppToast(
-              filterState.openNow ? "Otwarte teraz" : "Wszystkie lokale",
-              filterState.openNow ? "Pokazuję bary otwarte o tej porze" : "Pokazuję wszystkie lokale na mapie",
-              "🕒"
-            );
+            showAppToast("poilepiwko.pl", "Wyświetlam całą Warszawę 🍺", "🍺");
           }
         });
       }
@@ -4216,17 +4212,35 @@
         clearBottomNavActive();
         item.classList.add("active");
 
-        if (target === "explore") {
-          const mSearchSheet = document.getElementById("mobile-search-sheet");
-          if (mSearchSheet && mSearchSheet.style.display === "flex") {
-            mSearchSheet.style.display = "none";
-            item.classList.remove("active");
+        if (target === "promos" || target === "happyhour") {
+          if (drawer) drawer.classList.remove("open");
+          if (baroModal) baroModal.classList.remove("active");
+          closeModal();
+          if (window.__closePubCrawl) window.__closePubCrawl();
+          if (window.__closeCompass) window.__closeCompass();
+          if (window.__closeMobileSearch) window.__closeMobileSearch();
+          if (window.__openHappyHours) {
+            window.__openHappyHours();
           } else {
-            if (window.__openMobileSearch) window.__openMobileSearch();
+            const hhModal = document.getElementById("happyhour-modal");
+            if (hhModal) {
+              if (typeof renderHappyHourModal === "function") renderHappyHourModal();
+              hhModal.classList.add("active");
+            }
           }
+        } else if (target === "ranking") {
+          if (baroModal) baroModal.classList.remove("active");
+          if (window.__closeHappyHours) window.__closeHappyHours();
+          closeModal();
+          if (window.__closePubCrawl) window.__closePubCrawl();
+          if (window.__closeCompass) window.__closeCompass();
+          if (window.__closeMobileSearch) window.__closeMobileSearch();
+          if (tabCheapest) tabCheapest.click();
+          if (drawer) drawer.classList.add("open");
         } else if (target === "compass") {
           if (drawer) drawer.classList.remove("open");
           if (baroModal) baroModal.classList.remove("active");
+          if (window.__closeHappyHours) window.__closeHappyHours();
           closeModal();
           if (window.__closePubCrawl) window.__closePubCrawl();
           if (window.__closeMobileSearch) window.__closeMobileSearch();
@@ -4234,20 +4248,15 @@
         } else if (target === "pubcrawl") {
           if (drawer) drawer.classList.remove("open");
           if (baroModal) baroModal.classList.remove("active");
+          if (window.__closeHappyHours) window.__closeHappyHours();
           closeModal();
           if (window.__closeCompass) window.__closeCompass();
           if (window.__closeMobileSearch) window.__closeMobileSearch();
           if (window.__openPubCrawl) window.__openPubCrawl();
-        } else if (target === "ranking") {
-          if (baroModal) baroModal.classList.remove("active");
-          if (window.__closePubCrawl) window.__closePubCrawl();
-          if (window.__closeCompass) window.__closeCompass();
-          if (window.__closeMobileSearch) window.__closeMobileSearch();
-          if (tabCheapest) tabCheapest.click();
-          if (drawer) drawer.classList.add("open");
         } else if (target === "profile") {
           if (drawer) drawer.classList.remove("open");
           if (baroModal) baroModal.classList.remove("active");
+          if (window.__closeHappyHours) window.__closeHappyHours();
           closeModal();
           if (window.__closePubCrawl) window.__closePubCrawl();
           if (window.__closeCompass) window.__closeCompass();
@@ -4267,6 +4276,7 @@
           }
         } else if (target === "barometer") {
           if (drawer) drawer.classList.remove("open");
+          if (window.__closeHappyHours) window.__closeHappyHours();
           if (window.__closePubCrawl) window.__closePubCrawl();
           if (window.__closeCompass) window.__closeCompass();
           if (window.__closeMobileSearch) window.__closeMobileSearch();
@@ -4274,6 +4284,7 @@
         } else if (target === "add") {
           if (drawer) drawer.classList.remove("open");
           if (baroModal) baroModal.classList.remove("active");
+          if (window.__closeHappyHours) window.__closeHappyHours();
           if (window.__closePubCrawl) window.__closePubCrawl();
           if (window.__closeCompass) window.__closeCompass();
           if (window.__closeMobileSearch) window.__closeMobileSearch();

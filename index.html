@@ -141,10 +141,9 @@
         <span class="fab-badge-dot" id="top-filter-dot" style="display:none;"></span>
       </button>
 
-      <button type="button" class="fab-time-pill" id="btn-top-time" title="Aktualny czas w Warszawie · kliknij, aby przełączyć otwarte teraz">
-        <span class="time-pill-clock">🕒</span>
-        <span class="time-pill-val" id="top-time-clock">12:25</span>
-        <span class="time-pill-edit">✎</span>
+      <button type="button" class="fab-brand-pill" id="btn-top-brand" title="poilepiwko.pl – Pokaż całą Warszawę">
+        <span class="brand-pill-icon">🍺</span>
+        <span class="brand-pill-text">poilepiwko<span class="brand-pill-tld">.pl</span></span>
       </button>
 
       <button type="button" class="fab-top-btn" id="btn-top-search" title="Szukaj lokalu lub piwa">
@@ -905,25 +904,25 @@
 
   <!-- Mobile Bottom Navigation Bar (Native App Dock) -->
   <nav class="mobile-bottom-nav" id="mobile-bottom-nav" aria-label="Nawigacja dolna">
-    <button type="button" class="nav-item" id="nav-btn-explore" data-target="explore" title="Odkrywaj i szukaj barów">
+    <button type="button" class="nav-item" id="nav-btn-promos" data-target="promos" title="Promocje i Happy Hours">
       <span class="nav-icon">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8"></circle>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
         </svg>
       </span>
-      <span class="nav-label">EXPLORE</span>
+      <span class="nav-label">Promki</span>
     </button>
-    <button type="button" class="nav-item" id="nav-btn-ranking" data-target="ranking" title="Ranking i Znajomi">
+    <button type="button" class="nav-item" id="nav-btn-ranking" data-target="ranking" title="Ranking najtańszego piwa">
       <span class="nav-icon">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-          <circle cx="9" cy="7" r="4"></circle>
-          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+          <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+          <path d="M4 22h16"></path>
+          <path d="M10 14.66V17c0 .55-.45 1-1 1H8v2h8v-2h-1c-.55 0-1-.45-1-1v-2.34"></path>
+          <path d="M18 4H6v7a6 6 0 0 0 12 0V4Z"></path>
         </svg>
       </span>
-      <span class="nav-label">FRIENDS</span>
+      <span class="nav-label">Ranking</span>
     </button>
     <button type="button" class="nav-item nav-item-hero" id="nav-btn-hero-compass" data-target="compass" title="Piwny Kompas – Radar GPS na 1 klik">
       <div class="hero-ring">
@@ -945,18 +944,15 @@
         </svg>
       </div>
     </button>
-    <button type="button" class="nav-item" id="nav-btn-pubcrawl" data-target="pubcrawl" title="Trasa barowa i gry">
+    <button type="button" class="nav-item" id="nav-btn-pubcrawl" data-target="pubcrawl" title="Trasa barowa (Pub Crawl)">
       <span class="nav-icon">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-          <path d="M16 8h.01"></path>
-          <path d="M8 8h.01"></path>
-          <path d="M8 16h.01"></path>
-          <path d="M16 16h.01"></path>
-          <path d="M12 12h.01"></path>
+          <circle cx="6" cy="19" r="3"></circle>
+          <path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"></path>
+          <circle cx="18" cy="5" r="3"></circle>
         </svg>
       </span>
-      <span class="nav-label">GAMES</span>
+      <span class="nav-label">Trasa</span>
     </button>
     <button type="button" class="nav-item" id="nav-btn-profile" data-target="profile" title="Mój profil i konto">
       <span class="nav-icon">
@@ -965,7 +961,7 @@
           <circle cx="12" cy="7" r="4"></circle>
         </svg>
       </span>
-      <span class="nav-label">PROFILE</span>
+      <span class="nav-label">Profil</span>
     </button>
   </nav>
 
