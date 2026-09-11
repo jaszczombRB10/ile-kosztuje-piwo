@@ -1491,9 +1491,13 @@
             <span class="btn-hero-action-icon">📤</span>
             <span>Udostępnij</span>
           </button>
+          <button type="button" class="btn-hero-action btn-hero-story" id="btn-open-story-card" title="Wygeneruj kartę na Instagram Story">
+            <span class="btn-hero-action-icon">📸</span>
+            <span>Story</span>
+          </button>
           <button type="button" class="btn-hero-action btn-hero-search" id="btn-search-friends-hero" title="Wyszukaj znajomych po nicku">
             <span class="btn-hero-action-icon">🔍</span>
-            <span>Szukaj znajomych</span>
+            <span>Szukaj</span>
           </button>
           <button type="button" class="btn-hero-action btn-hero-edit" id="btn-toggle-edit-profile" title="Edytuj profil i preferencje">
             <span class="btn-hero-action-icon">✏️</span>
@@ -1777,8 +1781,22 @@
       <!-- Tab 2: Venues with Live Pub Quizzes in Warsaw -->
       <div class="pubquiz-tab-pane" id="pubquiz-pane-venues" style="display:none;">
         <div class="pubquiz-venues-intro">
-          <p>Szukasz rywalizacji na żywo ze znajomymi przy kuflu piwa? Oto popularne warszawskie lokale organizujące cykliczne Pub Quizy:</p>
+          <p>Szukasz rywalizacji na żywo ze znajomymi przy kuflu piwa? Wybierz dzień tygodnia i sprawdź harmonogram:</p>
         </div>
+
+        <!-- Day Filter Chips -->
+        <div class="quiz-day-filter" id="quiz-day-filter">
+          <button type="button" class="quiz-day-chip active" data-day="all">Wszystkie</button>
+          <button type="button" class="quiz-day-chip" data-day="today">🔥 Dziś</button>
+          <button type="button" class="quiz-day-chip" data-day="1">Pon</button>
+          <button type="button" class="quiz-day-chip" data-day="2">Wt</button>
+          <button type="button" class="quiz-day-chip" data-day="3">Śr</button>
+          <button type="button" class="quiz-day-chip" data-day="4">Czw</button>
+          <button type="button" class="quiz-day-chip" data-day="5">Pt</button>
+          <button type="button" class="quiz-day-chip" data-day="6">Sob</button>
+          <button type="button" class="quiz-day-chip" data-day="0">Ndz</button>
+        </div>
+
         <div class="pubquiz-venues-list" id="pubquiz-venues-cards">
           <!-- Dynamic venue cards -->
         </div>
@@ -1896,10 +1914,14 @@
 
       <div class="pubprof-actions">
         <button type="button" class="btn-primary" id="btn-pubprof-follow-toggle">
-          <span>➕ Obserwuj znajomego</span>
+          <span>➕ Obserwuj</span>
+        </button>
+        <button type="button" class="btn-pubprof-toast" id="btn-pubprof-toast" title="Wznieś wirtualny toast z tym użytkownikiem!">
+          <span class="btn-hero-action-icon">🍻</span>
+          <span>Na zdrowie!</span>
         </button>
         <button type="button" class="btn-secondary" id="btn-pubprof-share">
-          <span>📤 Udostępnij profil</span>
+          <span>📤 Udostępnij</span>
         </button>
       </div>
 
@@ -1927,6 +1949,56 @@
       <button type="button" class="lightbox-close" id="btn-close-lightbox">✕</button>
       <img id="lightbox-img" src="" alt="Zdjęcie menu / paragonu" />
       <div id="lightbox-caption" class="lightbox-caption"></div>
+    </div>
+  </div>
+
+  <!-- Cheers / Toast Clinking Overlay -->
+  <div id="cheers-animation-overlay" class="cheers-overlay" style="display:none;">
+    <div class="cheers-backdrop-dim"></div>
+    <div class="cheers-content">
+      <div class="cheers-clink-stage">
+        <div class="cheers-mug cheers-left">🍺</div>
+        <div class="cheers-spark">💥</div>
+        <div class="cheers-mug cheers-right">🍻</div>
+      </div>
+      <div class="cheers-toast-banner" id="cheers-toast-banner">Na zdrowie! 🍻</div>
+    </div>
+  </div>
+
+  <!-- Modal: Instagram Story Card Preview -->
+  <div class="modal-backdrop" id="story-card-modal" style="display:none; z-index: 10200;">
+    <div class="modal-card modal-card-story">
+      <div class="modal-head">
+        <div class="modal-head-title">
+          <div class="modal-icon-badge">📸</div>
+          <div>
+            <h2>Karta na Instagram Story</h2>
+            <p class="modal-head-sub">Pionowy format 9:16 (1080×1920) gotowy na Twoją relację</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close" id="btn-close-story-modal" aria-label="Zamknij podgląd Story">✕</button>
+      </div>
+
+      <div class="story-preview-container">
+        <!-- Offscreen Canvas for crisp 1080x1920 generation -->
+        <canvas id="story-canvas" width="1080" height="1920" style="display:none;"></canvas>
+        <div class="story-img-wrapper" id="story-img-wrapper">
+          <img id="story-preview-img" class="story-preview-img" alt="Generowanie Twojej karty..." />
+          <div class="story-loading-spinner" id="story-loading-spinner">
+            <span class="story-spinner-icon">🍺</span>
+            <span>Rysowanie karty 9:16...</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="story-actions-bar">
+        <button type="button" class="btn-primary btn-story-download" id="btn-story-download">
+          <span>📥 Pobierz grafikę (PNG)</span>
+        </button>
+        <button type="button" class="btn-secondary btn-story-share" id="btn-story-share">
+          <span>📤 Udostępnij</span>
+        </button>
+      </div>
     </div>
   </div>
 

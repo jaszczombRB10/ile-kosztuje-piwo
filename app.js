@@ -4717,6 +4717,7 @@
     initCommunityModal();
     initPublicProfileModal();
     initPubQuizModal();
+    initStoryCardModal();
 
     // Deep linking: listen to URL hash changes
     window.addEventListener("hashchange", checkUrlHash);
@@ -5758,6 +5759,16 @@
       });
     }
 
+    // Story Card Button (in hero bar) — opens Instagram Story card modal
+    const btnOpenStoryCard = document.getElementById("btn-open-story-card");
+    if (btnOpenStoryCard) {
+      btnOpenStoryCard.addEventListener("click", () => {
+        if (window.__openStoryCardModal) {
+          window.__openStoryCardModal();
+        }
+      });
+    }
+
     // Edit Profile Modal functions
     window.__openEditProfileModal = function () {
       if (!currentProfile) return;
@@ -6031,6 +6042,9 @@
                   ${priceFormatted ? `<strong class="feed-price">${priceFormatted}</strong>` : ""}
                   ${item.district ? `<span class="feed-district">(${escapeHtml(item.district)})</span>` : ""}
                 </div>
+                <button type="button" class="btn-feed-cheers" onclick="window.__triggerCheers('Wzniesiono toast za piwną Warszawę! 🍻'); event.stopPropagation();" title="Stuknij się kuflem!">
+                  <span>🍻 Na zdrowie!</span>
+                </button>
               </div>
             </div>
           `;
@@ -6383,6 +6397,16 @@
       });
     }
 
+    const btnToast = document.getElementById("btn-pubprof-toast");
+    if (btnToast) {
+      btnToast.addEventListener("click", () => {
+        if (!currentViewedProfile) return;
+        const targetNick = `@${currentViewedProfile.username}`;
+        triggerCheersAnimation(`Wzniesiono toast z ${targetNick}! Na zdrowie! 🍻`);
+        showAppToast("Wirtualny Toast!", `Stuknąłeś się kuflem z ${targetNick} 🍻`, "🍻");
+      });
+    }
+
     if (btnShare) {
       btnShare.addEventListener("click", () => {
         if (!currentViewedProfile) return;
@@ -6399,6 +6423,56 @@
       });
     }
   }
+
+  // Audio & Animation Helper for Virtual Cheers ("Stuknij się kuflem")
+  function playClinkSound() {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(1480, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(1050, ctx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.28, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.32);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.33);
+    } catch (e) {}
+  }
+
+  function triggerCheersAnimation(message = "Na zdrowie! 🍻") {
+    const overlay = document.getElementById("cheers-animation-overlay");
+    const banner = document.getElementById("cheers-toast-banner");
+    if (!overlay) return;
+
+    if (banner) banner.textContent = message;
+    overlay.style.display = "flex";
+
+    // Trigger audio clink + subtle vibration
+    playClinkSound();
+    if (navigator.vibrate) {
+      try { navigator.vibrate([40, 50, 60]); } catch (e) {}
+    }
+
+    // Reset animations
+    const left = overlay.querySelector(".cheers-left");
+    const right = overlay.querySelector(".cheers-right");
+    const spark = overlay.querySelector(".cheers-spark");
+    if (left) { left.style.animation = "none"; void left.offsetWidth; left.style.animation = ""; }
+    if (right) { right.style.animation = "none"; void right.offsetWidth; right.style.animation = ""; }
+    if (spark) { spark.style.animation = "none"; void spark.offsetWidth; spark.style.animation = ""; }
+    if (banner) { banner.style.animation = "none"; void banner.offsetWidth; banner.style.animation = ""; }
+
+    clearTimeout(window.__cheersTimer);
+    window.__cheersTimer = setTimeout(() => {
+      overlay.style.display = "none";
+    }, 1850);
+  }
+  window.__triggerCheers = triggerCheersAnimation;
 
   function initPubQuizModal() {
     const modal = document.getElementById("pubquiz-modal");
@@ -6735,6 +6809,7 @@
       {
         name: "Drugie Dno Craft Beer Camp",
         day: "Poniedziałki & Środy 19:30",
+        days: [1, 3],
         address: "Nowogrodzka 4, Śródmieście",
         desc: "Jeden z najpopularniejszych Pub Quizów w Warszawie! Dziesiątki kranów kraftowych, energiczna rywalizacja drużynowa i nagrody.",
         venueId: "srodmiescie-drugie-dno",
@@ -6742,17 +6817,9 @@
         lng: 21.0182
       },
       {
-        name: "Beer Station Centrum",
-        day: "Czwartki 20:00",
-        address: "Lwowska 17, Śródmieście Południowe",
-        desc: "Quizy tematyczne: filmowe, muzyczne i wiedzy ogólnej. Doskonała selekcja piw i przyjazny, pubowy klimat.",
-        venueId: "srodmiescie-beer-station",
-        lat: 52.2223,
-        lng: 21.0125
-      },
-      {
         name: "Shamrock Irish Pub",
         day: "Wtorki 20:00",
+        days: [2],
         address: "Zgoda 5, Śródmieście",
         desc: "Prawdziwy wyspiarski pub z tradycyjnym Pub Quizem, świeżym Guinnessem i biesiadną atmosferą.",
         venueId: "srodmiescie-shamrock",
@@ -6762,6 +6829,7 @@
       {
         name: "Hoppiness Beer & Food",
         day: "Środy 19:00",
+        days: [3],
         address: "Chmielna 24, Śródmieście",
         desc: "Świetna lokalizacja w centrum, wyśmienite burgery, autorskie krafty i zacięta walka o puchar wiedzy.",
         venueId: "srodmiescie-hoppiness",
@@ -6769,8 +6837,39 @@
         lng: 21.0152
       },
       {
+        name: "Beer Station Centrum",
+        day: "Czwartki 20:00",
+        days: [4],
+        address: "Lwowska 17, Śródmieście Południowe",
+        desc: "Quizy tematyczne: filmowe, muzyczne i wiedzy ogólnej. Doskonała selekcja piw i przyjazny, pubowy klimat.",
+        venueId: "srodmiescie-beer-station",
+        lat: 52.2223,
+        lng: 21.0125
+      },
+      {
+        name: "Jabeerwocky Craft Beer Pub",
+        day: "Piątki 20:00 (cykliczny pub quiz)",
+        days: [5],
+        address: "Nowogrodzka 12, Śródmieście",
+        desc: "Klimatyczny craft bar z 17 kranami, piwne pojedynki drużynowe i doskonała selekcja polskich browarów.",
+        venueId: "srodmiescie-jabeerwocky",
+        lat: 52.2291,
+        lng: 21.0165
+      },
+      {
+        name: "Same Krafty (Stare Miasto)",
+        day: "Soboty 18:00 (edycje tematyczne)",
+        days: [6],
+        address: "Nowomiejska 10, Stare Miasto",
+        desc: "Turnieje wiedzy o piwie, historii Warszawy i popkulturze tuż przy Rynku Starego Miasta.",
+        venueId: "srodmiescie-same-krafty",
+        lat: 52.2505,
+        lng: 21.0099
+      },
+      {
         name: "Kufle i Kapsle",
         day: "Niedziele 18:30",
+        days: [0],
         address: "Nowogrodzka 25, Śródmieście Południowe",
         desc: "Pionierzy polskiego kraftu. Cykliczne pub quizy dla koneserów piwa, sensoryki i ciekawostek o stylach.",
         venueId: "srodmiescie-kufle-i-kapsle",
@@ -6781,6 +6880,7 @@
 
     // State
     let selectedCategory = "all";
+    let selectedQuizDay = "all";
     let activeQuestions = [];
     let currentQuestionIdx = 0;
     let currentScore = 0;
@@ -6813,23 +6913,60 @@
     if (tabBtnGame) tabBtnGame.addEventListener("click", () => switchQuizTab("game"));
     if (tabBtnVenues) tabBtnVenues.addEventListener("click", () => switchQuizTab("venues"));
 
+    // Day filter chips setup
+    const quizDayChips = document.querySelectorAll(".quiz-day-chip");
+    quizDayChips.forEach(chip => {
+      chip.addEventListener("click", () => {
+        quizDayChips.forEach(c => c.classList.remove("active"));
+        chip.classList.add("active");
+        selectedQuizDay = chip.getAttribute("data-day") || "all";
+        renderLiveVenues();
+      });
+    });
+
     function renderLiveVenues() {
       if (!venuesContainer) return;
-      venuesContainer.innerHTML = LIVE_QUIZ_VENUES.map(v => `
-        <div class="pubquiz-venue-card">
-          <div class="venue-card-head">
-            <span class="venue-card-title">${escapeHtml(v.name)}</span>
-            <span class="venue-day-badge">${escapeHtml(v.day)}</span>
+      const todayDay = new Date().getDay(); // 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
+
+      let filtered = LIVE_QUIZ_VENUES;
+      if (selectedQuizDay === "today") {
+        filtered = LIVE_QUIZ_VENUES.filter(v => v.days && v.days.includes(todayDay));
+      } else if (selectedQuizDay !== "all") {
+        const targetDay = parseInt(selectedQuizDay, 10);
+        filtered = LIVE_QUIZ_VENUES.filter(v => v.days && v.days.includes(targetDay));
+      }
+
+      if (filtered.length === 0) {
+        venuesContainer.innerHTML = `
+          <div class="empty-state-hint" style="padding: 28px 14px; text-align: center;">
+            <div style="font-size: 2.2rem; margin-bottom: 8px;">🍻📅</div>
+            <strong>Brak zaplanowanych quizów w ten dzień tygodnia</strong>
+            <p style="color: #94a3b8; font-size: 0.78rem; margin-top: 4px;">
+              Sprawdź inny dzień lub kliknij „Wszystkie”, aby zobaczyć pełen harmonogram Warszawy!
+            </p>
           </div>
-          <div class="venue-card-details">
-            <span>📍 ${escapeHtml(v.address)}</span>
-            <span>🍺 ${escapeHtml(v.desc)}</span>
+        `;
+        return;
+      }
+
+      venuesContainer.innerHTML = filtered.map(v => {
+        const isToday = v.days && v.days.includes(todayDay);
+        return `
+          <div class="pubquiz-venue-card">
+            <div class="venue-card-head">
+              <span class="venue-card-title">${escapeHtml(v.name)}</span>
+              <span class="venue-day-badge">${isToday ? "🔥 Dziś! " : ""}${escapeHtml(v.day)}</span>
+            </div>
+            <div class="venue-card-details">
+              <span>📍 ${escapeHtml(v.address)}</span>
+              <span>🍺 ${escapeHtml(v.desc)}</span>
+            </div>
+            <button type="button" class="btn-venue-show-map" data-lat="${v.lat}" data-lng="${v.lng}" data-name="${escapeHtml(v.name)}">
+              📍 Pokaż na mapie
+            </button>
           </div>
-          <button type="button" class="btn-venue-show-map" data-lat="${v.lat}" data-lng="${v.lng}" data-name="${escapeHtml(v.name)}">
-            📍 Pokaż na mapie
-          </button>
-        </div>
-      `).join("");
+        `;
+      }).join("");
 
       venuesContainer.querySelectorAll(".btn-venue-show-map").forEach(btn => {
         btn.addEventListener("click", () => {
@@ -7070,6 +7207,405 @@
     }
 
     updateHighscoreDisplay();
+  }
+
+  // ==========================================================================
+  // Instagram Story Card Generator (Canvas 1080x1920 / 9:16)
+  // ==========================================================================
+  function initStoryCardModal() {
+    const modal = document.getElementById("story-card-modal");
+    const btnClose = document.getElementById("btn-close-story-modal");
+    const canvas = document.getElementById("story-canvas");
+    const previewImg = document.getElementById("story-preview-img");
+    const spinner = document.getElementById("story-loading-spinner");
+    const btnDownload = document.getElementById("btn-story-download");
+    const btnShare = document.getElementById("btn-story-share");
+
+    let currentBlob = null;
+    let currentDataUrl = null;
+
+    function drawRoundedRect(ctx, x, y, width, height, radius) {
+      if (ctx.roundRect) {
+        ctx.roundRect(x, y, width, height, radius);
+      } else {
+        ctx.beginPath();
+        ctx.moveTo(x + radius, y);
+        ctx.lineTo(x + width - radius, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+        ctx.lineTo(x + width, y + height - radius);
+        ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+        ctx.lineTo(x + radius, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+        ctx.lineTo(x, y + radius);
+        ctx.quadraticCurveTo(x, y, x + radius, y);
+        ctx.closePath();
+      }
+    }
+
+    function generateStoryCard() {
+      if (!canvas || !currentProfile) return;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      const W = 1080;
+      const H = 1920;
+      canvas.width = W;
+      canvas.height = H;
+
+      // 1. Dark Beer Pub Gradient Background
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+      bgGrad.addColorStop(0, "#141522");
+      bgGrad.addColorStop(0.35, "#0a0b10");
+      bgGrad.addColorStop(0.7, "#1c1106");
+      bgGrad.addColorStop(1, "#07080c");
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, W, H);
+
+      // Radial Golden Ambient Glow in upper area
+      const radialGlow = ctx.createRadialGradient(W / 2, 490, 40, W / 2, 490, 500);
+      radialGlow.addColorStop(0, "rgba(245, 158, 11, 0.28)");
+      radialGlow.addColorStop(0.5, "rgba(217, 119, 6, 0.1)");
+      radialGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
+      ctx.fillStyle = radialGlow;
+      ctx.fillRect(0, 0, W, H);
+
+      // Subtle golden floating bubbles / sparkles
+      const bubbles = [
+        { x: 130, y: 310, r: 16, a: 0.16 },
+        { x: 930, y: 270, r: 22, a: 0.13 },
+        { x: 210, y: 820, r: 12, a: 0.18 },
+        { x: 870, y: 770, r: 15, a: 0.15 },
+        { x: 160, y: 1370, r: 18, a: 0.12 },
+        { x: 920, y: 1410, r: 20, a: 0.14 },
+        { x: 540, y: 210, r: 7, a: 0.22 }
+      ];
+      bubbles.forEach(b => {
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(245, 158, 11, ${b.a})`;
+        ctx.fill();
+      });
+
+      // Outer Decorative Border Frame
+      ctx.save();
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+      ctx.lineWidth = 2;
+      drawRoundedRect(ctx, 45, 45, W - 90, H - 90, 44);
+      ctx.stroke();
+
+      // Golden Corner accents
+      ctx.strokeStyle = "#f59e0b";
+      ctx.lineWidth = 4;
+      // Top left
+      ctx.beginPath();
+      ctx.moveTo(45, 95); ctx.lineTo(45, 65); ctx.arcTo(45, 45, 65, 45, 20); ctx.lineTo(95, 45);
+      ctx.stroke();
+      // Top right
+      ctx.beginPath();
+      ctx.moveTo(W - 95, 45); ctx.lineTo(W - 65, 45); ctx.arcTo(W - 45, 45, W - 45, 65, 20); ctx.lineTo(W - 45, 95);
+      ctx.stroke();
+      // Bottom left
+      ctx.beginPath();
+      ctx.moveTo(45, H - 95); ctx.lineTo(45, H - 65); ctx.arcTo(45, H - 45, 65, H - 45, 20); ctx.lineTo(95, H - 45);
+      ctx.stroke();
+      // Bottom right
+      ctx.beginPath();
+      ctx.moveTo(W - 95, H - 45); ctx.lineTo(W - 65, H - 45); ctx.arcTo(W - 45, H - 45, W - 45, H - 65, 20); ctx.lineTo(W - 45, H - 95);
+      ctx.stroke();
+      ctx.restore();
+
+      // 2. Header Brand & Subtitle
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+
+      // POILEPIWKO.PL logo
+      ctx.font = "900 48px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+      ctx.fillStyle = "#fbbf24";
+      ctx.shadowColor = "rgba(245, 158, 11, 0.6)";
+      ctx.shadowBlur = 18;
+      ctx.fillText("🍻 POILEPIWKO.PL", W / 2, 130);
+      ctx.shadowBlur = 0;
+
+      // Subtitle
+      ctx.font = "700 24px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+      ctx.fillStyle = "#94a3b8";
+      ctx.fillText("WARSZAWSKI PASZPORT PIWNY", W / 2, 185);
+
+      // User Number Pill (e.g. #000042)
+      const userNum = currentProfile.user_number || "#000001";
+      const pillW = 200;
+      const pillH = 46;
+      ctx.fillStyle = "rgba(245, 158, 11, 0.16)";
+      ctx.strokeStyle = "rgba(245, 158, 11, 0.4)";
+      ctx.lineWidth = 1.5;
+      drawRoundedRect(ctx, W / 2 - pillW / 2, 225, pillW, pillH, 999);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.font = "700 24px monospace";
+      ctx.fillStyle = "#fef08a";
+      ctx.fillText(userNum, W / 2, 248);
+
+      // 3. Avatar Badge Circle
+      const avatarY = 460;
+      const avatarR = 115;
+
+      // Outer glow circle
+      ctx.save();
+      ctx.shadowColor = "rgba(245, 158, 11, 0.5)";
+      ctx.shadowBlur = 30;
+      ctx.beginPath();
+      ctx.arc(W / 2, avatarY, avatarR + 6, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(245, 158, 11, 0.25)";
+      ctx.fill();
+      ctx.restore();
+
+      // Avatar background
+      ctx.beginPath();
+      ctx.arc(W / 2, avatarY, avatarR, 0, Math.PI * 2);
+      ctx.fillStyle = "#1e2233";
+      ctx.fill();
+      ctx.strokeStyle = "#f59e0b";
+      ctx.lineWidth = 5;
+      ctx.stroke();
+
+      // Avatar Emoji
+      ctx.font = "120px apple color emoji, segoe ui emoji, sans-serif";
+      ctx.fillText(currentProfile.avatar_icon || "🍺", W / 2, avatarY + 12);
+
+      // 4. Display Name & Username
+      const displayName = currentProfile.display_name || currentProfile.username;
+      ctx.font = "900 56px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText(displayName, W / 2, 640);
+
+      ctx.font = "700 34px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+      ctx.fillStyle = "#60a5fa";
+      ctx.fillText(`@${currentProfile.username}`, W / 2, 705);
+
+      // 5. Rank Title Pill (e.g. 🏆 Koneser Kraftu)
+      const rank = calculateUserRank(visitedVenues.length);
+      const rankText = `🏆 ${rank.title}`;
+      ctx.font = "800 32px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+      const rankW = ctx.measureText(rankText).width + 60;
+      const rankH = 54;
+      ctx.fillStyle = "rgba(245, 158, 11, 0.22)";
+      ctx.strokeStyle = "rgba(245, 158, 11, 0.55)";
+      ctx.lineWidth = 2;
+      drawRoundedRect(ctx, W / 2 - rankW / 2, 755, rankW, rankH, 999);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#fde68a";
+      ctx.fillText(rankText, W / 2, 782);
+
+      // 6. Stats Glass Card (3 Columns: Odwiedzone, Odznaki, Ulubione)
+      const statsX = 85;
+      const statsY = 850;
+      const statsW = W - 170;
+      const statsH = 210;
+
+      ctx.fillStyle = "rgba(255, 255, 255, 0.05)";
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.14)";
+      ctx.lineWidth = 1.5;
+      drawRoundedRect(ctx, statsX, statsY, statsW, statsH, 26);
+      ctx.fill();
+      ctx.stroke();
+
+      const colW = statsW / 3;
+      const statItems = [
+        { icon: "🍺", num: visitedVenues.length, label: "ODWIEDZONE" },
+        { icon: "🎖️", num: loadUnlockedBadges().length, label: "ODZNAKI" },
+        { icon: "❤️", num: favoriteVenues.length, label: "ULUBIONE" }
+      ];
+
+      statItems.forEach((st, idx) => {
+        const cx = statsX + colW * idx + colW / 2;
+        // Icon
+        ctx.font = "38px apple color emoji, segoe ui emoji, sans-serif";
+        ctx.fillText(st.icon, cx, statsY + 55);
+
+        // Number
+        ctx.font = "900 52px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+        ctx.fillStyle = "#ffffff";
+        ctx.fillText(String(st.num), cx, statsY + 115);
+
+        // Label
+        ctx.font = "700 20px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+        ctx.fillStyle = "#94a3b8";
+        ctx.fillText(st.label, cx, statsY + 165);
+
+        // Divider
+        if (idx < 2) {
+          ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
+          ctx.beginPath();
+          ctx.moveTo(statsX + colW * (idx + 1), statsY + 35);
+          ctx.lineTo(statsX + colW * (idx + 1), statsY + statsH - 35);
+          ctx.stroke();
+        }
+      });
+
+      // 7. Bio & Favorites Glass Card
+      const bioX = 85;
+      const bioY = 1100;
+      const bioW = W - 170;
+      const bioH = 260;
+
+      ctx.fillStyle = "rgba(255, 255, 255, 0.035)";
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+      ctx.lineWidth = 1.5;
+      drawRoundedRect(ctx, bioX, bioY, bioW, bioH, 26);
+      ctx.fill();
+      ctx.stroke();
+
+      // Bio text
+      const userBio = currentProfile.bio || "Warszawski poszukiwacz dobrego i taniego piwa 🍻";
+      ctx.font = "italic 30px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+      ctx.fillStyle = "#cbd5e1";
+      const displayBio = userBio.length > 55 ? userBio.slice(0, 52) + "..." : userBio;
+      ctx.fillText(`“${displayBio}”`, W / 2, bioY + 65);
+
+      // Meta Pills: Rewir & Ulubione piwo
+      const rewir = `📍 Rewir: ${currentProfile.favorite_district || "Cała Warszawa"}`;
+      const piwo = `🍺 Piwo: ${currentProfile.favorite_beer || "Wszystkie dobre!"}`;
+
+      const pill1W = bioW - 60;
+      ctx.fillStyle = "rgba(255, 255, 255, 0.06)";
+      drawRoundedRect(ctx, bioX + 30, bioY + 115, pill1W, 52, 14);
+      ctx.fill();
+      ctx.font = "700 26px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+      ctx.fillStyle = "#38bdf8";
+      ctx.fillText(rewir, W / 2, bioY + 141);
+
+      ctx.fillStyle = "rgba(255, 255, 255, 0.06)";
+      drawRoundedRect(ctx, bioX + 30, bioY + 180, pill1W, 52, 14);
+      ctx.fill();
+      ctx.fillStyle = "#fbbf24";
+      ctx.fillText(piwo, W / 2, bioY + 206);
+
+      // 8. Achievements Row
+      const achY = 1400;
+      const achW = W - 170;
+      const achH = 180;
+      ctx.fillStyle = "rgba(255, 255, 255, 0.035)";
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+      drawRoundedRect(ctx, 85, achY, achW, achH, 26);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.font = "700 22px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+      ctx.fillStyle = "#94a3b8";
+      ctx.fillText("ZDOBYTE ODZNAKI PASZPORTU", W / 2, achY + 45);
+
+      const unlockedBadges = loadUnlockedBadges();
+      const badgeList = PASSPORT_BADGES.filter(b => unlockedBadges.includes(b.id));
+      const iconsToShow = badgeList.length > 0 ? badgeList.map(b => b.icon) : ["🍺", "🗺️", "👑", "🦉", "🧠"];
+      const displayIcons = iconsToShow.slice(0, 5);
+
+      const iconSpacing = achW / (displayIcons.length + 1);
+      displayIcons.forEach((ico, idx) => {
+        const ix = 85 + iconSpacing * (idx + 1);
+        ctx.font = "46px apple color emoji, segoe ui emoji, sans-serif";
+        ctx.fillText(ico, ix, achY + 115);
+      });
+
+      // 9. Footer Call-to-action & Profile Link
+      const footY = 1630;
+      ctx.font = "700 24px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+      ctx.fillStyle = "#94a3b8";
+      ctx.fillText("SPRAWDŹ MÓJ PROFIL & ZNAJDŹ NAJTAŃSZE PIWO:", W / 2, footY);
+
+      // Golden link pill
+      const linkText = `poilepiwko.pl/#@${currentProfile.username}`;
+      ctx.font = "800 32px monospace";
+      const linkW = ctx.measureText(linkText).width + 60;
+      const linkH = 64;
+      ctx.fillStyle = "rgba(245, 158, 11, 0.2)";
+      ctx.strokeStyle = "#f59e0b";
+      ctx.lineWidth = 2;
+      drawRoundedRect(ctx, W / 2 - linkW / 2, footY + 28, linkW, linkH, 999);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#fbbf24";
+      ctx.fillText(linkText, W / 2, footY + 60);
+
+      // Bottom tagline
+      ctx.font = "600 22px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+      ctx.fillStyle = "#64748b";
+      ctx.fillText("Puls cen piwa • Warszawski Pub Crawl • Pub Quizy", W / 2, 1780);
+
+      // Convert to blob and dataURL for preview
+      currentDataUrl = canvas.toDataURL("image/png");
+      if (previewImg) previewImg.src = currentDataUrl;
+      if (spinner) spinner.style.display = "none";
+
+      canvas.toBlob(blob => {
+        currentBlob = blob;
+      }, "image/png");
+    }
+
+    window.__openStoryCardModal = function () {
+      if (!currentProfile) {
+        showAppToast("Profil", "Zaloguj się, aby wygenerować kartę Story!", "⚠️");
+        return;
+      }
+      if (modal) {
+        modal.classList.add("active");
+        modal.style.display = "flex";
+      }
+      if (spinner) spinner.style.display = "flex";
+      setTimeout(generateStoryCard, 60);
+    };
+
+    window.__closeStoryCardModal = function () {
+      if (modal) {
+        modal.classList.remove("active");
+        modal.style.display = "none";
+      }
+    };
+
+    if (btnClose) btnClose.addEventListener("click", window.__closeStoryCardModal);
+    if (modal) {
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) window.__closeStoryCardModal();
+      });
+    }
+
+    if (btnDownload) {
+      btnDownload.addEventListener("click", () => {
+        if (!currentDataUrl) return;
+        const a = document.createElement("a");
+        a.href = currentDataUrl;
+        a.download = `poilepiwko-story-${currentProfile?.username || "profil"}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        showAppToast("Pobrano!", "Karta na Story zapisana w pobranych plikach 📸", "📥");
+      });
+    }
+
+    if (btnShare) {
+      btnShare.addEventListener("click", async () => {
+        if (!currentBlob && !currentDataUrl) return;
+        try {
+          if (navigator.canShare && currentBlob) {
+            const file = new File([currentBlob], `poilepiwko-story-${currentProfile?.username || "profil"}.png`, { type: "image/png" });
+            if (navigator.canShare({ files: [file] })) {
+              await navigator.share({
+                title: `${currentProfile?.display_name || currentProfile?.username} na poilepiwko`,
+                text: `Mój paszport piwny w Warszawie! 🍻 Sprawdź na poilepiwko.pl/#@${currentProfile?.username}`,
+                files: [file]
+              });
+              return;
+            }
+          }
+        } catch (e) {}
+
+        // Fallback: download
+        if (btnDownload) btnDownload.click();
+      });
+    }
   }
 
   const FALLBACK_VENUES = [

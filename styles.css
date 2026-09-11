@@ -5155,7 +5155,7 @@ header {
 /* Prominent Profile Quick Actions Bar (Top of Profile) */
 .profile-hero-actions-bar {
   display: grid;
-  grid-template-columns: 1fr 1.25fr 0.85fr;
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
   margin-top: 16px;
   width: 100%;
@@ -5199,6 +5199,19 @@ header {
   box-shadow: 0 6px 20px rgba(249, 115, 22, 0.6);
 }
 
+.btn-hero-action.btn-hero-story {
+  background: linear-gradient(135deg, #e11d48 0%, #c026d3 50%, #7c3aed 100%);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 4px 16px rgba(192, 38, 211, 0.4);
+}
+
+.btn-hero-action.btn-hero-story:hover {
+  background: linear-gradient(135deg, #f43f5e 0%, #d946ef 50%, #8b5cf6 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(192, 38, 211, 0.6);
+}
+
 .btn-hero-action.btn-hero-search {
   background: rgba(59, 130, 246, 0.22);
   color: #93c5fd;
@@ -5226,15 +5239,6 @@ header {
 
 .btn-hero-action:active {
   transform: scale(0.95);
-}
-
-@media (max-width: 360px) {
-  .profile-hero-actions-bar {
-    grid-template-columns: 1fr 1fr;
-  }
-  .btn-hero-action.btn-hero-edit {
-    grid-column: span 2;
-  }
 }
 
 /* Avatar Frame */
@@ -6040,8 +6044,45 @@ header {
 .pubquiz-venues-intro {
   font-size: 0.78rem;
   color: #94a3b8;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   line-height: 1.4;
+}
+
+.quiz-day-filter {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 4px 2px 10px 2px;
+  margin-bottom: 8px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.quiz-day-filter::-webkit-scrollbar {
+  display: none;
+}
+.quiz-day-chip {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #cbd5e1;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: inherit;
+}
+.quiz-day-chip:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+.quiz-day-chip.active {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  border-color: #fbbf24;
+  color: #ffffff;
+  box-shadow: 0 3px 10px rgba(245, 158, 11, 0.4);
 }
 
 .pubquiz-venues-list {
@@ -7265,4 +7306,254 @@ header {
 .btn-filter-apply:hover {
   filter: brightness(1.08);
   transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   Virtual Toast / Cheers ("Stuknij się kuflem")
+   ========================================================================== */
+.btn-pubprof-toast {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(251, 191, 36, 0.4) !important;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35) !important;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+.btn-pubprof-toast:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5) !important;
+}
+.btn-pubprof-toast:active {
+  transform: scale(0.96);
+}
+
+.btn-feed-cheers {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #f59e0b;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 8px;
+  font-family: inherit;
+}
+.btn-feed-cheers:hover {
+  background: rgba(245, 158, 11, 0.26);
+  color: #ffffff;
+  transform: scale(1.03);
+}
+
+.cheers-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.cheers-backdrop-dim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  animation: cheersDimFade 1.8s ease forwards;
+}
+
+.cheers-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.cheers-clink-stage {
+  position: relative;
+  width: 260px;
+  height: 130px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cheers-mug {
+  font-size: 4.8rem;
+  position: absolute;
+  filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.6));
+}
+
+.cheers-left {
+  left: 20px;
+  animation: cheersLeftClink 1.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.cheers-right {
+  right: 20px;
+  animation: cheersRightClink 1.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.cheers-spark {
+  font-size: 3rem;
+  position: absolute;
+  z-index: 3;
+  animation: cheersSparkPop 1.8s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+}
+
+.cheers-toast-banner {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border: 2px solid #f59e0b;
+  color: #fde68a;
+  padding: 12px 26px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 1.05rem;
+  box-shadow: 0 10px 30px rgba(245, 158, 11, 0.45), 0 4px 12px rgba(0, 0, 0, 0.6);
+  animation: cheersBannerSlide 1.8s ease forwards;
+  text-align: center;
+  max-width: 90vw;
+}
+
+@keyframes cheersLeftClink {
+  0% { transform: translateX(-60px) rotate(-35deg) scale(0.8); opacity: 0; }
+  25% { transform: translateX(-15px) rotate(-10deg) scale(1.1); opacity: 1; }
+  40% { transform: translateX(25px) rotate(18deg) scale(1.28); }
+  60% { transform: translateX(5px) rotate(0deg) scale(1.05); }
+  85% { transform: translateX(0) scale(1); opacity: 1; }
+  100% { transform: translateY(40px) scale(0.9); opacity: 0; }
+}
+
+@keyframes cheersRightClink {
+  0% { transform: translateX(60px) rotate(35deg) scale(0.8); opacity: 0; }
+  25% { transform: translateX(15px) rotate(10deg) scale(1.1); opacity: 1; }
+  40% { transform: translateX(-25px) rotate(-18deg) scale(1.28); }
+  60% { transform: translateX(-5px) rotate(0deg) scale(1.05); }
+  85% { transform: translateX(0) scale(1); opacity: 1; }
+  100% { transform: translateY(40px) scale(0.9); opacity: 0; }
+}
+
+@keyframes cheersSparkPop {
+  0%, 35% { transform: scale(0); opacity: 0; }
+  40% { transform: scale(1.7); opacity: 1; filter: drop-shadow(0 0 18px #f59e0b); }
+  65% { transform: scale(1.1); opacity: 0.8; }
+  85% { transform: scale(0.5); opacity: 0; }
+  100% { transform: scale(0); opacity: 0; }
+}
+
+@keyframes cheersBannerSlide {
+  0% { transform: translateY(20px) scale(0.9); opacity: 0; }
+  35% { transform: translateY(0) scale(1.04); opacity: 1; }
+  85% { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(-20px); opacity: 0; }
+}
+
+@keyframes cheersDimFade {
+  0% { opacity: 0; }
+  30% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ==========================================================================
+   Instagram Story Card Preview Modal
+   ========================================================================== */
+.modal-card-story {
+  max-width: 440px;
+  width: 92%;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 18px;
+  background: #0f1016;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85);
+  box-sizing: border-box;
+}
+
+.story-preview-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 12px 0;
+  overflow: hidden;
+  max-height: 60vh;
+}
+
+.story-img-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 310px;
+  aspect-ratio: 9 / 16;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.14);
+  background: #161722;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.story-preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.story-loading-spinner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: #11131b;
+  color: #94a3b8;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.story-spinner-icon {
+  font-size: 2.2rem;
+  animation: spinMug 1.5s infinite ease-in-out;
+}
+
+@keyframes spinMug {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(1.15); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+.story-actions-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  width: 100%;
+  margin-top: 6px;
+}
+
+.story-actions-bar button {
+  padding: 12px 8px;
+  font-size: 0.82rem;
 }
