@@ -6744,6 +6744,59 @@
       });
     }
 
+    // Interactive Stats Grid Handlers
+    const btnStatFriends = document.getElementById("prof-stat-btn-friends");
+    if (btnStatFriends) {
+      btnStatFriends.addEventListener("click", () => {
+        window.__closeMyProfile();
+        if (window.__openCommunity) window.__openCommunity();
+      });
+    }
+
+    const btnStatBadges = document.getElementById("prof-stat-btn-badges");
+    if (btnStatBadges) {
+      btnStatBadges.addEventListener("click", () => {
+        const achCard = document.getElementById("profile-achievements-card");
+        if (achWrapper && !achWrapper.classList.contains("expanded")) {
+          achWrapper.classList.add("expanded");
+          if (btnToggleAch) {
+            btnToggleAch.classList.add("active");
+            btnToggleAch.setAttribute("aria-expanded", "true");
+          }
+          if (achHint) achHint.textContent = "Zwiń";
+        }
+        if (achCard) {
+          achCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+      });
+    }
+
+    const btnStatFavs = document.getElementById("prof-stat-btn-favorites");
+    if (btnStatFavs) {
+      btnStatFavs.addEventListener("click", () => {
+        window.__closeMyProfile();
+        const favFilterBtn = document.querySelector('[data-filter="favorites"]');
+        if (favFilterBtn) {
+          favFilterBtn.click();
+        } else if (typeof showAppToast === "function") {
+          showAppToast("Twoje Ulubione ❤️", `Masz ${favoriteVenues.length} ulubionych lokali`, "⭐");
+        }
+      });
+    }
+
+    const btnStatVisited = document.getElementById("prof-stat-btn-visited");
+    if (btnStatVisited) {
+      btnStatVisited.addEventListener("click", () => {
+        window.__closeMyProfile();
+        const visitedFilterBtn = document.querySelector('[data-filter="visited"]');
+        if (visitedFilterBtn) {
+          visitedFilterBtn.click();
+        } else if (typeof showAppToast === "function") {
+          showAppToast("Odwiedzone bary 🍺", `Odwiedziłeś już ${visitedVenues.length} barów w Warszawie!`, "🍻");
+        }
+      });
+    }
+
     // Edit Profile Modal functions
     window.__openEditProfileModal = function () {
       if (!currentProfile) return;

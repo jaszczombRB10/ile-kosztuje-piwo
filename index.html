@@ -1681,47 +1681,51 @@
         </div>
       </div>
 
-      <!-- Unified Dark Glass Stats Grid (Replaces white card & loose pills) -->
+      <!-- Unified Dark Glass Stats Grid (Interactive) -->
       <div class="profile-stats-unified">
-        <div class="stat-unit">
+        <button type="button" class="stat-unit" id="prof-stat-btn-visited" title="Zobacz odwiedzone bary">
           <div class="stat-unit-icon">🍺</div>
           <div class="stat-unit-val" id="prof-stat-visited">0</div>
           <div class="stat-unit-lbl">Bary</div>
-        </div>
+        </button>
         <div class="stat-unit-sep"></div>
-        <div class="stat-unit">
+        <button type="button" class="stat-unit" id="prof-stat-btn-badges" title="Pokaż zdobyte odznaki">
           <div class="stat-unit-icon">🎖️</div>
           <div class="stat-unit-val" id="prof-stat-badges">0</div>
           <div class="stat-unit-lbl">Odznaki</div>
-        </div>
+        </button>
         <div class="stat-unit-sep"></div>
-        <div class="stat-unit">
+        <button type="button" class="stat-unit" id="prof-stat-btn-favorites" title="Pokaż ulubione lokale na mapie">
           <div class="stat-unit-icon">❤️</div>
           <div class="stat-unit-val" id="prof-stat-favorites">0</div>
           <div class="stat-unit-lbl">Ulubione</div>
-        </div>
+        </button>
         <div class="stat-unit-sep"></div>
-        <div class="stat-unit">
+        <button type="button" class="stat-unit" id="prof-stat-btn-friends" title="Przejdź do listy znajomych">
           <div class="stat-unit-icon">👥</div>
           <div class="stat-unit-val" id="prof-stat-friends">0</div>
           <div class="stat-unit-lbl">Znajomi</div>
-        </div>
+        </button>
       </div>
 
-      <!-- Compact Level Progress Card -->
-      <div class="profile-progress-card-clean">
-        <div class="progress-clean-head">
-          <span class="progress-clean-title" id="prof-progress-target">Następna ranga: Koneser Kraftu</span>
-          <span class="progress-clean-pct" id="prof-progress-percent">16%</span>
+      <!-- Unified Achievements & Rank Card (Pasek postępu + Odznaki w 1 zgrabnej karcie) -->
+      <div class="profile-achievements-unified-card" id="profile-achievements-card">
+        <!-- Postęp do następnej rangi -->
+        <div class="achievements-unified-top">
+          <div class="progress-clean-head">
+            <span class="progress-clean-title">
+              <span class="progress-clean-icon">🎯</span>
+              <span id="prof-progress-target">Następna ranga: Koneser Kraftu</span>
+            </span>
+            <span class="progress-clean-pct" id="prof-progress-percent">16%</span>
+          </div>
+          <div class="progress-clean-track">
+            <div class="progress-clean-fill" id="prof-progress-fill" style="width: 16%;"></div>
+          </div>
         </div>
-        <div class="progress-clean-track">
-          <div class="progress-clean-fill" id="prof-progress-fill" style="width: 16%;"></div>
-        </div>
-      </div>
 
-      <!-- Achievements Section (Collapsible Accordion) -->
-      <div class="profile-goin-achievements">
-        <button type="button" class="achievements-section-toggle" id="btn-toggle-achievements" aria-expanded="false">
+        <!-- Akordeon odznak -->
+        <button type="button" class="achievements-section-toggle" id="btn-toggle-achievements" aria-expanded="false" title="Rozwiń listę odznak">
           <div class="achievements-toggle-left">
             <span class="achievements-section-title">🎖️ Osiągnięcia & Paszport</span>
             <span class="achievements-count-badge" id="prof-achievements-count">0/8</span>
@@ -1743,35 +1747,18 @@
         <div class="comm-banner-left">
           <span class="comm-banner-icon">👥</span>
           <div class="comm-banner-text">
-            <span class="comm-banner-title">Piwni Znajomi</span>
+            <span class="comm-banner-title">Piwni Znajomi & Społeczność</span>
             <span class="comm-banner-sub">Szukaj znajomych i sprawdzaj ich profile</span>
           </div>
         </div>
         <span class="comm-banner-arrow">→</span>
       </button>
 
-      <!-- Legal & Terms Banner in Profile -->
-      <button type="button" class="profile-legal-banner btn-open-legal-terms" id="btn-profile-legal" title="Regulamin, zasady crowdsourcingu i ochrona twórcy">
-        <div class="comm-banner-left">
-          <span class="comm-banner-icon">📜</span>
-          <div class="comm-banner-text">
-            <span class="comm-banner-title">Regulamin & Crowdsourcing</span>
-            <span class="comm-banner-sub">Zasady społeczności, brak antyreklamy i ochrona twórcy</span>
-          </div>
-        </div>
-        <span class="comm-banner-arrow">→</span>
-      </button>
-
-      <!-- Appearance & Theme Selector Card (3 Tryby: Ciemny, Jasny, Auto) -->
-      <div class="profile-settings-card">
-        <div class="settings-card-header">
-          <div class="settings-card-title-wrap">
-            <span class="settings-card-icon">🌓</span>
-            <div>
-              <div class="settings-card-title">Wygląd aplikacji</div>
-              <div class="settings-card-sub">Ciemny na wieczór, jasny w pełnym słońcu</div>
-            </div>
-          </div>
+      <!-- Compact Appearance / Theme Selector Dock -->
+      <div class="profile-theme-compact-card">
+        <div class="theme-compact-label">
+          <span class="theme-compact-icon">🌓</span>
+          <span class="theme-compact-text">Motyw</span>
         </div>
         <div class="theme-segmented-dock" role="radiogroup" aria-label="Wybór motywu">
           <button type="button" class="theme-pill-btn active" id="theme-btn-dark" data-theme="dark" role="radio" aria-checked="true" title="Tryb ciemny (domyślny klimat nocny)">
@@ -1789,10 +1776,14 @@
         </div>
       </div>
 
-      <!-- Minimal Tasteful Logout Link -->
-      <div class="profile-logout-wrap">
-        <button type="button" class="btn-logout-clean" id="btn-logout">
-          <span>🚪 Wyloguj się</span>
+      <!-- Subtle, Minimalist Profile Footer (Regulamin & Wyloguj się) -->
+      <div class="profile-footer-clean">
+        <button type="button" class="profile-footer-link btn-open-legal-terms" id="btn-profile-legal" title="Regulamin serwisu, crowdsourcing i ochrona twórcy">
+          📜 Regulamin & Crowdsourcing
+        </button>
+        <span class="profile-footer-dot" aria-hidden="true">·</span>
+        <button type="button" class="profile-footer-link profile-footer-logout" id="btn-logout" title="Wyloguj się z konta">
+          Wyloguj się
         </button>
       </div>
 
