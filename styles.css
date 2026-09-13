@@ -2153,17 +2153,17 @@ header {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   padding: 0;
   border-radius: 8px;
-  background: rgba(14, 23, 21, 0.92);
+  background: rgba(15, 23, 42, 0.92);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  color: #fff;
+  border: 1.5px solid rgba(56, 189, 248, 0.45);
+  color: #38bdf8;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 10px rgba(56, 189, 248, 0.2);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -2172,18 +2172,144 @@ header {
 }
 
 .fab-locate-float .locate-icon {
-  font-size: 17px;
-  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  color: inherit;
+}
+
+.fab-locate-float .locate-crosshair-svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+  transition: transform 0.25s ease;
 }
 
 .fab-locate-float:hover {
-  background: rgba(255, 255, 255, 0.14);
-  border-color: var(--primary);
+  background: rgba(14, 45, 75, 0.94);
+  border-color: #38bdf8;
+  color: #7dd3fc;
+  box-shadow: 0 0 18px rgba(56, 189, 248, 0.55);
   transform: scale(1.06);
 }
 
 .fab-locate-float:active {
-  transform: scale(0.95);
+  transform: scale(0.94);
+}
+
+.fab-locate-float.active {
+  background: rgba(14, 45, 75, 0.95);
+  border-color: #38bdf8;
+  color: #38bdf8;
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.65), 0 4px 14px rgba(0, 0, 0, 0.6);
+}
+
+.fab-locate-float.locating .locate-crosshair-svg {
+  animation: gpsLocatingSpin 1.1s infinite linear;
+}
+
+@keyframes gpsLocatingSpin {
+  0% { transform: rotate(0deg) scale(0.92); }
+  50% { transform: rotate(180deg) scale(1.08); }
+  100% { transform: rotate(360deg) scale(0.92); }
+}
+
+/* User Location Pulsing Blue Marker (Leaflet DivIcon) */
+.custom-user-gps-icon {
+  background: transparent !important;
+  border: none !important;
+}
+
+.user-gps-pulse-marker {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+.user-gps-core {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #3b82f6;
+  border: 2.5px solid #ffffff;
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.9), 0 2px 6px rgba(0, 0, 0, 0.6);
+  position: relative;
+  z-index: 2;
+  transition: transform 0.2s ease;
+}
+
+.user-gps-pulse-marker:hover .user-gps-core {
+  transform: scale(1.25);
+}
+
+.user-gps-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(59, 130, 246, 0.4);
+  animation: gpsSonarWave 2s infinite cubic-bezier(0.215, 0.61, 0.355, 1);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.user-gps-pulse-marker.simulated .user-gps-core {
+  background: #f97316;
+  box-shadow: 0 0 12px rgba(249, 115, 22, 0.9), 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+.user-gps-pulse-marker.simulated .user-gps-ring {
+  background: rgba(249, 115, 22, 0.4);
+}
+
+@keyframes gpsSonarWave {
+  0% {
+    transform: scale(0.5);
+    opacity: 0.95;
+  }
+  70% {
+    transform: scale(1.8);
+    opacity: 0.18;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+/* Map Toast Notification Banner */
+.map-toast {
+  position: fixed;
+  top: 76px;
+  left: 50%;
+  transform: translateX(-50%) translateY(0);
+  z-index: 1200;
+  background: rgba(15, 23, 42, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  color: #f8fafc;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 8px 18px;
+  border-radius: 9999px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 12px rgba(56, 189, 248, 0.25);
+  pointer-events: none;
+  max-width: 90vw;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0;
+  transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Desktop Dark Leaflet Zoom Controls */
@@ -2512,11 +2638,12 @@ header,
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    background: rgba(14, 23, 21, 0.88) !important;
+    background: rgba(15, 23, 42, 0.92) !important;
     backdrop-filter: blur(20px) saturate(180%) !important;
     -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-    border: 2px solid #f97316 !important;
-    box-shadow: 0 0 16px rgba(249, 115, 22, 0.4), 0 4px 16px rgba(0, 0, 0, 0.65) !important;
+    border: 2px solid #38bdf8 !important;
+    box-shadow: 0 0 16px rgba(56, 189, 248, 0.4), 0 4px 16px rgba(0, 0, 0, 0.65) !important;
+    color: #38bdf8 !important;
     cursor: pointer !important;
     transition: all 0.2s ease !important;
   }
@@ -2525,13 +2652,34 @@ header,
     transform: scale(0.92) !important;
   }
 
+  .fab-locate-float.active {
+    background: rgba(14, 45, 75, 0.95) !important;
+    border-color: #38bdf8 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.7), 0 4px 16px rgba(0, 0, 0, 0.65) !important;
+  }
+
+  .fab-locate-float.locating .locate-crosshair-svg {
+    animation: gpsLocatingSpin 1.1s infinite linear !important;
+  }
+
   .fab-locate-float span:not(.locate-icon) {
     display: none !important;
   }
 
   .fab-locate-float .locate-icon {
-    font-size: 20px !important;
-    line-height: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 22px !important;
+    height: 22px !important;
+    color: inherit !important;
+  }
+
+  .fab-locate-float .locate-crosshair-svg {
+    width: 22px !important;
+    height: 22px !important;
+    display: block !important;
   }
 
   /* Pub Quiz button in mobile floating action stack */

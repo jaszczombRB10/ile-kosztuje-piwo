@@ -284,6 +284,7 @@
 
     <!-- Map Canvas -->
     <div id="map"></div>
+    <div id="map-toast" class="map-toast" style="display:none;" aria-live="polite"></div>
 
     <!-- Active Crawl Floating Banner on Map -->
     <div id="active-crawl-bar" class="active-crawl-bar" style="display: none;">
@@ -318,9 +319,18 @@
         <span class="compass-icon">🧭</span>
         <span>Kompas</span>
       </button>
-      <button type="button" id="btn-locate-float" class="fab-locate-float" title="Pokaż moją pozycję na mapie">
-        <span class="locate-icon">🎯</span>
-        <span>Moja pozycja</span>
+      <button type="button" id="btn-locate-float" class="fab-locate-float" title="Moja lokalizacja GPS – pokaż gdzie jestem" aria-label="Moja lokalizacja GPS">
+        <span class="locate-icon">
+          <svg class="locate-crosshair-svg" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="7"></circle>
+            <line x1="12" y1="1" x2="12" y2="5"></line>
+            <line x1="12" y1="19" x2="12" y2="23"></line>
+            <line x1="1" y1="12" x2="5" y2="12"></line>
+            <line x1="19" y1="12" x2="23" y2="12"></line>
+            <circle cx="12" cy="12" r="2.5" fill="currentColor"></circle>
+          </svg>
+        </span>
+        <span class="locate-label">Moja pozycja</span>
       </button>
     </div>
 
