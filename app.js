@@ -4718,9 +4718,15 @@
           return;
         }
 
+        const bannerTitle = document.getElementById("pwa-banner-title");
         if (isIOS) {
+          if (bannerTitle) bannerTitle.textContent = "Zainstaluj na iPhone";
           if (bannerDesc) bannerDesc.textContent = "Dodaj do ekranu początkowego Safari!";
+        } else if (window.innerWidth >= 641) {
+          if (bannerTitle) bannerTitle.textContent = "Zainstaluj na komputerze";
+          if (bannerDesc) bannerDesc.textContent = "Szybki dostęp z paska zadań lub Docka!";
         } else {
+          if (bannerTitle) bannerTitle.textContent = "Zainstaluj na telefonie";
           if (bannerDesc) bannerDesc.textContent = "Szybki dostęp z pulpitu, bez pasków!";
         }
 
@@ -4731,12 +4737,12 @@
       window.addEventListener("beforeinstallprompt", (e) => {
         e.preventDefault();
         deferredInstallPrompt = e;
-        setTimeout(showInstallBanner, 2000);
+        setTimeout(showInstallBanner, 1500);
       });
 
-      // For iOS devices: trigger banner after a few seconds
-      if (isIOS && !isStandalone) {
-        setTimeout(showInstallBanner, 2500);
+      // Universal trigger for all platforms (desktop, incognito, Safari Mac, Firefox)
+      if (!isStandalone) {
+        setTimeout(showInstallBanner, 3000);
       }
 
       // Action on floating banner install button
@@ -4755,7 +4761,13 @@
             openIosModal();
             dismissBanner();
           } else {
-            openIosModal();
+            // Desktop or Android without deferred prompt (e.g. Incognito, Safari Mac, or Firefox)
+            showAppToast(
+              "Instalacja aplikacji",
+              "W trybie Incognito przeglądarka blokuje instalację. Otwórz stronę w normalnym oknie lub kliknij ikonę w pasku adresu (⊕)! 🍺",
+              "📲",
+              5500
+            );
             dismissBanner();
           }
         });
