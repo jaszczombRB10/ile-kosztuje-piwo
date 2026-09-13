@@ -9802,7 +9802,10 @@
     }
 
     function toggleFlip() {
-      if (flipper) flipper.classList.toggle("flipped");
+      if (flipper) {
+        flipper.style.transform = "";
+        flipper.classList.toggle("flipped");
+      }
     }
 
     window.__openClubCard = function () {
@@ -9812,7 +9815,10 @@
         return;
       }
       renderClubCardData();
-      if (flipper) flipper.classList.remove("flipped");
+      if (flipper) {
+        flipper.style.transform = "";
+        flipper.classList.remove("flipped");
+      }
       if (stage) stage.classList.remove("barman-mode");
       if (modal) {
         modal.classList.add("active");

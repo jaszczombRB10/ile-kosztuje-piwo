@@ -9389,6 +9389,7 @@ header,
 
 .club-card-stage {
   perspective: 1000px;
+  -webkit-perspective: 1000px;
   width: 100%;
   max-width: 360px;
   height: 220px;
@@ -9402,12 +9403,15 @@ header,
   width: 100%;
   height: 100%;
   transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
   transition: transform 0.65s cubic-bezier(0.34, 1.56, 0.64, 1);
+  -webkit-transition: -webkit-transform 0.65s cubic-bezier(0.34, 1.56, 0.64, 1);
   will-change: transform;
 }
 
 .club-card-flipper.flipped {
   transform: rotateY(180deg);
+  -webkit-transform: rotateY(180deg);
 }
 
 .club-card-side {
@@ -9415,16 +9419,16 @@ header,
   inset: 0;
   width: 100%;
   height: 100%;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden !important;
+  -webkit-backface-visibility: hidden !important;
   border-radius: 18px;
   box-sizing: border-box;
-  overflow: hidden;
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(245, 158, 11, 0.35);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   padding: 16px 18px;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* Front Side */
@@ -9432,6 +9436,11 @@ header,
   background: radial-gradient(circle at 80% 20%, rgba(245, 158, 11, 0.22) 0%, transparent 50%),
               linear-gradient(145deg, #0b0f19 0%, #171f2f 45%, #0f141f 100%);
   border: 1.5px solid rgba(245, 158, 11, 0.5);
+  transform: rotateY(0deg) translateZ(1px);
+  -webkit-transform: rotateY(0deg) translateZ(1px);
+  z-index: 2;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+  -webkit-transition: opacity 0.25s ease, visibility 0.25s ease;
 }
 
 .card-front-top {
@@ -9498,6 +9507,8 @@ header,
   background: radial-gradient(ellipse 130% 80% at 50% 120%, rgba(245, 158, 11, 0.35) 0%, rgba(217, 119, 6, 0.15) 50%, transparent 75%);
   pointer-events: none;
   z-index: 1;
+  border-bottom-left-radius: 17px;
+  border-bottom-right-radius: 17px;
 }
 
 .card-member-details {
@@ -9572,14 +9583,45 @@ header,
   background: linear-gradient(115deg, rgba(255, 255, 255, 0.15) 0%, transparent 50%, rgba(255, 255, 255, 0.05) 100%);
   pointer-events: none;
   z-index: 3;
+  border-radius: 17px;
 }
 
 /* Back Side */
 .club-card-back {
   background: linear-gradient(145deg, #111827 0%, #1e293b 100%);
   border: 1.5px solid rgba(255, 255, 255, 0.15);
-  transform: rotateY(180deg);
+  transform: rotateY(180deg) translateZ(1px);
+  -webkit-transform: rotateY(180deg) translateZ(1px);
   padding: 14px 16px;
+  z-index: 1;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+  -webkit-transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+/* Hard visibility locks for iOS Safari & WebKit - prevent ghosting and overlapping completely */
+.club-card-flipper:not(.flipped) .club-card-back {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.club-card-flipper:not(.flipped) .club-card-front {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.club-card-flipper.flipped .club-card-front {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.club-card-flipper.flipped .club-card-back {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  z-index: 3;
 }
 
 .card-back-header {
