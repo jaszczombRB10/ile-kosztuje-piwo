@@ -1668,15 +1668,19 @@
           </div>
         </div>
 
-        <!-- Profile Actions Bar: Clean 2-Button Row -->
+        <!-- Profile Actions Bar: Clean 3-Button Row -->
         <div class="profile-hero-actions-bar">
           <button type="button" class="btn-hero-action btn-hero-edit" id="btn-toggle-edit-profile" title="Edytuj profil i preferencje">
             <span class="btn-hero-action-icon">✏️</span>
-            <span>Edytuj profil</span>
+            <span>Edytuj</span>
+          </button>
+          <button type="button" class="btn-hero-action btn-hero-club" id="btn-open-club-card" title="Otwórz wirtualną Kartę Klubu PoIlePiwko Pass (-10% rabat)">
+            <span class="btn-hero-action-icon">💳</span>
+            <span>Karta Pass</span>
           </button>
           <button type="button" class="btn-hero-action btn-hero-story" id="btn-open-story-card" title="Wygeneruj kartę na Instagram Story">
             <span class="btn-hero-action-icon">📸</span>
-            <span>Karta Story</span>
+            <span>Story</span>
           </button>
         </div>
       </div>
@@ -2278,6 +2282,118 @@
         </button>
         <button type="button" class="btn-secondary btn-story-share" id="btn-story-share">
           <span>📤 Udostępnij</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Wirtualna Karta Klubowa (PoIlePiwko Pass) -->
+  <div class="modal-backdrop" id="club-card-modal" style="display:none; z-index: 10220;">
+    <div class="modal-card modal-card-club-pass">
+      <div class="modal-head">
+        <div class="modal-head-title">
+          <div class="modal-icon-badge">💳</div>
+          <div>
+            <h2>PoIlePiwko Pass</h2>
+            <p class="modal-head-sub">Wirtualna karta klubowa uprawniająca do -10% rabatu na piwo</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close" id="btn-close-club-modal" aria-label="Zamknij kartę">✕</button>
+      </div>
+
+      <!-- 3D Card Interactive Stage -->
+      <div class="club-card-stage" id="club-card-stage">
+        <div class="club-card-flipper" id="club-card-flipper">
+          <!-- Card Front (Awers) -->
+          <div class="club-card-side club-card-front">
+            <div class="card-front-top">
+              <div class="card-brand-wrap">
+                <span class="card-beer-icon">🍺</span>
+                <div class="card-brand-text">
+                  <span class="card-brand-name">POILEPIWKO PASS</span>
+                  <span class="card-brand-sub">WARSZAWSKI KLUB PIWOSZA</span>
+                </div>
+              </div>
+              <span class="card-discount-pill">-10% RABAT</span>
+            </div>
+
+            <!-- Dynamic glowing beer wave -->
+            <div class="card-beer-wave"></div>
+
+            <div class="card-member-details">
+              <div class="card-member-row">
+                <div class="card-member-meta">
+                  <span class="card-meta-lbl">Członek Klubu</span>
+                  <span class="card-meta-val" id="club-card-name">KRYSTIAN</span>
+                </div>
+                <div class="card-member-num">
+                  <span class="card-meta-lbl">Numer Karty</span>
+                  <span class="card-meta-val" id="club-card-number">#000001</span>
+                </div>
+              </div>
+
+              <div class="card-bottom-row">
+                <div class="card-validity">
+                  <span class="card-valid-lbl">Ważna do</span>
+                  <span class="card-valid-val" id="club-card-validity">12/2027</span>
+                </div>
+                <div class="card-qr-box" id="club-card-qr">
+                  <svg viewBox="0 0 100 100" class="card-qr-svg" aria-label="Kod QR karty klubowej">
+                    <rect width="100" height="100" fill="#ffffff" rx="8"/>
+                    <path d="M10 10h30v30h-30z M16 16h18v18h-18z M22 22h6v6h-6z M60 10h30v30h-30z M66 16h18v18h-18z M72 22h6v6h-6z M10 60h30v30h-30z M16 66h18v18h-18z M22 72h6v6h-6z M46 12h6v6h-6z M46 24h6v12h-6z M52 30h6v6h-6z M46 60h6v18h-6z M60 60h12v6h-12z M78 60h12v12h-12z M60 72h6v18h-6z M72 78h18v12h-18z M46 84h12v6h-12z" fill="#0f172a"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <!-- Glare effect on tilt -->
+            <div class="card-glare" id="club-card-glare"></div>
+          </div>
+
+          <!-- Card Back (Rewers) -->
+          <div class="club-card-side club-card-back">
+            <div class="card-back-header">
+              <span class="card-back-title">Zasady Członkostwa</span>
+              <span class="card-back-badge">Klub PoIlePiwko</span>
+            </div>
+            <div class="card-back-body">
+              <div class="card-rule-item">
+                <span class="rule-icon">✓</span>
+                <span>Karta uprawnia do 10% rabatu na piwo z nalewaka w lokalach partnerskich.</span>
+              </div>
+              <div class="card-rule-item">
+                <span class="rule-icon">✓</span>
+                <span>Pokaż kartę barmanowi przed złożeniem zamówienia.</span>
+              </div>
+              <div class="card-rule-item">
+                <span class="rule-icon">✓</span>
+                <span>Karta jest imienna i powiązana z Twoim kontem poilepiwko.</span>
+              </div>
+              <div class="card-rule-item">
+                <span class="rule-icon">✓</span>
+                <span>Rabat naliczany jest bezpośrednio przy kasie.</span>
+              </div>
+            </div>
+            <div class="card-back-footer">
+              <span class="card-back-id" id="club-card-back-id">ID: #000001 • Warszawa</span>
+              <button type="button" class="btn-flip-back" id="btn-flip-back">Obróć na awers ↺</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Instructions & Action Controls -->
+      <p class="club-card-hint">Dotknij karty, aby ją obrócić i sprawdzić warunki zniżki</p>
+
+      <div class="club-card-actions">
+        <button type="button" class="btn-card-action btn-card-flip" id="btn-action-flip-card">
+          <span>🔄 Obróć</span>
+        </button>
+        <button type="button" class="btn-card-action btn-card-show" id="btn-action-show-barman">
+          <span>📱 Pokaż w barze</span>
+        </button>
+        <button type="button" class="btn-card-action btn-card-download" id="btn-action-save-pass">
+          <span>📥 Pobierz</span>
         </button>
       </div>
     </div>

@@ -3038,6 +3038,14 @@
       return;
     }
 
+    // Direct hash to open Virtual Club Pass
+    if (lower === "pass" || lower === "karta" || lower === "klub") {
+      if (typeof window.__openClubCard === "function") {
+        window.__openClubCard();
+      }
+      return;
+    }
+
     if (raw.startsWith("@")) {
       const username = raw.slice(1).trim();
       if (username && window.__openUserProfile) {
@@ -5440,6 +5448,7 @@
     initPubQuizModal();
     initRouletteModal();
     initStoryCardModal();
+    initClubCardModal();
 
     // Deep linking: listen to URL hash changes
     window.addEventListener("hashchange", checkUrlHash);
@@ -9759,6 +9768,144 @@
 
         // Fallback: download
         if (btnDownload) btnDownload.click();
+      });
+    }
+  }
+
+  // ==========================================================================
+  // Wirtualna Karta Klubowa (PoIlePiwko Pass 3D)
+  // ==========================================================================
+  function initClubCardModal() {
+    const modal = document.getElementById("club-card-modal");
+    const btnClose = document.getElementById("btn-close-club-modal");
+    const btnOpenFromProf = document.getElementById("btn-open-club-card");
+    const stage = document.getElementById("club-card-stage");
+    const flipper = document.getElementById("club-card-flipper");
+    const glare = document.getElementById("club-card-glare");
+    const btnFlip = document.getElementById("btn-action-flip-card");
+    const btnFlipBack = document.getElementById("btn-flip-back");
+    const btnShow = document.getElementById("btn-action-show-barman");
+    const btnDownload = document.getElementById("btn-action-save-pass");
+
+    const elName = document.getElementById("club-card-name");
+    const elNum = document.getElementById("club-card-number");
+    const elValidity = document.getElementById("club-card-validity");
+    const elBackId = document.getElementById("club-card-back-id");
+
+    function renderClubCardData() {
+      const name = (currentProfile && (currentProfile.display_name || currentProfile.username)) ? (currentProfile.display_name || currentProfile.username) : "PIWOSZ";
+      const num = (currentProfile && currentProfile.user_number) ? currentProfile.user_number : "#000001";
+      if (elName) elName.textContent = name.toUpperCase();
+      if (elNum) elNum.textContent = num;
+      if (elValidity) elValidity.textContent = "12/2027";
+      if (elBackId) elBackId.textContent = `ID: ${num} • Warszawa`;
+    }
+
+    function toggleFlip() {
+      if (flipper) flipper.classList.toggle("flipped");
+    }
+
+    window.__openClubCard = function () {
+      if (!currentProfile) {
+        showAppToast("Karta Pass 💳", "Zaloguj się, aby wyświetlić swoją Kartę Klubu!", "⚠️");
+        if (window.__openAuth) window.__openAuth();
+        return;
+      }
+      renderClubCardData();
+      if (flipper) flipper.classList.remove("flipped");
+      if (stage) stage.classList.remove("barman-mode");
+      if (modal) {
+        modal.classList.add("active");
+        modal.style.display = "flex";
+      }
+    };
+
+    window.__closeClubCard = function () {
+      if (modal) {
+        modal.classList.remove("active");
+        modal.style.display = "none";
+      }
+      if (stage) stage.classList.remove("barman-mode");
+    };
+
+    if (btnOpenFromProf) {
+      btnOpenFromProf.addEventListener("click", () => {
+        window.__openClubCard();
+      });
+    }
+
+    if (btnClose) btnClose.addEventListener("click", window.__closeClubCard);
+    if (modal) {
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) window.__closeClubCard();
+      });
+    }
+
+    if (stage) {
+      stage.addEventListener("click", (e) => {
+        if (e.target.closest("button")) return;
+        toggleFlip();
+      });
+
+      // 3D Tilt effect on mousemove
+      stage.addEventListener("mousemove", (e) => {
+        if (stage.classList.contains("barman-mode")) return;
+        const rect = stage.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        const rotateX = ((y - centerY) / centerY) * -12;
+        const rotateY = ((x - centerX) / centerX) * 12;
+
+        const isFlipped = flipper && flipper.classList.contains("flipped");
+        if (flipper) {
+          flipper.style.transform = `rotateY(${isFlipped ? 180 + rotateY : rotateY}deg) rotateX(${rotateX}deg)`;
+        }
+        if (glare) {
+          glare.style.background = `radial-gradient(circle at ${(x / rect.width) * 100}% ${(y / rect.height) * 100}%, rgba(255, 255, 255, 0.25) 0%, transparent 60%)`;
+        }
+      });
+
+      stage.addEventListener("mouseleave", () => {
+        if (flipper) {
+          const isFlipped = flipper.classList.contains("flipped");
+          flipper.style.transform = isFlipped ? "rotateY(180deg)" : "rotateY(0deg)";
+        }
+        if (glare) {
+          glare.style.background = "";
+        }
+      });
+    }
+
+    if (btnFlip) btnFlip.addEventListener("click", toggleFlip);
+    if (btnFlipBack) btnFlipBack.addEventListener("click", toggleFlip);
+
+    if (btnShow) {
+      btnShow.addEventListener("click", () => {
+        if (!stage) return;
+        const isBarman = stage.classList.toggle("barman-mode");
+        btnShow.classList.toggle("active", isBarman);
+        if (isBarman) {
+          showAppToast("Tryb przy barze 🍺", "Karta powiększona i rozjaśniona do pokazania barmanowi!", "📱", 2500);
+        }
+      });
+    }
+
+    if (btnDownload) {
+      btnDownload.addEventListener("click", async () => {
+        const passUrl = `${window.location.origin}/#pass`;
+        if (navigator.share) {
+          try {
+            await navigator.share({
+              title: "PoIlePiwko Pass - Karta Klubowa (-10%)",
+              text: `Moja wirtualna karta członkowska PoIlePiwko Pass: ${currentProfile?.user_number || "#000001"}! Sprawdź na poilepiwko.pl`,
+              url: passUrl
+            });
+            return;
+          } catch (e) {}
+        }
+        showAppToast("Karta Pass 💳", `Twój numer klubowicza to ${currentProfile?.user_number || "#000001"}. Karta jest aktywna w Twoim profilu!`, "✅", 2800);
       });
     }
   }
