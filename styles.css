@@ -2222,62 +2222,19 @@ header {
   border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
 }
 
-@media (min-width: 641px) {
-  /* On desktop, hide duplicate floating pills and the redundant floating add bar */
-  .fab-roulette-float,
-  .fab-pubquiz-float,
-  .fab-compass-float,
-  .fab-add-bar {
-    display: none !important;
-  }
-
-  .fab-stack-right {
-    position: static !important;
-    display: contents !important;
-  }
-}
-
-.btn-mobile-search-toggle {
-  display: none;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #fff;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  align-items: center;
-  justify-content: center;
-  font-size: 15px;
-  cursor: pointer;
-}
-
-/* Mobile Floating Controls (Hidden on desktop) */
-.mobile-floating-top,
-.floating-add-pill,
-.mobile-search-sheet,
-.fab-brand-pill {
-  display: none;
-}
-
-/* Mobile Bottom Navigation Bar (Hidden on desktop) */
-.mobile-bottom-nav {
-  display: none;
-}
-
 /* ========================================================================== */
-/* Mobile Responsive Overhaul (Smartphones < 640px)                          */
+/* Universal App Layout (Unified Mobile-First Clean UI for All Devices)       */
+/* Legacy desktop layout is permanently archived in desktop-legacy-reference.md*/
 /* ========================================================================== */
-@media (max-width: 640px) {
-  /* Clean Full-Bleed Map Layout on Mobile (Inspired by Vad Kostar Ölen) */
-  header,
-  .ticker-bar,
-  .map-overlay,
-  .btn-mobile-search-toggle,
-  .fab-add-bar,
-  .legend-pill,
-  .leaflet-control-zoom {
-    display: none !important;
-  }
+header,
+.ticker-bar,
+.map-overlay,
+.btn-mobile-search-toggle,
+.fab-add-bar,
+.legend-pill,
+.leaflet-control-zoom {
+  display: none !important;
+}
 
   .app-body {
     height: 100vh !important;
@@ -2846,6 +2803,42 @@ header {
     color: #ffffff;
   }
 
+  .m-dist-chip.chip-roulette {
+    background: rgba(244, 63, 94, 0.18);
+    border-color: rgba(244, 63, 94, 0.45);
+    color: #fda4af;
+    font-weight: 700;
+  }
+  .m-dist-chip.chip-roulette:hover,
+  .m-dist-chip.chip-roulette:active {
+    background: rgba(244, 63, 94, 0.35);
+    color: #ffffff;
+  }
+
+  .m-dist-chip.chip-happyhour {
+    background: rgba(245, 158, 11, 0.18);
+    border-color: rgba(245, 158, 11, 0.45);
+    color: #fcd34d;
+    font-weight: 700;
+  }
+  .m-dist-chip.chip-happyhour:hover,
+  .m-dist-chip.chip-happyhour:active {
+    background: rgba(245, 158, 11, 0.35);
+    color: #ffffff;
+  }
+
+  .m-dist-chip.chip-quiz {
+    background: rgba(139, 92, 246, 0.2);
+    border-color: rgba(167, 139, 250, 0.45);
+    color: #c4b5fd;
+    font-weight: 700;
+  }
+  .m-dist-chip.chip-quiz:hover,
+  .m-dist-chip.chip-quiz:active {
+    background: rgba(139, 92, 246, 0.38);
+    color: #ffffff;
+  }
+
   .mobile-search-results {
     overflow-y: auto;
     display: flex;
@@ -2965,6 +2958,141 @@ header {
 
   .baro-kpis {
     grid-template-columns: 1fr 1fr;
+  }
+
+/* ========================================================================== */
+/* Desktop Spatial Enhancements (Screens >= 641px)                            */
+/* Retains clean mobile-first app layout with centered floating islands       */
+/* ========================================================================== */
+@media (min-width: 641px) {
+  /* Floating Top Island Centered */
+  .mobile-floating-top {
+    left: 0 !important;
+    right: 0 !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    width: 580px !important;
+    max-width: calc(100vw - 40px) !important;
+    top: 20px !important;
+  }
+
+  /* Floating Bottom Nav Dock Centered */
+  .mobile-bottom-nav {
+    left: 0 !important;
+    right: 0 !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    width: 480px !important;
+    max-width: calc(100vw - 40px) !important;
+    bottom: 20px !important;
+    height: 60px !important;
+    padding: 6px 16px !important;
+    border-radius: 30px !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
+  }
+
+  /* Floating Add Pill on Desktop (Bottom Left) */
+  .floating-add-pill {
+    bottom: 24px !important;
+    left: 24px !important;
+    padding: 9px 18px !important;
+    font-size: 12px !important;
+    cursor: pointer !important;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease !important;
+  }
+
+  .floating-add-pill:hover {
+    transform: translateY(-2px) scale(1.04) !important;
+    border-color: rgba(249, 115, 22, 0.65) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8), 0 0 16px rgba(249, 115, 22, 0.35) !important;
+  }
+
+  /* Floating Action Stack on Desktop (Bottom Right) */
+  .fab-stack-right {
+    bottom: 24px !important;
+    right: 24px !important;
+  }
+
+  /* Micro-interactions & Hovers on Desktop */
+  .fab-top-btn:hover {
+    transform: translateY(-1px) scale(1.06) !important;
+    border-color: rgba(255, 255, 255, 0.35) !important;
+    color: #ffffff !important;
+  }
+
+  .fab-brand-pill:hover {
+    transform: translateX(-50%) translateY(-1px) scale(1.04) !important;
+    border-color: rgba(255, 255, 255, 0.35) !important;
+  }
+
+  .fab-roulette-float:hover {
+    transform: translateY(-2px) scale(1.08) !important;
+    box-shadow: 0 6px 24px rgba(244, 63, 94, 0.8), 0 2px 10px rgba(0, 0, 0, 0.8) !important;
+  }
+
+  .fab-pubquiz-float:hover {
+    transform: translateY(-2px) scale(1.08) !important;
+    box-shadow: 0 6px 22px rgba(139, 92, 246, 0.75), 0 2px 10px rgba(0, 0, 0, 0.8) !important;
+  }
+
+  .fab-compass-float:hover {
+    transform: translateY(-2px) scale(1.08) !important;
+    box-shadow: 0 6px 20px rgba(249, 115, 22, 0.75), 0 2px 10px rgba(0, 0, 0, 0.8) !important;
+  }
+
+  .fab-locate-float:hover {
+    transform: translateY(-2px) scale(1.08) !important;
+    box-shadow: 0 0 22px rgba(249, 115, 22, 0.65), 0 6px 22px rgba(0, 0, 0, 0.8) !important;
+  }
+
+  .nav-item {
+    cursor: pointer !important;
+    transition: transform 0.15s ease, color 0.15s ease !important;
+  }
+
+  .nav-item:hover {
+    color: #f1f5f9 !important;
+  }
+
+  .nav-item:hover .nav-icon {
+    transform: scale(1.12) !important;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+
+  .nav-item-hero:hover .hero-ring {
+    transform: scale(1.08) !important;
+    box-shadow: 0 0 26px rgba(249, 115, 22, 0.8), 0 6px 18px rgba(0, 0, 0, 0.9) !important;
+  }
+
+  /* Desktop Search Sheet */
+  .mobile-search-sheet {
+    left: 0 !important;
+    right: 0 !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    width: 580px !important;
+    max-width: calc(100vw - 40px) !important;
+    top: 20px !important;
+    border-radius: 20px !important;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.12) !important;
+  }
+
+  /* Desktop Sidebar Drawer (Ranking) */
+  .sidebar-drawer {
+    width: 420px !important;
+    max-width: 90vw !important;
+    right: -440px !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.14) !important;
+    box-shadow: -15px 0 45px rgba(0, 0, 0, 0.7) !important;
+  }
+
+  .sidebar-drawer.open {
+    right: 0 !important;
   }
 }
 

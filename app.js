@@ -4989,6 +4989,24 @@
       });
     }
 
+    // "Happy Hours" chip in mobile search sheet
+    const chipSearchHappyhour = document.getElementById("chip-search-happyhour");
+    if (chipSearchHappyhour) {
+      chipSearchHappyhour.addEventListener("click", () => {
+        if (window.__closeMobileSearch) window.__closeMobileSearch();
+        if (window.__openHappyHours) window.__openHappyHours();
+      });
+    }
+
+    // "Pub Quiz" chip in mobile search sheet
+    const chipSearchQuiz = document.getElementById("chip-search-quiz");
+    if (chipSearchQuiz) {
+      chipSearchQuiz.addEventListener("click", () => {
+        if (window.__closeMobileSearch) window.__closeMobileSearch();
+        if (window.__openPubQuiz) window.__openPubQuiz();
+      });
+    }
+
     // Initialize Auth & Social Modals
     initAuthModal();
     initOnboardingUsernameModal();
