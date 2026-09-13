@@ -10027,6 +10027,54 @@ body.theme-light .nav-item.nav-item-hero .hero-ring {
   box-shadow: 0 4px 16px rgba(234, 88, 12, 0.35), 0 2px 6px rgba(0, 0, 0, 0.1) !important;
 }
 
+/* Happy Hour Live Promo in Dark Theme (Base) */
+.hh-live-promo-box {
+  background: rgba(34, 197, 94, 0.14);
+  border: 1px solid rgba(34, 197, 94, 0.45);
+  border-radius: 10px;
+  padding: 8px 10px;
+  margin: 8px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.hh-live-promo-title {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #4ade80;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.hh-live-promo-title .pulse-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #4ade80;
+}
+
+.hh-live-promo-desc {
+  font-size: 0.7rem;
+  color: #cbd5e1;
+  margin-top: 2px;
+}
+
+.hh-live-promo-price {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: #4ade80;
+}
+
+.hh-live-promo-time {
+  font-size: 0.64rem;
+  font-weight: 700;
+  color: #fb923c;
+}
+
 /* Happy Hour Live Promo in Light Theme */
 body.theme-light .hh-live-promo-box {
   background: #f0fdf4 !important;
