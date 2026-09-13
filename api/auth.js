@@ -267,6 +267,7 @@ module.exports = async (req, res) => {
                 display_name: meta.display_name || meta.full_name || meta.username || "Piwosz",
                 avatar_icon: meta.avatar_icon || "🍺",
                 avatar_photo: meta.avatar_photo || null,
+                user_number: meta.user_number || null,
                 bio: meta.bio || "Warszawski poszukiwacz dobrego i taniego piwa 🍻",
                 favorite_beer: meta.favorite_beer || "",
                 favorite_district: meta.favorite_district || "",
@@ -332,19 +333,31 @@ module.exports = async (req, res) => {
 
       // Calculate user sequence number
       try {
-        if (profile.created_at) {
-          const countRes = await fetch(`${SUPABASE_URL}/rest/v1/profiles?created_at=lte.${encodeURIComponent(profile.created_at)}&select=id`, {
-            headers: { ...headers, "Prefer": "count=exact" }
-          });
-          const contentRange = countRes.headers.get("content-range");
-          if (contentRange && contentRange.includes("/")) {
-            const count = parseInt(contentRange.split("/")[1], 10);
-            if (!isNaN(count) && count > 0) {
-              userNumber = "#" + String(count).padStart(6, "0");
+        if (profile.user_number) {
+          userNumber = profile.user_number;
+        } else {
+          const adminUsersRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?per_page=1000`, { headers });
+          if (adminUsersRes.ok) {
+            const adminUsersData = await adminUsersRes.json();
+            const allU = adminUsersData.users || (Array.isArray(adminUsersData) ? adminUsersData : []);
+            allU.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+            const targetId = profile.id || userId;
+            const idx = allU.findIndex(u => u.id === targetId || u.email === profile.email);
+            if (idx !== -1) {
+              userNumber = "#" + String(idx + 1).padStart(6, "0");
+              profile.user_number = userNumber;
+              // Persist permanently in user_metadata
+              fetch(`${SUPABASE_URL}/auth/v1/admin/users/${targetId}`, {
+                method: "PUT",
+                headers,
+                body: JSON.stringify({ user_metadata: { ...(allU[idx].user_metadata || {}), user_number: userNumber } })
+              }).catch(() => {});
             }
           }
         }
-      } catch (e) {}
+      } catch (e) {
+        console.warn("User sequence calculation error:", e);
+      }
 
       return res.status(200).json({
         success: true,

@@ -5296,6 +5296,10 @@
           currentProfile = data.profile;
           if (data.userNumber) {
             currentProfile.user_number = data.userNumber;
+            const userNumEl = document.getElementById("prof-user-number");
+            if (userNumEl) userNumEl.textContent = data.userNumber;
+            const pubUserNum = document.getElementById("pubprof-user-number");
+            if (pubUserNum) pubUserNum.textContent = data.userNumber;
           }
           if (Array.isArray(data.followingIds)) {
             myFollowingIds = data.followingIds;
