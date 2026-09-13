@@ -183,7 +183,7 @@ module.exports = async (req, res) => {
 
       try {
         const response = await fetch(
-          `${SUPABASE_URL}/rest/v1/profiles?or=(username.ilike.*${cleanQ}*,display_name.ilike.*${cleanQ}*)&select=id,username,display_name,avatar_icon,avatar_photo,bio,favorite_district,visited_venues&limit=15`,
+          `${SUPABASE_URL}/rest/v1/profiles?username.ilike.*${cleanQ}*&select=id,username,display_name,avatar_icon,avatar_photo,bio,favorite_district,visited_venues&limit=15`,
           { headers }
         );
 
@@ -197,7 +197,7 @@ module.exports = async (req, res) => {
         console.warn("DB search error:", e);
       }
 
-      // Fallback: search in Supabase Auth Admin users
+      // Fallback: search in Supabase Auth Admin users (strictly by username / nick)
       if (users.length === 0) {
         try {
           const listRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?per_page=200`, { headers });
@@ -208,8 +208,7 @@ module.exports = async (req, res) => {
             users = allUsers
               .filter(u => {
                 const uName = (u.user_metadata?.username || u.email?.split("@")[0] || "").toLowerCase();
-                const dName = (u.user_metadata?.display_name || "").toLowerCase();
-                return uName.includes(plainQ) || dName.includes(plainQ);
+                return uName.includes(plainQ);
               })
               .map(u => {
                 const m = u.user_metadata || {};

@@ -4942,6 +4942,12 @@
       const btnAckLegal = document.getElementById("btn-ack-legal");
 
       function openLegal() {
+        if (typeof window.__closeMyProfile === "function") {
+          window.__closeMyProfile();
+        }
+        if (typeof window.__closeEditProfileModal === "function") {
+          window.__closeEditProfileModal();
+        }
         if (legalModal) {
           legalModal.classList.add("active");
           legalModal.style.display = "flex";
@@ -4962,6 +4968,9 @@
         const trigger = e.target.closest(".btn-open-legal-terms, #btn-open-legal, #btn-ranking-legal, #btn-profile-legal, [data-open-legal]");
         if (trigger) {
           e.preventDefault();
+          if (typeof window.__closeMyProfile === "function") {
+            window.__closeMyProfile();
+          }
           openLegal();
         }
       });
@@ -7046,10 +7055,9 @@
         markNotificationsAsRead();
         requestBrowserNotificationPermission();
       } else {
-        // default "search"
+        // default "search" — DO NOT auto-focus to prevent virtual keyboard from unexpectedly popping up on mobile
         if (tabSearch) tabSearch.classList.add("active");
         if (paneSearch) paneSearch.style.display = "block";
-        if (searchInput) searchInput.focus();
       }
     }
 
@@ -7066,7 +7074,14 @@
       if (commFollowingBadge) commFollowingBadge.textContent = myFollowingIds.length;
       updateNotificationBadges();
 
-      const targetTab = initialTab || (unreadNotificationsCount > 0 ? "notifications" : "search");
+      // If specific tab passed, use it. Otherwise:
+      // 1. Unread notifications -> notifications
+      // 2. Already following friends -> following tab (to see your friends)
+      // 3. Otherwise -> search tab
+      const defaultTab = (typeof unreadNotificationsCount === "number" && unreadNotificationsCount > 0)
+        ? "notifications"
+        : (Array.isArray(myFollowingIds) && myFollowingIds.length > 0 ? "following" : "search");
+      const targetTab = initialTab || defaultTab;
       switchTab(targetTab);
     };
 
@@ -7085,11 +7100,12 @@
       });
     }
 
-    // Search Friends
+    // Search Friends strictly by Nick / Username
     async function searchFriends() {
-      const q = searchInput ? searchInput.value.trim() : "";
+      const rawQ = searchInput ? searchInput.value.trim() : "";
+      const q = rawQ.replace(/^@/, "").trim();
       if (!q) return;
-      if (searchResults) searchResults.innerHTML = `<div class="loading-state-hint">Szukanie piwoszy... 🔍</div>`;
+      if (searchResults) searchResults.innerHTML = `<div class="loading-state-hint">Szukanie nicku @${escapeHtml(q)}... 🔍</div>`;
 
       try {
         const res = await fetch("/api/auth", {
@@ -7104,7 +7120,7 @@
         const data = await res.json();
         if (!res.ok || !data.users || data.users.length === 0) {
           if (searchResults) {
-            searchResults.innerHTML = `<div class="empty-state-hint">Nie znaleziono piwoszy pasujących do "${escapeHtml(q)}".</div>`;
+            searchResults.innerHTML = `<div class="empty-state-hint">Nie znaleziono piwosza o nicku "@${escapeHtml(q)}".<br><small style="opacity:0.75;margin-top:4px;display:inline-block;">Upewnij się, że wpisujesz unikalny nick profilu (np. @jaszczomb).</small></div>`;
           }
           return;
         }
