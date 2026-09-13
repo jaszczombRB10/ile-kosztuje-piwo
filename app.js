@@ -7127,6 +7127,9 @@
 
     function openModal() {
       if (!modal) return;
+      if (typeof requestMotionPermissionIfNeeded === "function") {
+        requestMotionPermissionIfNeeded();
+      }
       modal.classList.add("active");
       modal.style.display = "flex";
       updateVibeChipsAvailability();
@@ -7406,7 +7409,12 @@
     }
 
     if (btnSpin) {
-      btnSpin.addEventListener("click", spinRoulette);
+      btnSpin.addEventListener("click", () => {
+        if (typeof requestMotionPermissionIfNeeded === "function") {
+          requestMotionPermissionIfNeeded();
+        }
+        spinRoulette();
+      });
     }
 
     // Go to map
@@ -7449,20 +7457,116 @@
       });
     }
 
-    // Shake to spin detection
-    let lastShakeTime = 0;
-    window.addEventListener("devicemotion", (e) => {
-      if (!modal || modal.style.display === "none" || isSpinning) return;
-      const acc = e.accelerationIncludingGravity;
-      if (!acc) return;
-      const now = Date.now();
-      if (now - lastShakeTime < 1500) return;
-      const speed = Math.abs(acc.x || 0) + Math.abs(acc.y || 0) + Math.abs(acc.z || 0);
-      if (speed > 26) {
-        lastShakeTime = now;
+    // =========================================================================
+    // 📱 Shake to Spin (Shakeomat à la Biedronka) Controller
+    // =========================================================================
+    let motionPermissionRequested = false;
+    let motionListenerAttached = false;
+    let lastX = null, lastY = null, lastZ = null;
+    let lastSampleTime = 0;
+    let shakeMoveCount = 0;
+    let lastShakeTriggerTime = 0;
+
+    function requestMotionPermissionIfNeeded() {
+      if (typeof DeviceMotionEvent !== "undefined" && typeof DeviceMotionEvent.requestPermission === "function") {
+        if (!motionPermissionRequested) {
+          motionPermissionRequested = true;
+          DeviceMotionEvent.requestPermission()
+            .then((permissionState) => {
+              if (permissionState === "granted") {
+                setupMotionListener();
+                console.log("[Shake] iOS DeviceMotion permission granted");
+              }
+            })
+            .catch((err) => {
+              console.log("[Shake] iOS DeviceMotion request notice:", err);
+            });
+        }
+      } else {
+        setupMotionListener();
+      }
+    }
+
+    function setupMotionListener() {
+      if (motionListenerAttached) return;
+      motionListenerAttached = true;
+
+      window.addEventListener("devicemotion", (e) => {
+        const acc = e.accelerationIncludingGravity || e.acceleration;
+        if (!acc || acc.x === null) return;
+        const now = Date.now();
+        if (now - lastSampleTime < 75) return;
+
+        if (lastX !== null) {
+          const deltaX = Math.abs((acc.x || 0) - lastX);
+          const deltaY = Math.abs((acc.y || 0) - lastY);
+          const deltaZ = Math.abs((acc.z || 0) - lastZ);
+
+          // Strong acceleration change indicating intentional shaking
+          const isShake = (deltaX > 13 && deltaY > 13) || deltaX > 18 || deltaY > 18 || deltaZ > 20;
+
+          if (isShake) {
+            shakeMoveCount++;
+            if (shakeMoveCount >= 2 && (now - lastShakeTriggerTime > 2600)) {
+              shakeMoveCount = 0;
+              lastShakeTriggerTime = now;
+              triggerShakeRoulette();
+            }
+          } else {
+            if (now - lastSampleTime > 450) {
+              shakeMoveCount = 0;
+            }
+          }
+        }
+
+        lastX = acc.x || 0;
+        lastY = acc.y || 0;
+        lastZ = acc.z || 0;
+        lastSampleTime = now;
+      }, { passive: true });
+    }
+
+    function triggerShakeRoulette() {
+      if (isSpinning) return;
+
+      if (navigator.vibrate) {
+        try { navigator.vibrate([40, 60, 40]); } catch (e) {}
+      }
+
+      const isModalOpen = modal && modal.classList.contains("active") && modal.style.display !== "none";
+      if (!isModalOpen) {
+        openModal();
+        if (typeof showAppToast === "function") {
+          showAppToast("Shakeomat!", "📱 Wykryto potrząśnięcie! Losujemy bar...", "🍺");
+        }
+        setTimeout(() => {
+          spinRoulette();
+        }, 350);
+      } else {
+        const modalCard = modal.querySelector(".modal-card-roulette");
+        if (modalCard) {
+          modalCard.classList.add("shake-triggered");
+          setTimeout(() => modalCard.classList.remove("shake-triggered"), 600);
+        }
+        if (typeof showAppToast === "function") {
+          showAppToast("Shakeomat!", "📱 Potrząśnięto telefonem! Losujemy bar...", "🎰");
+        }
         spinRoulette();
       }
-    });
+    }
+
+    // Auto-setup for browsers that don't need user permission (Android Chrome, etc.)
+    if (typeof DeviceMotionEvent !== "undefined" && typeof DeviceMotionEvent.requestPermission !== "function") {
+      setupMotionListener();
+    }
+
+    const shakeHint = document.getElementById("roulette-shake-hint");
+    if (shakeHint) {
+      shakeHint.addEventListener("click", () => {
+        requestMotionPermissionIfNeeded();
+        triggerShakeRoulette();
+      });
+    }
   }
 
   function initPubQuizModal() {
