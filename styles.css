@@ -3516,34 +3516,232 @@ header,
   font-weight: 600;
 }
 
-/* Legal Modal Body */
-.legal-modal-body {
-  color: #cbd5e1;
-  font-size: 0.84rem;
-  line-height: 1.55;
+/* ==========================================================================
+   Legal & Terms of Service & Crowdsourcing Modal Styles
+   ========================================================================== */
+.legal-modal-card {
+  max-width: 680px;
+  width: 95%;
+  max-height: 88vh;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+}
+
+.legal-modal-body {
+  color: #cbd5e1;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.legal-highlight-box {
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.legal-highlight-box.highlight-crowdsource {
+  background: rgba(14, 165, 233, 0.08);
+  border: 1px solid rgba(14, 165, 233, 0.3);
+}
+
+.legal-highlight-box.highlight-disclaimer {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.32);
+}
+
+.highlight-box-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.94rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.legal-highlight-box.highlight-crowdsource .highlight-box-head {
+  color: #38bdf8;
+}
+
+.legal-highlight-box.highlight-disclaimer .highlight-box-head {
+  color: #fbbf24;
+}
+
+.legal-highlight-box p {
+  margin: 0;
+  color: #e2e8f0;
+}
+
+.legal-section {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding-bottom: 12px;
+}
+
+.legal-section:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
 }
 
 .legal-section h4 {
   font-size: 0.92rem;
-  font-weight: 700;
-  color: #fff;
-  margin-bottom: 4px;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 6px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.legal-section p, .legal-section ul {
-  margin: 0;
+.legal-section p {
+  margin: 0 0 8px 0;
+  color: #cbd5e1;
+}
+
+.legal-section p:last-child {
+  margin-bottom: 0;
 }
 
 .legal-section ul {
   padding-left: 20px;
-  margin-top: 6px;
+  margin: 4px 0 8px 0;
 }
 
 .legal-section li {
   margin-bottom: 4px;
+}
+
+.legal-modal-footer {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.legal-admin-link {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  opacity: 0.8;
+  transition: opacity 0.15s ease;
+}
+
+.legal-admin-link:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
+.btn-legal-ack {
+  background: linear-gradient(135deg, #f59e0b, #ea580c);
+  border: none;
+  color: #ffffff;
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(234, 88, 12, 0.35);
+  transition: transform 0.15s ease;
+}
+
+.btn-legal-ack:active {
+  transform: scale(0.97);
+}
+
+/* Checkbox and inline links in Auth & Age Gate */
+.terms-checkbox-group {
+  margin-top: 10px;
+  margin-bottom: 12px;
+}
+
+.terms-checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: #94a3b8;
+  cursor: pointer;
+  user-select: none;
+}
+
+.terms-checkbox-label input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+  margin-top: 2px;
+  accent-color: #f59e0b;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.btn-text-legal {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  color: #f59e0b;
+  font-size: inherit;
+  font-weight: 700;
+  font-family: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  display: inline;
+}
+
+.btn-text-legal:hover {
+  color: #fbbf24;
+}
+
+.age-gate-terms-note {
+  font-size: 0.76rem;
+  line-height: 1.4;
+  color: #94a3b8;
+  margin: 10px 0 14px 0;
+  text-align: center;
+}
+
+.auth-terms-note {
+  font-size: 0.74rem;
+  color: #94a3b8;
+  text-align: center;
+  margin-top: 10px;
+  line-height: 1.4;
+}
+
+.profile-legal-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.btn-profile-legal {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  padding: 7px 14px;
+  border-radius: 10px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.btn-profile-legal:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 /* ==========================================================================
@@ -12063,4 +12261,76 @@ body.theme-light .age-gate-title {
 
 body.theme-light .age-gate-desc {
   color: #475569 !important;
+}
+
+body.theme-light .legal-modal-card {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.16) !important;
+}
+
+body.theme-light .legal-modal-body {
+  color: #334155 !important;
+}
+
+body.theme-light .legal-highlight-box.highlight-crowdsource {
+  background: #f0f9ff !important;
+  border-color: #bae6fd !important;
+}
+
+body.theme-light .legal-highlight-box.highlight-crowdsource .highlight-box-head {
+  color: #0284c7 !important;
+}
+
+body.theme-light .legal-highlight-box.highlight-disclaimer {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+}
+
+body.theme-light .legal-highlight-box.highlight-disclaimer .highlight-box-head {
+  color: #d97706 !important;
+}
+
+body.theme-light .legal-highlight-box p {
+  color: #334155 !important;
+}
+
+body.theme-light .legal-section {
+  border-bottom-color: #e2e8f0 !important;
+}
+
+body.theme-light .legal-section h4 {
+  color: #0f172a !important;
+}
+
+body.theme-light .legal-section p {
+  color: #334155 !important;
+}
+
+body.theme-light .legal-modal-footer {
+  border-top-color: #e2e8f0 !important;
+}
+
+body.theme-light .terms-checkbox-label {
+  color: #475569 !important;
+}
+
+body.theme-light .btn-text-legal {
+  color: #d97706 !important;
+}
+
+body.theme-light .age-gate-terms-note,
+body.theme-light .auth-terms-note {
+  color: #64748b !important;
+}
+
+body.theme-light .btn-profile-legal {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #475569 !important;
+}
+
+body.theme-light .btn-profile-legal:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
 }

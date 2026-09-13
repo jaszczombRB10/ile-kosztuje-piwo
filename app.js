@@ -4902,6 +4902,7 @@
         btnAgeYes.addEventListener("click", () => {
           try {
             localStorage.setItem("age_verified_18", "true");
+            localStorage.setItem("poilepiwko_terms_accepted", "true");
           } catch (e) {}
           ageModal.classList.remove("active");
         });
@@ -4919,22 +4920,46 @@
     // Legal, Privacy & Responsible Drinking Modal
     function initLegalModal() {
       const legalModal = document.getElementById("legal-modal");
-      const btnOpenLegal = document.getElementById("btn-open-legal");
-      const btnRankingLegal = document.getElementById("btn-ranking-legal");
       const btnCloseLegal = document.getElementById("btn-close-legal");
       const btnAckLegal = document.getElementById("btn-ack-legal");
 
       function openLegal() {
-        if (legalModal) legalModal.classList.add("active");
+        if (legalModal) {
+          legalModal.classList.add("active");
+          legalModal.style.display = "flex";
+        }
       }
       function closeLegal() {
-        if (legalModal) legalModal.classList.remove("active");
+        if (legalModal) {
+          legalModal.classList.remove("active");
+          legalModal.style.display = "none";
+        }
       }
 
-      if (btnOpenLegal) btnOpenLegal.addEventListener("click", openLegal);
-      if (btnRankingLegal) btnRankingLegal.addEventListener("click", openLegal);
+      window.__openLegalModal = openLegal;
+      window.__closeLegalModal = closeLegal;
+
+      // Listen for clicks on any legal link/button across modals and views
+      document.addEventListener("click", (e) => {
+        const trigger = e.target.closest(".btn-open-legal-terms, #btn-open-legal, #btn-ranking-legal, #btn-profile-legal, [data-open-legal]");
+        if (trigger) {
+          e.preventDefault();
+          openLegal();
+        }
+      });
+
       if (btnCloseLegal) btnCloseLegal.addEventListener("click", closeLegal);
-      if (btnAckLegal) btnAckLegal.addEventListener("click", closeLegal);
+      if (btnAckLegal) {
+        btnAckLegal.addEventListener("click", () => {
+          try {
+            localStorage.setItem("poilepiwko_terms_accepted", "true");
+          } catch (e) {}
+          closeLegal();
+          if (typeof showAppToast === "function") {
+            showAppToast("Regulamin zaakceptowany", "Dziękujemy za zapoznanie się z zasadami społeczności!", "📜");
+          }
+        });
+      }
       if (legalModal) {
         legalModal.addEventListener("click", (e) => {
           if (e.target === legalModal) closeLegal();
@@ -6073,6 +6098,15 @@
         const displayName = displayNameInput ? displayNameInput.value.trim() : "";
         const email = emailInput ? emailInput.value.trim() : "";
         const password = passInput ? passInput.value : "";
+        const termsAgree = document.getElementById("reg-terms-agree");
+
+        if (termsAgree && !termsAgree.checked) {
+          if (regErrorMsg) {
+            regErrorMsg.textContent = "Musisz zaakceptować Regulamin serwisu i zasady crowdsourcingu.";
+            regErrorMsg.style.display = "block";
+          }
+          return;
+        }
 
         if (regErrorMsg) regErrorMsg.style.display = "none";
         if (submitBtn) {
@@ -6279,6 +6313,15 @@
         if (!valUser || !/^[a-z0-9_]{3,20}$/.test(valUser)) {
           if (errorMsg) {
             errorMsg.textContent = "Wpisz poprawny nick (3-20 znaków: małe litery, cyfry lub _).";
+            errorMsg.style.display = "block";
+          }
+          return;
+        }
+
+        const termsAgree = document.getElementById("onboarding-terms-agree");
+        if (termsAgree && !termsAgree.checked) {
+          if (errorMsg) {
+            errorMsg.textContent = "Musisz zaakceptować Regulamin serwisu i zasady crowdsourcingu.";
             errorMsg.style.display = "block";
           }
           return;

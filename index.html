@@ -401,8 +401,8 @@
         <div class="legal-warning-text">
           🔞 <strong>18+</strong> · Informacje wyłącznie dla osób pełnoletnich. Spożywanie alkoholu szkodzi zdrowiu.
         </div>
-        <button type="button" class="btn-legal-link" id="btn-ranking-legal">
-          Regulamin, odpowiedzialność & cookies
+        <button type="button" class="btn-legal-link btn-open-legal-terms" id="btn-ranking-legal">
+          📜 Regulamin serwisu, crowdsourcing & ochrona prawna
         </button>
       </div>
     </div>
@@ -1044,6 +1044,9 @@
       <div class="age-gate-question">
         Czy masz ukończone 18 lat?
       </div>
+      <div class="age-gate-terms-note">
+        Klikając „Tak” oświadczasz, że masz ukończone 18 lat oraz akceptujesz <button type="button" class="btn-text-legal btn-open-legal-terms">Regulamin serwisu i zasady crowdsourcingu</button>.
+      </div>
       <div class="age-gate-actions">
         <button type="button" id="btn-age-yes" class="btn-age-confirm">
           ✓ Tak, mam ukończone 18 lat
@@ -1062,52 +1065,150 @@
     </div>
   </div>
 
-  <!-- Legal & Privacy Modal (Nota prawna, Cookies, RODO & Odpowiedzialność) -->
+  <!-- Legal & Terms of Service Modal (Regulamin, Crowdsourcing, Brak antyreklamy i Ochrona Prawna) -->
   <div class="modal-backdrop" id="legal-modal">
-    <div class="modal-card modal-card-wide">
+    <div class="modal-card modal-card-wide legal-modal-card">
       <div class="modal-head">
-        <h3>⚖️ Informacje Prawne & Odpowiedzialność</h3>
-        <button id="btn-close-legal" class="btn-close-drawer">✕</button>
+        <div class="modal-head-title">
+          <div class="modal-icon-badge">⚖️</div>
+          <div>
+            <h2>Regulamin & Zasady Crowdsourcingu</h2>
+            <p class="modal-head-sub">Warunki korzystania, brak antyreklamy i ochrona prawna twórcy</p>
+          </div>
+        </div>
+        <button id="btn-close-legal" class="modal-close" aria-label="Zamknij">✕</button>
       </div>
       <div class="legal-modal-body">
-        <div class="legal-section">
-          <h4>🔞 1. Dostęp wyłącznie dla osób pełnoletnich (+18)</h4>
+
+        <!-- Highlighted Callout: Czym jest crowdsourcing? -->
+        <div class="legal-highlight-box highlight-crowdsource">
+          <div class="highlight-box-head">
+            <span class="highlight-icon">🌐</span>
+            <strong>Czym jest CROWDSOURCING w Po ile piwko?</strong>
+          </div>
           <p>
-            Zgodnie z ustawą z dnia 26 października 1982 r. o wychowaniu w trzeźwości i przeciwdziałaniu alkoholizmowi (Dz.U. z 2023 r. poz. 165 z późn. zm.), serwis jest przeznaczony wyłącznie dla osób, które ukończyły 18. rok życia.
+            <strong>Crowdsourcing</strong> (społecznościowe pozyskiwanie danych) to model, w którym informacje o cenach, asortymencie i godzinach <strong>są wprowadzane i weryfikowane oddolnie przez samych użytkowników i bywalców barów</strong> (społeczność), a nie pobierane z kas fiskalnych czy narzucane przez twórcę serwisu.
+          </p>
+          <p>
+            Dzięki temu mapa żyje w czasie rzeczywistym, ale <strong>dane mają charakter wyłącznie orientacyjny, szacunkowy i historyczny</strong>. Mogą zawierać pomyłki lub nieścisłości, za które twórca serwisu nie ponosi odpowiedzialności.
+          </p>
+        </div>
+
+        <!-- Highlighted Callout: Wyłączenie odpowiedzialności za antyreklamę -->
+        <div class="legal-highlight-box highlight-disclaimer">
+          <div class="highlight-box-head">
+            <span class="highlight-icon">🛡️</span>
+            <strong>Brak antyreklamy i wyłączenie odpowiedzialności za frekwencję barów</strong>
+          </div>
+          <p>
+            Serwis <em>„poilepiwko”</em> ma charakter hobbystyczny i pro-społecznościowy. <strong>Żadne publikowane treści nie stanowią celowej antyreklamy, bojkotu konsumenckiego ani nieuczciwej konkurencji wobec któregokolwiek lokalu.</strong>
+          </p>
+          <p>
+            Twórca i administrator serwisu <strong>nie ponoszą odpowiedzialności</strong> za ewentualny spadek liczby klientów lokalu, utracone korzyści (utarg) ani błędy w cenach podanych przez użytkowników. Każdy właściciel baru ma prawo do <strong>bezpłatnego i natychmiastowego sprostowania danych</strong>.
           </p>
         </div>
 
         <div class="legal-section">
-          <h4>🍻 2. Charakter serwisu i brak sprzedaży</h4>
+          <h4>§ 1. Postanowienia ogólne i charakter serwisu</h4>
           <p>
-            Serwis <em>„poilepiwko”</em> jest niezależnym narzędziem o charakterze czysto informacyjno-statystycznym (społecznościowy crowdsourcing cen).
-            Serwis <strong>nie prowadzi sprzedaży, rezerwacji ani dostawy napojów alkoholowych</strong>. Wszystkie znaki towarowe i nazwy lokali należą do ich prawnych właścicieli i zostały użyte wyłącznie w celach informacyjnych.
+            1. Serwis internetowy <strong>„poilepiwko”</strong> (zwany dalej „Serwisem”) jest niezależną, hobbystyczną platformą informacyjną gromadzącą subiektywne dane użytkowników dotyczące cen piwa w lokalach gastronomicznych w Warszawie.
+          </p>
+          <p>
+            2. Serwis <strong>nie prowadzi sprzedaży, pośrednictwa, rezerwacji ani dostaw napojów alkoholowych</strong>. Wszystkie logotypy, nazwy lokali i marek należą do ich prawnych właścicieli i zostały użyte wyłącznie w celach informacyjno-identyfikacyjnych (art. 156 ustawy Prawo własności przemysłowej).
+          </p>
+          <p>
+            3. Dane prezentowane w Serwisie <strong>nie stanowią oferty handlowej</strong> w rozumieniu art. 66 § 1 ustawy z dnia 23 kwietnia 1964 r. Kodeks cywilny. Jedynym wiążącym cennikiem jest oficjalne menu udostępniane przez obsługę w danym lokalu.
           </p>
         </div>
 
         <div class="legal-section">
-          <h4>⚠️ 3. Odpowiedzialne spożywanie alkoholu</h4>
+          <h4>§ 2. Zasady crowdsourcingu (Danych tworzonych przez społeczność)</h4>
           <p>
-            Nadmierne spożywanie alkoholu jest szkodliwe dla zdrowia. Serwis nie zachęca do spożywania alkoholu ani do nadużywania napojów alkoholowych.
-            Pamiętaj: <strong>Nigdy nie prowadź pojazdów po spożyciu alkoholu</strong>.
+            1. Wszelkie informacje o cenach piwa lanego/butelkowego, promocjach godzinowych (happy hours), quizach i klimacie barów są wprowadzane przez zarejestrowanych lub anonimowych Użytkowników.
+          </p>
+          <p>
+            2. Ceny w gastronomii podlegają dynamicznym zmianom (np. weekendowe taryfy nocne, promocje studenckie, inflacja, zmiana dostawców). Informacje w Serwisie mogą różnić się od stawek w danym dniu. Użytkownik korzysta z informacji na własną odpowiedzialność.
           </p>
         </div>
 
         <div class="legal-section">
-          <h4>🍪 4. Prywatność i pamięć lokalna (LocalStorage)</h4>
+          <h4>§ 3. Klauzula ochrony przed roszczeniami o „antyreklamę” i utracone korzyści</h4>
           <p>
-            Szanujemy Twoją prywatność:
+            1. Serwis nie faworyzuje ani nie dyskredytuje żadnego lokalu gastronomicznego. Pozycja lokalu na mapie lub w zestawieniach wynika wyłącznie z kryteriów matematycznych (np. filtrowanie cenowe) na bazie wpisów nadesłanych przez Użytkowników.
+          </p>
+          <p>
+            2. <strong>Administrator nie odpowiada za ewentualne straty finansowe lokalu</strong>, spadek liczby gości, brak klientów czy szkody wizerunkowe spowodowane tym, że użytkownik zgłosił cenę nieaktualną, zawyżoną lub pomyłkową.
+          </p>
+          <p>
+            3. <strong>Status prawny Administratora:</strong> Zgodnie z art. 14 ustawy z dnia 18 lipca 2002 r. o świadczeniu usług drogą elektroniczną oraz Aktem o Usługach Cyfrowych (DSA - Rozporządzenie UE 2022/2065), Administrator nie ponosi odpowiedzialności za przechowywane dane wprowadzone przez Użytkowników, pod warunkiem że w razie powzięcia wiarygodnej wiadomości o ich bezprawnym lub nieprawdziwym charakterze niezwłocznie uniemożliwi do nich dostęp.
+          </p>
+        </div>
+
+        <div class="legal-section">
+          <h4>§ 4. Szybka, bezpłatna ścieżka korekty dla Właścicieli Lokali (Notice & Takedown)</h4>
+          <p>
+            1. Każdy właściciel, menedżer lub przedstawiciel lokalu może w każdej chwili, całkowicie bezpłatnie, zgłosić sprostowanie, aktualizację cennika lub korektę danych swojego lokalu.
+          </p>
+          <p>
+            2. Zgłoszenia można dokonać:
           </p>
           <ul>
-            <li><strong>Brak ciasteczek śledzących i reklamowych</strong>.</li>
-            <li>Aplikacja korzysta z pamięci lokalnej urządzenia (<code>localStorage</code>) wyłącznie w celach technicznych: zapamiętanie weryfikacji wieku (18+), potwierdzeń cen oraz dodanych przez Ciebie lokali.</li>
-            <li>Dane geolokalizacyjne (GPS) są przetwarzane wyłącznie lokalnie w Twojej przeglądarce i nie są gromadzone na zewnętrznych serwerach.</li>
+            <li>Klikając przycisk <strong>„✏️ Zgłoś zmianę”</strong> bezpośrednio na karcie danego lokalu w aplikacji;</li>
+            <li>Wysyłając wiadomość e-mail na adres: <strong>kontakt@poilepiwko.pl</strong> ze wskazaniem nazwy lokalu i aktualnych cen.</li>
           </ul>
+          <p>
+            3. Zgłoszenia ze strony personelu lokali rozpatrywane są priorytetowo.
+          </p>
         </div>
 
-        <div class="modal-footer" style="margin-top: 18px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
-          <a href="/admin.html" style="font-size: 0.76rem; color: var(--text-muted); text-decoration: none; opacity: 0.8;" title="Dostęp tylko dla moderatorów">🛡️ Panel Moderatora</a>
-          <button type="button" id="btn-ack-legal" class="btn-submit">Rozumiem i akceptuję</button>
+        <div class="legal-section">
+          <h4>§ 5. Obowiązki Użytkowników i zakaz sabotażu cenowego</h4>
+          <p>
+            1. Użytkownik zobowiązuje się do wprowadzania wyłącznie rzetelnych informacji, opartych na faktycznych paragonach i wizytach.
+          </p>
+          <p>
+            2. <strong>Kategorycznie zabrania się:</strong>
+          </p>
+          <ul>
+            <li>Celowego fałszowania cen w celu zaszkodzenia lokalowi (tzw. review bombing, trolling cenowy);</li>
+            <li>Wprowadzania złośliwie zaniżonych lub zawyżonych kwot;</li>
+            <li>Publikowania treści wulgarnych, obraźliwych, nawołujących do nienawiści lub naruszających dobra osobiste w nickach, bio czy wpisach;</li>
+            <li>Działań stanowiących czyny nieuczciwej konkurencji pomiędzy lokalami.</li>
+          </ul>
+          <p>
+            3. Konta użytkowników naruszających te zasady będą blokowane, a fałszywe wpisy usuwane.
+          </p>
+        </div>
+
+        <div class="legal-section">
+          <h4>§ 6. Wymóg pełnoletności (+18)</h4>
+          <p>
+            Zgodnie z ustawą z dnia 26 października 1982 r. o wychowaniu w trzeźwości i przeciwdziałaniu alkoholizmowi (Dz.U. z 2023 r. poz. 165 z późn. zm.), serwis jest przeznaczony wyłącznie dla osób, które ukończyły 18. rok życia. Nadmierne spożywanie alkoholu szkodzi zdrowiu.
+          </p>
+        </div>
+
+        <div class="legal-section">
+          <h4>§ 7. Prywatność, RODO & Cookies</h4>
+          <p>
+            1. Serwis nie stosuje zewnętrznych ciasteczek śledzących ani reklamowych.
+          </p>
+          <p>
+            2. Pamięć urządzenia (<code>localStorage</code>) wykorzystywana jest wyłącznie w celach technicznych: zapamiętanie weryfikacji wieku (+18), akceptacji Regulaminu oraz preferencji motywu (ciemny/jasny).
+          </p>
+        </div>
+
+        <div class="legal-section">
+          <h4>§ 8. Akceptacja Regulaminu</h4>
+          <p>
+            Korzystanie z serwisu, zatwierdzenie weryfikacji wieku 18+, rejestracja konta lub dodanie zgłoszenia ceny oznacza pełną i bezwarunkową akceptację niniejszego Regulaminu.
+          </p>
+        </div>
+
+        <div class="modal-footer legal-modal-footer">
+          <a href="/admin.html" class="legal-admin-link" title="Dostęp tylko dla moderatorów">🛡️ Panel Moderatora</a>
+          <button type="button" id="btn-ack-legal" class="btn-submit btn-legal-ack">
+            ✓ Rozumiem i akceptuję Regulamin
+          </button>
         </div>
       </div>
     </div>
@@ -1372,6 +1473,9 @@
         <button type="submit" class="btn-primary btn-auth-submit" id="btn-submit-login">
           <span>🚀 Zaloguj się</span>
         </button>
+        <div class="auth-terms-note">
+          Logując się, potwierdzasz akceptację <button type="button" class="btn-text-legal btn-open-legal-terms">Regulaminu serwisu</button>.
+        </div>
       </form>
 
       <!-- Form 2: Rejestracja -->
@@ -1409,6 +1513,12 @@
         <div class="form-group">
           <label for="reg-password" class="form-label">Hasło (min. 6 znaków)</label>
           <input type="password" id="reg-password" class="form-input" required placeholder="••••••••" autocomplete="new-password" minlength="6" />
+        </div>
+        <div class="form-group terms-checkbox-group">
+          <label class="terms-checkbox-label">
+            <input type="checkbox" id="reg-terms-agree" required checked />
+            <span>Oświadczam, że mam 18+ lat i akceptuję <button type="button" class="btn-text-legal btn-open-legal-terms">Regulamin serwisu</button> (w tym zasady crowdsourcingu i wyłączenie odpowiedzialności twórcy za zgłoszone ceny).</span>
+          </label>
         </div>
         <div class="auth-error-msg" id="reg-error-msg" style="display:none;"></div>
         <button type="submit" class="btn-primary btn-auth-submit" id="btn-submit-register">
@@ -1476,6 +1586,13 @@
             <button type="button" class="avatar-option" data-avatar="🕶️">🕶️</button>
             <button type="button" class="avatar-option" data-avatar="🦉">🦉</button>
           </div>
+        </div>
+
+        <div class="form-group terms-checkbox-group">
+          <label class="terms-checkbox-label">
+            <input type="checkbox" id="onboarding-terms-agree" required checked />
+            <span>Oświadczam, że mam 18+ lat i akceptuję <button type="button" class="btn-text-legal btn-open-legal-terms">Regulamin serwisu i zasady crowdsourcingu</button>.</span>
+          </label>
         </div>
 
         <div class="auth-error-msg" id="onboarding-error-msg" style="display:none;"></div>
@@ -1655,6 +1772,13 @@
             <span class="theme-pill-label">Auto</span>
           </button>
         </div>
+      </div>
+
+      <!-- Legal & Terms in Profile -->
+      <div class="profile-legal-wrap">
+        <button type="button" class="btn-profile-legal btn-open-legal-terms" id="btn-profile-legal">
+          <span>📜 Regulamin serwisu & crowdsourcing</span>
+        </button>
       </div>
 
       <!-- Minimal Tasteful Logout Link -->
