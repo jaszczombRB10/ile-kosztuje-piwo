@@ -7113,6 +7113,7 @@
       if (!modal) return;
       modal.classList.add("active");
       modal.style.display = "flex";
+      updateVibeChipsAvailability();
       if (window.__clearBottomNavActive) window.__clearBottomNavActive();
     }
 
@@ -7145,6 +7146,48 @@
       });
     }
 
+    function getDistrictPool(district) {
+      if (!district || district === "all") return allVenues;
+      const target = district.toLowerCase().trim();
+      const targetNorm = target.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+      const pool = allVenues.filter(v => {
+        const vDist = (v.district || "").toLowerCase();
+        const vDistNorm = vDist.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const vName = (v.name || "").toLowerCase();
+        const vAddr = (v.address || "").toLowerCase();
+
+        if (target === "pawilony") {
+          return vDist === "pawilony" || vName.includes("pawilony");
+        }
+        if (target === "bulwary") {
+          return vDist === "bulwary" || vAddr.includes("bulwar") || vAddr.includes("wioślarsk") || vAddr.includes("zaruskiego");
+        }
+        if (target === "praga") {
+          return vDist.includes("praga");
+        }
+
+        return vDistNorm.includes(targetNorm) || vDist.includes(target);
+      });
+
+      return pool.length > 0 ? pool : allVenues;
+    }
+
+    function updateVibeChipsAvailability() {
+      const pool = getDistrictPool(currentDistrictFilter);
+      const prices = pool.map(v => v.beer_price_pln).filter(p => typeof p === "number" && p > 0);
+      const minPrice = prices.length ? Math.min(...prices) : 12;
+
+      const cheapChip = document.querySelector('#roulette-vibe-chips [data-vibe="cheap"]');
+      if (cheapChip) {
+        if (minPrice <= 12) {
+          cheapChip.innerHTML = "Tanie (≤ 12 zł) 💸";
+        } else {
+          cheapChip.innerHTML = `Tanie (od ${minPrice.toFixed(0)} zł) 💸`;
+        }
+      }
+    }
+
     // Filter Chips: District
     const distChips = document.querySelectorAll("#roulette-district-chips .roulette-chip");
     distChips.forEach(chip => {
@@ -7152,6 +7195,7 @@
         distChips.forEach(c => c.classList.remove("active"));
         chip.classList.add("active");
         currentDistrictFilter = chip.getAttribute("data-district") || "all";
+        updateVibeChipsAvailability();
       });
     });
 
@@ -7169,36 +7213,7 @@
 
     function getCandidates() {
       lastSpinRelaxed = false;
-
-      // 1. First, strictly filter by selected district
-      let districtPool = allVenues;
-      if (currentDistrictFilter !== "all") {
-        const target = currentDistrictFilter.toLowerCase().trim();
-        const targetNorm = target.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-        districtPool = allVenues.filter(v => {
-          const vDist = (v.district || "").toLowerCase();
-          const vDistNorm = vDist.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-          const vName = (v.name || "").toLowerCase();
-          const vAddr = (v.address || "").toLowerCase();
-
-          if (target === "pawilony") {
-            return vDist === "pawilony" || vName.includes("pawilony");
-          }
-          if (target === "bulwary") {
-            return vDist === "bulwary" || vAddr.includes("bulwar") || vAddr.includes("wioślarsk") || vAddr.includes("zaruskiego");
-          }
-          if (target === "praga") {
-            return vDist.includes("praga");
-          }
-
-          return vDistNorm.includes(targetNorm) || vDist.includes(target);
-        });
-
-        if (districtPool.length === 0) {
-          districtPool = allVenues;
-        }
-      }
+      const districtPool = getDistrictPool(currentDistrictFilter);
 
       // 2. If vibe is "all", return the district pool directly
       if (currentVibeFilter === "all") {
@@ -7313,7 +7328,26 @@
         if (resName) resName.textContent = winner.name;
         if (resPrice) resPrice.textContent = `🍺 ${winner.beer_price_pln.toFixed(2)} zł`;
         if (resBeer) resBeer.textContent = winner.beer_name || "Piwo z kranu";
-        if (resAddress) resAddress.textContent = winner.address || winner.district || "Warszawa";
+        if (resAddress) {
+          if (winner.address && winner.address !== "Warszawa") {
+            resAddress.textContent = `${winner.address}${winner.district ? ` (${winner.district})` : ""}`;
+          } else {
+            resAddress.textContent = winner.district || "Warszawa";
+          }
+        }
+
+        const resAlert = document.getElementById("roulette-result-alert");
+        if (resAlert) {
+          if (currentVibeFilter === "cheap" && winner.beer_price_pln > 12.0) {
+            resAlert.textContent = `💡 W dzielnicy ${winner.district || currentDistrictFilter} najtańsze piwo zaczyna się od ${winner.beer_price_pln.toFixed(2)} zł – wylosowano najlepszą opcję!`;
+            resAlert.style.display = "block";
+          } else if (lastSpinRelaxed) {
+            resAlert.textContent = `💡 Wylosowano najpopularniejszy lokal w dzielnicy ${winner.district || currentDistrictFilter}!`;
+            resAlert.style.display = "block";
+          } else {
+            resAlert.style.display = "none";
+          }
+        }
 
         if (resDist) {
           if (userLocation) {
@@ -7331,9 +7365,13 @@
           if (isGardenVenue(winner)) tags.push("🌿 Ogródek");
           if (winner.happy_hour || winner.happy_hour_rule) tags.push("⚡ Happy Hour");
           if (isNonAlcoholicVenue(winner)) tags.push("🌱 0.0%");
-          if (winner.beer_price_pln <= 12.0) tags.push("💸 Tanie piwko");
-          if (lastSpinRelaxed && currentDistrictFilter !== "all") {
-            tags.push(`📍 ${escapeHtml(winner.district || currentDistrictFilter)}`);
+          if (winner.beer_price_pln <= 12.0) {
+            tags.push("💸 Tanie piwko (≤ 12 zł)");
+          } else if (currentVibeFilter === "cheap") {
+            tags.push(`💰 Najtańsze w dzielnicy (${winner.beer_price_pln.toFixed(0)} zł)`);
+          }
+          if (winner.district) {
+            tags.push(`📍 ${escapeHtml(winner.district)}`);
           }
           resTags.innerHTML = tags.map(t => `<span class="roulette-tag-chip">${t}</span>`).join("");
         }
