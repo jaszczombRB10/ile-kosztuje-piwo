@@ -6745,6 +6745,8 @@
         modal.classList.add("active");
         modal.style.display = "flex";
       }
+      const commFollowingBadge = document.getElementById("comm-following-badge");
+      if (commFollowingBadge) commFollowingBadge.textContent = myFollowingIds.length;
       switchTab(initialTab);
     };
 
@@ -6835,8 +6837,10 @@
       if (!followingList) return;
       if (!currentUser) {
         followingList.innerHTML = `
-          <div class="empty-state-hint">
-            Zaloguj się, aby zobaczyć listę obserwowanych piwoszy.
+          <div class="empty-state-card">
+            <div class="empty-icon">🔒</div>
+            <div class="empty-title">Zaloguj się</div>
+            <p class="empty-sub">Zaloguj się na swoje konto, aby widzieć listę obserwowanych piwoszy!</p>
           </div>
         `;
         return;
@@ -6853,47 +6857,61 @@
         return;
       }
 
-      followingList.innerHTML = `<div class="loading-state-hint">Ładowanie listy znajomych...</div>`;
+      followingList.innerHTML = `<div class="loading-state-hint">Ładowanie listy znajomych... 🍻</div>`;
 
       try {
         const res = await fetch("/api/auth", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            action: "search-users",
-            payload: { query: "" }
+            action: "get-following",
+            payload: { userId: currentUser.id, userIds: myFollowingIds }
           })
         });
         const data = await res.json();
-        const users = (data.users || []).filter(u => myFollowingIds.includes(u.id));
+        if (Array.isArray(data.followingIds)) {
+          myFollowingIds = data.followingIds;
+          const commFollowingBadge = document.getElementById("comm-following-badge");
+          if (commFollowingBadge) commFollowingBadge.textContent = myFollowingIds.length;
+        }
+
+        const users = data.users || [];
 
         if (users.length === 0) {
-          followingList.innerHTML = `<div class="empty-state-hint">Obserwujesz ${myFollowingIds.length} osób.</div>`;
+          followingList.innerHTML = `
+            <div class="empty-state-card">
+              <div class="empty-icon">👥</div>
+              <div class="empty-title">Nie obserwujesz jeszcze nikogo</div>
+              <p class="empty-sub">Przejdź do zakładki „Szukaj znajomych”, aby znaleźć swoich piwnych kompanów!</p>
+            </div>
+          `;
           return;
         }
 
         followingList.innerHTML = users.map(u => {
+          const visitedCount = Array.isArray(u.visited_venues) ? u.visited_venues.length : 0;
           const avatarHtml = u.avatar_photo
             ? `<img src="${escapeHtml(u.avatar_photo)}" class="user-card-photo" alt="Avatar" />`
             : escapeHtml(u.avatar_icon || "🍺");
 
           return `
-          <div class="user-search-card">
-            <div class="user-card-avatar" onclick="window.__openUserProfile('${escapeHtml(u.username)}')">${avatarHtml}</div>
-            <div class="user-card-info" onclick="window.__openUserProfile('${escapeHtml(u.username)}')">
-              <div class="user-card-name">${escapeHtml(u.display_name || u.username)}</div>
-              <div class="user-card-handle">@${escapeHtml(u.username)}</div>
+            <div class="user-search-card">
+              <div class="user-card-avatar" onclick="window.__openUserProfile('${escapeHtml(u.username)}')">${avatarHtml}</div>
+              <div class="user-card-info" onclick="window.__openUserProfile('${escapeHtml(u.username)}')">
+                <div class="user-card-name">${escapeHtml(u.display_name || u.username)}</div>
+                <div class="user-card-handle">@${escapeHtml(u.username)} • <span>🎖️ ${visitedCount} lokali</span></div>
+                ${u.bio ? `<div class="user-card-bio">${escapeHtml(u.bio)}</div>` : ""}
+              </div>
+              <div class="user-card-action">
+                <button type="button" class="btn-follow-toggle following" data-user-id="${u.id}" onclick="window.__toggleFollowUser('${u.id}', this)">
+                  ✓ Obserwujesz
+                </button>
+              </div>
             </div>
-            <div class="user-card-action">
-              <button type="button" class="btn-follow-toggle following" data-user-id="${u.id}" onclick="window.__toggleFollowUser('${u.id}', this)">
-                ✓ Obserwujesz
-              </button>
-            </div>
-          </div>
-        `;
+          `;
         }).join("");
       } catch (err) {
-        followingList.innerHTML = `<div class="error-state-hint">Nie udało się załadować listy.</div>`;
+        followingList.innerHTML = `<div class="error-state-hint">Nie udało się załadować listy obserwowanych.</div>`;
       }
     }
   }
@@ -6926,27 +6944,46 @@
       if (res.ok && data.success) {
         if (data.isFollowing) {
           if (!myFollowingIds.includes(targetUserId)) myFollowingIds.push(targetUserId);
-          if (btnEl) {
-            btnEl.classList.add("following");
-            btnEl.textContent = "✓ Obserwujesz";
-          }
           showAppToast("Obserwujesz użytkownika!", "Jego check-iny pojawią się w Twoim feedzie.", "❤️");
         } else {
           myFollowingIds = myFollowingIds.filter(id => id !== targetUserId);
-          if (btnEl) {
-            btnEl.classList.remove("following");
-            btnEl.textContent = "➕ Obserwuj";
-          }
           showAppToast("Przestałeś obserwować użytkownika.", "", "🤍");
+        }
+
+        if (Array.isArray(data.followingIds)) {
+          myFollowingIds = data.followingIds;
+        }
+
+        // Update all buttons for this target user on the page
+        document.querySelectorAll(`.btn-follow-toggle[data-user-id="${targetUserId}"]`).forEach(btn => {
+          if (data.isFollowing) {
+            btn.classList.add("following");
+            btn.textContent = "✓ Obserwujesz";
+          } else {
+            btn.classList.remove("following");
+            btn.textContent = "➕ Obserwuj";
+          }
+        });
+
+        // Update public profile modal follow button if currently open for this user
+        const pubprofFollowBtn = document.getElementById("btn-pubprof-follow-toggle");
+        if (pubprofFollowBtn) {
+          const statFollowers = document.getElementById("pubprof-stat-followers");
+          if (typeof data.followersCount === "number" && statFollowers) {
+            statFollowers.textContent = data.followersCount;
+          }
         }
 
         const commFollowingBadge = document.getElementById("comm-following-badge");
         if (commFollowingBadge) commFollowingBadge.textContent = myFollowingIds.length;
         const profStatFriends = document.getElementById("prof-stat-friends");
         if (profStatFriends) profStatFriends.textContent = myFollowingIds.length;
+      } else {
+        showAppToast("Uwaga", data.error || "Nie udało się zaktualizować obserwowania.", "⚠️");
       }
     } catch (err) {
       console.warn("Toggle follow error:", err);
+      showAppToast("Błąd", "Problem z połączeniem z serwerem.", "⚠️");
     } finally {
       if (btnEl) btnEl.disabled = false;
     }

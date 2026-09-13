@@ -138,19 +138,48 @@ module.exports = async (req, res) => {
     }
 
     // =========================================================================
-    // 3. Search Users by Nick or Display Name
-    // =========================================================================
-    // =========================================================================
-    // 3. Search Users by Nick or Display Name
+    // 3. Search Users by Nick or Display Name / Fetch by IDs
     // =========================================================================
     if (action === "search-users") {
       const q = String(payload?.query || "").trim().toLowerCase();
-      if (!q) {
+      const reqUserIds = Array.isArray(payload?.userIds) ? payload.userIds : null;
+
+      if (!q && (!reqUserIds || reqUserIds.length === 0)) {
         return res.status(200).json({ success: true, users: [] });
       }
 
-      const cleanQ = encodeURIComponent(q.replace(/^@/, ""));
       let users = [];
+
+      // If specific user IDs were requested
+      if (reqUserIds && reqUserIds.length > 0) {
+        try {
+          const listRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?per_page=500`, { headers });
+          if (listRes.ok) {
+            const listData = await listRes.json();
+            const allUsers = listData.users || (Array.isArray(listData) ? listData : []);
+            users = allUsers
+              .filter(u => reqUserIds.includes(u.id))
+              .map(u => {
+                const m = u.user_metadata || {};
+                return {
+                  id: u.id,
+                  username: m.username || u.email?.split("@")[0] || "piwosz",
+                  display_name: m.display_name || m.full_name || m.username || "Piwosz",
+                  avatar_icon: m.avatar_icon || "🍺",
+                  avatar_photo: m.avatar_photo || null,
+                  bio: m.bio || "",
+                  favorite_district: m.favorite_district || "",
+                  visited_venues: m.visited_venues || []
+                };
+              });
+            return res.status(200).json({ success: true, users });
+          }
+        } catch (e) {
+          console.warn("User IDs search error:", e);
+        }
+      }
+
+      const cleanQ = encodeURIComponent(q.replace(/^@/, ""));
 
       try {
         const response = await fetch(
@@ -171,7 +200,7 @@ module.exports = async (req, res) => {
       // Fallback: search in Supabase Auth Admin users
       if (users.length === 0) {
         try {
-          const listRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?per_page=50`, { headers });
+          const listRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?per_page=200`, { headers });
           if (listRes.ok) {
             const listData = await listRes.json();
             const allUsers = listData.users || (Array.isArray(listData) ? listData : []);
@@ -187,7 +216,7 @@ module.exports = async (req, res) => {
                 return {
                   id: u.id,
                   username: m.username || u.email?.split("@")[0] || "piwosz",
-                  display_name: m.display_name || m.username || "Piwosz",
+                  display_name: m.display_name || m.full_name || m.username || "Piwosz",
                   avatar_icon: m.avatar_icon || "🍺",
                   avatar_photo: m.avatar_photo || null,
                   bio: m.bio || "",
@@ -195,7 +224,7 @@ module.exports = async (req, res) => {
                   visited_venues: m.visited_venues || []
                 };
               })
-              .slice(0, 15);
+              .slice(0, 20);
           }
         } catch (adminErr) {
           console.warn("Admin search error:", adminErr);
@@ -203,6 +232,57 @@ module.exports = async (req, res) => {
       }
 
       return res.status(200).json({ success: true, users });
+    }
+
+    // =========================================================================
+    // 3b. Get Following Users List
+    // =========================================================================
+    if (action === "get-following") {
+      const { userId } = payload || {};
+      let userIds = Array.isArray(payload?.userIds) ? payload.userIds : [];
+
+      try {
+        if (userIds.length === 0 && userId) {
+          const userRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(userId)}`, { headers });
+          if (userRes.ok) {
+            const u = await userRes.json();
+            userIds = Array.isArray(u.user_metadata?.following_ids) ? u.user_metadata.following_ids : [];
+          }
+        }
+
+        if (userIds.length === 0) {
+          return res.status(200).json({ success: true, users: [], followingIds: [] });
+        }
+
+        const listRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?per_page=500`, { headers });
+        if (!listRes.ok) {
+          return res.status(200).json({ success: true, users: [], followingIds: userIds });
+        }
+
+        const listData = await listRes.json();
+        const allUsers = listData.users || (Array.isArray(listData) ? listData : []);
+
+        const users = allUsers
+          .filter(u => userIds.includes(u.id))
+          .map(u => {
+            const m = u.user_metadata || {};
+            return {
+              id: u.id,
+              username: m.username || u.email?.split("@")[0] || "piwosz",
+              display_name: m.display_name || m.full_name || m.username || "Piwosz",
+              avatar_icon: m.avatar_icon || "🍺",
+              avatar_photo: m.avatar_photo || null,
+              bio: m.bio || "",
+              favorite_district: m.favorite_district || "",
+              visited_venues: m.visited_venues || []
+            };
+          });
+
+        return res.status(200).json({ success: true, users, followingIds: userIds });
+      } catch (e) {
+        console.error("get-following error:", e);
+        return res.status(500).json({ error: "Błąd podczas pobierania listy obserwowanych." });
+      }
     }
 
     // =========================================================================
@@ -314,22 +394,39 @@ module.exports = async (req, res) => {
         return res.status(404).json({ error: "Użytkownik nie istnieje." });
       }
 
-      // Get follower and following count
-      try {
-        const followersRes = await fetch(`${SUPABASE_URL}/rest/v1/follows?following_id=eq.${profile.id}&select=follower_id`, { headers });
-        if (followersRes.ok) {
-          const fList = await followersRes.json();
-          followersCount = Array.isArray(fList) ? fList.length : 0;
-        }
-        const followingRes = await fetch(`${SUPABASE_URL}/rest/v1/follows?follower_id=eq.${profile.id}&select=following_id`, { headers });
-        if (followingRes.ok) {
-          const fgList = await followingRes.json();
-          if (Array.isArray(fgList)) {
-            followingCount = fgList.length;
-            followingIds = fgList.map(f => f.following_id);
+      // Get follower and following count from user_metadata (with admin scan fallback)
+      if (profile && profile.id) {
+        try {
+          const targetUid = profile.id;
+          const uRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(targetUid)}`, { headers });
+          if (uRes.ok) {
+            const uData = await uRes.json();
+            const m = uData.user_metadata || {};
+            followingIds = Array.isArray(m.following_ids) ? m.following_ids : [];
+            followingCount = followingIds.length;
+            followersCount = Array.isArray(m.follower_ids) ? m.follower_ids.length : 0;
           }
+        } catch (e) {
+          console.warn("Error reading follower metadata:", e);
         }
-      } catch (e) {}
+
+        // Supplementary check: if follower_ids was 0, calculate by scanning users who follow this profile
+        if (followersCount === 0) {
+          try {
+            const allUsersRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?per_page=200`, { headers });
+            if (allUsersRes.ok) {
+              const allData = await allUsersRes.json();
+              const allU = allData.users || (Array.isArray(allData) ? allData : []);
+              const fanIds = allU
+                .filter(u => Array.isArray(u.user_metadata?.following_ids) && u.user_metadata.following_ids.includes(profile.id))
+                .map(u => u.id);
+              if (fanIds.length > 0) {
+                followersCount = fanIds.length;
+              }
+            }
+          } catch (_) {}
+        }
+      }
 
       // Calculate user sequence number
       try {
@@ -441,37 +538,78 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: "Nieprawidłowe identyfikatory użytkowników." });
       }
 
-      // Check if already following
-      const checkRes = await fetch(
-        `${SUPABASE_URL}/rest/v1/follows?follower_id=eq.${followerId}&following_id=eq.${followingId}`,
-        { headers }
-      );
+      try {
+        // Fetch follower user
+        const followerRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(followerId)}`, { headers });
+        if (!followerRes.ok) {
+          return res.status(404).json({ error: "Nie znaleziono profilu obserwującego." });
+        }
+        const followerUser = await followerRes.json();
+        const followerMeta = followerUser.user_metadata || {};
+        let followerFollowingIds = Array.isArray(followerMeta.following_ids) ? [...followerMeta.following_ids] : [];
 
-      let isNowFollowing = false;
-      if (checkRes.ok) {
-        const existing = await checkRes.json();
-        if (Array.isArray(existing) && existing.length > 0) {
+        // Fetch target user
+        const followingRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(followingId)}`, { headers });
+        let followingMeta = {};
+        let targetFollowerIds = [];
+        if (followingRes.ok) {
+          const followingUser = await followingRes.json();
+          followingMeta = followingUser.user_metadata || {};
+          targetFollowerIds = Array.isArray(followingMeta.follower_ids) ? [...followingMeta.follower_ids] : [];
+        }
+
+        let isNowFollowing = false;
+        if (followerFollowingIds.includes(followingId)) {
           // Unfollow
-          await fetch(
-            `${SUPABASE_URL}/rest/v1/follows?follower_id=eq.${followerId}&following_id=eq.${followingId}`,
-            { method: "DELETE", headers }
-          );
+          followerFollowingIds = followerFollowingIds.filter(id => id !== followingId);
+          targetFollowerIds = targetFollowerIds.filter(id => id !== followerId);
           isNowFollowing = false;
         } else {
           // Follow
-          await fetch(`${SUPABASE_URL}/rest/v1/follows`, {
-            method: "POST",
-            headers,
-            body: JSON.stringify({
-              follower_id: followerId,
-              following_id: followingId
-            })
-          });
+          followerFollowingIds.push(followingId);
+          if (!targetFollowerIds.includes(followerId)) {
+            targetFollowerIds.push(followerId);
+          }
           isNowFollowing = true;
         }
-      }
 
-      return res.status(200).json({ success: true, isFollowing: isNowFollowing });
+        // Persist to follower user_metadata
+        await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(followerId)}`, {
+          method: "PUT",
+          headers,
+          body: JSON.stringify({
+            user_metadata: {
+              ...followerMeta,
+              following_ids: followerFollowingIds
+            }
+          })
+        });
+
+        // Persist to target user_metadata
+        if (followingRes.ok) {
+          await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(followingId)}`, {
+            method: "PUT",
+            headers,
+            body: JSON.stringify({
+              user_metadata: {
+                ...followingMeta,
+                follower_ids: targetFollowerIds
+              }
+            })
+          });
+        }
+
+        return res.status(200).json({
+          success: true,
+          isFollowing: isNowFollowing,
+          followingCount: followerFollowingIds.length,
+          followingIds: followerFollowingIds,
+          followersCount: targetFollowerIds.length
+        });
+      } catch (err) {
+        console.error("toggle-follow error:", err);
+        return res.status(500).json({ error: "Błąd serwera podczas aktualizacji obserwowania." });
+      }
     }
 
     // =========================================================================
