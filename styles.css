@@ -9705,8 +9705,9 @@ body.theme-light .profile-handle {
 
 body.theme-light .profile-rank-tag {
   background: #f1f5f9 !important;
-  color: #475569 !important;
-  border-color: rgba(0, 0, 0, 0.08) !important;
+  color: #334155 !important;
+  border: 1px solid #cbd5e1 !important;
+  font-weight: 700 !important;
 }
 
 body.theme-light .goin-bio-text {
@@ -9714,9 +9715,14 @@ body.theme-light .goin-bio-text {
 }
 
 body.theme-light .goin-tag-item {
-  background: #f1f5f9 !important;
-  border-color: rgba(0, 0, 0, 0.07) !important;
-  color: #334155 !important;
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .goin-tag-val {
+  color: #0f172a !important;
+  font-weight: 700 !important;
 }
 
 body.theme-light .goin-avatar-badge {
