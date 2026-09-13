@@ -5139,6 +5139,7 @@
       console.log("Auth state change:", event, session?.user?.email);
       if (session && session.user) {
         currentUser = session.user;
+        if (window.__closeAuth) window.__closeAuth();
         await fetchAndSyncUserProfile();
       } else {
         currentUser = null;
@@ -5173,10 +5174,25 @@
             myFollowingIds = data.followingIds;
           }
 
-          // Hydrate photo from local storage if missing in DB
-          if (!currentProfile.avatar_photo && currentUser) {
-            const savedLocalPhoto = localStorage.getItem("poilepiwko_user_avatar_photo_" + currentUser.id);
-            if (savedLocalPhoto) currentProfile.avatar_photo = savedLocalPhoto;
+          // Robust photo hydration: DB -> user_metadata -> localStorage
+          const metaPhoto = currentUser.user_metadata?.avatar_photo;
+          const savedLocalPhoto = currentUser ? localStorage.getItem("poilepiwko_user_avatar_photo_" + currentUser.id) : null;
+
+          if (!currentProfile.avatar_photo) {
+            if (metaPhoto) {
+              currentProfile.avatar_photo = metaPhoto;
+              if (currentUser) localStorage.setItem("poilepiwko_user_avatar_photo_" + currentUser.id, metaPhoto);
+            } else if (savedLocalPhoto) {
+              currentProfile.avatar_photo = savedLocalPhoto;
+              // Push local device photo to cloud so other devices (desktop/tablet) get it!
+              syncUserDataToCloud({ avatarPhoto: savedLocalPhoto });
+              if (supabaseClient && supabaseClient.auth) {
+                supabaseClient.auth.updateUser({ data: { avatar_photo: savedLocalPhoto } }).catch(() => {});
+              }
+            }
+          } else if (currentUser) {
+            // Cloud has photo -> keep device localStorage in sync
+            localStorage.setItem("poilepiwko_user_avatar_photo_" + currentUser.id, currentProfile.avatar_photo);
           }
 
           // Lossless merge with localStorage
@@ -5277,23 +5293,46 @@
 
   function updateAuthUI() {
     const btnAuth = document.getElementById("btn-user-auth");
-    if (!btnAuth) return;
+    const navIconWrap = document.getElementById("nav-profile-icon-wrap");
+    const navLabel = document.getElementById("nav-profile-label");
 
     if (currentUser && currentProfile) {
-      btnAuth.classList.remove("badge-guest");
-      btnAuth.classList.add("badge-logged-in");
-      const icon = currentProfile.avatar_icon || "🍺";
-      const name = currentProfile.username ? `@${currentProfile.username}` : (currentProfile.display_name || "Mój profil");
-      const avatarHtml = currentProfile.avatar_photo
-        ? `<span class="auth-avatar"><img src="${escapeHtml(currentProfile.avatar_photo)}" class="auth-avatar-photo" alt="Avatar" /></span>`
-        : `<span class="auth-avatar">${escapeHtml(icon)}</span>`;
-      btnAuth.innerHTML = `${avatarHtml}<span class="badge-text">${escapeHtml(name)}</span>`;
-      btnAuth.title = `Zalogowano jako @${currentProfile.username}`;
+      if (btnAuth) {
+        btnAuth.classList.remove("badge-guest");
+        btnAuth.classList.add("badge-logged-in");
+        const icon = currentProfile.avatar_icon || "🍺";
+        const name = currentProfile.username ? `@${currentProfile.username}` : (currentProfile.display_name || "Mój profil");
+        const avatarHtml = currentProfile.avatar_photo
+          ? `<span class="auth-avatar"><img src="${escapeHtml(currentProfile.avatar_photo)}" class="auth-avatar-photo" alt="Avatar" /></span>`
+          : `<span class="auth-avatar">${escapeHtml(icon)}</span>`;
+        btnAuth.innerHTML = `${avatarHtml}<span class="badge-text">${escapeHtml(name)}</span>`;
+        btnAuth.title = `Zalogowano jako @${currentProfile.username}`;
+      }
+
+      if (navIconWrap) {
+        if (currentProfile.avatar_photo) {
+          navIconWrap.innerHTML = `<img src="${escapeHtml(currentProfile.avatar_photo)}" class="nav-avatar-photo" alt="Profil" />`;
+        } else {
+          navIconWrap.innerHTML = `<span class="nav-avatar-emoji">${escapeHtml(currentProfile.avatar_icon || "🍺")}</span>`;
+        }
+      }
+      if (navLabel) {
+        navLabel.textContent = currentProfile.username ? `@${currentProfile.username}` : "Profil";
+      }
     } else {
-      btnAuth.classList.remove("badge-logged-in");
-      btnAuth.classList.add("badge-guest");
-      btnAuth.innerHTML = `<span>👤</span><span class="badge-text">Zaloguj się</span>`;
-      btnAuth.title = "Zaloguj się lub załóż konto piwosza";
+      if (btnAuth) {
+        btnAuth.classList.remove("badge-logged-in");
+        btnAuth.classList.add("badge-guest");
+        btnAuth.innerHTML = `<span>👤</span><span class="badge-text">Zaloguj się</span>`;
+        btnAuth.title = "Zaloguj się lub załóż konto piwosza";
+      }
+
+      if (navIconWrap) {
+        navIconWrap.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`;
+      }
+      if (navLabel) {
+        navLabel.textContent = "Profil";
+      }
     }
 
     const commFollowingBadge = document.getElementById("comm-following-badge");
@@ -5554,7 +5593,7 @@
             throw new Error(msg);
           }
 
-          if (modal) modal.style.display = "none";
+          closeModalWindow();
           showAppToast("Zalogowano pomyślnie!", "Witaj z powrotem w poilepiwko!", "🍻");
         } catch (err) {
           if (loginErrorMsg) {
@@ -5625,7 +5664,7 @@
             }
           }
 
-          if (modal) modal.style.display = "none";
+          closeModalWindow();
           showAppToast(`Witaj @${username}! 🎉`, "Twoje konto piwosza jest już aktywne!", selectedAvatar);
         } catch (err) {
           if (regErrorMsg) {
@@ -6316,6 +6355,15 @@
           currentProfile.vibe_tags = editVibeTags;
           if (currentUser) {
             localStorage.setItem("poilepiwko_user_avatar_photo_" + currentUser.id, editSelectedPhoto || "");
+            if (supabaseClient && supabaseClient.auth) {
+              supabaseClient.auth.updateUser({
+                data: {
+                  avatar_photo: editSelectedPhoto || "",
+                  avatar_icon: editSelectedAvatar,
+                  display_name: editName
+                }
+              }).catch(() => {});
+            }
           }
         }
 

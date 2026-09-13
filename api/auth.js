@@ -237,6 +237,22 @@ module.exports = async (req, res) => {
         console.warn("Profiles DB fetch error:", e);
       }
 
+      // If profile was fetched from DB but avatar_photo is missing, hydrate from user_metadata
+      if (profile && !profile.avatar_photo && (userId || profile.id)) {
+        try {
+          const targetUid = userId || profile.id;
+          const adminRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(targetUid)}`, { headers });
+          if (adminRes.ok) {
+            const u = await adminRes.json();
+            if (u.user_metadata?.avatar_photo) {
+              profile.avatar_photo = u.user_metadata.avatar_photo;
+            }
+          }
+        } catch (e) {
+          console.warn("Hydrate avatar_photo from admin note:", e);
+        }
+      }
+
       // Fallback: Supabase Auth Admin API
       if (!profile) {
         try {
