@@ -17,6 +17,24 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="poilepiwko">
   
+  <!-- Early Theme Initializer to Prevent Flash of Wrong Theme -->
+  <script>
+    (function() {
+      try {
+        var pref = localStorage.getItem("poilepiwko_theme") || "dark";
+        var isLight = (pref === "light") || (pref === "auto" && window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches);
+        if (isLight) {
+          document.documentElement.setAttribute("data-theme", "light");
+          var metaTc = document.querySelector('meta[name="theme-color"]');
+          if (metaTc) metaTc.setAttribute("content", "#f8fafc");
+          document.addEventListener("DOMContentLoaded", function() {
+            document.body.classList.add("theme-light");
+          });
+        }
+      } catch(e) {}
+    })();
+  </script>
+
   <!-- Leaflet CSS & MarkerCluster CSS (Local) -->
   <link rel="stylesheet" href="vendor/leaflet/leaflet.css" />
   <link rel="stylesheet" href="vendor/leaflet/MarkerCluster.css" />
@@ -1607,6 +1625,33 @@
         </div>
         <span class="comm-banner-arrow">→</span>
       </button>
+
+      <!-- Appearance & Theme Selector Card (3 Tryby: Ciemny, Jasny, Auto) -->
+      <div class="profile-settings-card">
+        <div class="settings-card-header">
+          <div class="settings-card-title-wrap">
+            <span class="settings-card-icon">🌓</span>
+            <div>
+              <div class="settings-card-title">Wygląd aplikacji</div>
+              <div class="settings-card-sub">Ciemny na wieczór, jasny w pełnym słońcu</div>
+            </div>
+          </div>
+        </div>
+        <div class="theme-segmented-dock" role="radiogroup" aria-label="Wybór motywu">
+          <button type="button" class="theme-pill-btn active" id="theme-btn-dark" data-theme="dark" role="radio" aria-checked="true" title="Tryb ciemny (domyślny klimat nocny)">
+            <span class="theme-pill-icon">🌙</span>
+            <span class="theme-pill-label">Ciemny</span>
+          </button>
+          <button type="button" class="theme-pill-btn" id="theme-btn-light" data-theme="light" role="radio" aria-checked="false" title="Tryb jasny (ogródki piwne i słońce)">
+            <span class="theme-pill-icon">☀️</span>
+            <span class="theme-pill-label">Jasny</span>
+          </button>
+          <button type="button" class="theme-pill-btn" id="theme-btn-auto" data-theme="auto" role="radio" aria-checked="false" title="Automatycznie według ustawień telefonu">
+            <span class="theme-pill-icon">⚙️</span>
+            <span class="theme-pill-label">Auto</span>
+          </button>
+        </div>
+      </div>
 
       <!-- Minimal Tasteful Logout Link -->
       <div class="profile-logout-wrap">

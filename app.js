@@ -43,6 +43,7 @@
   };
 
   let map;
+  let mapTileLayer = null;
   let allVenues = [];
   let activeMarkers = [];
   let clusterGroup = null;
@@ -211,6 +212,90 @@
               Math.sin(dLon/2) * Math.sin(dLon/2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     return R * c;
+  }
+
+  // Theme Management (Ciemny, Jasny, Auto / Systemowy)
+  const THEME_STORAGE_KEY = "poilepiwko_theme";
+
+  function getSavedThemePreference() {
+    return localStorage.getItem(THEME_STORAGE_KEY) || "dark";
+  }
+
+  function getEffectiveTheme() {
+    const pref = getSavedThemePreference();
+    if (pref === "auto") {
+      return (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) ? "light" : "dark";
+    }
+    return pref; // 'dark' or 'light'
+  }
+
+  function updateMapTilesForTheme(isLight) {
+    if (!mapTileLayer) return;
+    const cartoKey = (typeof MAP_CONFIG !== "undefined" && MAP_CONFIG.cartoApiKey) ? `?key=${MAP_CONFIG.cartoApiKey}` : "";
+    const variant = isLight ? "light_all" : "dark_all";
+    mapTileLayer.setUrl(`https://{s}.basemaps.cartocdn.com/${variant}/{z}/{x}/{y}{r}.png${cartoKey}`);
+  }
+
+  function applyTheme(themePref) {
+    if (!["dark", "light", "auto"].includes(themePref)) {
+      themePref = "dark";
+    }
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, themePref);
+    } catch (e) {}
+
+    const effectiveTheme = (themePref === "auto")
+      ? (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark")
+      : themePref;
+
+    const isLight = effectiveTheme === "light";
+    document.documentElement.setAttribute("data-theme", effectiveTheme);
+    document.body.classList.toggle("theme-light", isLight);
+
+    // Update browser navigation bar color (iOS Safari / Android Chrome)
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute("content", isLight ? "#f8fafc" : "#0d1615");
+    }
+
+    // Update Leaflet map tiles
+    updateMapTilesForTheme(isLight);
+
+    // Update segmented control buttons in Profile
+    const themeBtns = document.querySelectorAll(".theme-pill-btn");
+    themeBtns.forEach(btn => {
+      const isActive = btn.getAttribute("data-theme") === themePref;
+      btn.classList.toggle("active", isActive);
+      btn.setAttribute("aria-checked", isActive ? "true" : "false");
+    });
+  }
+
+  function setupThemeEventListeners() {
+    const themeBtns = document.querySelectorAll(".theme-pill-btn");
+    themeBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const theme = btn.getAttribute("data-theme");
+        if (theme) {
+          applyTheme(theme);
+          showMapToast(
+            theme === "dark" ? "🌙 Włączono tryb ciemny" :
+            theme === "light" ? "☀️ Włączono tryb jasny" :
+            "⚙️ Włączono motyw automatyczny"
+          );
+        }
+      });
+    });
+
+    // Listen for system theme changes if user has chosen 'auto'
+    if (window.matchMedia) {
+      try {
+        window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", () => {
+          if (getSavedThemePreference() === "auto") {
+            applyTheme("auto");
+          }
+        });
+      } catch (e) {}
+    }
   }
 
   // Map Toast Notification Banner
@@ -397,9 +482,11 @@
     // Zoom control at bottom-right
     L.control.zoom({ position: "bottomright" }).addTo(map);
 
-    // CartoDB Dark Matter Tiles with streets & labels (dark_all - shows street names upon zoom)
+    // CartoDB Dark Matter / Positron Tiles with streets & labels (dark_all / light_all)
     const cartoKey = (typeof MAP_CONFIG !== "undefined" && MAP_CONFIG.cartoApiKey) ? `?key=${MAP_CONFIG.cartoApiKey}` : "";
-    L.tileLayer(`https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png${cartoKey}`, {
+    const isLight = getEffectiveTheme() === "light";
+    const initialVariant = isLight ? "light_all" : "dark_all";
+    mapTileLayer = L.tileLayer(`https://{s}.basemaps.cartocdn.com/${initialVariant}/{z}/{x}/{y}{r}.png${cartoKey}`, {
       attribution: '&copy; <a href="https://carto.com/">CARTO</a> | &copy; OpenStreetMap',
       minZoom: 6,
       maxZoom: 19,
@@ -3442,6 +3529,8 @@
 
   // Setup UI Event Listeners
   function setupEventListeners() {
+    setupThemeEventListeners();
+
     // Geolocation ("Blisko mnie")
     const btnLocate = document.getElementById("btn-locate-me");
     if (btnLocate) {
@@ -19268,6 +19357,7 @@
 
   // Boot Application
   function boot() {
+    applyTheme(getSavedThemePreference());
     initMap();
     initSupabase();
     setupEventListeners();
