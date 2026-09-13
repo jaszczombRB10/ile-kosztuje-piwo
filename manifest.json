@@ -1,7 +1,7 @@
 {
   "name": "poilepiwko - Gdzie na piwo w Warszawie",
   "short_name": "poilepiwko",
-  "description": "Sprawdź na żywo aktualne ceny piwa z nalewaka w Warszawie, Happy Hours i wyznacz trasę barową Pub Crawl!",
+  "description": "Sprawdź na żywo aktualne ceny piwa z nalewaka w Warszawie, Happy Hours i wyznacz Pub Crawl!",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

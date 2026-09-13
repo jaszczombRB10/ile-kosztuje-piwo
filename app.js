@@ -2107,21 +2107,21 @@
     const stopsText = route.stops.map((s, i) => `${i + 1}. ${s.venue.name} (${s.venue.beer_price_pln.toFixed(2)} zł)`).join("\n");
     const distText = route.totalDistance >= 1000 ? (route.totalDistance / 1000).toFixed(1) + " km" : Math.round(route.totalDistance) + " m";
     const gmaps = buildGoogleMapsDirectionsUrl(route.stops.map(s => s.venue));
-    const text = `🍻 Trasa Pub Crawl poilepiwko:\n${stopsText}\n🚶 Spacer: ~${distText} | Koszt piwek: ${route.totalCost.toFixed(2)} zł\n🧭 Nawigacja piesza: ${gmaps}\nSprawdź w poilepiwko!`;
+    const text = `🍻 Pub Crawl poilepiwko:\n${stopsText}\n🚶 Spacer: ~${distText} | Koszt piwek: ${route.totalCost.toFixed(2)} zł\n🧭 Nawigacja piesza: ${gmaps}\nSprawdź w poilepiwko!`;
 
     if (navigator.share) {
       navigator.share({
-        title: "Trasa Pub Crawl - poilepiwko",
+        title: "Pub Crawl - poilepiwko",
         text: text
       }).catch(() => {});
     } else if (navigator.clipboard) {
       navigator.clipboard.writeText(text).then(() => {
-        alert("📋 Trasa skopiowana do schowka! Możesz wysłać ją znajomym.");
+        alert("📋 Pub Crawl skopiowany do schowka! Możesz wysłać go znajomym.");
       }).catch(() => {
-        prompt("Skopiuj trasę pub crawl:", text);
+        prompt("Skopiuj Pub Crawl:", text);
       });
     } else {
-      prompt("Skopiuj trasę pub crawl:", text);
+      prompt("Skopiuj Pub Crawl:", text);
     }
   }
 
