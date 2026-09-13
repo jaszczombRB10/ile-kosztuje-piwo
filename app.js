@@ -1057,6 +1057,36 @@
     });
   }
 
+  // Client-Side Profile Photo Square Center-Crop and Compression (240x240 ~20KB)
+  function cropAndCompressAvatarPhoto(file, targetDim = 240, quality = 0.84) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const img = new Image();
+        img.onload = function () {
+          try {
+            const minDim = Math.min(img.naturalWidth || img.width, img.naturalHeight || img.height);
+            const sx = ((img.naturalWidth || img.width) - minDim) / 2;
+            const sy = ((img.naturalHeight || img.height) - minDim) / 2;
+            const canvas = document.createElement("canvas");
+            canvas.width = targetDim;
+            canvas.height = targetDim;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, targetDim, targetDim);
+            const dataUrl = canvas.toDataURL("image/jpeg", quality);
+            resolve(dataUrl);
+          } catch (err) {
+            reject(err);
+          }
+        };
+        img.onerror = reject;
+        img.src = e.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
   // Warsaw Districts Division for Left vs Right Bank
   const LEFT_BANK_DISTRICTS = new Set([
     "Śródmieście", "Mokotów", "Wola", "Ochota", "Żoliborz", "Bielany", "Bemowo", "Ursynów", "Włochy", "Ursus", "Wilanów", "Pawilony", "Bulwary"
@@ -5125,6 +5155,12 @@
             myFollowingIds = data.followingIds;
           }
 
+          // Hydrate photo from local storage if missing in DB
+          if (!currentProfile.avatar_photo && currentUser) {
+            const savedLocalPhoto = localStorage.getItem("poilepiwko_user_avatar_photo_" + currentUser.id);
+            if (savedLocalPhoto) currentProfile.avatar_photo = savedLocalPhoto;
+          }
+
           // Lossless merge with localStorage
           const cloudVisited = Array.isArray(currentProfile.visited_venues) ? currentProfile.visited_venues : [];
           const mergedVisited = Array.from(new Set([...visitedVenues, ...cloudVisited]));
@@ -5154,11 +5190,13 @@
       // Fallback profile if record not fetched
       const meta = currentUser.user_metadata || {};
       const fallbackUsername = meta.username || (currentUser.email ? currentUser.email.split("@")[0].toLowerCase().replace(/[^a-z0-9_]/g, "") : "piwosz");
+      const savedPhoto = (currentUser ? localStorage.getItem("poilepiwko_user_avatar_photo_" + currentUser.id) : null) || meta.avatar_photo || null;
       currentProfile = {
         id: currentUser.id,
         username: fallbackUsername,
         display_name: meta.display_name || meta.full_name || meta.name || fallbackUsername,
         avatar_icon: meta.avatar_icon || "🍺",
+        avatar_photo: savedPhoto,
         user_number: "#000001",
         bio: "Warszawski poszukiwacz dobrego i taniego piwa 🍻",
         vibe_tags: "Kraft, Ogródki, Pub Quiz",
@@ -5204,6 +5242,12 @@
       if (data.success && currentProfile) {
         if (extra.displayName) currentProfile.display_name = extra.displayName;
         if (extra.avatarIcon) currentProfile.avatar_icon = extra.avatarIcon;
+        if (extra.avatarPhoto !== undefined) {
+          currentProfile.avatar_photo = extra.avatarPhoto || null;
+          if (currentUser) {
+            localStorage.setItem("poilepiwko_user_avatar_photo_" + currentUser.id, extra.avatarPhoto || "");
+          }
+        }
         if (extra.bio !== undefined) currentProfile.bio = extra.bio;
         if (extra.favoriteBeer !== undefined) currentProfile.favorite_beer = extra.favoriteBeer;
         if (extra.favoriteDistrict !== undefined) currentProfile.favorite_district = extra.favoriteDistrict;
@@ -5222,7 +5266,10 @@
       btnAuth.classList.add("badge-logged-in");
       const icon = currentProfile.avatar_icon || "🍺";
       const name = currentProfile.username ? `@${currentProfile.username}` : (currentProfile.display_name || "Mój profil");
-      btnAuth.innerHTML = `<span class="auth-avatar">${icon}</span><span class="badge-text">${escapeHtml(name)}</span>`;
+      const avatarHtml = currentProfile.avatar_photo
+        ? `<span class="auth-avatar"><img src="${escapeHtml(currentProfile.avatar_photo)}" class="auth-avatar-photo" alt="Avatar" /></span>`
+        : `<span class="auth-avatar">${escapeHtml(icon)}</span>`;
+      btnAuth.innerHTML = `${avatarHtml}<span class="badge-text">${escapeHtml(name)}</span>`;
       btnAuth.title = `Zalogowano jako @${currentProfile.username}`;
     } else {
       btnAuth.classList.remove("badge-logged-in");
@@ -5817,6 +5864,41 @@
     const editAvatarPicker = document.getElementById("edit-avatar-picker");
 
     let editSelectedAvatar = "🍺";
+    let editSelectedPhoto = null;
+
+    function updateEditModalAvatarPreview() {
+      const previewImg = document.getElementById("edit-photo-preview-img");
+      const previewEmoji = document.getElementById("edit-photo-preview-emoji");
+      const btnRemovePhoto = document.getElementById("btn-remove-profile-photo");
+      const btns = editAvatarPicker ? editAvatarPicker.querySelectorAll(".avatar-option") : [];
+
+      if (editSelectedPhoto) {
+        if (previewImg) {
+          previewImg.src = editSelectedPhoto;
+          previewImg.style.display = "block";
+        }
+        if (previewEmoji) previewEmoji.style.display = "none";
+        if (btnRemovePhoto) btnRemovePhoto.style.display = "inline-block";
+        btns.forEach(b => b.classList.remove("selected"));
+      } else {
+        if (previewImg) {
+          previewImg.src = "";
+          previewImg.style.display = "none";
+        }
+        if (previewEmoji) {
+          previewEmoji.textContent = editSelectedAvatar || "🍺";
+          previewEmoji.style.display = "flex";
+        }
+        if (btnRemovePhoto) btnRemovePhoto.style.display = "none";
+        btns.forEach(b => {
+          if (b.getAttribute("data-avatar") === editSelectedAvatar) {
+            b.classList.add("selected");
+          } else {
+            b.classList.remove("selected");
+          }
+        });
+      }
+    }
 
     function renderMyProfile() {
       if (!currentProfile) return;
@@ -5836,7 +5918,13 @@
       const valDistrict = document.getElementById("prof-val-district");
       const valVibe = document.getElementById("prof-val-vibe");
 
-      if (heroAvatar) heroAvatar.textContent = currentProfile.avatar_icon || "🍺";
+      if (heroAvatar) {
+        if (currentProfile.avatar_photo) {
+          heroAvatar.innerHTML = `<img src="${escapeHtml(currentProfile.avatar_photo)}" class="profile-hero-photo" alt="Zdjęcie profilowe" />`;
+        } else {
+          heroAvatar.textContent = currentProfile.avatar_icon || "🍺";
+        }
+      }
       if (heroName) heroName.textContent = currentProfile.display_name || currentProfile.username;
       if (heroHandle) heroHandle.textContent = `@${currentProfile.username}`;
       if (userNumEl) userNumEl.textContent = currentProfile.user_number || "#000001";
@@ -5912,17 +6000,9 @@
       if (editDist) editDist.value = currentProfile.favorite_district || "";
       if (editVibe) editVibe.value = currentProfile.vibe_tags || "";
 
+      editSelectedPhoto = currentProfile.avatar_photo || null;
       editSelectedAvatar = currentProfile.avatar_icon || "🍺";
-      if (editAvatarPicker) {
-        const btns = editAvatarPicker.querySelectorAll(".avatar-option");
-        btns.forEach(b => {
-          if (b.getAttribute("data-avatar") === editSelectedAvatar) {
-            b.classList.add("selected");
-          } else {
-            b.classList.remove("selected");
-          }
-        });
-      }
+      updateEditModalAvatarPreview();
     }
 
     window.__openMyProfile = function () {
@@ -6057,17 +6137,9 @@
       if (editDist) editDist.value = currentProfile.favorite_district || "";
       if (editVibe) editVibe.value = currentProfile.vibe_tags || "";
 
+      editSelectedPhoto = currentProfile.avatar_photo || null;
       editSelectedAvatar = currentProfile.avatar_icon || "🍺";
-      if (editAvatarPicker) {
-        const btns = editAvatarPicker.querySelectorAll(".avatar-option");
-        btns.forEach(b => {
-          if (b.getAttribute("data-avatar") === editSelectedAvatar) {
-            b.classList.add("selected");
-          } else {
-            b.classList.remove("selected");
-          }
-        });
-      }
+      updateEditModalAvatarPreview();
 
       if (editModal) {
         editModal.classList.add("active");
@@ -6103,14 +6175,61 @@
       });
     }
 
-    // Edit Avatar Picker
+    // Edit Profile Photo Uploader Handlers
+    const editFileInput = document.getElementById("edit-avatar-file-input");
+    const btnChoosePhoto = document.getElementById("btn-choose-photo");
+    const btnTriggerBadge = document.getElementById("btn-trigger-photo-badge");
+    const btnRemovePhoto = document.getElementById("btn-remove-profile-photo");
+
+    if (btnChoosePhoto && editFileInput) {
+      btnChoosePhoto.addEventListener("click", () => editFileInput.click());
+    }
+    if (btnTriggerBadge && editFileInput) {
+      btnTriggerBadge.addEventListener("click", () => editFileInput.click());
+    }
+    if (editFileInput) {
+      editFileInput.addEventListener("change", async (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        if (!file.type.startsWith("image/")) {
+          showAppToast("Błąd", "Wybierz plik graficzny (JPG, PNG itp.).", "⚠️");
+          return;
+        }
+        if (file.size > 15 * 1024 * 1024) {
+          showAppToast("Za duży plik", "Maksymalny rozmiar zdjęcia to 15MB.", "⚠️");
+          return;
+        }
+        try {
+          const croppedDataUrl = await cropAndCompressAvatarPhoto(file, 240, 0.84);
+          if (croppedDataUrl) {
+            editSelectedPhoto = croppedDataUrl;
+            updateEditModalAvatarPreview();
+            showAppToast("Zdjęcie wczytane!", "Kliknij 'Zapisz zmiany', aby zastosować.", "📷");
+          }
+        } catch (cropErr) {
+          console.warn("Avatar crop error:", cropErr);
+          showAppToast("Błąd", "Nie udało się przetworzyć zdjęcia.", "⚠️");
+        }
+        editFileInput.value = "";
+      });
+    }
+
+    if (btnRemovePhoto) {
+      btnRemovePhoto.addEventListener("click", () => {
+        editSelectedPhoto = null;
+        updateEditModalAvatarPreview();
+        showAppToast("Zdjęcie usunięte", "Twój profil będzie używać piwnego awatara.", "🍺");
+      });
+    }
+
+    // Edit Avatar Picker (Emoji fallback/alternative)
     if (editAvatarPicker) {
       const btns = editAvatarPicker.querySelectorAll(".avatar-option");
       btns.forEach(btn => {
         btn.addEventListener("click", () => {
-          btns.forEach(b => b.classList.remove("selected"));
-          btn.classList.add("selected");
           editSelectedAvatar = btn.getAttribute("data-avatar") || "🍺";
+          editSelectedPhoto = null;
+          updateEditModalAvatarPreview();
         });
       });
     }
@@ -6140,6 +6259,7 @@
                   username: editUsername,
                   displayName: editName,
                   avatarIcon: editSelectedAvatar,
+                  avatarPhoto: editSelectedPhoto || "",
                   bio: editBio,
                   favoriteBeer: editBeer,
                   favoriteDistrict: editDist,
@@ -6161,6 +6281,7 @@
         syncUserDataToCloud({
           displayName: editName,
           avatarIcon: editSelectedAvatar,
+          avatarPhoto: editSelectedPhoto || "",
           bio: editBio,
           favoriteBeer: editBeer,
           favoriteDistrict: editDist,
@@ -6170,10 +6291,14 @@
         if (currentProfile) {
           currentProfile.display_name = editName;
           currentProfile.avatar_icon = editSelectedAvatar;
+          currentProfile.avatar_photo = editSelectedPhoto || null;
           currentProfile.bio = editBio;
           currentProfile.favorite_beer = editBeer;
           currentProfile.favorite_district = editDist;
           currentProfile.vibe_tags = editVibeTags;
+          if (currentUser) {
+            localStorage.setItem("poilepiwko_user_avatar_photo_" + currentUser.id, editSelectedPhoto || "");
+          }
         }
 
         renderMyProfile();
@@ -6285,10 +6410,13 @@
             const isMe = currentUser && currentUser.id === u.id;
             const isFollowing = myFollowingIds.includes(u.id);
             const visitedCount = Array.isArray(u.visited_venues) ? u.visited_venues.length : 0;
+            const avatarHtml = u.avatar_photo
+              ? `<img src="${escapeHtml(u.avatar_photo)}" class="user-card-photo" alt="Avatar" />`
+              : escapeHtml(u.avatar_icon || "🍺");
 
             return `
               <div class="user-search-card">
-                <div class="user-card-avatar" onclick="window.__openUserProfile('${escapeHtml(u.username)}')">${escapeHtml(u.avatar_icon || "🍺")}</div>
+                <div class="user-card-avatar" onclick="window.__openUserProfile('${escapeHtml(u.username)}')">${avatarHtml}</div>
                 <div class="user-card-info" onclick="window.__openUserProfile('${escapeHtml(u.username)}')">
                   <div class="user-card-name">${escapeHtml(u.display_name || u.username)}</div>
                   <div class="user-card-handle">@${escapeHtml(u.username)} • <span>🎖️ ${visitedCount} lokali</span></div>
@@ -6362,9 +6490,14 @@
           return;
         }
 
-        followingList.innerHTML = users.map(u => `
+        followingList.innerHTML = users.map(u => {
+          const avatarHtml = u.avatar_photo
+            ? `<img src="${escapeHtml(u.avatar_photo)}" class="user-card-photo" alt="Avatar" />`
+            : escapeHtml(u.avatar_icon || "🍺");
+
+          return `
           <div class="user-search-card">
-            <div class="user-card-avatar" onclick="window.__openUserProfile('${escapeHtml(u.username)}')">${escapeHtml(u.avatar_icon || "🍺")}</div>
+            <div class="user-card-avatar" onclick="window.__openUserProfile('${escapeHtml(u.username)}')">${avatarHtml}</div>
             <div class="user-card-info" onclick="window.__openUserProfile('${escapeHtml(u.username)}')">
               <div class="user-card-name">${escapeHtml(u.display_name || u.username)}</div>
               <div class="user-card-handle">@${escapeHtml(u.username)}</div>
@@ -6375,7 +6508,8 @@
               </button>
             </div>
           </div>
-        `).join("");
+        `;
+        }).join("");
       } catch (err) {
         followingList.innerHTML = `<div class="error-state-hint">Nie udało się załadować listy.</div>`;
       }
@@ -6496,7 +6630,13 @@
         currentViewedProfile = p;
         const rank = calculateUserRank((p.visited_venues || []).length);
 
-        if (avatarEl) avatarEl.textContent = p.avatar_icon || "🍺";
+        if (avatarEl) {
+          if (p.avatar_photo) {
+            avatarEl.innerHTML = `<img src="${escapeHtml(p.avatar_photo)}" class="public-profile-photo" alt="Zdjęcie profilowe" />`;
+          } else {
+            avatarEl.textContent = p.avatar_icon || "🍺";
+          }
+        }
         if (nameEl) nameEl.textContent = p.display_name || p.username;
         if (handleEl) handleEl.textContent = `@${p.username}`;
 
@@ -8237,7 +8377,7 @@
       }
     }
 
-    function generateStoryCard() {
+    function generateStoryCard(avatarImg = null) {
       if (!canvas || !currentProfile) return;
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
@@ -8360,13 +8500,27 @@
       ctx.arc(W / 2, avatarY, avatarR, 0, Math.PI * 2);
       ctx.fillStyle = "#1e2233";
       ctx.fill();
+
+      // Render photo or emoji
+      if (avatarImg) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(W / 2, avatarY, avatarR, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(avatarImg, W / 2 - avatarR, avatarY - avatarR, avatarR * 2, avatarR * 2);
+        ctx.restore();
+      } else {
+        // Avatar Emoji
+        ctx.font = "120px apple color emoji, segoe ui emoji, sans-serif";
+        ctx.fillText(currentProfile.avatar_icon || "🍺", W / 2, avatarY + 12);
+      }
+
       ctx.strokeStyle = "#f59e0b";
       ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.arc(W / 2, avatarY, avatarR, 0, Math.PI * 2);
       ctx.stroke();
-
-      // Avatar Emoji
-      ctx.font = "120px apple color emoji, segoe ui emoji, sans-serif";
-      ctx.fillText(currentProfile.avatar_icon || "🍺", W / 2, avatarY + 12);
 
       // 4. Display Name & Username
       const displayName = currentProfile.display_name || currentProfile.username;
@@ -8550,7 +8704,20 @@
         modal.style.display = "flex";
       }
       if (spinner) spinner.style.display = "flex";
-      setTimeout(generateStoryCard, 60);
+
+      if (currentProfile.avatar_photo) {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+          generateStoryCard(img);
+        };
+        img.onerror = () => {
+          generateStoryCard(null);
+        };
+        img.src = currentProfile.avatar_photo;
+      } else {
+        setTimeout(() => generateStoryCard(null), 60);
+      }
     };
 
     window.__closeStoryCardModal = function () {
