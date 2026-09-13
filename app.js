@@ -1526,110 +1526,216 @@
   // PUB CRAWL GENERATOR LOGIC (poilepiwko)
   // ==========================================================================
 
-  function generatePubCrawlRoute(startVal, stopsCount, vibe) {
+  function getCrawlCandidatePool(startVal, userLoc, validVenues) {
     let startCoords = WARSAW_CENTER;
+    let pool = [];
 
-    if (startVal === "gps") {
-      if (userLocation) {
-        const distFromWarsaw = calculateDistanceKm(userLocation[0], userLocation[1], WARSAW_CENTER[0], WARSAW_CENTER[1]);
+    if (startVal === "bulwary") {
+      startCoords = (CRAWL_HOTSPOTS.bulwary && CRAWL_HOTSPOTS.bulwary.coords) || [52.2385, 21.0295];
+      pool = validVenues.filter(v => {
+        // Hard exclusion: Pawilony, Praga / Right Bank, west of escarpment
+        if (v.district === "Pawilony") return false;
+        if (v.district && v.district.startsWith("Praga")) return false;
+        if (v.longitude < 21.025) return false;
+        if (v.district === "Bulwary") return true;
+        // Powiśle / Waterfront strip
+        if (v.longitude >= 21.026 && v.latitude >= 52.225 && v.latitude <= 52.248) {
+          return calculateDistanceKm(startCoords[0], startCoords[1], v.latitude, v.longitude) <= 0.95;
+        }
+        return false;
+      });
+    } else if (startVal === "pawilony") {
+      startCoords = (CRAWL_HOTSPOTS.pawilony && CRAWL_HOTSPOTS.pawilony.coords) || [52.2323, 21.0206];
+      pool = validVenues.filter(v => {
+        if (v.district === "Bulwary") return false;
+        if (v.district === "Pawilony") return true;
+        return calculateDistanceKm(startCoords[0], startCoords[1], v.latitude, v.longitude) <= 0.35;
+      });
+    } else if (startVal === "nowogrodzka") {
+      startCoords = (CRAWL_HOTSPOTS.nowogrodzka && CRAWL_HOTSPOTS.nowogrodzka.coords) || [52.2289, 21.0118];
+      pool = validVenues.filter(v => {
+        if (v.district === "Pawilony" || v.district === "Bulwary") return false;
+        return calculateDistanceKm(startCoords[0], startCoords[1], v.latitude, v.longitude) <= 0.65;
+      });
+    } else if (startVal === "zbawiciela") {
+      startCoords = (CRAWL_HOTSPOTS.zbawiciela && CRAWL_HOTSPOTS.zbawiciela.coords) || [52.2199, 21.0185];
+      pool = validVenues.filter(v => {
+        if (v.district === "Pawilony" || v.district === "Bulwary") return false;
+        return calculateDistanceKm(startCoords[0], startCoords[1], v.latitude, v.longitude) <= 0.60;
+      });
+    } else if (startVal === "praga") {
+      startCoords = (CRAWL_HOTSPOTS.praga && CRAWL_HOTSPOTS.praga.coords) || [52.2530, 21.0390];
+      pool = validVenues.filter(v => {
+        // Strict right bank
+        if (v.longitude < 21.025) return false;
+        if (v.district === "Pawilony" || v.district === "Bulwary" || v.district === "Śródmieście") return false;
+        if (v.district === "Praga Północ") return true;
+        return calculateDistanceKm(startCoords[0], startCoords[1], v.latitude, v.longitude) <= 1.1;
+      });
+    } else if (startVal === "wola") {
+      startCoords = (CRAWL_HOTSPOTS.wola && CRAWL_HOTSPOTS.wola.coords) || [52.2355, 20.9880];
+      pool = validVenues.filter(v => {
+        if (v.district === "Pawilony" || v.district === "Bulwary") return false;
+        return calculateDistanceKm(startCoords[0], startCoords[1], v.latitude, v.longitude) <= 0.85;
+      });
+    } else if (startVal === "gps") {
+      if (userLoc) {
+        const distFromWarsaw = calculateDistanceKm(userLoc[0], userLoc[1], WARSAW_CENTER[0], WARSAW_CENTER[1]);
         if (distFromWarsaw < 60) {
-          startCoords = userLocation;
+          startCoords = userLoc;
         }
       }
-    } else if (CRAWL_HOTSPOTS[startVal]) {
-      startCoords = CRAWL_HOTSPOTS[startVal].coords;
+      pool = validVenues.filter(v => calculateDistanceKm(startCoords[0], startCoords[1], v.latitude, v.longitude) <= 1.0);
+      if (pool.length < 4) {
+        pool = validVenues.filter(v => calculateDistanceKm(startCoords[0], startCoords[1], v.latitude, v.longitude) <= 1.8);
+      }
+      if (pool.length < 4) {
+        pool = validVenues.filter(v => calculateDistanceKm(startCoords[0], startCoords[1], v.latitude, v.longitude) <= 3.0);
+      }
+    } else if (startVal.toLowerCase() === "śródmieście") {
+      startCoords = (DISTRICT_CENTERS["Śródmieście"] && DISTRICT_CENTERS["Śródmieście"].coords) || WARSAW_CENTER;
+      // Śródmieście is large, so prefer venues within 1.2km of central hub
+      pool = validVenues.filter(v => v.district && v.district.toLowerCase() === "śródmieście" && calculateDistanceKm(startCoords[0], startCoords[1], v.latitude, v.longitude) <= 1.2);
+      if (pool.length < 4) {
+        pool = validVenues.filter(v => v.district && v.district.toLowerCase() === "śródmieście");
+      }
     } else if (DISTRICT_CENTERS[startVal]) {
       startCoords = DISTRICT_CENTERS[startVal].coords;
+      pool = validVenues.filter(v => v.district && v.district.toLowerCase() === startVal.toLowerCase());
+      if (pool.length < 4) {
+        pool = validVenues.filter(v => calculateDistanceKm(startCoords[0], startCoords[1], v.latitude, v.longitude) <= 1.8);
+      }
+    } else {
+      pool = validVenues.filter(v => v.district && v.district.toLowerCase() === startVal.toLowerCase());
+      if (pool.length < 4) {
+        pool = validVenues.filter(v => calculateDistanceKm(startCoords[0], startCoords[1], v.latitude, v.longitude) <= 2.0);
+      }
     }
 
-    const validVenues = allVenues.filter(v => v.latitude && v.longitude && typeof v.beer_price_pln === "number" && v.beer_price_pln > 0);
-    if (validVenues.length === 0) return null;
+    return { startCoords, pool };
+  }
 
-    // Score venues based on distance, vibe, open status, and variety
-    const scored = validVenues.map(v => {
+  function generatePubCrawlRoute(startVal, stopsCount, vibe) {
+    const validVenues = allVenues.filter(v => v.latitude && v.longitude && typeof v.beer_price_pln === "number" && v.beer_price_pln > 0);
+    if (!validVenues || validVenues.length === 0) return null;
+
+    const { startCoords, pool } = getCrawlCandidatePool(startVal, userLocation, validVenues);
+    if (!pool || pool.length === 0) return null;
+
+    const actualStops = Math.min(stopsCount, pool.length);
+    const prices = pool.map(v => v.beer_price_pln);
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+    const priceRange = Math.max(1, maxPrice - minPrice);
+
+    // Score candidates relative to this specific area and vibe
+    const scored = pool.map(v => {
       const distFromStartKm = calculateDistanceKm(startCoords[0], startCoords[1], v.latitude, v.longitude);
-      let score = 100 - (distFromStartKm * 8);
+      let baseScore = 100;
+      const priceNorm = (v.beer_price_pln - minPrice) / priceRange;
 
       const isOpen = isVenueOpen(v);
-      if (isOpen) score += 14;
+      if (isOpen) baseScore += 12;
 
       if (vibe === "cheap") {
-        if (v.beer_price_pln <= 12) score += 28;
-        else if (v.beer_price_pln <= 15) score += 14;
-        else score -= (v.beer_price_pln - 15) * 4;
+        // Cheaper beer within this area gets massive bonus
+        baseScore += (1 - priceNorm) * 50 - 15;
+        if (v.beer_price_pln <= 12) baseScore += 12;
+        else if (v.beer_price_pln <= 15) baseScore += 6;
+        if (v.happy_hour) baseScore += 8;
       } else if (vibe === "craft") {
-        if (v.is_craft) score += 32;
-        else if (v.beer_price_pln >= 17) score += 8;
-        else score -= 15;
+        if (v.is_craft) baseScore += 50;
+        else baseScore -= 25;
+        if (v.beer_price_pln >= 17) baseScore += 8;
       } else if (vibe === "party") {
-        if (v.happy_hour) score += 20;
-        if (v.shot_price_pln && v.shot_price_pln <= 9) score += 16;
-        if (v.district && v.district.toLowerCase() === "pawilony") score += 14;
+        if (v.happy_hour) baseScore += 25;
+        if (v.shot_price_pln && v.shot_price_pln <= 9) baseScore += 20;
+        if (v.district && v.district.toLowerCase() === "pawilony") baseScore += 12;
       } else if (vibe === "mix") {
-        if (v.is_craft) score += 10;
-        if (v.beer_price_pln <= 14) score += 10;
-        if (v.happy_hour) score += 8;
+        if (v.is_craft) baseScore += 16;
+        if (priceNorm <= 0.4) baseScore += 16;
+        if (v.happy_hour) baseScore += 10;
       }
 
-      // Random jitter for variety on rerolls
-      score += (Math.random() - 0.5) * 8;
+      baseScore -= distFromStartKm * 14;
+      baseScore += (Math.random() - 0.5) * 6; // Freshness on re-roll
 
-      return { venue: v, distKm: distFromStartKm, score, isOpen };
+      return { venue: v, baseScore, distFromStartKm, isOpen };
     });
-
-    let pool = scored
-      .filter(item => item.distKm <= 3.8)
-      .sort((a, b) => b.score - a.score);
-
-    if (pool.length < stopsCount) {
-      pool = scored.sort((a, b) => a.distKm - b.distKm).slice(0, 35);
-    }
 
     const routeStops = [];
     let currentPos = startCoords;
-    let remainingPool = [...pool];
+    let remaining = [...scored];
+    const isPawilony = startVal === "pawilony";
 
-    for (let i = 0; i < stopsCount; i++) {
-      if (remainingPool.length === 0) break;
+    for (let i = 0; i < actualStops; i++) {
+      if (remaining.length === 0) break;
 
       if (i === 0) {
-        // Pick top candidate with mild randomization
-        const topSlice = remainingPool.slice(0, Math.min(3, remainingPool.length));
+        // First stop: closest to hub with top vibe score
+        remaining.sort((a, b) => b.baseScore - a.baseScore);
+        const topSlice = remaining.slice(0, Math.min(3, remaining.length));
         const chosen = topSlice[Math.floor(Math.random() * topSlice.length)];
         const legDistM = Math.round(calculateDistanceKm(startCoords[0], startCoords[1], chosen.venue.latitude, chosen.venue.longitude) * 1000);
+
         routeStops.push({
           venue: chosen.venue,
           legDistMeters: legDistM,
           legMinutes: Math.max(1, Math.round(legDistM / 75))
         });
         currentPos = [chosen.venue.latitude, chosen.venue.longitude];
-        remainingPool = remainingPool.filter(p => p.venue.id !== chosen.venue.id);
+        remaining = remaining.filter(r => r.venue.id !== chosen.venue.id);
       } else {
-        // Walking distance scoring (optimal 100m - 500m)
-        const candidates = remainingPool.map(item => {
+        // Subsequent stops: prioritize realistic walking distance
+        const candidates = remaining.map(item => {
           const dM = Math.round(calculateDistanceKm(currentPos[0], currentPos[1], item.venue.latitude, item.venue.longitude) * 1000);
-          let legScore = item.score;
-          if (dM < 40) {
-            legScore -= 8;
-            if (item.venue.district && item.venue.district.toLowerCase() === "pawilony") legScore += 12;
-          } else if (dM <= 450) {
-            legScore += 22; // sweet spot walking distance
-          } else if (dM <= 850) {
-            legScore += 10;
+          let legScore = item.baseScore;
+
+          if (isPawilony) {
+            if (dM <= 250) legScore += 35;
+            else legScore -= (dM - 250) / 10;
           } else {
-            legScore -= (dM - 850) / 25;
+            if (dM < 40) {
+              legScore -= 6;
+            } else if (dM <= 450) {
+              legScore += 32; // optimal walking leg
+            } else if (dM <= 750) {
+              legScore += 16;
+            } else {
+              legScore -= (dM - 750) / 15;
+            }
           }
+
+          // Avoid immediately backtracking to previous-previous stop
+          if (i >= 2) {
+            const prevPrev = routeStops[i - 2];
+            const distToPrevPrev = Math.round(calculateDistanceKm(item.venue.latitude, item.venue.longitude, prevPrev.venue.latitude, prevPrev.venue.longitude) * 1000);
+            if (distToPrevPrev < 90 && !isPawilony) {
+              legScore -= 25;
+            }
+          }
+
+          // Mix vibe variety: prefer alternating craft / non-craft
+          if (vibe === "mix") {
+            const lastStop = routeStops[i - 1];
+            if (!!item.venue.is_craft !== !!lastStop.venue.is_craft) {
+              legScore += 12;
+            }
+          }
+
           return { ...item, dM, legScore };
         }).sort((a, b) => b.legScore - a.legScore);
 
-        const chosen = candidates[0];
+        const topPicks = candidates.slice(0, Math.min(2, candidates.length));
+        const chosen = topPicks[Math.floor(Math.random() * topPicks.length)];
+
         routeStops.push({
           venue: chosen.venue,
           legDistMeters: chosen.dM,
           legMinutes: Math.max(1, Math.round(chosen.dM / 75))
         });
         currentPos = [chosen.venue.latitude, chosen.venue.longitude];
-        remainingPool = remainingPool.filter(p => p.venue.id !== chosen.venue.id);
+        remaining = remaining.filter(r => r.venue.id !== chosen.venue.id);
       }
     }
 
@@ -1651,7 +1757,7 @@
       startCoords,
       startVal,
       vibe,
-      stopsCount
+      stopsCount: actualStops
     };
   }
 
