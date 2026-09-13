@@ -7642,6 +7642,171 @@ header,
   margin: 0;
 }
 
+/* ==========================================================================
+   Notification Badges, Red Dots & Activity List
+   ========================================================================== */
+.nav-icon-relative,
+.btn-icon-relative {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-badge-dot {
+  position: absolute;
+  top: -3px;
+  right: -5px;
+  width: 9px;
+  height: 9px;
+  background: #ef4444;
+  border-radius: 50%;
+  border: 1.5px solid #091218;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.9);
+  animation: pulse-badge-dot 1.8s infinite ease-in-out;
+}
+
+.badge-dot {
+  position: absolute;
+  top: -3px;
+  right: -5px;
+  width: 9px;
+  height: 9px;
+  background: #ef4444;
+  border-radius: 50%;
+  border: 1.5px solid #0f172a;
+  box-shadow: 0 0 7px rgba(239, 68, 68, 0.85);
+  animation: pulse-badge-dot 1.8s infinite ease-in-out;
+}
+
+@keyframes pulse-badge-dot {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 0.85;
+  }
+}
+
+.comm-notif-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  margin-left: 4px;
+  line-height: 1;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.5);
+}
+
+.notifications-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 380px;
+  overflow-y: auto;
+  padding: 4px 2px;
+}
+
+.notif-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 12px 14px;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.notif-card.unread {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.35);
+  box-shadow: 0 2px 12px rgba(245, 158, 11, 0.15);
+}
+
+.notif-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid rgba(255, 153, 0, 0.35);
+  flex-shrink: 0;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.notif-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.notif-info {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.notif-msg {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.35;
+}
+
+.notif-meta {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin-top: 3px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.notif-action {
+  flex-shrink: 0;
+}
+
+.btn-notif-action {
+  background: linear-gradient(135deg, #f59e0b, #ea580c);
+  border: none;
+  color: #ffffff;
+  padding: 7px 14px;
+  border-radius: 10px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(234, 88, 12, 0.3);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-notif-action:active {
+  transform: scale(0.96);
+}
+
+.btn-notif-action.following {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #cbd5e1;
+  box-shadow: none;
+}
+
 /* Public Profile Actions & Badges */
 .pubprof-actions {
   display: flex;
@@ -11377,6 +11542,45 @@ body.theme-light .empty-state-card .empty-title {
 
 body.theme-light .empty-state-card .empty-sub {
   color: #64748b !important;
+}
+
+body.theme-light .nav-badge-dot {
+  border-color: #ffffff !important;
+}
+
+body.theme-light .badge-dot {
+  border-color: #ffffff !important;
+}
+
+body.theme-light .notif-card {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+}
+
+body.theme-light .notif-card.unread {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+  box-shadow: 0 2px 10px rgba(245, 158, 11, 0.12) !important;
+}
+
+body.theme-light .notif-avatar {
+  background: #f8fafc !important;
+  border-color: #fcd34d !important;
+}
+
+body.theme-light .notif-msg {
+  color: #0f172a !important;
+}
+
+body.theme-light .notif-meta {
+  color: #64748b !important;
+}
+
+body.theme-light .btn-notif-action.following {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
 }
 
 body.theme-light .feed-card {

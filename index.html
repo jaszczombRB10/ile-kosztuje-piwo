@@ -92,8 +92,11 @@
           <span>🎲</span>
           <span class="btn-text">Ruletka</span>
         </button>
-        <button type="button" id="btn-community-toggle" class="btn-secondary" title="Społeczność, Piwni Znajomi i Feed aktywności">
-          <span>👥</span>
+        <button type="button" id="btn-community-toggle" class="btn-secondary" title="Piwni Znajomi & Aktywność">
+          <span class="btn-icon-relative">
+            👥
+            <span class="badge-dot" id="header-community-dot" style="display:none;"></span>
+          </span>
           <span class="btn-text">Znajomi</span>
         </button>
 
@@ -977,14 +980,15 @@
 
   <!-- Mobile Bottom Navigation Bar (Native App Dock) -->
   <nav class="mobile-bottom-nav" id="mobile-bottom-nav" aria-label="Nawigacja dolna">
-    <button type="button" class="nav-item" id="nav-btn-community" data-target="community" title="Piwni Znajomi & Społeczność">
-      <span class="nav-icon">
+    <button type="button" class="nav-item" id="nav-btn-community" data-target="community" title="Piwni Znajomi & Aktywność">
+      <span class="nav-icon nav-icon-relative">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
           <circle cx="9" cy="7" r="4"></circle>
           <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
           <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
         </svg>
+        <span class="nav-badge-dot" id="nav-community-dot" style="display:none;"></span>
       </span>
       <span class="nav-label">Znajomi</span>
     </button>
@@ -1979,8 +1983,12 @@
 
       <!-- Community Tabs -->
       <div class="community-tabs">
-        <button type="button" class="comm-tab active" id="tab-comm-search">🔍 Szukaj znajomych</button>
+        <button type="button" class="comm-tab active" id="tab-comm-search">🔍 Szukaj</button>
         <button type="button" class="comm-tab" id="tab-comm-following">❤️ Obserwowani (<span id="comm-following-badge">0</span>)</button>
+        <button type="button" class="comm-tab" id="tab-comm-notifications">
+          🔔 Aktywność
+          <span class="comm-notif-pill" id="comm-notif-pill" style="display:none;">0</span>
+        </button>
       </div>
 
       <!-- Tab 1: Wyszukiwarka znajomych -->
@@ -1994,9 +2002,16 @@
         </div>
       </div>
 
-      <!-- Tab 3: Lista obserwowanych znajomych -->
+      <!-- Tab 2: Lista obserwowanych znajomych -->
       <div class="comm-tab-pane" id="pane-comm-following" style="display:none;">
         <div class="following-list" id="comm-following-list">
+          <!-- Injected via JS -->
+        </div>
+      </div>
+
+      <!-- Tab 3: Powiadomienia & Aktywność -->
+      <div class="comm-tab-pane" id="pane-comm-notifications" style="display:none;">
+        <div class="notifications-list" id="comm-notifications-list">
           <!-- Injected via JS -->
         </div>
       </div>

@@ -573,6 +573,24 @@ module.exports = async (req, res) => {
           isNowFollowing = true;
         }
 
+        let targetNotifs = Array.isArray(followingMeta.notifications) ? [...followingMeta.notifications] : [];
+        if (isNowFollowing) {
+          const fromName = followerMeta.display_name || followerMeta.username || "Nowy Piwosz";
+          targetNotifs.unshift({
+            id: "notif_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
+            type: "new_follower",
+            fromUserId: followerId,
+            fromUsername: followerMeta.username || followerUser.email?.split("@")[0] || "znajomy",
+            fromDisplayName: fromName,
+            fromAvatarIcon: followerMeta.avatar_icon || "🍺",
+            fromAvatarPhoto: followerMeta.avatar_photo || null,
+            message: `${fromName} zaczął Cię obserwować! 👥`,
+            createdAt: new Date().toISOString(),
+            read: false
+          });
+          targetNotifs = targetNotifs.slice(0, 30);
+        }
+
         // Persist to follower user_metadata
         await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(followerId)}`, {
           method: "PUT",
@@ -593,7 +611,8 @@ module.exports = async (req, res) => {
             body: JSON.stringify({
               user_metadata: {
                 ...followingMeta,
-                follower_ids: targetFollowerIds
+                follower_ids: targetFollowerIds,
+                notifications: targetNotifs
               }
             })
           });
@@ -609,6 +628,129 @@ module.exports = async (req, res) => {
       } catch (err) {
         console.error("toggle-follow error:", err);
         return res.status(500).json({ error: "Błąd serwera podczas aktualizacji obserwowania." });
+      }
+    }
+
+    // =========================================================================
+    // 7b. Send Virtual Cheers Toast to a Friend
+    // =========================================================================
+    if (action === "send-toast") {
+      const { fromUserId, toUserId } = payload || {};
+      if (!fromUserId || !toUserId || fromUserId === toUserId) {
+        return res.status(400).json({ error: "Nieprawidłowe identyfikatory użytkowników." });
+      }
+
+      try {
+        const fromRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(fromUserId)}`, { headers });
+        const toRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(toUserId)}`, { headers });
+        if (!fromRes.ok || !toRes.ok) {
+          return res.status(404).json({ error: "Nie znaleziono użytkownika." });
+        }
+
+        const fromUser = await fromRes.json();
+        const toUser = await toRes.json();
+        const fromMeta = fromUser.user_metadata || {};
+        const toMeta = toUser.user_metadata || {};
+
+        let targetNotifs = Array.isArray(toMeta.notifications) ? [...toMeta.notifications] : [];
+        const fromName = fromMeta.display_name || fromMeta.username || "Piwosz";
+
+        targetNotifs.unshift({
+          id: "notif_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
+          type: "cheers_toast",
+          fromUserId,
+          fromUsername: fromMeta.username || "znajomy",
+          fromDisplayName: fromName,
+          fromAvatarIcon: fromMeta.avatar_icon || "🍻",
+          fromAvatarPhoto: fromMeta.avatar_photo || null,
+          message: `${fromName} wzniósł z Tobą toast: Na zdrowie! 🍻`,
+          createdAt: new Date().toISOString(),
+          read: false
+        });
+
+        targetNotifs = targetNotifs.slice(0, 30);
+
+        await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(toUserId)}`, {
+          method: "PUT",
+          headers,
+          body: JSON.stringify({
+            user_metadata: {
+              ...toMeta,
+              notifications: targetNotifs
+            }
+          })
+        });
+
+        return res.status(200).json({ success: true });
+      } catch (err) {
+        console.error("send-toast error:", err);
+        return res.status(500).json({ error: "Błąd podczas wysyłania toastu." });
+      }
+    }
+
+    // =========================================================================
+    // 7c. Get User Notifications
+    // =========================================================================
+    if (action === "get-notifications") {
+      const { userId } = payload || {};
+      if (!userId) {
+        return res.status(400).json({ error: "Brak userId." });
+      }
+
+      try {
+        const uRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(userId)}`, { headers });
+        if (!uRes.ok) {
+          return res.status(404).json({ error: "Nie znaleziono użytkownika." });
+        }
+        const u = await uRes.json();
+        const notifs = Array.isArray(u.user_metadata?.notifications) ? u.user_metadata.notifications : [];
+        const unreadCount = notifs.filter(n => !n.read).length;
+
+        return res.status(200).json({
+          success: true,
+          notifications: notifs,
+          unreadCount
+        });
+      } catch (err) {
+        console.error("get-notifications error:", err);
+        return res.status(500).json({ error: "Błąd podczas pobierania powiadomień." });
+      }
+    }
+
+    // =========================================================================
+    // 7d. Mark Notifications as Read
+    // =========================================================================
+    if (action === "mark-notifications-read") {
+      const { userId } = payload || {};
+      if (!userId) {
+        return res.status(400).json({ error: "Brak userId." });
+      }
+
+      try {
+        const uRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(userId)}`, { headers });
+        if (!uRes.ok) {
+          return res.status(404).json({ error: "Nie znaleziono użytkownika." });
+        }
+        const u = await uRes.json();
+        const meta = u.user_metadata || {};
+        const notifs = Array.isArray(meta.notifications) ? meta.notifications : [];
+        const updatedNotifs = notifs.map(n => ({ ...n, read: true }));
+
+        await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(userId)}`, {
+          method: "PUT",
+          headers,
+          body: JSON.stringify({
+            user_metadata: {
+              ...meta,
+              notifications: updatedNotifs
+            }
+          })
+        });
+
+        return res.status(200).json({ success: true, unreadCount: 0 });
+      } catch (err) {
+        console.error("mark-notifications-read error:", err);
+        return res.status(500).json({ error: "Błąd podczas oznaczania powiadomień." });
       }
     }
 

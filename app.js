@@ -88,6 +88,10 @@
   let currentUser = null;
   let currentProfile = null;
   let myFollowingIds = [];
+  let myNotifications = [];
+  let unreadNotificationsCount = 0;
+  let knownNotificationIds = new Set();
+  let isFetchingNotifications = false;
 
   function loadFavoriteVenues() {
     try {
@@ -4790,7 +4794,7 @@
           if (window.__closeMobileSearch) window.__closeMobileSearch();
           if (window.__closeHappyHours) window.__closeHappyHours();
           if (window.__openCommunity) {
-            window.__openCommunity("search");
+            window.__openCommunity(unreadNotificationsCount > 0 ? "notifications" : "search");
           }
         } else if (target === "promos" || target === "happyhour") {
           if (window.__closeRankingDrawer) window.__closeRankingDrawer();
@@ -5331,6 +5335,19 @@
 
     // Deep linking: listen to URL hash changes
     window.addEventListener("hashchange", checkUrlHash);
+
+    // Notifications & Activity Polling (every 45s or when tab regains focus)
+    setInterval(() => {
+      if (currentUser && document.visibilityState === "visible") {
+        loadUserNotifications(true);
+      }
+    }, 45000);
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible" && currentUser) {
+        loadUserNotifications(true);
+      }
+    });
   }
 
   // Populate Datalist for autocomplete in form
@@ -5441,6 +5458,9 @@
         currentUser = null;
         currentProfile = null;
         myFollowingIds = [];
+        myNotifications = [];
+        unreadNotificationsCount = 0;
+        knownNotificationIds.clear();
         updateAuthUI();
       }
     }).catch(err => {
@@ -5457,6 +5477,9 @@
         currentUser = null;
         currentProfile = null;
         myFollowingIds = [];
+        myNotifications = [];
+        unreadNotificationsCount = 0;
+        knownNotificationIds.clear();
         updateAuthUI();
       }
     });
@@ -5572,6 +5595,7 @@
     updatePassportCounters();
     updateFavoriteCounters();
     renderMarkers();
+    loadUserNotifications(false);
   }
 
   function syncUserDataToCloud(extra = {}) {
@@ -5654,6 +5678,116 @@
     const commFollowingBadge = document.getElementById("comm-following-badge");
     if (commFollowingBadge) {
       commFollowingBadge.textContent = myFollowingIds.length;
+    }
+    updateNotificationBadges();
+  }
+
+  // Activity & Notifications Handlers
+  function updateNotificationBadges() {
+    const headerDot = document.getElementById("header-community-dot");
+    const navDot = document.getElementById("nav-community-dot");
+    const commPill = document.getElementById("comm-notif-pill");
+
+    const hasUnread = Boolean(currentUser && unreadNotificationsCount > 0);
+
+    if (headerDot) {
+      headerDot.style.display = hasUnread ? "block" : "none";
+    }
+    if (navDot) {
+      navDot.style.display = hasUnread ? "block" : "none";
+    }
+    if (commPill) {
+      if (hasUnread) {
+        commPill.textContent = unreadNotificationsCount > 99 ? "99+" : unreadNotificationsCount;
+        commPill.style.display = "inline-flex";
+      } else {
+        commPill.style.display = "none";
+      }
+    }
+  }
+
+  function requestBrowserNotificationPermission() {
+    if (typeof Notification !== "undefined" && Notification.permission === "default") {
+      Notification.requestPermission().catch(() => {});
+    }
+  }
+
+  async function loadUserNotifications(notifyIfNew = false) {
+    if (!currentUser || isFetchingNotifications) return;
+    isFetchingNotifications = true;
+    try {
+      const res = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "get-notifications",
+          payload: { userId: currentUser.id }
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.notifications)) {
+          const prevKnown = new Set(knownNotificationIds);
+          myNotifications = data.notifications;
+          unreadNotificationsCount = typeof data.unreadCount === "number" ? data.unreadCount : 0;
+
+          if (notifyIfNew && prevKnown.size > 0) {
+            const newlyArrived = myNotifications.filter(n => !n.read && !prevKnown.has(n.id));
+            if (newlyArrived.length > 0) {
+              const latest = newlyArrived[0];
+              const toastIcon = latest.type === "cheers_toast" ? "🍻" : "👥";
+              showAppToast("Nowa aktywność od znajomego!", latest.message, toastIcon, 4500);
+
+              if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+                try {
+                  new Notification("Po ile piwko? 🍻", {
+                    body: latest.message,
+                    icon: "/icons/icon-192.png",
+                    badge: "/icons/icon-192.png"
+                  });
+                } catch (e) {}
+              }
+            }
+          }
+
+          myNotifications.forEach(n => {
+            if (n.id) knownNotificationIds.add(n.id);
+          });
+
+          updateNotificationBadges();
+
+          const paneNotifications = document.getElementById("pane-comm-notifications");
+          if (paneNotifications && paneNotifications.style.display !== "none") {
+            if (typeof window.__renderNotificationsList === "function") {
+              window.__renderNotificationsList();
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("loadUserNotifications error:", e);
+    } finally {
+      isFetchingNotifications = false;
+    }
+  }
+
+  async function markNotificationsAsRead() {
+    if (!currentUser || unreadNotificationsCount === 0) return;
+    unreadNotificationsCount = 0;
+    myNotifications.forEach(n => { n.read = true; });
+    updateNotificationBadges();
+
+    try {
+      await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "mark-notifications-read",
+          payload: { userId: currentUser.id }
+        })
+      });
+    } catch (e) {
+      console.warn("markNotificationsAsRead error:", e);
     }
   }
 
@@ -6702,6 +6836,9 @@
         currentUser = null;
         currentProfile = null;
         myFollowingIds = [];
+        myNotifications = [];
+        unreadNotificationsCount = 0;
+        knownNotificationIds.clear();
         updateAuthUI();
         if (modal) modal.style.display = "none";
         showAppToast("Wylogowano pomyślnie.", "Do zobaczenia przy barze!", "👋");
@@ -6714,21 +6851,30 @@
     const btnClose = document.getElementById("btn-close-community");
     const tabSearch = document.getElementById("tab-comm-search");
     const tabFollowing = document.getElementById("tab-comm-following");
+    const tabNotifications = document.getElementById("tab-comm-notifications");
     const paneSearch = document.getElementById("pane-comm-search");
     const paneFollowing = document.getElementById("pane-comm-following");
+    const paneNotifications = document.getElementById("pane-comm-notifications");
     const searchInput = document.getElementById("input-search-friends");
     const btnRunSearch = document.getElementById("btn-run-search-friends");
     const searchResults = document.getElementById("comm-search-results");
     const followingList = document.getElementById("comm-following-list");
+    const notifList = document.getElementById("comm-notifications-list");
 
     function switchTab(tab) {
-      [tabSearch, tabFollowing].forEach(t => t && t.classList.remove("active"));
-      [paneSearch, paneFollowing].forEach(p => p && (p.style.display = "none"));
+      [tabSearch, tabFollowing, tabNotifications].forEach(t => t && t.classList.remove("active"));
+      [paneSearch, paneFollowing, paneNotifications].forEach(p => p && (p.style.display = "none"));
 
       if (tab === "following") {
         if (tabFollowing) tabFollowing.classList.add("active");
         if (paneFollowing) paneFollowing.style.display = "block";
         loadFollowingList();
+      } else if (tab === "notifications") {
+        if (tabNotifications) tabNotifications.classList.add("active");
+        if (paneNotifications) paneNotifications.style.display = "block";
+        renderNotificationsList();
+        markNotificationsAsRead();
+        requestBrowserNotificationPermission();
       } else {
         // default "search"
         if (tabSearch) tabSearch.classList.add("active");
@@ -6739,15 +6885,19 @@
 
     if (tabSearch) tabSearch.addEventListener("click", () => switchTab("search"));
     if (tabFollowing) tabFollowing.addEventListener("click", () => switchTab("following"));
+    if (tabNotifications) tabNotifications.addEventListener("click", () => switchTab("notifications"));
 
-    window.__openCommunity = function (initialTab = "search") {
+    window.__openCommunity = function (initialTab) {
       if (modal) {
         modal.classList.add("active");
         modal.style.display = "flex";
       }
       const commFollowingBadge = document.getElementById("comm-following-badge");
       if (commFollowingBadge) commFollowingBadge.textContent = myFollowingIds.length;
-      switchTab(initialTab);
+      updateNotificationBadges();
+
+      const targetTab = initialTab || (unreadNotificationsCount > 0 ? "notifications" : "search");
+      switchTab(targetTab);
     };
 
     window.__closeCommunity = function () {
@@ -6914,6 +7064,65 @@
         followingList.innerHTML = `<div class="error-state-hint">Nie udało się załadować listy obserwowanych.</div>`;
       }
     }
+
+    // Render Notifications & Activity
+    function renderNotificationsList() {
+      if (!notifList) return;
+      if (!currentUser) {
+        notifList.innerHTML = `
+          <div class="empty-state-card">
+            <div class="empty-icon">🔒</div>
+            <div class="empty-title">Zaloguj się</div>
+            <p class="empty-sub">Zaloguj się na swoje konto, aby widzieć aktywność znajomych!</p>
+          </div>
+        `;
+        return;
+      }
+
+      if (!myNotifications || myNotifications.length === 0) {
+        notifList.innerHTML = `
+          <div class="empty-state-card">
+            <div class="empty-icon">🔔</div>
+            <div class="empty-title">Brak powiadomień</div>
+            <p class="empty-sub">Gdy ktoś Cię zaobserwuje lub wzniesie z Tobą toast 🍻, powiadomienie pojawi się tutaj!</p>
+          </div>
+        `;
+        return;
+      }
+
+      notifList.innerHTML = myNotifications.map(n => {
+        const isUnread = !n.read;
+        const avatarHtml = n.fromAvatarPhoto
+          ? `<img src="${escapeHtml(n.fromAvatarPhoto)}" class="notif-photo" alt="Avatar" />`
+          : escapeHtml(n.fromAvatarIcon || "🍺");
+        const timeAgo = formatTimeAgo(n.createdAt);
+        const isFollowing = n.fromUserId ? myFollowingIds.includes(n.fromUserId) : false;
+        const isMe = currentUser && currentUser.id === n.fromUserId;
+
+        return `
+          <div class="notif-card ${isUnread ? "unread" : ""}">
+            <div class="notif-avatar" ${n.fromUsername ? `onclick="window.__openUserProfile('${escapeHtml(n.fromUsername)}')"` : ""}>
+              ${avatarHtml}
+            </div>
+            <div class="notif-info" ${n.fromUsername ? `onclick="window.__openUserProfile('${escapeHtml(n.fromUsername)}')"` : ""}>
+              <div class="notif-msg">${escapeHtml(n.message || "Nowa aktywność")}</div>
+              <div class="notif-meta">
+                <span>🕒 ${timeAgo}</span>
+                ${n.fromUsername ? `<span>• @${escapeHtml(n.fromUsername)}</span>` : ""}
+              </div>
+            </div>
+            <div class="notif-action">
+              ${(!isMe && n.fromUserId) ? `
+                <button type="button" class="btn-notif-action ${isFollowing ? "following" : ""}" data-user-id="${escapeHtml(n.fromUserId)}" onclick="window.__toggleFollowFromNotif('${escapeHtml(n.fromUserId)}', this)">
+                  ${isFollowing ? "✓ Obserwujesz" : "➕ Obserwuj zwrotnie"}
+                </button>
+              ` : ""}
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+    window.__renderNotificationsList = renderNotificationsList;
   }
 
   // Global Follow / Unfollow Toggle
@@ -6965,6 +7174,16 @@
           }
         });
 
+        document.querySelectorAll(`.btn-notif-action[data-user-id="${targetUserId}"]`).forEach(btn => {
+          if (data.isFollowing) {
+            btn.classList.add("following");
+            btn.textContent = "✓ Obserwujesz";
+          } else {
+            btn.classList.remove("following");
+            btn.textContent = "➕ Obserwuj zwrotnie";
+          }
+        });
+
         // Update public profile modal follow button if currently open for this user
         const pubprofFollowBtn = document.getElementById("btn-pubprof-follow-toggle");
         if (pubprofFollowBtn) {
@@ -6988,6 +7207,15 @@
       showAppToast("Błąd", "Problem z połączeniem z serwerem.", "⚠️");
     } finally {
       if (btnEl) btnEl.disabled = false;
+    }
+  };
+
+  window.__toggleFollowFromNotif = async function (targetUserId, btnEl) {
+    await window.__toggleFollowUser(targetUserId, btnEl);
+    if (btnEl) {
+      const isFollowing = myFollowingIds.includes(targetUserId);
+      btnEl.className = `btn-notif-action ${isFollowing ? "following" : ""}`;
+      btnEl.textContent = isFollowing ? "✓ Obserwujesz" : "➕ Obserwuj zwrotnie";
     }
   };
 
@@ -7167,6 +7395,20 @@
         const targetNick = `@${currentViewedProfile.username}`;
         triggerCheersAnimation(`Wzniesiono toast z ${targetNick}! Na zdrowie! 🍻`);
         showAppToast("Wirtualny Toast!", `Stuknąłeś się kuflem z ${targetNick} 🍻`, "🍻");
+
+        if (currentUser && currentViewedProfile.id && currentUser.id !== currentViewedProfile.id) {
+          fetch("/api/auth", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "send-toast",
+              payload: {
+                fromUserId: currentUser.id,
+                toUserId: currentViewedProfile.id
+              }
+            })
+          }).catch(err => console.warn("Failed to send toast notification:", err));
+        }
       });
     }
 
