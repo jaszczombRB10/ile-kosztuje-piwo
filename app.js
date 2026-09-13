@@ -1455,10 +1455,10 @@
       sorted = sorted.filter(v => isVenueVisited(v.id)).sort((a, b) => a.beer_price_pln - b.beer_price_pln);
       if (sorted.length === 0) {
         listEl.innerHTML = `
-          <div style="text-align:center;padding:32px 16px;display:flex;flex-direction:column;align-items:center;gap:12px;">
+          <div class="ranking-empty-card" style="text-align:center;padding:32px 16px;display:flex;flex-direction:column;align-items:center;gap:12px;">
             <div style="font-size:42px;">🎖️</div>
-            <div style="font-weight:700;font-size:1.05rem;color:#fff;">Brak odwiedzonych lokali</div>
-            <div style="font-size:0.78rem;color:var(--text-muted);line-height:1.45;max-width:280px;">
+            <div class="ranking-empty-title" style="font-weight:700;font-size:1.05rem;">Brak odwiedzonych lokali</div>
+            <div class="ranking-empty-desc" style="font-size:0.78rem;line-height:1.45;max-width:280px;">
               Kliknij na dowolny bar na mapie i wciśnij <strong>„Byłem tu!”</strong>, aby zbierać pieczątki i zdobywać odznaki w Piwnym Paszporcie Warszawy.
             </div>
             <button type="button" id="btn-browse-all-bars" class="btn-primary" style="margin-top:6px;font-size:0.8rem;padding:8px 16px;">
@@ -1479,10 +1479,10 @@
       sorted = sorted.filter(v => isVenueFavorite(v.id)).sort((a, b) => a.beer_price_pln - b.beer_price_pln);
       if (sorted.length === 0) {
         listEl.innerHTML = `
-          <div style="text-align:center;padding:32px 16px;display:flex;flex-direction:column;align-items:center;gap:12px;">
+          <div class="ranking-empty-card" style="text-align:center;padding:32px 16px;display:flex;flex-direction:column;align-items:center;gap:12px;">
             <div style="font-size:42px;">❤️</div>
-            <div style="font-weight:700;font-size:1.05rem;color:#fff;">Brak ulubionych barów</div>
-            <div style="font-size:0.78rem;color:var(--text-muted);line-height:1.45;max-width:280px;">
+            <div class="ranking-empty-title" style="font-weight:700;font-size:1.05rem;">Brak ulubionych barów</div>
+            <div class="ranking-empty-desc" style="font-size:0.78rem;line-height:1.45;max-width:280px;">
               Kliknij <strong>„🤍 Do ulubionych”</strong> na karcie dowolnego lokalu na mapie, aby zapisać go w szybkim dostępie.
             </div>
             <button type="button" id="btn-browse-fav-all" class="btn-primary" style="margin-top:6px;font-size:0.8rem;padding:8px 16px;">
@@ -1502,10 +1502,10 @@
     } else if (rankingMode === "nearest") {
       if (!userLocation) {
         listEl.innerHTML = `
-          <div style="text-align:center;padding:26px 16px;display:flex;flex-direction:column;align-items:center;gap:12px;">
+          <div class="ranking-empty-card" style="text-align:center;padding:26px 16px;display:flex;flex-direction:column;align-items:center;gap:12px;">
             <div style="font-size:38px;">🧭</div>
-            <div style="font-weight:700;font-size:1.05rem;color:#fff;">Włącz Piwny Kompas</div>
-            <div style="font-size:0.78rem;color:var(--text-muted);line-height:1.45;max-width:280px;">
+            <div class="ranking-empty-title" style="font-weight:700;font-size:1.05rem;">Włącz Piwny Kompas</div>
+            <div class="ranking-empty-desc" style="font-size:0.78rem;line-height:1.45;max-width:280px;">
               Jesteś w Sztokholmie 🇸🇪 lub Safari zablokowało GPS? Ustaw pozycję w centrum Warszawy, aby zobaczyć najbliższe bary i czas spaceru:
             </div>
             <button type="button" class="btn-simulate-warsaw" id="btn-simulate-warsaw" style="width:100%;max-width:280px;font-size:0.82rem;">
@@ -1546,7 +1546,7 @@
     }
 
     if (sorted.length === 0) {
-      listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:24px;">Brak lokali spełniających kryteria.</div>';
+      listEl.innerHTML = '<div class="ranking-empty-desc" style="text-align:center;padding:24px;">Brak lokali spełniających kryteria.</div>';
       return;
     }
 
@@ -1555,7 +1555,7 @@
       if (isLocationFarAway) {
         const distFromWarsaw = Math.round(calculateDistanceKm(userLocation[0], userLocation[1], WARSAW_CENTER[0], WARSAW_CENTER[1]));
         bannerHtml = `
-          <div style="background:rgba(245,158,11,0.14);border:1px solid rgba(251,191,36,0.35);border-radius:10px;padding:8px 12px;margin:8px 10px;font-size:0.75rem;color:#fde68a;display:flex;flex-direction:column;gap:6px;">
+          <div class="ranking-banner-faraway" style="border-radius:10px;padding:8px 12px;margin:8px 10px;font-size:0.75rem;display:flex;flex-direction:column;gap:6px;">
             <div>🇸🇪 Wykryto lokalizację: <strong>${distFromWarsaw} km od Warszawy</strong> (np. Sztokholm).</div>
             <button type="button" id="btn-switch-to-warsaw" style="background:#ea580c;color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:0.75rem;font-weight:700;cursor:pointer;">
               📍 Przełącz na Centrum Warszawy (spacer w minutach)
@@ -1564,17 +1564,17 @@
         `;
       } else if (isSimulatedLocation) {
         bannerHtml = `
-          <div style="background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.25);border-radius:10px;padding:6px 12px;margin:6px 10px;font-size:0.72rem;color:#7dd3fc;display:flex;align-items:center;justify-content:space-between;">
+          <div class="ranking-banner-simulated" style="border-radius:10px;padding:6px 12px;margin:6px 10px;font-size:0.72rem;display:flex;align-items:center;justify-content:space-between;">
             <span>📍 Pozycja: <strong>Centrum (Nowy Świat)</strong></span>
-            <button type="button" id="btn-refresh-gps" style="background:none;border:none;color:#38bdf8;text-decoration:underline;cursor:pointer;font-size:0.72rem;font-weight:600;">Włącz GPS</button>
+            <button type="button" id="btn-refresh-gps" style="background:none;border:none;text-decoration:underline;cursor:pointer;font-size:0.72rem;font-weight:600;">Włącz GPS</button>
           </div>
         `;
       }
     } else if (rankingMode === "favorites") {
       bannerHtml = `
-        <div style="background:rgba(244,63,94,0.12);border:1px solid rgba(244,63,94,0.3);border-radius:10px;padding:8px 12px;margin:8px 10px;font-size:0.75rem;color:#fecdd3;display:flex;align-items:center;justify-content:space-between;">
+        <div class="ranking-banner-favorites" style="border-radius:10px;padding:8px 12px;margin:8px 10px;font-size:0.75rem;display:flex;align-items:center;justify-content:space-between;">
           <span>❤️ Twoje ulubione lokale (<strong>${sorted.length}</strong>)</span>
-          <span style="font-size:0.7rem;color:#fda4af;">wg ceny</span>
+          <span style="font-size:0.7rem;">wg ceny</span>
         </div>
       `;
     }

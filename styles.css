@@ -1390,6 +1390,46 @@ header {
   white-space: nowrap;
 }
 
+/* Base Banners inside Ranking List (Dark Mode) */
+.ranking-banner-faraway {
+  background: rgba(245, 158, 11, 0.14);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  color: #fde68a;
+}
+
+.ranking-banner-simulated {
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  color: #7dd3fc;
+}
+
+.ranking-banner-simulated button {
+  color: #38bdf8;
+}
+
+.ranking-banner-favorites {
+  background: rgba(244, 63, 94, 0.12);
+  border: 1px solid rgba(244, 63, 94, 0.3);
+  color: #fecdd3;
+}
+
+.ranking-banner-favorites span:last-child {
+  color: #fda4af;
+}
+
+/* Base Empty State inside Ranking List (Dark Mode) */
+.ranking-empty-card {
+  color: #cbd5e1;
+}
+
+.ranking-empty-title {
+  color: #ffffff;
+}
+
+.ranking-empty-desc {
+  color: #94a3b8;
+}
+
 /* Modal for "Zglos cene" (Crowdsourcing) */
 .modal-backdrop {
   position: fixed;
@@ -9449,7 +9489,7 @@ body.theme-light .map-toast {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
 }
 
-/* Ranking Drawer (Clean White & Slate) */
+/* Ranking Drawer (Clean White, High-Contrast Daytime Styling) */
 body.theme-light .sidebar-drawer {
   background: #ffffff !important;
   border-left: 1px solid rgba(0, 0, 0, 0.08) !important;
@@ -9459,48 +9499,164 @@ body.theme-light .sidebar-drawer {
 
 body.theme-light .drawer-header {
   background: #ffffff !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+  border-bottom: 1px solid #e2e8f0 !important;
 }
 
-body.theme-light .drawer-header h2 {
+body.theme-light .drawer-header-top h2 {
   color: #0f172a !important;
 }
 
 body.theme-light .btn-close-drawer {
   background: #f1f5f9 !important;
   color: #475569 !important;
-  border-color: rgba(0, 0, 0, 0.08) !important;
+  border-color: #cbd5e1 !important;
+}
+
+body.theme-light .btn-close-drawer:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .ranking-tabs {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
 }
 
 body.theme-light .ranking-tab {
-  background: #f1f5f9 !important;
-  color: #64748b !important;
-  border-color: rgba(0, 0, 0, 0.06) !important;
+  background: transparent !important;
+  color: #475569 !important;
+  border: none !important;
+}
+
+body.theme-light .ranking-tab:hover {
+  color: #0f172a !important;
 }
 
 body.theme-light .ranking-tab.active {
-  background: #ffffff !important;
-  color: #ea580c !important;
+  background: #ea580c !important;
+  color: #ffffff !important;
   border-color: #ea580c !important;
-  box-shadow: 0 2px 8px rgba(234, 88, 12, 0.15) !important;
+  box-shadow: 0 2px 8px rgba(234, 88, 12, 0.25) !important;
 }
 
-body.theme-light .ranking-item {
+/* Ranked Cards in Drawer (Light Theme) */
+body.theme-light .ranked-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03) !important;
+}
+
+body.theme-light .ranked-card:hover {
   background: #f8fafc !important;
-  border: 1px solid rgba(0, 0, 0, 0.07) !important;
-  color: #0f172a !important;
+  border-color: #ea580c !important;
+  box-shadow: 0 4px 14px rgba(234, 88, 12, 0.12) !important;
+  transform: translateX(-3px) !important;
 }
 
-body.theme-light .ranking-item:hover {
-  background: #f1f5f9 !important;
-}
-
-body.theme-light .ranking-name {
-  color: #0f172a !important;
-}
-
-body.theme-light .ranking-meta {
+body.theme-light .ranked-pos {
   color: #64748b !important;
+  font-weight: 900 !important;
+}
+
+body.theme-light .ranked-card:nth-child(1) .ranked-pos {
+  color: #d97706 !important;
+}
+
+body.theme-light .ranked-card:nth-child(2) .ranked-pos {
+  color: #475569 !important;
+}
+
+body.theme-light .ranked-card:nth-child(3) .ranked-pos {
+  color: #b45309 !important;
+}
+
+body.theme-light .ranked-name {
+  color: #0f172a !important;
+  font-weight: 800 !important;
+}
+
+body.theme-light .ranked-sub {
+  color: #475569 !important;
+}
+
+body.theme-light .ranked-price {
+  color: #15803d !important;
+  font-weight: 900 !important;
+}
+
+/* Banners inside Ranking List (Light Theme) */
+body.theme-light .ranking-banner-faraway {
+  background: #fffbeb !important;
+  border: 1px solid #fde68a !important;
+  color: #92400e !important;
+}
+
+body.theme-light .ranking-banner-simulated {
+  background: #f0f9ff !important;
+  border: 1px solid #bae6fd !important;
+  color: #0369a1 !important;
+}
+
+body.theme-light .ranking-banner-simulated button {
+  color: #0284c7 !important;
+}
+
+body.theme-light .ranking-banner-favorites {
+  background: #fff1f2 !important;
+  border: 1px solid #fecdd3 !important;
+  color: #9f1239 !important;
+}
+
+/* Empty States in Ranking Drawer */
+body.theme-light .ranking-empty-card,
+body.theme-light #ranking-list .ranking-empty-card {
+  color: #334155 !important;
+}
+
+body.theme-light .ranking-empty-title,
+body.theme-light #ranking-list .ranking-empty-title {
+  color: #0f172a !important;
+  font-weight: 800 !important;
+}
+
+body.theme-light .ranking-empty-desc,
+body.theme-light #ranking-list .ranking-empty-desc {
+  color: #64748b !important;
+}
+
+body.theme-light .btn-retry-gps {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+body.theme-light .btn-retry-gps:hover {
+  background: #e2e8f0 !important;
+}
+
+/* Legal Footer in Ranking Drawer */
+body.theme-light .drawer-legal-footer {
+  background: #f8fafc !important;
+  border-top: 1px solid #e2e8f0 !important;
+}
+
+body.theme-light .legal-warning-text {
+  color: #64748b !important;
+}
+
+body.theme-light .btn-legal-link {
+  color: #0284c7 !important;
+}
+
+body.theme-light .btn-drawer-pwa {
+  background: #fff7ed !important;
+  border: 1px solid #fdba74 !important;
+  color: #ea580c !important;
+}
+
+body.theme-light .btn-drawer-pwa:hover {
+  background: #ea580c !important;
+  color: #ffffff !important;
 }
 
 /* Profile Modal & Hero */
