@@ -751,17 +751,17 @@
     let hhLivePromoHtml = "";
     if (activeHh) {
       hhLivePromoHtml = `
-        <div style="background:rgba(34,197,94,0.14);border:1px solid rgba(34,197,94,0.45);border-radius:10px;padding:8px 10px;margin:8px 0;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+        <div class="hh-live-promo-box">
           <div>
-            <div style="font-size:0.75rem;font-weight:800;color:#4ade80;display:flex;align-items:center;gap:4px;">
-              <span class="pulse-dot" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#4ade80;"></span>
+            <div class="hh-live-promo-title">
+              <span class="pulse-dot"></span>
               HAPPY HOUR TRWA TERAZ!
             </div>
-            <div style="font-size:0.7rem;color:#cbd5e1;margin-top:2px;">${escapeHtml(activeHh.rule.description || "Piwo w promocji")}</div>
+            <div class="hh-live-promo-desc">${escapeHtml(activeHh.rule.description || "Piwo w promocji")}</div>
           </div>
           <div style="text-align:right;flex-shrink:0;">
-            <div style="font-size:1.15rem;font-weight:900;color:#4ade80;">${activeHh.rule.promo_price.toFixed(2)} zł</div>
-            <div style="font-size:0.64rem;font-weight:700;color:#fb923c;">jeszcze ${formatMinutesLeft(activeHh.minutesLeft)}</div>
+            <div class="hh-live-promo-price">${activeHh.rule.promo_price.toFixed(2)} zł</div>
+            <div class="hh-live-promo-time">jeszcze ${formatMinutesLeft(activeHh.minutesLeft)}</div>
           </div>
         </div>
       `;

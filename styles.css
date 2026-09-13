@@ -9751,12 +9751,306 @@ body.theme-light .leaflet-popup-tip {
   background: #ffffff !important;
 }
 
-body.theme-light .venue-popup-name {
+/* ========================================================================== */
+/* VENUE CARD POPUP IN LIGHT THEME (Crisp, High-Contrast Daytime Typography)  */
+/* ========================================================================== */
+body.theme-light .leaflet-popup-content-wrapper {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.18) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+body.theme-light .leaflet-popup-tip {
+  background: #ffffff !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1) !important;
+}
+
+body.theme-light .leaflet-container a.leaflet-popup-close-button {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #475569 !important;
+}
+
+body.theme-light .leaflet-container a.leaflet-popup-close-button:hover {
+  background: #e2e8f0 !important;
   color: #0f172a !important;
 }
 
-body.theme-light .venue-popup-addr {
+body.theme-light .venue-card {
+  color: #0f172a !important;
+}
+
+body.theme-light .venue-name {
+  color: #0f172a !important;
+  font-weight: 800 !important;
+}
+
+body.theme-light .venue-name span {
+  color: #0f172a !important;
+}
+
+body.theme-light .venue-old-name {
   color: #64748b !important;
+}
+
+body.theme-light .venue-district {
+  color: #475569 !important;
+  font-weight: 600 !important;
+}
+
+body.theme-light .venue-dist-tag {
+  color: #0284c7 !important;
+}
+
+body.theme-light .venue-dist-tag.distant {
+  color: #64748b !important;
+}
+
+body.theme-light .venue-status-badge.open {
+  background: #dcfce7 !important;
+  color: #15803d !important;
+  border: 1px solid #86efac !important;
+}
+
+body.theme-light .venue-status-badge.open .status-dot {
+  background: #16a34a !important;
+  box-shadow: 0 0 5px #16a34a !important;
+}
+
+body.theme-light .venue-status-badge.closed {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+body.theme-light .venue-status-badge.closed .status-dot {
+  background: #64748b !important;
+}
+
+body.theme-light .venue-hours-chip {
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+/* Featured Price Box in Popup */
+body.theme-light .venue-price-box {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+}
+
+body.theme-light .price-beer-title {
+  color: #475569 !important;
+  font-weight: 700 !important;
+}
+
+body.theme-light .price-beer-brand {
+  color: #0f172a !important;
+  font-weight: 800 !important;
+}
+
+body.theme-light .price-val.low {
+  color: #16a34a !important;
+  text-shadow: none !important;
+}
+
+body.theme-light .price-val.mid {
+  color: #d97706 !important;
+  text-shadow: none !important;
+}
+
+body.theme-light .price-val.high {
+  color: #dc2626 !important;
+  text-shadow: none !important;
+}
+
+body.theme-light .price-val .price-currency {
+  color: #475569 !important;
+}
+
+/* Chips in Popup */
+body.theme-light .venue-chip {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+body.theme-light .venue-chip strong {
+  color: #0f172a !important;
+}
+
+body.theme-light .venue-chip.craft {
+  background: #f3e8ff !important;
+  border-color: #d8b4fe !important;
+  color: #7e22ce !important;
+}
+
+body.theme-light .venue-chip.hh {
+  background: #fef3c7 !important;
+  border-color: #fde68a !important;
+  color: #b45309 !important;
+}
+
+body.theme-light .venue-chip.chip-bezalko {
+  background: #d1fae5 !important;
+  border-color: #6ee7b7 !important;
+  color: #047857 !important;
+}
+
+/* Social Row & Visited Buttons */
+body.theme-light .btn-fav-toggle,
+body.theme-light .btn-share-venue {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+body.theme-light .btn-fav-toggle:hover,
+body.theme-light .btn-share-venue:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  border-color: #94a3b8 !important;
+}
+
+body.theme-light .btn-fav-toggle.active {
+  background: #ffe4e6 !important;
+  border-color: #fda4af !important;
+  color: #e11d48 !important;
+}
+
+body.theme-light .btn-toggle-visited {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+body.theme-light .btn-toggle-visited:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  border-color: #94a3b8 !important;
+}
+
+body.theme-light .btn-toggle-visited.visited {
+  background: #ecfdf5 !important;
+  border-color: #6ee7b7 !important;
+  color: #047857 !important;
+}
+
+/* Action Buttons (Confirm & Edit) */
+body.theme-light .venue-btn-confirm {
+  background: #dcfce7 !important;
+  color: #15803d !important;
+  border: 1.5px solid #86efac !important;
+  font-weight: 800 !important;
+}
+
+body.theme-light .venue-btn-confirm:hover {
+  background: #bbf7d0 !important;
+  border-color: #4ade80 !important;
+}
+
+body.theme-light .venue-btn-edit {
+  background: #fef3c7 !important;
+  color: #b45309 !important;
+  border: 1.5px solid #fde68a !important;
+  font-weight: 800 !important;
+}
+
+body.theme-light .venue-btn-edit:hover {
+  background: #fde68a !important;
+  border-color: #f59e0b !important;
+}
+
+/* Google Maps Navigation Link */
+body.theme-light .venue-btn-map {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .venue-btn-map .nav-arrow {
+  color: #ea580c !important;
+}
+
+body.theme-light .venue-btn-map:hover {
+  background: #f1f5f9 !important;
+  border-color: #ea580c !important;
+}
+
+/* Lightbox Proof Button */
+body.theme-light .venue-proof-badge {
+  background: #e0f2fe !important;
+  border: 1px solid #7dd3fc !important;
+  color: #0284c7 !important;
+}
+
+/* Closed Bar Pins on Light Map (No more harsh black blobs!) */
+body.theme-light .price-badge-marker.marker-closed {
+  background: rgba(241, 245, 249, 0.95) !important;
+  border: 1.5px solid rgba(148, 163, 184, 0.6) !important;
+  color: #64748b !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12) !important;
+}
+
+body.theme-light .beer-cluster-closed {
+  background: rgba(241, 245, 249, 0.95) !important;
+  border: 2px solid rgba(148, 163, 184, 0.6) !important;
+  color: #64748b !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Price Badge Pins Softened Shadow on Light Map */
+body.theme-light .price-badge-marker {
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.22), 0 1px 3px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Floating Add Bar Pill (+ NOWY) */
+body.theme-light .floating-add-pill {
+  background: rgba(255, 255, 255, 0.94) !important;
+  background: -webkit-linear-gradient(bottom, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.92)) !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  color: #0f172a !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12) !important;
+}
+
+body.theme-light .floating-add-pill .pill-plus {
+  color: #ea580c !important;
+}
+
+/* Syrenka Dock Hero Ring in Light Mode */
+body.theme-light .nav-item.nav-item-hero .hero-ring {
+  background: #ffffff !important;
+  background: radial-gradient(circle, #fff7ed 0%, #ffedd5 100%) !important;
+  border: 2.5px solid #ea580c !important;
+  box-shadow: 0 4px 16px rgba(234, 88, 12, 0.35), 0 2px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Happy Hour Live Promo in Light Theme */
+body.theme-light .hh-live-promo-box {
+  background: #f0fdf4 !important;
+  border: 1px solid #86efac !important;
+}
+
+body.theme-light .hh-live-promo-title {
+  color: #15803d !important;
+}
+
+body.theme-light .hh-live-promo-title .pulse-dot {
+  background: #16a34a !important;
+}
+
+body.theme-light .hh-live-promo-desc {
+  color: #334155 !important;
+}
+
+body.theme-light .hh-live-promo-price {
+  color: #15803d !important;
+}
+
+body.theme-light .hh-live-promo-time {
+  color: #ea580c !important;
 }
 
 /* Filter Chips and Active Crawl Bar in Light Theme */
