@@ -10140,3 +10140,1117 @@ body.theme-light .active-crawl-bar {
 body.theme-light .crawl-active-sub {
   color: #64748b !important;
 }
+
+/* ========================================================================== */
+/* COMPREHENSIVE LIGHT THEME SYSTEM (POILEPIWKO.PL DAYTIME CONTRAST & BEAUTY) */
+/* ========================================================================== */
+
+/* -------------------------------------------------------------------------- */
+/* 1. FILTERS MODAL & MOBILE SEARCH SHEET                                    */
+/* -------------------------------------------------------------------------- */
+body.theme-light .filter-modal-card {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.08) !important;
+}
+
+body.theme-light .filter-section-title {
+  color: #0f172a !important;
+  font-weight: 800 !important;
+}
+
+body.theme-light .filter-price-card {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .filter-price-card:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+}
+
+body.theme-light .filter-price-card .price-card-title {
+  color: #0f172a !important;
+  font-weight: 800 !important;
+}
+
+body.theme-light .filter-price-card .price-card-desc {
+  color: #64748b !important;
+}
+
+body.theme-light .filter-price-card.active {
+  background: #fff7ed !important;
+  border-color: #ea580c !important;
+  box-shadow: 0 0 0 1px #ea580c, 0 4px 12px rgba(234, 88, 12, 0.2) !important;
+}
+
+body.theme-light .filter-price-card.tier-low.active {
+  background: #f0fdf4 !important;
+  border-color: #16a34a !important;
+  box-shadow: 0 0 0 1px #16a34a, 0 4px 12px rgba(22, 163, 74, 0.2) !important;
+}
+
+body.theme-light .filter-price-card.tier-mid.active {
+  background: #fffbeb !important;
+  border-color: #d97706 !important;
+  box-shadow: 0 0 0 1px #d97706, 0 4px 12px rgba(217, 119, 6, 0.2) !important;
+}
+
+body.theme-light .filter-price-card.tier-high.active {
+  background: #fef2f2 !important;
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 1px #dc2626, 0 4px 12px rgba(220, 38, 38, 0.2) !important;
+}
+
+/* Slider Box in Light Theme */
+body.theme-light .filter-slider-box {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+body.theme-light .filter-slider-header {
+  color: #334155 !important;
+  font-weight: 600 !important;
+}
+
+body.theme-light .filter-slider-header strong {
+  color: #ea580c !important;
+}
+
+body.theme-light .filter-slider {
+  background: #cbd5e1 !important;
+}
+
+body.theme-light .filter-slider-labels {
+  color: #64748b !important;
+}
+
+/* Toggle Buttons in Light Theme */
+body.theme-light .filter-toggle-btn {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+body.theme-light .filter-toggle-btn:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+}
+
+body.theme-light .filter-toggle-btn .toggle-title {
+  color: #0f172a !important;
+  font-weight: 800 !important;
+}
+
+body.theme-light .filter-toggle-btn .toggle-desc {
+  color: #64748b !important;
+}
+
+body.theme-light .filter-toggle-btn .toggle-check {
+  border: 1.5px solid #cbd5e1 !important;
+  background: #ffffff !important;
+}
+
+body.theme-light .filter-toggle-btn.active {
+  background: #fff7ed !important;
+  border-color: #ea580c !important;
+}
+
+body.theme-light .filter-toggle-btn.active .toggle-check {
+  background: #ea580c !important;
+  border-color: #ea580c !important;
+  color: #ffffff !important;
+}
+
+/* District Chips in Modal */
+body.theme-light .filter-dist-chip {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+body.theme-light .filter-dist-chip:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .filter-dist-chip.active {
+  background: #ea580c !important;
+  border-color: #ea580c !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(234, 88, 12, 0.3) !important;
+}
+
+/* Filter Modal Footer */
+body.theme-light .filter-modal-footer {
+  border-top: 1px solid #e2e8f0 !important;
+}
+
+body.theme-light .btn-filter-reset {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #475569 !important;
+}
+
+body.theme-light .btn-filter-reset:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .btn-filter-apply {
+  background: linear-gradient(135deg, #ea580c 0%, #f97316 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 16px rgba(234, 88, 12, 0.35) !important;
+}
+
+/* Mobile Search Sheet */
+body.theme-light .mobile-search-sheet {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15) !important;
+}
+
+body.theme-light .mobile-search-bar {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+body.theme-light .mobile-search-bar input {
+  color: #0f172a !important;
+}
+
+body.theme-light .mobile-search-bar input::placeholder {
+  color: #94a3b8 !important;
+}
+
+body.theme-light .btn-close-search {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+}
+
+body.theme-light .m-dist-chip {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #475569 !important;
+}
+
+body.theme-light .m-dist-chip.active {
+  background: #ea580c !important;
+  color: #ffffff !important;
+  border-color: #ea580c !important;
+}
+
+body.theme-light .m-search-item {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+body.theme-light .m-search-item:hover,
+body.theme-light .m-search-item:active {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+
+body.theme-light .m-search-name {
+  color: #0f172a !important;
+}
+
+body.theme-light .m-search-sub {
+  color: #64748b !important;
+}
+
+body.theme-light .m-search-price {
+  color: #15803d !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 2. PROFILE VIEW, ACHIEVEMENTS & EDIT PROFILE                               */
+/* -------------------------------------------------------------------------- */
+body.theme-light .achievements-toggle-hint,
+body.theme-light .achievements-chevron {
+  color: #64748b !important;
+}
+
+body.theme-light .achievement-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03) !important;
+}
+
+body.theme-light .achievement-card.unlocked {
+  background: #f0fdf4 !important;
+  border-color: #86efac !important;
+}
+
+body.theme-light .achievement-icon-bubble {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .achievement-card.unlocked .achievement-icon-bubble {
+  background: #dcfce7 !important;
+}
+
+body.theme-light .achievement-title {
+  color: #0f172a !important;
+  font-weight: 800 !important;
+}
+
+body.theme-light .achievement-sub {
+  color: #475569 !important;
+}
+
+/* Edit Profile Modal */
+body.theme-light .modal-card-edit-profile {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.16) !important;
+}
+
+body.theme-light .profile-edit-form {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+body.theme-light .profile-photo-uploader {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+body.theme-light .photo-preview-frame {
+  background: #f1f5f9 !important;
+  border: 2.5px solid #ea580c !important;
+  box-shadow: 0 0 12px rgba(234, 88, 12, 0.25) !important;
+}
+
+body.theme-light .btn-change-photo-badge {
+  background: #ea580c !important;
+  color: #ffffff !important;
+  border: 2px solid #ffffff !important;
+}
+
+body.theme-light .btn-upload-photo {
+  background: #fff7ed !important;
+  border: 1px solid #fdba74 !important;
+  color: #ea580c !important;
+}
+
+body.theme-light .btn-upload-photo:hover {
+  background: #ea580c !important;
+  color: #ffffff !important;
+}
+
+body.theme-light .profile-footer-bar {
+  border-top: 1px solid #e2e8f0 !important;
+}
+
+body.theme-light .btn-profile-back {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .btn-profile-back:hover {
+  background: #e2e8f0 !important;
+}
+
+/* Public Profile Modal */
+body.theme-light .public-profile-card {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+body.theme-light .profile-hero-names h2 {
+  color: #0f172a !important;
+}
+
+body.theme-light .profile-avatar-badge {
+  background: radial-gradient(circle, #fff7ed 0%, #ffedd5 100%) !important;
+  border: 2px solid #ea580c !important;
+  box-shadow: 0 4px 14px rgba(234, 88, 12, 0.25) !important;
+}
+
+body.theme-light .profile-stat-box {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+body.theme-light .profile-stat-box .stat-num {
+  color: #0f172a !important;
+}
+
+body.theme-light .profile-stat-box .stat-label {
+  color: #64748b !important;
+}
+
+body.theme-light .profile-bio-text {
+  color: #334155 !important;
+}
+
+body.theme-light .profile-pill {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+body.theme-light .profile-pill strong {
+  color: #0f172a !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 3. PIWNY PASZPORT WARSZAWY (#passport-modal)                               */
+/* -------------------------------------------------------------------------- */
+body.theme-light .passport-modal-card {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .passport-rank-title {
+  color: #0f172a !important;
+}
+
+body.theme-light .passport-rank-sub {
+  color: #64748b !important;
+}
+
+body.theme-light .passport-progress-bar-bg {
+  background: #e2e8f0 !important;
+}
+
+body.theme-light .passport-progress-label {
+  color: #64748b !important;
+}
+
+body.theme-light .passport-stat-box {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+body.theme-light .passport-stat-num {
+  color: #0f172a !important;
+}
+
+body.theme-light .passport-stat-num.highlight {
+  color: #d97706 !important;
+}
+
+body.theme-light .passport-stat-label {
+  color: #64748b !important;
+}
+
+body.theme-light .passport-section-title {
+  color: #0f172a !important;
+}
+
+body.theme-light .passport-section-hint {
+  color: #64748b !important;
+}
+
+body.theme-light .passport-badge-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+body.theme-light .passport-badge-card.unlocked {
+  background: #fefce8 !important;
+  border-color: #fde047 !important;
+  box-shadow: 0 4px 14px rgba(250, 204, 21, 0.25) !important;
+}
+
+body.theme-light .badge-card-name {
+  color: #0f172a !important;
+}
+
+body.theme-light .badge-card-desc {
+  color: #64748b !important;
+}
+
+body.theme-light .passport-venue-row {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #334155 !important;
+}
+
+body.theme-light .passport-venue-title {
+  color: #0f172a !important;
+}
+
+body.theme-light .passport-venue-title:hover {
+  color: #ea580c !important;
+}
+
+body.theme-light .btn-remove-visited {
+  color: #64748b !important;
+}
+
+body.theme-light .btn-remove-visited:hover {
+  background: #fee2e2 !important;
+  color: #dc2626 !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 4. PUB CRAWL GENERATOR (#pubcrawl-modal)                                  */
+/* -------------------------------------------------------------------------- */
+body.theme-light .pubcrawl-modal-card {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .pubcrawl-modal-card h3 {
+  color: #0f172a !important;
+}
+
+body.theme-light .crawl-label {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+}
+
+body.theme-light .crawl-select {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .crawl-select option,
+body.theme-light .crawl-select optgroup {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .crawl-pill-btn {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .crawl-pill-btn span {
+  color: #64748b !important;
+}
+
+body.theme-light .crawl-pill-btn:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+}
+
+body.theme-light .crawl-pill-btn.active {
+  background: #fff7ed !important;
+  border-color: #ea580c !important;
+  color: #ea580c !important;
+  box-shadow: 0 0 12px rgba(234, 88, 12, 0.2) !important;
+}
+
+body.theme-light .crawl-pill-btn.active span {
+  color: #c2410c !important;
+}
+
+body.theme-light .crawl-result-box {
+  border-top: 1px solid #e2e8f0 !important;
+}
+
+body.theme-light .crawl-summary-bar {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+body.theme-light .crawl-stat-label {
+  color: #64748b !important;
+}
+
+body.theme-light .crawl-stat-val {
+  color: #0f172a !important;
+}
+
+body.theme-light .crawl-stat-val.highlight {
+  color: #15803d !important;
+  text-shadow: none !important;
+}
+
+body.theme-light .crawl-stop-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+}
+
+body.theme-light .crawl-stop-card:hover {
+  background: #f8fafc !important;
+  border-color: #ea580c !important;
+}
+
+body.theme-light .crawl-stop-name {
+  color: #0f172a !important;
+}
+
+body.theme-light .crawl-stop-price {
+  color: #15803d !important;
+}
+
+body.theme-light .crawl-stop-address {
+  color: #64748b !important;
+}
+
+body.theme-light .crawl-stop-chip {
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+body.theme-light .btn-crawl-secondary {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .btn-crawl-secondary:hover {
+  background: #e2e8f0 !important;
+}
+
+body.theme-light .btn-crawl-ghost {
+  color: #64748b !important;
+}
+
+body.theme-light .btn-crawl-ghost:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 5. PIWNI ZNAJOMI & SPOŁECZNOŚĆ (#community-modal)                          */
+/* -------------------------------------------------------------------------- */
+body.theme-light .community-modal-card {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .community-tabs {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+body.theme-light .comm-tab {
+  color: #475569 !important;
+}
+
+body.theme-light .comm-tab.active {
+  background: #ea580c !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(234, 88, 12, 0.3) !important;
+}
+
+body.theme-light .user-search-wrap input {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .user-card-item {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+body.theme-light .user-card-name {
+  color: #0f172a !important;
+}
+
+body.theme-light .user-card-handle {
+  color: #0284c7 !important;
+}
+
+body.theme-light .user-card-avatar {
+  background: #f1f5f9 !important;
+}
+
+body.theme-light .btn-follow-toggle {
+  background: #e0f2fe !important;
+  border-color: #7dd3fc !important;
+  color: #0284c7 !important;
+}
+
+body.theme-light .btn-follow-toggle.following {
+  background: #fee2e2 !important;
+  border-color: #fca5a5 !important;
+  color: #dc2626 !important;
+}
+
+body.theme-light .feed-card {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+body.theme-light .feed-username {
+  color: #0f172a !important;
+}
+
+body.theme-light .feed-action-text {
+  color: #334155 !important;
+}
+
+body.theme-light .feed-venue-name {
+  color: #ea580c !important;
+}
+
+body.theme-light .feed-time {
+  color: #64748b !important;
+}
+
+body.theme-light .empty-state-hint {
+  color: #64748b !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 6. DODAJ BAR / EDYTUJ CENĘ (#report-modal)                                */
+/* -------------------------------------------------------------------------- */
+body.theme-light #report-modal .modal-card {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
+body.theme-light #report-modal-title {
+  color: #0f172a !important;
+}
+
+body.theme-light .report-mode-toggle {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+body.theme-light .report-mode-tab {
+  color: #475569 !important;
+}
+
+body.theme-light .report-mode-tab:hover {
+  color: #0f172a !important;
+  background: #e2e8f0 !important;
+}
+
+body.theme-light .report-mode-tab.active {
+  background: #ea580c !important;
+  color: #ffffff !important;
+}
+
+body.theme-light .rename-selector-box {
+  background: #fffbeb !important;
+  border: 1px solid #fde68a !important;
+}
+
+body.theme-light .rename-suggestions-list {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12) !important;
+}
+
+body.theme-light .rename-suggestion-item {
+  color: #0f172a !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+}
+
+body.theme-light .rename-suggestion-item:hover {
+  background: #f8fafc !important;
+}
+
+body.theme-light #rename-selected-badge {
+  background: #f0fdf4 !important;
+  border: 1px solid #86efac !important;
+  color: #15803d !important;
+}
+
+body.theme-light #rename-edit-toggle-row label {
+  color: #0f172a !important;
+}
+
+body.theme-light #report-modal-desc {
+  color: #64748b !important;
+}
+
+body.theme-light .form-select {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .photo-upload-label {
+  background: #f8fafc !important;
+  border: 1.5px dashed #cbd5e1 !important;
+  color: #475569 !important;
+}
+
+body.theme-light .photo-upload-label:hover {
+  background: #f1f5f9 !important;
+  border-color: #ea580c !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .btn-cancel {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #475569 !important;
+}
+
+body.theme-light .btn-cancel:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 7. HAPPY HOURS KALENDARZ (#happyhour-modal)                               */
+/* -------------------------------------------------------------------------- */
+body.theme-light .happyhour-modal-card {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .happyhour-modal-card h3 {
+  color: #0f172a !important;
+}
+
+body.theme-light .hh-modal-tabs {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+body.theme-light .hh-tab {
+  color: #475569 !important;
+}
+
+body.theme-light .hh-tab.active {
+  background: #ea580c !important;
+  color: #ffffff !important;
+}
+
+body.theme-light .hh-now-banner {
+  background: #f0fdf4 !important;
+  border: 1px solid #86efac !important;
+}
+
+body.theme-light .hh-live-indicator {
+  color: #15803d !important;
+}
+
+body.theme-light .hh-now-sub {
+  color: #475569 !important;
+}
+
+body.theme-light .hh-day-pill {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #475569 !important;
+}
+
+body.theme-light .hh-day-pill:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .hh-day-pill.active {
+  background: #fff7ed !important;
+  border-color: #ea580c !important;
+  color: #ea580c !important;
+}
+
+body.theme-light .hh-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+}
+
+body.theme-light .hh-card:hover {
+  background: #f8fafc !important;
+  border-color: #ea580c !important;
+}
+
+body.theme-light .hh-card-title {
+  color: #0f172a !important;
+}
+
+body.theme-light .hh-card-desc {
+  color: #475569 !important;
+}
+
+body.theme-light .hh-card-meta {
+  color: #64748b !important;
+}
+
+body.theme-light .hh-price-regular {
+  color: #94a3b8 !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 8. PIWNA RULETKA (#roulette-modal)                                        */
+/* -------------------------------------------------------------------------- */
+body.theme-light .modal-card-roulette {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .modal-card-roulette h2 {
+  color: #0f172a !important;
+}
+
+body.theme-light .roulette-group-label {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+}
+
+body.theme-light .roulette-chip {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #475569 !important;
+}
+
+body.theme-light .roulette-chip:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .roulette-chip.active {
+  background: #ea580c !important;
+  border-color: #ea580c !important;
+  color: #ffffff !important;
+}
+
+body.theme-light .roulette-drum-viewport {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+body.theme-light .roulette-reel-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+body.theme-light .roulette-item-title {
+  color: #0f172a !important;
+}
+
+body.theme-light .roulette-result-card {
+  background: linear-gradient(135deg, #fff1f2 0%, #faf5ff 100%) !important;
+  border: 1.5px solid #f43f5e !important;
+  box-shadow: 0 10px 30px rgba(244, 63, 94, 0.15) !important;
+}
+
+body.theme-light .roulette-result-name {
+  color: #0f172a !important;
+}
+
+body.theme-light .roulette-price-pill {
+  background: #dcfce7 !important;
+  border: 1px solid #86efac !important;
+  color: #15803d !important;
+}
+
+body.theme-light .roulette-beer-name {
+  color: #475569 !important;
+}
+
+body.theme-light .roulette-result-meta {
+  color: #64748b !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 9. PUB QUIZ & BAROMETR CENOWY                                             */
+/* -------------------------------------------------------------------------- */
+body.theme-light .pubquiz-modal-card {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .pubquiz-hero {
+  background: #f8fafc !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+body.theme-light .pubquiz-hero h2 {
+  color: #0f172a !important;
+}
+
+body.theme-light .pubquiz-hero p {
+  color: #475569 !important;
+}
+
+body.theme-light .pubquiz-nav-tabs {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+body.theme-light .pubquiz-tab-pill {
+  color: #475569 !important;
+}
+
+body.theme-light .pubquiz-tab-pill.active {
+  background: #8b5cf6 !important;
+  color: #ffffff !important;
+}
+
+body.theme-light .pubquiz-venue-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+}
+
+body.theme-light .pubquiz-venue-card h4 {
+  color: #0f172a !important;
+}
+
+body.theme-light .pubquiz-schedule-pill {
+  background: #f5f3ff !important;
+  border: 1px solid #ddd6fe !important;
+  color: #7c3aed !important;
+}
+
+/* Barometr Cenowy */
+body.theme-light #barometer-modal .modal-card {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
+body.theme-light #barometer-modal h3 {
+  color: #0f172a !important;
+}
+
+body.theme-light .baro-card {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+body.theme-light .baro-card.baro-green {
+  background: #f0fdf4 !important;
+  border-color: #86efac !important;
+}
+
+body.theme-light .baro-card.baro-amber {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+}
+
+body.theme-light .baro-card.baro-blue {
+  background: #f0f9ff !important;
+  border-color: #bae6fd !important;
+}
+
+body.theme-light .baro-label {
+  color: #64748b !important;
+}
+
+body.theme-light .baro-val {
+  color: #0f172a !important;
+}
+
+body.theme-light .baro-sub {
+  color: #64748b !important;
+}
+
+body.theme-light .baro-compare-box {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+body.theme-light .compare-tag {
+  color: #0f172a !important;
+}
+
+body.theme-light .compare-name {
+  color: #64748b !important;
+}
+
+body.theme-light .compare-vs {
+  background: #e2e8f0 !important;
+  color: #475569 !important;
+}
+
+body.theme-light .compare-val {
+  color: #ea580c !important;
+}
+
+body.theme-light .baro-list-title {
+  color: #0f172a !important;
+}
+
+body.theme-light .district-bar-item {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+body.theme-light .dist-bar-name {
+  color: #0f172a !important;
+}
+
+body.theme-light .baro-fun-facts .fun-fact {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #334155 !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 10. TOP HEADER, TICKER & OTHER MODALS                                      */
+/* -------------------------------------------------------------------------- */
+body.theme-light .top-header {
+  background: rgba(255, 255, 255, 0.94) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
+}
+
+body.theme-light .live-clock-badge {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+body.theme-light .badge-passport,
+body.theme-light .badge-auth,
+body.theme-light .badge-legal-18,
+body.theme-light .header-more-btn {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .header-more-menu {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12) !important;
+}
+
+body.theme-light .more-menu-item {
+  color: #0f172a !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+}
+
+body.theme-light .more-menu-item:hover {
+  background: #f8fafc !important;
+}
+
+body.theme-light .more-menu-item-text {
+  color: #0f172a !important;
+}
+
+body.theme-light .more-menu-item-sub {
+  color: #64748b !important;
+}
+
+body.theme-light .ticker-bar {
+  background: #f1f5f9 !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+body.theme-light .ticker-track {
+  color: #334155 !important;
+}
+
+/* Legal & Age Gate in Light Theme */
+body.theme-light .age-gate-card,
+body.theme-light .auth-modal-card,
+body.theme-light .pwa-ios-card {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.16) !important;
+}
+
+body.theme-light .age-gate-title {
+  color: #0f172a !important;
+}
+
+body.theme-light .age-gate-desc {
+  color: #475569 !important;
+}
