@@ -506,12 +506,28 @@
     });
   }
 
+  function buildGoogleMapsNavigationUrl(venue) {
+    if (!venue) return "#";
+    const name = venue.name || "";
+    let addr = venue.address && venue.address !== "Warszawa" ? venue.address : "";
+    if ((venue.district === "Pawilony" || name.toLowerCase().includes("pawilon")) && !addr.toLowerCase().includes("nowy świat") && !addr.toLowerCase().includes("foksal")) {
+      addr = "Nowy Świat 22/28";
+    }
+    const parts = [name];
+    if (addr) parts.push(addr);
+    else if (venue.district) parts.push(venue.district);
+    parts.push("Warszawa");
+
+    const query = parts.filter(Boolean).join(", ");
+    return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(query)}&travelmode=walking`;
+  }
+
   // Create Venue Popup HTML
   function createPopupContent(venue) {
     const open = isVenueOpen(venue);
     const price = venue.beer_price_pln;
     const tier = getPriceTier(price);
-    const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${venue.latitude},${venue.longitude}`;
+    const mapsUrl = buildGoogleMapsNavigationUrl(venue);
     const visited = isVenueVisited(venue.id);
     const activeHh = getActiveHappyHour(venue);
     const isFav = isVenueFavorite(venue.id);
@@ -1868,7 +1884,7 @@
       }
     }
     if (activeGmaps) {
-      activeGmaps.href = `https://www.google.com/maps/dir/?api=1&destination=${currentStop.venue.latitude},${currentStop.venue.longitude}&travelmode=walking`;
+      activeGmaps.href = buildGoogleMapsNavigationUrl(currentStop.venue);
     }
 
     // Refresh marker DOM classes
@@ -3073,7 +3089,7 @@
 
       // Navigation Link
       if (btnNavigate) {
-        btnNavigate.href = `https://www.google.com/maps/dir/?api=1&destination=${v.latitude},${v.longitude}&travelmode=walking`;
+        btnNavigate.href = buildGoogleMapsNavigationUrl(v);
       }
 
       // Visited / Stamp button state
@@ -7408,10 +7424,12 @@
     if (btnShare) {
       btnShare.addEventListener("click", () => {
         if (!currentWinner) return;
+        const gmapsUrl = buildGoogleMapsNavigationUrl(currentWinner);
         const text = `🎲 Piwna Ruletka poilepiwko wylosowała bar na dziś:\n` +
           `📍 ${currentWinner.name} (${currentWinner.district || 'Warszawa'})\n` +
           `🍺 ${currentWinner.beer_name || 'Piwo'}: ${currentWinner.beer_price_pln.toFixed(2)} zł\n` +
-          (currentWinner.address ? `Adres: ${currentWinner.address}\n` : "") +
+          (currentWinner.address && currentWinner.address !== "Warszawa" ? `Adres: ${currentWinner.address}\n` : "") +
+          `🗺️ Nawigacja Google Maps: ${gmapsUrl}\n` +
           `Idziemy na piwko? Sprawdź na https://poilepiwko.pl 🍻`;
 
         if (navigator.share) {
