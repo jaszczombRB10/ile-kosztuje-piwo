@@ -3414,16 +3414,10 @@ header,
 }
 
 @media (min-width: 641px) {
-  .pwa-install-banner {
-    left: 50% !important;
-    right: auto !important;
-    transform: translateX(-50%) !important;
-    bottom: 90px !important;
-    width: 440px !important;
-    max-width: calc(100vw - 40px) !important;
-    border-radius: 20px !important;
-    z-index: 10000 !important;
-    box-shadow: 0 16px 45px rgba(0, 0, 0, 0.85), 0 0 25px rgba(249, 115, 22, 0.25) !important;
+  /* On desktop/computer, completely hide PWA install banner */
+  .pwa-install-banner,
+  #drawer-pwa-wrap {
+    display: none !important;
   }
 }
 

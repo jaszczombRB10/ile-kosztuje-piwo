@@ -4706,6 +4706,10 @@
       function showInstallBanner() {
         if (isStandalone || isDismissedRecently() || !banner) return;
 
+        // Never show install prompt on desktop computers / laptops
+        const isMobile = window.innerWidth <= 640 || /iphone|ipad|ipod|android/i.test(navigator.userAgent);
+        if (!isMobile) return;
+
         // Check if Age Gate is currently blocking the screen
         const isAgeVerified = localStorage.getItem("age_verified_18") === "true";
         if (!isAgeVerified) {
@@ -4718,30 +4722,28 @@
           return;
         }
 
-        const bannerTitle = document.getElementById("pwa-banner-title");
         if (isIOS) {
-          if (bannerTitle) bannerTitle.textContent = "Zainstaluj na iPhone";
           if (bannerDesc) bannerDesc.textContent = "Dodaj do ekranu początkowego Safari!";
-        } else if (window.innerWidth >= 641) {
-          if (bannerTitle) bannerTitle.textContent = "Zainstaluj na komputerze";
-          if (bannerDesc) bannerDesc.textContent = "Szybki dostęp z paska zadań lub Docka!";
         } else {
-          if (bannerTitle) bannerTitle.textContent = "Zainstaluj na telefonie";
           if (bannerDesc) bannerDesc.textContent = "Szybki dostęp z pulpitu, bez pasków!";
         }
 
         banner.style.display = "flex";
       }
 
-      // Listen for Chrome / Android beforeinstallprompt
+      // Listen for Chrome / Android beforeinstallprompt on mobile
       window.addEventListener("beforeinstallprompt", (e) => {
         e.preventDefault();
         deferredInstallPrompt = e;
-        setTimeout(showInstallBanner, 1500);
+        const isMobile = window.innerWidth <= 640 || /iphone|ipad|ipod|android/i.test(navigator.userAgent);
+        if (isMobile) {
+          setTimeout(showInstallBanner, 1500);
+        }
       });
 
-      // Universal trigger for all platforms (desktop, incognito, Safari Mac, Firefox)
-      if (!isStandalone) {
+      // For mobile devices (e.g. iOS Safari & Android): trigger after short delay if not standalone
+      const isMobileDevice = window.innerWidth <= 640 || /iphone|ipad|ipod|android/i.test(navigator.userAgent);
+      if (isMobileDevice && !isStandalone) {
         setTimeout(showInstallBanner, 3000);
       }
 
@@ -4757,17 +4759,8 @@
               }
               deferredInstallPrompt = null;
             });
-          } else if (isIOS) {
-            openIosModal();
-            dismissBanner();
           } else {
-            // Desktop or Android without deferred prompt (e.g. Incognito, Safari Mac, or Firefox)
-            showAppToast(
-              "Instalacja aplikacji",
-              "W trybie Incognito przeglądarka blokuje instalację. Otwórz stronę w normalnym oknie lub kliknij ikonę w pasku adresu (⊕)! 🍺",
-              "📲",
-              5500
-            );
+            openIosModal();
             dismissBanner();
           }
         });
