@@ -6944,10 +6944,10 @@
       if (res.ok && data.success) {
         if (data.isFollowing) {
           if (!myFollowingIds.includes(targetUserId)) myFollowingIds.push(targetUserId);
-          showAppToast("Obserwujesz użytkownika!", "Jego check-iny pojawią się w Twoim feedzie.", "❤️");
+          showAppToast("Obserwujesz użytkownika!", "Dodano do Twojej listy znajomych 👥", "❤️");
         } else {
           myFollowingIds = myFollowingIds.filter(id => id !== targetUserId);
-          showAppToast("Przestałeś obserwować użytkownika.", "", "🤍");
+          showAppToast("Przestałeś obserwować użytkownika.", "Usunięto z listy znajomych", "🤍");
         }
 
         if (Array.isArray(data.followingIds)) {
@@ -6968,6 +6968,8 @@
         // Update public profile modal follow button if currently open for this user
         const pubprofFollowBtn = document.getElementById("btn-pubprof-follow-toggle");
         if (pubprofFollowBtn) {
+          pubprofFollowBtn.className = data.isFollowing ? "btn-pubprof-follow following" : "btn-pubprof-follow";
+          pubprofFollowBtn.innerHTML = data.isFollowing ? "<span>✓ Obserwujesz</span>" : "<span>➕ Obserwuj znajomego</span>";
           const statFollowers = document.getElementById("pubprof-stat-followers");
           if (typeof data.followersCount === "number" && statFollowers) {
             statFollowers.textContent = data.followersCount;
@@ -7092,8 +7094,8 @@
         // Follow button state
         if (btnFollow) {
           const isFollowing = myFollowingIds.includes(p.id);
-          btnFollow.className = isFollowing ? "btn-secondary" : "btn-primary";
-          btnFollow.innerHTML = isFollowing ? "<span>✓ Obserwujesz (odznacz)</span>" : "<span>➕ Obserwuj znajomego</span>";
+          btnFollow.className = isFollowing ? "btn-pubprof-follow following" : "btn-pubprof-follow";
+          btnFollow.innerHTML = isFollowing ? "<span>✓ Obserwujesz</span>" : "<span>➕ Obserwuj znajomego</span>";
         }
 
         // Render unlocked badges safely without any location or timeline stalking
@@ -7148,8 +7150,8 @@
         if (!currentViewedProfile) return;
         await window.__toggleFollowUser(currentViewedProfile.id, null);
         const isFollowing = myFollowingIds.includes(currentViewedProfile.id);
-        btnFollow.className = isFollowing ? "btn-secondary" : "btn-primary";
-        btnFollow.innerHTML = isFollowing ? "<span>✓ Obserwujesz (odznacz)</span>" : "<span>➕ Obserwuj znajomego</span>";
+        btnFollow.className = isFollowing ? "btn-pubprof-follow following" : "btn-pubprof-follow";
+        btnFollow.innerHTML = isFollowing ? "<span>✓ Obserwujesz</span>" : "<span>➕ Obserwuj znajomego</span>";
         const statFollowers = document.getElementById("pubprof-stat-followers");
         if (statFollowers) {
           const cur = parseInt(statFollowers.textContent, 10) || 0;

@@ -2012,7 +2012,7 @@
           <div class="profile-avatar-badge" id="pubprof-avatar">🍺</div>
           <div class="profile-hero-info">
             <div class="profile-hero-names">
-              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <div class="pubprof-title-row">
                 <h2 id="pubprof-name">Profil Użytkownika</h2>
                 <span class="user-num-badge" id="pubprof-user-number" style="display:none;">#000001</span>
               </div>
@@ -2028,14 +2028,17 @@
 
       <div class="profile-stats-grid">
         <div class="profile-stat-box">
+          <div class="stat-box-icon">🍺</div>
           <div class="stat-num" id="pubprof-stat-visited">0</div>
           <div class="stat-lbl">Odwiedzone</div>
         </div>
         <div class="profile-stat-box">
+          <div class="stat-box-icon">❤️</div>
           <div class="stat-num" id="pubprof-stat-favorites">0</div>
           <div class="stat-lbl">Ulubione</div>
         </div>
         <div class="profile-stat-box">
+          <div class="stat-box-icon">👥</div>
           <div class="stat-num" id="pubprof-stat-followers">0</div>
           <div class="stat-lbl">Obserwujący</div>
         </div>
@@ -2051,16 +2054,18 @@
       </div>
 
       <div class="pubprof-actions">
-        <button type="button" class="btn-primary" id="btn-pubprof-follow-toggle">
-          <span>➕ Obserwuj</span>
+        <button type="button" class="btn-pubprof-follow" id="btn-pubprof-follow-toggle">
+          <span>➕ Obserwuj znajomego</span>
         </button>
-        <button type="button" class="btn-pubprof-toast" id="btn-pubprof-toast" title="Wznieś wirtualny toast z tym użytkownikiem!">
-          <span class="btn-hero-action-icon">🍻</span>
-          <span>Na zdrowie!</span>
-        </button>
-        <button type="button" class="btn-secondary" id="btn-pubprof-share">
-          <span>📤 Udostępnij</span>
-        </button>
+        <div class="pubprof-sub-actions">
+          <button type="button" class="btn-pubprof-toast" id="btn-pubprof-toast" title="Wznieś wirtualny toast z tym użytkownikiem!">
+            <span class="btn-hero-action-icon">🍻</span>
+            <span>Na zdrowie!</span>
+          </button>
+          <button type="button" class="btn-pubprof-share" id="btn-pubprof-share" title="Udostępnij profil znajomego">
+            <span>📤 Udostępnij</span>
+          </button>
+        </div>
       </div>
 
       <div class="pubprof-badges-section">
