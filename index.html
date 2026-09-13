@@ -129,6 +129,13 @@
                 <span class="menu-item-desc">Średnie ceny w dzielnicach</span>
               </div>
             </button>
+            <button type="button" class="more-menu-item btn-open-legal-terms" id="btn-more-legal" title="Regulamin serwisu i zasady crowdsourcingu">
+              <span class="menu-item-icon">📜</span>
+              <div class="menu-item-content">
+                <span class="menu-item-title">Regulamin & Zasady</span>
+                <span class="menu-item-desc">Zasady crowdsourcingu i ochrona twórcy</span>
+              </div>
+            </button>
           </div>
         </div>
 
@@ -401,9 +408,6 @@
         <div class="legal-warning-text">
           🔞 <strong>18+</strong> · Informacje wyłącznie dla osób pełnoletnich. Spożywanie alkoholu szkodzi zdrowiu.
         </div>
-        <button type="button" class="btn-legal-link btn-open-legal-terms" id="btn-ranking-legal">
-          📜 Regulamin serwisu, crowdsourcing & ochrona prawna
-        </button>
       </div>
     </div>
 
@@ -1205,8 +1209,7 @@
         </div>
 
         <div class="modal-footer legal-modal-footer">
-          <a href="/admin.html" class="legal-admin-link" title="Dostęp tylko dla moderatorów">🛡️ Panel Moderatora</a>
-          <button type="button" id="btn-ack-legal" class="btn-submit btn-legal-ack">
+          <button type="button" id="btn-ack-legal" class="btn-submit btn-legal-ack" style="width: 100%;">
             ✓ Rozumiem i akceptuję Regulamin
           </button>
         </div>
@@ -1747,6 +1750,18 @@
         <span class="comm-banner-arrow">→</span>
       </button>
 
+      <!-- Legal & Terms Banner in Profile -->
+      <button type="button" class="profile-legal-banner btn-open-legal-terms" id="btn-profile-legal" title="Regulamin, zasady crowdsourcingu i ochrona twórcy">
+        <div class="comm-banner-left">
+          <span class="comm-banner-icon">📜</span>
+          <div class="comm-banner-text">
+            <span class="comm-banner-title">Regulamin & Crowdsourcing</span>
+            <span class="comm-banner-sub">Zasady społeczności, brak antyreklamy i ochrona twórcy</span>
+          </div>
+        </div>
+        <span class="comm-banner-arrow">→</span>
+      </button>
+
       <!-- Appearance & Theme Selector Card (3 Tryby: Ciemny, Jasny, Auto) -->
       <div class="profile-settings-card">
         <div class="settings-card-header">
@@ -1772,13 +1787,6 @@
             <span class="theme-pill-label">Auto</span>
           </button>
         </div>
-      </div>
-
-      <!-- Legal & Terms in Profile -->
-      <div class="profile-legal-wrap">
-        <button type="button" class="btn-profile-legal btn-open-legal-terms" id="btn-profile-legal">
-          <span>📜 Regulamin serwisu & crowdsourcing</span>
-        </button>
       </div>
 
       <!-- Minimal Tasteful Logout Link -->

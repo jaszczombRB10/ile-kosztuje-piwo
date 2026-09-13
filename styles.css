@@ -6768,6 +6768,49 @@ header,
   transform: translateX(3px);
 }
 
+.profile-legal-banner {
+  margin: 0 16px 14px 16px;
+  width: calc(100% - 32px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 14px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.22);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: inherit;
+  color: #ffffff;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.profile-legal-banner:hover {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.4);
+  transform: translateY(-1px);
+}
+
+.profile-legal-banner:active {
+  transform: scale(0.99);
+}
+
+.profile-legal-banner .comm-banner-title {
+  color: #fbbf24;
+}
+
+.profile-legal-banner .comm-banner-arrow {
+  color: #fbbf24;
+  font-size: 0.95rem;
+  font-weight: 700;
+  transition: transform 0.2s ease;
+}
+
+.profile-legal-banner:hover .comm-banner-arrow {
+  transform: translateX(3px);
+}
+
 /* ==========================================================================
    Minimal Logout Link
    ========================================================================== */
@@ -12333,4 +12376,26 @@ body.theme-light .btn-profile-legal {
 body.theme-light .btn-profile-legal:hover {
   background: #f1f5f9 !important;
   color: #0f172a !important;
+}
+
+body.theme-light .profile-legal-banner {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+}
+
+body.theme-light .profile-legal-banner:hover {
+  background: #fef3c7 !important;
+  border-color: #f59e0b !important;
+}
+
+body.theme-light .profile-legal-banner .comm-banner-title {
+  color: #b45309 !important;
+}
+
+body.theme-light .profile-legal-banner .comm-banner-sub {
+  color: #78350f !important;
+}
+
+body.theme-light .profile-legal-banner .comm-banner-arrow {
+  color: #b45309 !important;
 }

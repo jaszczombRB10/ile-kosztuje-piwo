@@ -3019,6 +3019,25 @@
   function checkUrlHash() {
     const raw = decodeURIComponent(window.location.hash.replace(/^#/, "").trim());
     if (!raw) return;
+    const lower = raw.toLowerCase();
+
+    // Secret Admin / Moderator hash access
+    if (lower === "admin" || lower === "moderator" || lower === "panel") {
+      try {
+        history.replaceState(null, "", window.location.pathname + window.location.search);
+      } catch (e) {}
+      window.location.href = "/admin.html";
+      return;
+    }
+
+    // Direct hash to open Regulamin & Terms
+    if (lower === "regulamin" || lower === "terms" || lower === "zasady") {
+      if (typeof window.__openLegalModal === "function") {
+        window.__openLegalModal();
+      }
+      return;
+    }
+
     if (raw.startsWith("@")) {
       const username = raw.slice(1).trim();
       if (username && window.__openUserProfile) {
@@ -3026,7 +3045,6 @@
       }
       return;
     }
-    const lower = raw.toLowerCase();
     const target = allVenues.find(v => 
       (v.slug && v.slug.toLowerCase() === lower) || 
       (v.id && v.id.toLowerCase() === lower)
@@ -4967,6 +4985,62 @@
       }
     }
     initLegalModal();
+
+    // Secret Creator & Moderator Panel Access Sequence (Easter Egg)
+    function initSecretModeratorAccess() {
+      let secretTapCount = 0;
+      let secretTapTimer = null;
+
+      function triggerModeratorAccess() {
+        if (typeof showAppToast === "function") {
+          showAppToast("Panel Moderatora 🛡️", "Wykryto tajną sekwencję! Otwieranie panelu...", "🔐", 1800);
+        }
+        setTimeout(() => {
+          window.location.href = "/admin.html";
+        }, 400);
+      }
+
+      function onSecretTap(e) {
+        secretTapCount++;
+        clearTimeout(secretTapTimer);
+        secretTapTimer = setTimeout(() => {
+          secretTapCount = 0;
+        }, 2200);
+
+        if (secretTapCount >= 5) {
+          secretTapCount = 0;
+          if (e && e.preventDefault) e.preventDefault();
+          triggerModeratorAccess();
+        }
+      }
+
+      // 1. Rapid 5-tap on Desktop Brand Logo (.logo-wrap)
+      const logoDesktop = document.querySelector(".logo-wrap");
+      if (logoDesktop) {
+        logoDesktop.addEventListener("click", onSecretTap);
+      }
+
+      // 2. Rapid 5-tap on Mobile Floating Brand Pill (#btn-top-brand)
+      const logoMobile = document.getElementById("btn-top-brand");
+      if (logoMobile) {
+        logoMobile.addEventListener("click", onSecretTap);
+      }
+
+      // 3. Rapid 5-tap on User Number in Profile (#prof-user-number)
+      const profUserNum = document.getElementById("prof-user-number");
+      if (profUserNum) {
+        profUserNum.addEventListener("click", onSecretTap);
+      }
+
+      // 4. Secret Desktop Keyboard Shortcut: Ctrl+Shift+A or Cmd+Shift+A
+      document.addEventListener("keydown", (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "A" || e.key === "a")) {
+          e.preventDefault();
+          triggerModeratorAccess();
+        }
+      });
+    }
+    initSecretModeratorAccess();
 
     // PWA Installation (Android / Chrome & iOS Safari Guide)
     function initPwaInstall() {
