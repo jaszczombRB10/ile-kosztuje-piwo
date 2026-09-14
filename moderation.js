@@ -98,12 +98,19 @@
 
     // English & International
     'fuck', 'fuk', 'fck', 'motherfuck',
-    'shit', 'shyt', 'bullshit',
+    'shit', 'shyt', 'bullshit', 'dipshit', 'horseshit',
     'bitch', 'btch',
     'cunt',
     'asshole', 'jackass', 'dumbass',
     'nigger', 'nigga',
     'faggot',
+    'blowjob', 'handjob',
+    'dildo',
+    'wanker',
+    'twat',
+    'douchebag',
+    'bollocks',
+    'pedophile', 'rapist',
     'hitler', 'nazist', 'nazi',
     'porno', 'xvideos', 'hentai'
   ];
@@ -115,16 +122,19 @@
     /\b(suka|suki|suko)\b/i,
     /\b(ciul|ciulu|ciule)\b/i,
     /\b(frajer|frajerze|frajery)\b/i,
-    /\b(cock|cocks|cocksucker)\b/i,
-    /\b(dick|dicks|dickhead)\b/i,
+    /\b(cock|cocks|cocksucker|cockhead)\b/i,
+    /\b(dick|dicks|dickhead|dickpic)\b/i,
     /\b(pussy|pussies)\b/i,
-    /\b(whore|whores|slut|sluts)\b/i,
+    /\b(whore|whores|slut|sluts|skank)\b/i,
     /\b(bastard|bastards)\b/i,
-    /\b(retard|retards)\b/i
+    /\b(retard|retards|retarded)\b/i,
+    /\b(prick|pricks)\b/i,
+    /\b(boobs|tits|titties)\b/i,
+    /\b(cum|cumshot|jizz)\b/i
   ];
 
   const EXACT_BAD_COLLAPSED = [
-    'cipa', 'cipo', 'cipy', 'suka', 'suko', 'dupa', 'ciul', 'dick', 'cock', 'slut', 'fag'
+    'cipa', 'cipo', 'cipy', 'suka', 'suko', 'dupa', 'ciul', 'dick', 'cock', 'slut', 'fag', 'cum', 'tits', 'boobs', 'prick', 'twat'
   ];
 
   /**
