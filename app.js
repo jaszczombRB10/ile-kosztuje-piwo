@@ -6084,6 +6084,14 @@
           return;
         }
 
+        if (window.ProfanityFilter && window.ProfanityFilter.isOffensive(val)) {
+          if (regUsernameHint) {
+            regUsernameHint.textContent = "✕ Nick zawiera niedozwolone lub obraźliwe słowa";
+            regUsernameHint.style.color = "#f87171";
+          }
+          return;
+        }
+
         if (regUsernameHint) {
           regUsernameHint.textContent = "Sprawdzanie dostępności...";
           regUsernameHint.style.color = "var(--text-muted)";
@@ -6198,6 +6206,29 @@
             regErrorMsg.style.display = "block";
           }
           return;
+        }
+
+        if (window.ProfanityFilter) {
+          const uVal = window.ProfanityFilter.validateUsername(username);
+          if (!uVal.valid) {
+            if (regErrorMsg) {
+              regErrorMsg.textContent = uVal.error;
+              regErrorMsg.style.display = "block";
+            }
+            if (usernameInput) usernameInput.focus();
+            return;
+          }
+          if (displayName) {
+            const dVal = window.ProfanityFilter.validateDisplayName(displayName);
+            if (!dVal.valid) {
+              if (regErrorMsg) {
+                regErrorMsg.textContent = dVal.error;
+                regErrorMsg.style.display = "block";
+              }
+              if (displayNameInput) displayNameInput.focus();
+              return;
+            }
+          }
         }
 
         if (regErrorMsg) regErrorMsg.style.display = "none";
@@ -6343,6 +6374,14 @@
           return;
         }
 
+        if (window.ProfanityFilter && window.ProfanityFilter.isOffensive(val)) {
+          if (usernameHint) {
+            usernameHint.textContent = "✕ Nick zawiera niedozwolone lub obraźliwe słowa";
+            usernameHint.style.color = "#f87171";
+          }
+          return;
+        }
+
         if (usernameHint) {
           usernameHint.textContent = "Sprawdzanie dostępności...";
           usernameHint.style.color = "var(--text-muted)";
@@ -6408,6 +6447,29 @@
             errorMsg.style.display = "block";
           }
           return;
+        }
+
+        if (window.ProfanityFilter) {
+          const uVal = window.ProfanityFilter.validateUsername(valUser);
+          if (!uVal.valid) {
+            if (errorMsg) {
+              errorMsg.textContent = uVal.error;
+              errorMsg.style.display = "block";
+            }
+            if (usernameInput) usernameInput.focus();
+            return;
+          }
+          if (valName) {
+            const dVal = window.ProfanityFilter.validateDisplayName(valName);
+            if (!dVal.valid) {
+              if (errorMsg) {
+                errorMsg.textContent = dVal.error;
+                errorMsg.style.display = "block";
+              }
+              if (displayNameInput) displayNameInput.focus();
+              return;
+            }
+          }
         }
 
         const termsAgree = document.getElementById("onboarding-terms-agree");
@@ -6942,6 +7004,35 @@
         const editVibeInput = document.getElementById("edit-vibe-tags");
         const editVibeTags = editVibeInput ? editVibeInput.value.trim() : "";
 
+        if (window.ProfanityFilter) {
+          if (editUsername && (!currentProfile || editUsername !== currentProfile.username)) {
+            const uVal = window.ProfanityFilter.validateUsername(editUsername);
+            if (!uVal.valid) {
+              showAppToast("Niedozwolony nick", uVal.error, "⚠️");
+              if (editUserInput) editUserInput.focus();
+              return;
+            }
+          }
+          if (editName) {
+            const dVal = window.ProfanityFilter.validateDisplayName(editName);
+            if (!dVal.valid) {
+              showAppToast("Niedozwolona nazwa", dVal.error, "⚠️");
+              const nameEl = document.getElementById("edit-display-name");
+              if (nameEl) nameEl.focus();
+              return;
+            }
+          }
+          if (editBio) {
+            const bVal = window.ProfanityFilter.validateBio(editBio);
+            if (!bVal.valid) {
+              showAppToast("Niedozwolony opis", bVal.error, "⚠️");
+              const bioEl = document.getElementById("edit-bio");
+              if (bioEl) bioEl.focus();
+              return;
+            }
+          }
+        }
+
         if (editUsername && currentProfile && editUsername !== currentProfile.username) {
           try {
             const uRes = await fetch("/api/auth", {
@@ -6967,9 +7058,11 @@
               currentProfile.username = editUsername;
             } else {
               showAppToast("Uwaga", uData.error || "Nie udało się zmienić nicku.", "⚠️");
+              return;
             }
           } catch (err) {
             console.warn("Change username error:", err);
+            return;
           }
         }
 

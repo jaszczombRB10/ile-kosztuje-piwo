@@ -1,6 +1,7 @@
 // Vercel Serverless Function: Poilepiwko Social & Auth API
 const SUPABASE_URL = process.env.SUPABASE_URL || "https://agsodpzkytdgicpmphxz.supabase.co";
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFnc29kcHpreXRkZ2ljcG1waHh6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4ODcxODI3MywiZXhwIjoyMTA0Mjk0MjczfQ.nXVSigEdTUqxVcIOAic59j47lUNn_qI61NQRxs3Deho";
+const { isOffensive, validateUsername, validateDisplayName, validateBio } = require("./moderation");
 
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -26,14 +27,16 @@ module.exports = async (req, res) => {
     // =========================================================================
     if (action === "check-username") {
       const rawUser = String(payload?.username || "").trim().toLowerCase();
-      if (!rawUser || rawUser.length < 3 || rawUser.length > 20 || !/^[a-z0-9_]+$/.test(rawUser)) {
+      const userValidation = validateUsername(rawUser);
+      if (!userValidation.valid) {
         return res.status(200).json({ 
           available: false, 
-          message: "Nick musi mieć 3-20 znaków (litery, cyfry lub _)." 
+          message: userValidation.error 
         });
       }
 
-      const response = await fetch(`${SUPABASE_URL}/rest/v1/profiles?username=eq.${encodeURIComponent(rawUser)}&select=id`, {
+      const cleanUser = userValidation.clean;
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/profiles?username=eq.${encodeURIComponent(cleanUser)}&select=id`, {
         headers
       });
 
@@ -60,9 +63,17 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: "Podaj adres e-mail, hasło oraz nick." });
       }
 
-      const cleanUser = String(username).trim().toLowerCase();
-      if (!/^[a-z0-9_]{3,20}$/.test(cleanUser)) {
-        return res.status(400).json({ error: "Nieprawidłowy format nicku (3-20 znaków, bez spacji i znaków specjalnych)." });
+      const userValidation = validateUsername(username);
+      if (!userValidation.valid) {
+        return res.status(400).json({ error: userValidation.error });
+      }
+      const cleanUser = userValidation.clean;
+
+      if (displayName) {
+        const nameValidation = validateDisplayName(displayName);
+        if (!nameValidation.valid) {
+          return res.status(400).json({ error: nameValidation.error });
+        }
       }
 
       if (password.length < 6) {
@@ -765,6 +776,20 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: "Brak userId." });
       }
 
+      if (displayName !== undefined && displayName !== null && displayName !== "") {
+        const nameValidation = validateDisplayName(displayName);
+        if (!nameValidation.valid) {
+          return res.status(400).json({ error: nameValidation.error });
+        }
+      }
+
+      if (bio !== undefined && bio !== null && bio !== "") {
+        const bioValidation = validateBio(bio);
+        if (!bioValidation.valid) {
+          return res.status(400).json({ error: bioValidation.error });
+        }
+      }
+
       // Update Supabase Auth user_metadata via Admin API (guaranteed persistence)
       try {
         const uRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(userId)}`, { headers });
@@ -821,14 +846,29 @@ module.exports = async (req, res) => {
     // 9. Set / Change Username (e.g. after Google OAuth or in settings)
     // =========================================================================
     if (action === "set-username") {
-      const { userId, username, displayName, avatarIcon, avatarPhoto, vibeTags } = payload || {};
+      const { userId, username, displayName, avatarIcon, avatarPhoto, vibeTags, bio } = payload || {};
       if (!userId || !username) {
         return res.status(400).json({ error: "Brak userId lub nicku." });
       }
 
-      const cleanUser = String(username).trim().toLowerCase().replace(/^@/, "");
-      if (!/^[a-z0-9_]{3,20}$/.test(cleanUser)) {
-        return res.status(400).json({ error: "Nick musi mieć 3-20 znaków (małe litery, cyfry lub _)." });
+      const userValidation = validateUsername(username);
+      if (!userValidation.valid) {
+        return res.status(400).json({ error: userValidation.error });
+      }
+      const cleanUser = userValidation.clean;
+
+      if (displayName !== undefined && displayName !== null && displayName !== "") {
+        const nameValidation = validateDisplayName(displayName);
+        if (!nameValidation.valid) {
+          return res.status(400).json({ error: nameValidation.error });
+        }
+      }
+
+      if (bio !== undefined && bio !== null && bio !== "") {
+        const bioValidation = validateBio(bio);
+        if (!bioValidation.valid) {
+          return res.status(400).json({ error: bioValidation.error });
+        }
       }
 
       // Check if username is already taken by someone else

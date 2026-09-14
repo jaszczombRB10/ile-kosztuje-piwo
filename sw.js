@@ -1,9 +1,10 @@
-const CACHE_NAME = "poilepiwko-v86";
+const CACHE_NAME = "poilepiwko-v87";
 
 const STATIC_ASSETS = [
   "./",
   "./index.html",
   "./styles.css",
+  "./moderation.js",
   "./app.js",
   "./config.js",
   "./manifest.json",
