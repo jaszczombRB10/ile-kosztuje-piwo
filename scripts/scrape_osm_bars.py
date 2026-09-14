@@ -129,6 +129,41 @@ SUBURBAN_SUPPLEMENTARY = [
     {"name": "Pub Stokłosy", "district": "Ursynów", "address": "ul. Ciszewskiego 15", "latitude": 52.1550, "longitude": 21.0350, "beer_name": "Warka z nalewaka", "beer_price_pln": 12.0, "is_craft": False, "shot_price_pln": 7.0, "hours": "14:00 - 23:00", "is_verified": True}
 ]
 
+def is_outside_warsaw(lat, lon, tags=None):
+    tags = tags or {}
+    city = (tags.get("addr:city") or tags.get("city") or "").lower().strip()
+    if city and city not in ["warszawa", "warsaw", "warschau", ""]:
+        return True
+
+    # Piaseczno / Mysiadlo / Jozefoslaw (south of Ursynow)
+    if lat < 52.115 and lon < 21.06:
+        return True
+    # Konstancin-Jeziorna (south of Wilanow)
+    if lat < 52.115 and lon >= 21.06:
+        return True
+    # Lazy / Raszyn / Janki / Sekocin (south of Wlochy)
+    if lat < 52.15 and lon < 20.93:
+        return True
+    # Ozarow / Jawczyce (west of Ursus)
+    if lon < 20.86 and lat < 52.22:
+        return True
+    # Lomianki / Dziekanow (north-west of Bielany)
+    if lat > 52.33 and lon < 20.92:
+        return True
+    # Kobylka / Wolomin / Zielonka (north-east of Rembertow)
+    if lat > 52.32 and lon > 21.18:
+        return True
+    # Sulejowek (east of Wesola)
+    if lon > 21.25 and lat > 52.23:
+        return True
+    # Wiazowna / Otwock / Jozefow / Swider (south-east of Wawer)
+    if lon > 21.23 and lat < 52.20:
+        return True
+    if lon > 21.25 and lat < 52.22:
+        return True
+
+    return False
+
 def guess_district(lat, lon, tags=None, name=""):
     tags = tags or {}
     # 1. Pawilony micro-hotspot
@@ -137,22 +172,49 @@ def guess_district(lat, lon, tags=None, name=""):
 
     street = (tags.get("addr:street") or "").lower()
     suburb = (tags.get("addr:suburb") or tags.get("addr:district") or tags.get("addr:neighbourhood") or "").lower()
-    combined = f"{name} {street} {suburb}".lower()
+    addr_only = f"{street} {suburb}".lower()
+    name_clean = name.lower()
 
-    if any(k in combined for k in KEYWORDS["Pawilony"]):
+    if any(k in f"{name_clean} {addr_only}" for k in KEYWORDS["Pawilony"]):
         return "Pawilony"
 
     # 2. Bulwary Wiślane riverfront
     if 52.225 <= lat <= 52.255 and 21.025 <= lon <= 21.045:
-        if any(k in combined for k in KEYWORDS["Bulwary"]):
+        if any(k in f"{name_clean} {addr_only}" for k in KEYWORDS["Bulwary"]):
             return "Bulwary"
 
-    # 3. Explicit keywords match
+    # Wisla river separation for north Warsaw: East of Wisla (lon >= 20.945) cannot be Bielany
+    if lat >= 52.29 and lon >= 20.945:
+        return "Białołęka"
+
+    # Specific known street overrides:
+    # Aleja Niepodległości south of Trasa Łazienkowska is Mokotów
+    if "niepodległości" in street or "niepodleglosci" in street:
+        if lat < 52.22:
+            return "Mokotów"
+        return "Śródmieście"
+
+    # 3. Explicit keywords match with word boundary check
+    # Check address first (street/suburb) which is most reliable
     for dname, kws in KEYWORDS.items():
         if dname in ["Pawilony", "Bulwary"]:
             continue
-        if any(k in combined for k in kws):
-            return dname
+        for k in kws:
+            pattern = r"\b" + re.escape(k) + r"\b" if len(k) <= 6 else re.escape(k)
+            if re.search(pattern, addr_only):
+                return dname
+
+    # Then check name (avoid matching common words like 'zielona', 'wola', 'rakow')
+    generic_name_skip = {"zielona", "wola", "raków", "rakow", "koło", "kolo"}
+    for dname, kws in KEYWORDS.items():
+        if dname in ["Pawilony", "Bulwary"]:
+            continue
+        for k in kws:
+            if k in generic_name_skip:
+                continue
+            pattern = r"\b" + re.escape(k) + r"\b" if len(k) <= 6 else re.escape(k)
+            if re.search(pattern, name_clean):
+                return dname
 
     # 4. Proximity to district centroids
     best_name = "Śródmieście"
@@ -290,7 +352,10 @@ def main():
         if not name or len(name) < 2:
             continue
 
-        if any(x in name.lower() for x in ["kebab", "mcdonald", "kfc", "żabka", "zabka", "biedronka", "subway", "stacja paliw", "orlen", "bp", "apteki", "apteka", "rossmann", "lidl", "piekarnia", "cukiernia"]):
+        if any(x in name.lower() for x in ["kebab", "mcdonald", "kfc", "żabka", "zabka", "biedronka", "subway", "stacja paliw", "orlen", "bp", "apteki", "apteka", "rossmann", "lidl", "piekarnia", "cukiernia", "bibliotek"]):
+            continue
+
+        if tags.get("amenity") == "public_bookcase":
             continue
 
         name_clean = name.lower()
@@ -303,7 +368,10 @@ def main():
         if not lat or not lon:
             continue
 
-        if not (52.05 <= lat <= 52.38 and 20.80 <= lon <= 21.30):
+        if not (52.09 <= lat <= 52.37 and 20.84 <= lon <= 21.28):
+            continue
+
+        if is_outside_warsaw(lat, lon, tags):
             continue
 
         seen_names.add(name_clean)
