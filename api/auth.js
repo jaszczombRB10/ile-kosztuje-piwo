@@ -312,159 +312,73 @@ module.exports = async (req, res) => {
       let followingIds = [];
 
       try {
-        const queryUrl = userId
-          ? `${SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}&select=*`
-          : `${SUPABASE_URL}/rest/v1/profiles?username=eq.${encodeURIComponent(username)}&select=*`;
+        if (userId) {
+          const userRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(userId)}`, { headers });
+          if (userRes.ok) {
+            const u = await userRes.json();
+            const meta = u.user_metadata || {};
+            followingIds = Array.isArray(meta.following_ids) ? meta.following_ids : [];
+            followersCount = Array.isArray(meta.follower_ids) ? meta.follower_ids.length : 0;
+            userNumber = meta.user_number || "#000001";
 
-        const profRes = await fetch(queryUrl, { headers });
-        if (profRes.ok) {
-          const profiles = await profRes.json();
-          if (Array.isArray(profiles) && profiles.length > 0) {
-            profile = profiles[0];
+            profile = {
+              id: u.id,
+              username: meta.username || u.email?.split("@")[0] || "piwosz",
+              display_name: meta.display_name || meta.full_name || meta.username || "Piwosz",
+              avatar_icon: meta.avatar_icon || "🍺",
+              avatar_photo: meta.avatar_photo || null,
+              user_number: userNumber,
+              bio: meta.bio || "Warszawski poszukiwacz dobrego i taniego piwa 🍻",
+              favorite_beer: meta.favorite_beer || "",
+              favorite_district: meta.favorite_district || "",
+              vibe_tags: meta.vibe_tags || "",
+              visited_venues: meta.visited_venues || [],
+              favorite_venues: meta.favorite_venues || [],
+              created_at: u.created_at
+            };
           }
-        }
-      } catch (e) {
-        console.warn("Profiles DB fetch error:", e);
-      }
+        } else if (username) {
+          const listRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?per_page=100`, { headers });
+          if (listRes.ok) {
+            const listData = await listRes.json();
+            const allUsers = listData.users || (Array.isArray(listData) ? listData : []);
+            const match = allUsers.find(u => {
+              const uName = (u.user_metadata?.username || u.email?.split("@")[0] || "").toLowerCase();
+              return uName === username;
+            });
+            if (match) {
+              const meta = match.user_metadata || {};
+              followingIds = Array.isArray(meta.following_ids) ? meta.following_ids : [];
+              followersCount = Array.isArray(meta.follower_ids) ? meta.follower_ids.length : 0;
+              userNumber = meta.user_number || "#000001";
 
-      // If profile was fetched from DB but avatar_photo is missing, hydrate from user_metadata
-      if (profile && !profile.avatar_photo && (userId || profile.id)) {
-        try {
-          const targetUid = userId || profile.id;
-          const adminRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(targetUid)}`, { headers });
-          if (adminRes.ok) {
-            const u = await adminRes.json();
-            if (u.user_metadata?.avatar_photo) {
-              profile.avatar_photo = u.user_metadata.avatar_photo;
-            }
-          }
-        } catch (e) {
-          console.warn("Hydrate avatar_photo from admin note:", e);
-        }
-      }
-
-      // Fallback: Supabase Auth Admin API
-      if (!profile) {
-        try {
-          if (userId) {
-            const adminRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(userId)}`, { headers });
-            if (adminRes.ok) {
-              const u = await adminRes.json();
-              const meta = u.user_metadata || {};
               profile = {
-                id: u.id,
-                username: meta.username || u.email?.split("@")[0] || "piwosz",
-                display_name: meta.display_name || meta.full_name || meta.username || "Piwosz",
+                id: match.id,
+                username: meta.username || match.email?.split("@")[0] || username,
+                display_name: meta.display_name || meta.full_name || meta.username || username,
                 avatar_icon: meta.avatar_icon || "🍺",
                 avatar_photo: meta.avatar_photo || null,
-                user_number: meta.user_number || null,
+                user_number: userNumber,
                 bio: meta.bio || "Warszawski poszukiwacz dobrego i taniego piwa 🍻",
                 favorite_beer: meta.favorite_beer || "",
                 favorite_district: meta.favorite_district || "",
                 vibe_tags: meta.vibe_tags || "",
                 visited_venues: meta.visited_venues || [],
                 favorite_venues: meta.favorite_venues || [],
-                created_at: u.created_at
+                created_at: match.created_at
               };
             }
-          } else if (username) {
-            const listRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?per_page=100`, { headers });
-            if (listRes.ok) {
-              const listData = await listRes.json();
-              const allUsers = listData.users || (Array.isArray(listData) ? listData : []);
-              const match = allUsers.find(u => {
-                const uName = (u.user_metadata?.username || u.email?.split("@")[0] || "").toLowerCase();
-                return uName === username;
-              });
-              if (match) {
-                const meta = match.user_metadata || {};
-                profile = {
-                  id: match.id,
-                  username: meta.username || match.email?.split("@")[0] || username,
-                  display_name: meta.display_name || meta.full_name || meta.username || username,
-                  avatar_icon: meta.avatar_icon || "🍺",
-                  avatar_photo: meta.avatar_photo || null,
-                  bio: meta.bio || "Warszawski poszukiwacz dobrego i taniego piwa 🍻",
-                  favorite_beer: meta.favorite_beer || "",
-                  favorite_district: meta.favorite_district || "",
-                  vibe_tags: meta.vibe_tags || "",
-                  visited_venues: meta.visited_venues || [],
-                  favorite_venues: meta.favorite_venues || [],
-                  created_at: match.created_at
-                };
-              }
-            }
           }
-        } catch (adminErr) {
-          console.warn("Admin profile fallback error:", adminErr);
         }
+      } catch (err) {
+        console.error("get-profile error:", err);
       }
 
       if (!profile) {
         return res.status(404).json({ error: "Użytkownik nie istnieje." });
       }
 
-      // Get follower and following count from user_metadata (with admin scan fallback)
-      if (profile && profile.id) {
-        try {
-          const targetUid = profile.id;
-          const uRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(targetUid)}`, { headers });
-          if (uRes.ok) {
-            const uData = await uRes.json();
-            const m = uData.user_metadata || {};
-            followingIds = Array.isArray(m.following_ids) ? m.following_ids : [];
-            followingCount = followingIds.length;
-            followersCount = Array.isArray(m.follower_ids) ? m.follower_ids.length : 0;
-          }
-        } catch (e) {
-          console.warn("Error reading follower metadata:", e);
-        }
-
-        // Supplementary check: if follower_ids was 0, calculate by scanning users who follow this profile
-        if (followersCount === 0) {
-          try {
-            const allUsersRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?per_page=200`, { headers });
-            if (allUsersRes.ok) {
-              const allData = await allUsersRes.json();
-              const allU = allData.users || (Array.isArray(allData) ? allData : []);
-              const fanIds = allU
-                .filter(u => Array.isArray(u.user_metadata?.following_ids) && u.user_metadata.following_ids.includes(profile.id))
-                .map(u => u.id);
-              if (fanIds.length > 0) {
-                followersCount = fanIds.length;
-              }
-            }
-          } catch (_) {}
-        }
-      }
-
-      // Calculate user sequence number
-      try {
-        if (profile.user_number) {
-          userNumber = profile.user_number;
-        } else {
-          const adminUsersRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?per_page=1000`, { headers });
-          if (adminUsersRes.ok) {
-            const adminUsersData = await adminUsersRes.json();
-            const allU = adminUsersData.users || (Array.isArray(adminUsersData) ? adminUsersData : []);
-            allU.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-            const targetId = profile.id || userId;
-            const idx = allU.findIndex(u => u.id === targetId || u.email === profile.email);
-            if (idx !== -1) {
-              userNumber = "#" + String(idx + 1).padStart(6, "0");
-              profile.user_number = userNumber;
-              // Persist permanently in user_metadata
-              fetch(`${SUPABASE_URL}/auth/v1/admin/users/${targetId}`, {
-                method: "PUT",
-                headers,
-                body: JSON.stringify({ user_metadata: { ...(allU[idx].user_metadata || {}), user_number: userNumber } })
-              }).catch(() => {});
-            }
-          }
-        }
-      } catch (e) {
-        console.warn("User sequence calculation error:", e);
-      }
+      followingCount = followingIds.length;
 
       return res.status(200).json({
         success: true,
