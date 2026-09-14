@@ -645,6 +645,30 @@
     }
   }
 
+  function formatDisplayHours(raw) {
+    if (!raw) return "";
+    let s = raw.trim();
+    if (/^\d{1,2}\+$/.test(s)) {
+      const h = s.replace("+", "");
+      return `od ${h}:00`;
+    }
+    if (/^\d{1,2}:\d{2}\+$/.test(s)) {
+      return `od ${s.replace("+", "")}`;
+    }
+    s = s.replace(/\bMo\b/g, "Pn")
+         .replace(/\bTu\b/g, "Wt")
+         .replace(/\bWe\b/g, "Śr")
+         .replace(/\bTh\b/g, "Czw")
+         .replace(/\bFr\b/g, "Pt")
+         .replace(/\bSa\b/g, "Sb")
+         .replace(/\bSu\b/g, "Nd")
+         .replace(/\bPH\b/g, "Święta")
+         .replace(/\boff\b/g, "zamknięte")
+         .replace(/(\d{1,2}):00\+/g, "od $1:00")
+         .replace(/(\d{1,2})\+/g, "od $1:00");
+    return s;
+  }
+
   function isNonAlcoholicVenue(venue) {
     if (!venue) return false;
     if (venue.has_non_alcoholic === true || venue.is_non_alcoholic === true) return true;
@@ -696,7 +720,7 @@
       const size = [32, 32];
       return L.divIcon({
         className: "custom-price-div-icon",
-        html: `<div class="price-badge-marker marker-closed" style="width:${size[0]}px; height:${size[1]}px;" title="Zamknięte teraz · ${escapeHtml(venue.hours || '')}">
+        html: `<div class="price-badge-marker marker-closed" style="width:${size[0]}px; height:${size[1]}px;" title="Zamknięte teraz · ${escapeHtml(formatDisplayHours(venue.hours) || '')}">
                 <span class="closed-x">✕</span>
                 ${visitedBadge}
                </div>`,
@@ -801,7 +825,7 @@
             ? `<span class="venue-verified-pill" title="Cena zweryfikowana w lokalu"><span class="ver-dot"></span> Zweryfikowana</span>`
             : `<span class="venue-unverified-pill" title="Cena szacunkowa na podstawie dzielnicy – pomóż zaktualizować!"><span class="unver-dot"></span> Szacunek</span>`
           }
-          ${venue.hours ? `<span class="venue-hours-chip">🕒 ${escapeHtml(venue.hours)}</span>` : ''}
+          ${venue.hours ? `<span class="venue-hours-chip">🕒 ${escapeHtml(formatDisplayHours(venue.hours))}</span>` : ''}
         </div>
 
         ${hhLivePromoHtml}
@@ -11466,7 +11490,7 @@
     "is_craft": false,
     "shot_price_pln": 7.5,
     "happy_hour": null,
-    "hours": "15+",
+    "hours": "od 15:00",
     "is_verified": true,
     "last_updated": "2026-09-14T00:00:00+00:00",
     "votes_confirm": 2
@@ -12169,7 +12193,7 @@
     "is_craft": false,
     "shot_price_pln": 8.0,
     "happy_hour": null,
-    "hours": "13+",
+    "hours": "od 13:00",
     "is_verified": false,
     "last_updated": "2026-09-06T21:00:56.550498+00:00",
     "votes_confirm": 0
@@ -15437,7 +15461,7 @@
     "is_craft": false,
     "shot_price_pln": 10.0,
     "happy_hour": null,
-    "hours": "17+",
+    "hours": "od 17:00",
     "is_verified": false,
     "last_updated": "2026-09-06T21:00:56.124372+00:00",
     "votes_confirm": 0
@@ -19484,7 +19508,7 @@
     "is_craft": true,
     "shot_price_pln": 13.0,
     "happy_hour": null,
-    "hours": "16+",
+    "hours": "15:00 - 00:00",
     "is_verified": true,
     "last_updated": "2026-09-14T00:00:00+00:00",
     "votes_confirm": 3

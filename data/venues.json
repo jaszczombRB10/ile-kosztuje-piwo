@@ -1438,7 +1438,7 @@
     "is_craft": false,
     "shot_price_pln": 7.5,
     "happy_hour": null,
-    "hours": "15+",
+    "hours": "od 15:00",
     "is_verified": true,
     "last_updated": "2026-09-14T00:00:00+00:00",
     "votes_confirm": 2
@@ -2141,7 +2141,7 @@
     "is_craft": false,
     "shot_price_pln": 8.0,
     "happy_hour": null,
-    "hours": "13+",
+    "hours": "od 13:00",
     "is_verified": false,
     "last_updated": "2026-09-06T21:00:56.550498+00:00",
     "votes_confirm": 0
@@ -5409,7 +5409,7 @@
     "is_craft": false,
     "shot_price_pln": 10.0,
     "happy_hour": null,
-    "hours": "17+",
+    "hours": "od 17:00",
     "is_verified": false,
     "last_updated": "2026-09-06T21:00:56.124372+00:00",
     "votes_confirm": 0
@@ -9456,7 +9456,7 @@
     "is_craft": true,
     "shot_price_pln": 13.0,
     "happy_hour": null,
-    "hours": "16+",
+    "hours": "15:00 - 00:00",
     "is_verified": true,
     "last_updated": "2026-09-14T00:00:00+00:00",
     "votes_confirm": 3
