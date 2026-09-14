@@ -464,7 +464,7 @@
 
   // Polish Cities for Nationwide Expansion (Vad Kostar Ölen style)
   const EXPANSION_CITIES = [
-    { name: "WARSZAWA", count: 524, coords: [52.2319, 21.0185], status: "active", sub: "524 bary · od 10 zł", zoom: 13 },
+    { name: "WARSZAWA", count: 499, coords: [52.2319, 21.0185], status: "active", sub: "499 barów · od 10 zł", zoom: 13 },
     { name: "KRAKÓW", count: 0, coords: [50.0647, 19.9450], status: "coming_soon", sub: "wkrótce", zoom: 13 },
     { name: "GDAŃSK", count: 0, coords: [54.3520, 18.6466], status: "coming_soon", sub: "wkrótce", zoom: 13 },
     { name: "WROCŁAW", count: 0, coords: [51.1079, 17.0385], status: "coming_soon", sub: "wkrótce", zoom: 13 },
@@ -568,12 +568,22 @@
 
     EXPANSION_CITIES.forEach(city => {
       const isComingSoon = city.status === "coming_soon";
+      let subText = city.sub;
+      if (city.name === "WARSZAWA") {
+        const total = (allVenues && allVenues.length) ? allVenues.length : 499;
+        const prices = (allVenues && allVenues.length)
+          ? allVenues.map(v => v.beer_price_pln).filter(p => typeof p === "number" && p > 0)
+          : [];
+        const minP = prices.length > 0 ? Math.min(...prices).toFixed(0) : "10";
+        subText = `${total} barów · od ${minP} zł`;
+      }
+
       const icon = L.divIcon({
         className: `city-overview-marker ${isComingSoon ? 'coming-soon' : ''}`,
         html: `
           <div class="city-overview-box">
             <div class="city-overview-name">${escapeHtml(city.name)}</div>
-            <div class="city-overview-sub">${escapeHtml(city.sub)}</div>
+            <div class="city-overview-sub">${escapeHtml(subText)}</div>
           </div>
         `,
         iconSize: [130, 48],
@@ -2712,7 +2722,7 @@
 
   function updatePassportCounters() {
     const count = visitedVenues.length;
-    const total = allVenues.length || 524;
+    const total = allVenues.length || 499;
     const headerCount = document.getElementById("passport-header-count");
     if (headerCount) headerCount.textContent = `${count}/${total}`;
 
@@ -2725,7 +2735,7 @@
     allVenues.forEach(v => { vMap[v.id] = v; });
 
     const count = visitedVenues.length;
-    const total = allVenues.length || 524;
+    const total = allVenues.length || 499;
     const pct = ((count / total) * 100).toFixed(1);
 
     const districts = new Set(visitedVenues.map(id => vMap[id] && vMap[id].district).filter(Boolean));
@@ -3110,7 +3120,7 @@
     if (btnShare) {
       btnShare.addEventListener("click", () => {
         const count = visitedVenues.length;
-        const total = allVenues.length || 524;
+        const total = allVenues.length || 499;
         const rank = getPassportRank(count);
         const vMap = {};
         allVenues.forEach(v => { vMap[v.id] = v; });
