@@ -7239,7 +7239,7 @@
         const data = await res.json();
         if (!res.ok || !data.users || data.users.length === 0) {
           if (searchResults) {
-            searchResults.innerHTML = `<div class="empty-state-hint">Nie znaleziono piwosza o nicku "@${escapeHtml(q)}".<br><small style="opacity:0.75;margin-top:4px;display:inline-block;">Upewnij się, że wpisujesz unikalny nick profilu (np. @jaszczomb).</small></div>`;
+            searchResults.innerHTML = `<div class="empty-state-hint">Nie znaleziono piwosza o nicku "@${escapeHtml(q)}".<br><small style="opacity:0.75;margin-top:4px;display:inline-block;">Upewnij się, że wpisujesz unikalny nick profilu (np. @piwosz).</small></div>`;
           }
           return;
         }
