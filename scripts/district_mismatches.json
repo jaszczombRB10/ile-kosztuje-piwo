@@ -1,0 +1,659 @@
+[
+  [
+    "suburban-tawerna-lesna-wesola",
+    "Tawerna Leśna Wesoła",
+    "Wesoła",
+    "Poza Warszawą",
+    "Trakt Brzeski 54",
+    52.239,
+    21.242
+  ],
+  [
+    "osm-way-930817947",
+    "Trattoria da Antonio",
+    "Włochy",
+    "Ochota",
+    "Włodarzewska 79",
+    52.20255,
+    20.95016
+  ],
+  [
+    "osm-node-280333661",
+    "Bez Słowa",
+    "Mokotów",
+    "Ursynów",
+    "Warszawa",
+    52.17376,
+    21.04501
+  ],
+  [
+    "osm-node-3696194021",
+    "Spin City",
+    "Bielany",
+    "Bemowo",
+    "Warszawa",
+    52.266,
+    20.93282
+  ],
+  [
+    "osm-node-4591418211",
+    "Paradox Cafe",
+    "Żoliborz",
+    "Śródmieście",
+    "Warszawa",
+    52.24947,
+    20.99767
+  ],
+  [
+    "osm-node-6700831010",
+    "Cafe Bar Monika's House",
+    "Żoliborz",
+    "Bielany",
+    "Warszawa",
+    52.28128,
+    20.97675
+  ],
+  [
+    "osm-node-7956420256",
+    "Mielżyński",
+    "Żoliborz",
+    "Wola",
+    "Warszawa",
+    52.25396,
+    20.97855
+  ],
+  [
+    "osm-node-10761295246",
+    "The Beer Store",
+    "Ochota",
+    "Mokotów",
+    "Konstruktorska 12A",
+    52.187,
+    20.98811
+  ],
+  [
+    "osm-node-11018644077",
+    "Stork",
+    "Żoliborz",
+    "Śródmieście",
+    "Bonifraterska 10A",
+    52.25295,
+    21.00105
+  ],
+  [
+    "osm-node-11022418052",
+    "Regency Club",
+    "Mokotów",
+    "Śródmieście",
+    "Warszawa",
+    52.20758,
+    21.0297
+  ],
+  [
+    "osm-node-11035383268",
+    "Czarna Koszula",
+    "Żoliborz",
+    "Śródmieście",
+    "Warszawa",
+    52.25533,
+    21.00008
+  ],
+  [
+    "osm-node-11169103777",
+    "Kinowy",
+    "Bielany",
+    "Bemowo",
+    "Warszawa",
+    52.26562,
+    20.93234
+  ],
+  [
+    "osm-node-12036270648",
+    "Spicy Sports Bar & Lounge",
+    "Ursynów",
+    "Mokotów",
+    "Warszawa",
+    52.17602,
+    21.06394
+  ],
+  [
+    "osm-way-244662258",
+    "Bolek",
+    "Śródmieście",
+    "Ochota",
+    "Aleja Niepodległości 211",
+    52.21231,
+    21.00487
+  ],
+  [
+    "osm-node-3711021687",
+    "Mosir Poranki i Wieczory",
+    "Praga Północ",
+    "Praga-Południe",
+    "Wybrzeże Szczecińskie 1",
+    52.23802,
+    21.04268
+  ],
+  [
+    "osm-node-416569739",
+    "Bar pod Kufelkiem",
+    "Praga Północ",
+    "Praga-Południe",
+    "Targowa 1",
+    52.24802,
+    21.04556
+  ],
+  [
+    "osm-node-952192677",
+    "Środowiskowe Warszawskie Wodne Ochotnicze Pogotowie Ratunkowe",
+    "Ochota",
+    "Praga-Północ",
+    "Jagiellońska 7",
+    52.25023,
+    21.03555
+  ],
+  [
+    "osm-node-1656239912",
+    "Paragraf",
+    "Śródmieście",
+    "Wola",
+    "Aleja „Solidarności” 84",
+    52.24163,
+    20.99174
+  ],
+  [
+    "osm-node-4934955870",
+    "Arena",
+    "Śródmieście",
+    "Wola",
+    "Warszawa",
+    52.23163,
+    20.9946
+  ],
+  [
+    "osm-node-9043701129",
+    "Space Club",
+    "Ochota",
+    "Wola",
+    "Kolejowa 37/39",
+    52.22549,
+    20.97929
+  ],
+  [
+    "osm-node-9790895194",
+    "Amare Mio!",
+    "Ochota",
+    "Wola",
+    "Warszawa",
+    52.23195,
+    20.99027
+  ],
+  [
+    "osm-node-9790895196",
+    "Torres Wine Bar",
+    "Ochota",
+    "Wola",
+    "Warszawa",
+    52.23206,
+    20.99026
+  ],
+  [
+    "osm-node-9790895198",
+    "Gimlet",
+    "Ochota",
+    "Wola",
+    "Warszawa",
+    52.23225,
+    20.99011
+  ],
+  [
+    "osm-node-9790895199",
+    "Old Shaker",
+    "Ochota",
+    "Wola",
+    "Warszawa",
+    52.23217,
+    20.99005
+  ],
+  [
+    "osm-node-9790899517",
+    "Pandan",
+    "Ochota",
+    "Wola",
+    "Warszawa",
+    52.2321,
+    20.99077
+  ],
+  [
+    "osm-node-10775974948",
+    "Smok",
+    "Ochota",
+    "Wola",
+    "Kolejowa 43",
+    52.22634,
+    20.97965
+  ],
+  [
+    "osm-node-11018644090",
+    "Sound Garden",
+    "Ochota",
+    "Włochy",
+    "Warszawa",
+    52.19046,
+    20.98188
+  ],
+  [
+    "osm-node-11029954968",
+    "Right Place",
+    "Żoliborz",
+    "Śródmieście",
+    "Warszawa",
+    52.24512,
+    20.99131
+  ],
+  [
+    "osm-node-11029954978",
+    "Metal Cave",
+    "Bemowo",
+    "Wola",
+    "Warszawa",
+    52.23565,
+    20.93728
+  ],
+  [
+    "osm-node-11648854188",
+    "The Backstage Bar",
+    "Żoliborz",
+    "Wola",
+    "Warszawa",
+    52.24434,
+    20.99063
+  ],
+  [
+    "osm-node-11730882836",
+    "Sala bankietowa Dedek Park",
+    "Praga Północ",
+    "Praga-Południe",
+    "Aleja Zieleniecka 6/8",
+    52.24416,
+    21.04987
+  ],
+  [
+    "osm-node-12578606138",
+    "Anh Anh",
+    "Żoliborz",
+    "Wola",
+    "Warszawa",
+    52.2468,
+    20.98509
+  ],
+  [
+    "osm-node-12662423340",
+    "White Stone",
+    "Ochota",
+    "Mokotów",
+    "Warszawa",
+    52.20638,
+    20.99584
+  ],
+  [
+    "osm-way-977350469",
+    "Dwa Koła",
+    "Ochota",
+    "Wola",
+    "Tunelowa 2B",
+    52.22185,
+    20.96903
+  ],
+  [
+    "osm-node-3424760272",
+    "Piwomaniak",
+    "Żoliborz",
+    "Wola",
+    "Aleja Jana Pawła II 61",
+    52.24749,
+    20.98818
+  ],
+  [
+    "osm-node-416591075",
+    "Klub Wieżyca",
+    "Żoliborz",
+    "Śródmieście",
+    "Aleje Jerozolimskie 1",
+    52.23266,
+    21.02689
+  ],
+  [
+    "osm-node-416622148",
+    "Emerald Irish Pub",
+    "Żoliborz",
+    "Śródmieście",
+    "Aleje Jerozolimskie 4",
+    52.2328,
+    21.02394
+  ],
+  [
+    "osm-node-473159293",
+    "Zanzi Bar",
+    "Białołęka",
+    "Praga-Północ",
+    "Modlińska 3B",
+    52.29101,
+    21.00081
+  ],
+  [
+    "osm-node-602277145",
+    "Pod Mosteczkiem",
+    "Praga Północ",
+    "Śródmieście",
+    "Warszawa",
+    52.23509,
+    21.0377
+  ],
+  [
+    "osm-node-1437931262",
+    "City Wine",
+    "Wola",
+    "Śródmieście",
+    "Grzybowska 2",
+    52.23754,
+    21.00317
+  ],
+  [
+    "osm-node-2203276440",
+    "Frodo",
+    "Śródmieście",
+    "Wola",
+    "Chmielna 98",
+    52.22947,
+    20.99968
+  ],
+  [
+    "osm-node-4018492376",
+    "Miejsce",
+    "Praga Południe",
+    "Śródmieście",
+    "Generała Mariusza Zaruskiego 1",
+    52.21961,
+    21.04731
+  ],
+  [
+    "osm-node-5343148942",
+    "Aviator Bar & Lounge",
+    "Ochota",
+    "Włochy",
+    "Komitetu Obrony Robotników 24",
+    52.17819,
+    20.98299
+  ],
+  [
+    "osm-node-8567986993",
+    "Panorama Sky Bar",
+    "Żoliborz",
+    "Śródmieście",
+    "Aleje Jerozolimskie 65/79",
+    52.22775,
+    21.00488
+  ],
+  [
+    "osm-node-9858657819",
+    "Connect",
+    "Śródmieście",
+    "Wola",
+    "Chmielna 98",
+    52.22923,
+    20.99982
+  ],
+  [
+    "osm-node-9862659410",
+    "nGin",
+    "Ochota",
+    "Włochy",
+    "Warszawa",
+    52.17255,
+    20.97335
+  ],
+  [
+    "osm-node-10103180403",
+    "Botanic Bar",
+    "Bemowo",
+    "Wola",
+    "Warszawa",
+    52.24093,
+    20.93317
+  ],
+  [
+    "osm-node-10311427306",
+    "Lobby Bar",
+    "Żoliborz",
+    "Śródmieście",
+    "Aleje Jerozolimskie 67/69",
+    52.22793,
+    21.00496
+  ],
+  [
+    "osm-node-10998218192",
+    "Qufel Beer Park",
+    "Bemowo",
+    "Wola",
+    "Warszawa",
+    52.24159,
+    20.93354
+  ],
+  [
+    "osm-node-11019898108",
+    "Bar việt thái",
+    "Bielany",
+    "Białołęka",
+    "Warszawa",
+    52.31376,
+    20.95689
+  ],
+  [
+    "osm-node-11033970864",
+    "Strefa Kibica",
+    "Praga Północ",
+    "Praga-Południe",
+    "Warszawa",
+    52.23853,
+    21.04682
+  ],
+  [
+    "osm-node-11035383256",
+    "Mono Kitchen",
+    "Ochota",
+    "Włochy",
+    "Warszawa",
+    52.18913,
+    20.96236
+  ],
+  [
+    "osm-node-11043802505",
+    "Ellada Souvlaki Bar",
+    "Targówek",
+    "Białołęka",
+    "Warszawa",
+    52.31706,
+    21.05942
+  ],
+  [
+    "osm-node-11052560527",
+    "Hanoi",
+    "Ochota",
+    "Włochy",
+    "Warszawa",
+    52.19231,
+    20.9621
+  ],
+  [
+    "osm-node-11061363272",
+    "Alibi",
+    "Rembertów",
+    "Wawer",
+    "Warszawa",
+    52.22577,
+    21.15264
+  ],
+  [
+    "osm-node-11068725463",
+    "Kalima",
+    "Praga Północ",
+    "Śródmieście",
+    "Warszawa",
+    52.2404,
+    21.03297
+  ],
+  [
+    "osm-node-11434349304",
+    "Lokal +48",
+    "Ochota",
+    "Włochy",
+    "Żwirki i Wigury 1",
+    52.1739,
+    20.96876
+  ],
+  [
+    "osm-node-12026827517",
+    "Kegs",
+    "Włochy",
+    "Wola",
+    "Warszawa",
+    52.22148,
+    20.92955
+  ],
+  [
+    "osm-node-12160542258",
+    "Wynurzenie",
+    "Praga Północ",
+    "Śródmieście",
+    "Warszawa",
+    52.24241,
+    21.02984
+  ],
+  [
+    "osm-node-12422530094",
+    "Warshishawa",
+    "Wola",
+    "Śródmieście",
+    "Grzybowska 2",
+    52.23791,
+    21.00266
+  ],
+  [
+    "osm-node-12520371361",
+    "Erewań",
+    "Praga Północ",
+    "Praga-Południe",
+    "Warszawa",
+    52.23532,
+    21.04569
+  ],
+  [
+    "osm-node-12888500997",
+    "Messa",
+    "Praga Północ",
+    "Śródmieście",
+    "Warszawa",
+    52.24372,
+    21.0267
+  ],
+  [
+    "osm-node-13135172938",
+    "HighGarden Rooftop Lounge",
+    "Śródmieście",
+    "Wola",
+    "Warszawa",
+    52.2288,
+    21.00018
+  ],
+  [
+    "osm-node-13931718959",
+    "Schodki",
+    "Praga Północ",
+    "Śródmieście",
+    "Warszawa",
+    52.23655,
+    21.03748
+  ],
+  [
+    "osm-node-14048312362",
+    "Rob & Jerry",
+    "Ochota",
+    "Włochy",
+    "Warszawa",
+    52.17093,
+    20.97152
+  ],
+  [
+    "osm-way-865418148",
+    "Dworzec Wodny",
+    "Praga Północ",
+    "Śródmieście",
+    "Warszawa",
+    52.24015,
+    21.0333
+  ],
+  [
+    "osm-node-5777672936",
+    "Na Cyplu",
+    "Praga Południe",
+    "Śródmieście",
+    "Generała Mariusza Zaruskiego 12",
+    52.22557,
+    21.0456
+  ],
+  [
+    "pub-lolek",
+    "Pub Lolek (Pole Mokotowskie)",
+    "Mokotów",
+    "Ochota",
+    "Rokitnicka 20 (Pole Mokotowskie)",
+    52.21142,
+    20.99815
+  ],
+  [
+    "osm-node-457296879",
+    "Bierhalle",
+    "Żoliborz",
+    "Śródmieście",
+    "Warszawa",
+    52.25595,
+    20.98448
+  ],
+  [
+    "osm-node-9983858837",
+    "Krym",
+    "Mokotów",
+    "Śródmieście",
+    "Belwederska 44",
+    52.20951,
+    21.02895
+  ],
+  [
+    "osm-node-8848582896",
+    "Cześć",
+    "Wola",
+    "Śródmieście",
+    "Grzybowska 2",
+    52.23759,
+    21.00274
+  ],
+  [
+    "osm-node-10103149471",
+    "Tap Bar",
+    "Bemowo",
+    "Wola",
+    "Warszawa",
+    52.24102,
+    20.93313
+  ],
+  [
+    "osm-way-160342684",
+    "Gniazdo Piratów",
+    "Żoliborz",
+    "Bielany",
+    "Ogólna 5",
+    52.27113,
+    20.96241
+  ]
+]
