@@ -7171,42 +7171,99 @@
   function initCommunityModal() {
     const modal = document.getElementById("community-modal");
     const btnClose = document.getElementById("btn-close-community");
-    const tabSearch = document.getElementById("tab-comm-search");
-    const tabFollowing = document.getElementById("tab-comm-following");
+
+    // 4 Modern Tabs
+    const tabFriends = document.getElementById("tab-comm-friends") || document.getElementById("tab-comm-search");
+    const tabMap = document.getElementById("tab-comm-map");
+    const tabFeed = document.getElementById("tab-comm-feed");
     const tabNotifications = document.getElementById("tab-comm-notifications");
-    const paneSearch = document.getElementById("pane-comm-search");
-    const paneFollowing = document.getElementById("pane-comm-following");
+
+    // 4 Modern Panes
+    const paneFriends = document.getElementById("pane-comm-friends") || document.getElementById("pane-comm-search");
+    const paneMap = document.getElementById("pane-comm-map");
+    const paneFeed = document.getElementById("pane-comm-feed");
     const paneNotifications = document.getElementById("pane-comm-notifications");
+
+    // Controls
     const searchInput = document.getElementById("input-search-friends");
     const btnRunSearch = document.getElementById("btn-run-search-friends");
     const searchResults = document.getElementById("comm-search-results");
     const followingList = document.getElementById("comm-following-list");
+    const recommendedList = document.getElementById("comm-recommended-list");
     const notifList = document.getElementById("comm-notifications-list");
+    const feedGrid = document.getElementById("comm-feed-grid");
+    const feedFileInput = document.getElementById("feed-photo-file-input");
+    const btnAddPhoto = document.getElementById("btn-add-feed-photo");
+    const btnCheckinDirect = document.getElementById("btn-open-checkin-direct");
+
+    // QR Share & Referral Elements
+    const qrModal = document.getElementById("qr-share-modal");
+    const qrCloseBtn = document.getElementById("btn-close-qr-modal");
+    const qrImage = document.getElementById("qr-code-image");
+    const qrHandle = document.getElementById("qr-code-handle");
+    const btnCopyQrLink = document.getElementById("btn-copy-qr-link");
+    const btnShowQr = document.getElementById("btn-show-qr-code");
+    const btnCopyInviteLink = document.getElementById("btn-copy-invite-link");
+    const btnCopyRefLink = document.getElementById("btn-copy-ref-link");
+    const inputRefLink = document.getElementById("input-referral-link");
+
+    // State
+    let currentCommunityTab = "friends";
+    let friendsMapInstance = null;
+    let friendsMarkersLayer = null;
+
+    function getInviteUrl() {
+      const myHandle = (currentUser && currentUser.user_metadata && currentUser.user_metadata.username)
+        || (currentUser ? currentUser.id.slice(0, 8) : "ekipa");
+      return `https://poilepiwko.pl/?ref=${encodeURIComponent(myHandle)}`;
+    }
 
     function switchTab(tab) {
-      [tabSearch, tabFollowing, tabNotifications].forEach(t => t && t.classList.remove("active"));
-      [paneSearch, paneFollowing, paneNotifications].forEach(p => p && (p.style.display = "none"));
+      currentCommunityTab = tab;
+      const allTabs = [tabFriends, tabMap, tabFeed, tabNotifications];
+      const allPanes = [paneFriends, paneMap, paneFeed, paneNotifications];
 
-      if (tab === "following") {
-        if (tabFollowing) tabFollowing.classList.add("active");
-        if (paneFollowing) paneFollowing.style.display = "block";
-        loadFollowingList();
+      allTabs.forEach(t => t && t.classList.remove("active"));
+      allPanes.forEach(p => p && (p.style.display = "none"));
+
+      if (tab === "map") {
+        if (tabMap) tabMap.classList.add("active");
+        if (paneMap) paneMap.style.display = "block";
+        setTimeout(() => { initFriendsMap(); }, 80);
+      } else if (tab === "feed") {
+        if (tabFeed) tabFeed.classList.add("active");
+        if (paneFeed) paneFeed.style.display = "block";
+        loadLiveBarFeed();
       } else if (tab === "notifications") {
         if (tabNotifications) tabNotifications.classList.add("active");
         if (paneNotifications) paneNotifications.style.display = "block";
         renderNotificationsList();
         markNotificationsAsRead();
         requestBrowserNotificationPermission();
+        if (inputRefLink) inputRefLink.value = getInviteUrl();
       } else {
-        // default "search" — DO NOT auto-focus to prevent virtual keyboard from unexpectedly popping up on mobile
-        if (tabSearch) tabSearch.classList.add("active");
-        if (paneSearch) paneSearch.style.display = "block";
+        // default "friends"
+        if (tabFriends) tabFriends.classList.add("active");
+        if (paneFriends) paneFriends.style.display = "block";
+        loadFollowingList();
+        loadRecommendedFriends();
       }
     }
 
-    if (tabSearch) tabSearch.addEventListener("click", () => switchTab("search"));
-    if (tabFollowing) tabFollowing.addEventListener("click", () => switchTab("following"));
+    if (tabFriends) tabFriends.addEventListener("click", () => switchTab("friends"));
+    if (tabMap) tabMap.addEventListener("click", () => switchTab("map"));
+    if (tabFeed) tabFeed.addEventListener("click", () => switchTab("feed"));
     if (tabNotifications) tabNotifications.addEventListener("click", () => switchTab("notifications"));
+
+    // Legacy aliases
+    const tabSearchLegacy = document.getElementById("tab-comm-search");
+    if (tabSearchLegacy && tabSearchLegacy !== tabFriends) {
+      tabSearchLegacy.addEventListener("click", () => switchTab("friends"));
+    }
+    const tabFollowingLegacy = document.getElementById("tab-comm-following");
+    if (tabFollowingLegacy) {
+      tabFollowingLegacy.addEventListener("click", () => switchTab("friends"));
+    }
 
     window.__openCommunity = function (initialTab) {
       if (modal) {
@@ -7217,15 +7274,10 @@
       if (commFollowingBadge) commFollowingBadge.textContent = myFollowingIds.length;
       updateNotificationBadges();
 
-      // If specific tab passed, use it. Otherwise:
-      // 1. Unread notifications -> notifications
-      // 2. Already following friends -> following tab (to see your friends)
-      // 3. Otherwise -> search tab
       const defaultTab = (typeof unreadNotificationsCount === "number" && unreadNotificationsCount > 0)
         ? "notifications"
-        : (Array.isArray(myFollowingIds) && myFollowingIds.length > 0 ? "following" : "search");
-      const targetTab = initialTab || defaultTab;
-      switchTab(targetTab);
+        : (initialTab || "friends");
+      switchTab(defaultTab);
     };
 
     window.__closeCommunity = function () {
@@ -7243,12 +7295,72 @@
       });
     }
 
-    // Search Friends strictly by Nick / Username
+    // -------------------------------------------------------------------------
+    // QR Code & Referral Link Sharing
+    // -------------------------------------------------------------------------
+    function copyTextToClipboard(text, successMsg) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          showAppToast("Skopiowano link!", successMsg || "Wklej link znajomym na Messengerze lub WhatsAppie 🍻", "🔗");
+        }).catch(() => {
+          prompt("Skopiuj link poniżej:", text);
+        });
+      } else {
+        prompt("Skopiuj link poniżej:", text);
+      }
+    }
+
+    if (btnCopyInviteLink) {
+      btnCopyInviteLink.addEventListener("click", () => {
+        copyTextToClipboard(getInviteUrl(), "Zaproś znajomych do ekipy i zdobywajcie Kapsle!");
+      });
+    }
+
+    if (btnCopyRefLink) {
+      btnCopyRefLink.addEventListener("click", () => {
+        copyTextToClipboard(getInviteUrl(), "Za każdego znajomego zyskasz +50 Kapsli!");
+      });
+    }
+
+    if (btnShowQr) {
+      btnShowQr.addEventListener("click", () => {
+        const url = getInviteUrl();
+        const myHandle = (currentUser && currentUser.user_metadata && currentUser.user_metadata.username) || "piwosz";
+        if (qrImage) {
+          qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(url)}`;
+        }
+        if (qrHandle) qrHandle.textContent = `@${myHandle}`;
+        if (qrModal) qrModal.style.display = "flex";
+      });
+    }
+
+    if (qrCloseBtn && qrModal) {
+      qrCloseBtn.addEventListener("click", () => { qrModal.style.display = "none"; });
+      qrModal.addEventListener("click", (e) => {
+        if (e.target === qrModal) qrModal.style.display = "none";
+      });
+    }
+
+    if (btnCopyQrLink) {
+      btnCopyQrLink.addEventListener("click", () => {
+        copyTextToClipboard(getInviteUrl(), "Link z kodem QR skopiowany!");
+      });
+    }
+
+    // -------------------------------------------------------------------------
+    // Tab 1: Search Friends strictly by Nick / Username
+    // -------------------------------------------------------------------------
     async function searchFriends() {
       const rawQ = searchInput ? searchInput.value.trim() : "";
       const q = rawQ.replace(/^@/, "").trim();
-      if (!q) return;
-      if (searchResults) searchResults.innerHTML = `<div class="loading-state-hint">Szukanie nicku @${escapeHtml(q)}... 🔍</div>`;
+      if (!q) {
+        if (searchResults) searchResults.style.display = "none";
+        return;
+      }
+      if (searchResults) {
+        searchResults.style.display = "flex";
+        searchResults.innerHTML = `<div class="loading-state-hint">Szukanie nicku @${escapeHtml(q)}... 🔍</div>`;
+      }
 
       try {
         const res = await fetch("/api/auth", {
@@ -7309,6 +7421,11 @@
           searchFriends();
         }
       });
+      searchInput.addEventListener("input", () => {
+        if (!searchInput.value.trim() && searchResults) {
+          searchResults.style.display = "none";
+        }
+      });
     }
 
     // Load Following List
@@ -7330,7 +7447,7 @@
           <div class="empty-state-card">
             <div class="empty-icon">👥</div>
             <div class="empty-title">Nie obserwujesz jeszcze nikogo</div>
-            <p class="empty-sub">Przejdź do zakładki „Szukaj znajomych”, aby znaleźć swoich piwnych kompanów!</p>
+            <p class="empty-sub">Wyszukaj znajomego powyżej, zaobserwuj polecanych poniżej lub zaproś ekipę!</p>
           </div>
         `;
         return;
@@ -7355,13 +7472,12 @@
         }
 
         const users = data.users || [];
-
         if (users.length === 0) {
           followingList.innerHTML = `
             <div class="empty-state-card">
               <div class="empty-icon">👥</div>
-              <div class="empty-title">Nie obserwujesz jeszcze nikogo</div>
-              <p class="empty-sub">Przejdź do zakładki „Szukaj znajomych”, aby znaleźć swoich piwnych kompanów!</p>
+              <div class="empty-title">Brak obserwowanych</div>
+              <p class="empty-sub">Dodaj piwoszy z listy poniżej!</p>
             </div>
           `;
           return;
@@ -7394,7 +7510,439 @@
       }
     }
 
-    // Render Notifications & Activity
+    // Load Recommended Friends (Popularni teraz w Warszawie)
+    async function loadRecommendedFriends() {
+      if (!recommendedList) return;
+      recommendedList.innerHTML = `<div class="loading-state-hint" style="padding:10px;">Szukanie aktywnych piwoszy... 🍻</div>`;
+
+      try {
+        const res = await fetch("/api/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "get-recommended-users",
+            payload: { userId: currentUser ? currentUser.id : null }
+          })
+        });
+        const data = await res.json();
+        const users = data.users || [];
+
+        if (users.length === 0) {
+          recommendedList.innerHTML = `<div class="empty-state-hint" style="padding:12px;">Wszyscy aktywni piwosze są już w Twojej ekipie! 👑</div>`;
+          return;
+        }
+
+        recommendedList.innerHTML = users.slice(0, 6).map(u => {
+          const avatarHtml = u.avatar_photo
+            ? `<img src="${escapeHtml(u.avatar_photo)}" alt="Avatar" />`
+            : escapeHtml(u.avatar_icon || "🍺");
+          const isFollowing = myFollowingIds.includes(u.id);
+
+          return `
+            <div class="recommended-user-card">
+              <div class="rec-user-left" onclick="window.__openUserProfile('${escapeHtml(u.username)}')">
+                <div class="rec-user-avatar">${avatarHtml}</div>
+                <div class="rec-user-info">
+                  <div class="rec-user-name">${escapeHtml(u.display_name || u.username)}</div>
+                  <div class="rec-user-meta">
+                    <span>@${escapeHtml(u.username)}</span>
+                    <span class="rec-user-badge">${escapeHtml(u.popular_badge || "🔥 Aktywny")}</span>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <button type="button" class="btn-follow-toggle ${isFollowing ? "following" : ""}" data-user-id="${u.id}" onclick="window.__toggleFollowUser('${u.id}', this)" style="padding: 6px 12px; font-size: 0.76rem;">
+                  ${isFollowing ? "✓ W ekipie" : "➕ Obserwuj"}
+                </button>
+              </div>
+            </div>
+          `;
+        }).join("");
+      } catch (e) {
+        recommendedList.innerHTML = `<div class="empty-state-hint">Nie udało się załadować polecanych.</div>`;
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // Tab 2: 24h Live Friends Map ("Puls Warszawy")
+    // -------------------------------------------------------------------------
+    async function initFriendsMap() {
+      const container = document.getElementById("friends-map-container");
+      if (!container || typeof L === "undefined") return;
+
+      if (!friendsMapInstance) {
+        friendsMapInstance = L.map("friends-map-container", {
+          zoomControl: false,
+          attributionControl: false
+        }).setView([52.232, 21.018], 13);
+
+        L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
+          maxZoom: 19
+        }).addTo(friendsMapInstance);
+
+        friendsMarkersLayer = L.layerGroup().addTo(friendsMapInstance);
+      }
+
+      friendsMapInstance.invalidateSize();
+
+      const statusSummary = document.getElementById("friends-map-summary");
+      const hotspotsList = document.getElementById("hotspots-quick-list");
+
+      try {
+        const res = await fetch("/api/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "get-friends-map-checkins",
+            payload: { userId: currentUser ? currentUser.id : null }
+          })
+        });
+
+        const data = await res.json();
+        if (friendsMarkersLayer) friendsMarkersLayer.clearLayers();
+
+        const activeFriends = data.activeFriends || [];
+        const hotspots = data.hotspots || [];
+
+        // 1. Add active friends markers
+        activeFriends.forEach(f => {
+          if (!f.latitude || !f.longitude) return;
+          const friendIcon = L.divIcon({
+            className: "friend-live-pin",
+            html: `
+              <div style="width:38px;height:38px;border-radius:50%;background:#ff5722;border:2.5px solid #ffffff;box-shadow:0 0 12px rgba(255,87,34,0.8);display:flex;align-items:center;justify-content:center;font-size:18px;overflow:hidden;cursor:pointer;">
+                ${f.avatar_photo ? `<img src="${escapeHtml(f.avatar_photo)}" style="width:100%;height:100%;object-fit:cover;" />` : (f.avatar_icon || "🍺")}
+              </div>
+            `,
+            iconSize: [38, 38],
+            iconAnchor: [19, 19]
+          });
+
+          const timeAgo = formatTimeAgo(f.timestamp);
+          const popupContent = `
+            <div style="font-family:sans-serif;min-width:160px;">
+              <strong style="color:#ff5722;font-size:13px;">${escapeHtml(f.display_name)}</strong>
+              <div style="font-size:11px;color:#64748b;">@${escapeHtml(f.username)} • ${timeAgo}</div>
+              <div style="margin-top:6px;font-size:12px;font-weight:700;">📍 ${escapeHtml(f.venue_name || "Lokal")}</div>
+              ${f.beer_name ? `<div style="font-size:11px;color:#10b981;font-weight:700;">🍺 ${escapeHtml(f.beer_name)} (${f.beer_price || 12} zł)</div>` : ""}
+            </div>
+          `;
+
+          const m = L.marker([f.latitude, f.longitude], { icon: friendIcon }).bindPopup(popupContent);
+          friendsMarkersLayer.addLayer(m);
+        });
+
+        // 2. Add Warsaw party hotspots
+        hotspots.forEach(h => {
+          const hotspotIcon = L.divIcon({
+            className: "hotspot-live-pin",
+            html: `
+              <div style="background:linear-gradient(135deg, #ef4444, #ea580c);color:#ffffff;font-size:11px;font-weight:900;padding:4px 9px;border-radius:999px;border:2px solid #ffffff;box-shadow:0 3px 12px rgba(239,68,68,0.7);display:inline-flex;align-items:center;gap:3px;cursor:pointer;white-space:nowrap;">
+                🔥 ${h.count}
+              </div>
+            `,
+            iconSize: [44, 24],
+            iconAnchor: [22, 12]
+          });
+
+          const popupContent = `
+            <div style="font-family:sans-serif;min-width:180px;">
+              <div style="font-size:11px;font-weight:800;color:#ea580c;text-transform:uppercase;">🔥 GORĄCY REJON</div>
+              <strong style="font-size:13px;display:block;margin:2px 0;">${escapeHtml(h.name)}</strong>
+              <div style="font-size:11px;color:#64748b;line-height:1.3;">${escapeHtml(h.vibe)}</div>
+              <div style="margin-top:6px;font-size:11px;font-weight:700;color:#ef4444;">~${h.count} piwoszy w ciągu 24h</div>
+            </div>
+          `;
+
+          const hm = L.marker(h.coords, { icon: hotspotIcon }).bindPopup(popupContent);
+          friendsMarkersLayer.addLayer(hm);
+        });
+
+        // Update status summary text
+        if (statusSummary) {
+          if (activeFriends.length > 0) {
+            statusSummary.innerHTML = `<strong>${activeFriends.length} znajomych</strong> z Twojej ekipy pije w Warszawie • ${hotspots.length} gorących stref`;
+          } else {
+            statusSummary.innerHTML = `Twoi znajomi jeszcze nie zrobili check-inu w 24h • <strong>${hotspots.length} stref</strong> tętni życiem w Warszawie!`;
+          }
+        }
+
+        // Render Hotspots Cards
+        if (hotspotsList) {
+          hotspotsList.innerHTML = hotspots.map(h => `
+            <div class="hotspot-chip-card" onclick="window.__flyToHotspot(${h.coords[0]}, ${h.coords[1]})">
+              <div class="hotspot-card-top">
+                <span class="hotspot-name">${escapeHtml(h.name)}</span>
+                <span class="hotspot-count-pill">🔥 ${h.count}</span>
+              </div>
+              <div class="hotspot-vibe">${escapeHtml(h.vibe)}</div>
+            </div>
+          `).join("");
+        }
+      } catch (err) {
+        console.warn("Friends map load error:", err);
+      }
+    }
+
+    window.__flyToHotspot = function (lat, lng) {
+      if (friendsMapInstance) {
+        friendsMapInstance.flyTo([lat, lng], 15, { duration: 1.2 });
+      }
+    };
+
+    // Direct check-in button
+    if (btnCheckinDirect) {
+      btnCheckinDirect.addEventListener("click", () => {
+        if (!currentUser) {
+          showAppToast("Zaloguj się!", "Zaloguj się, aby zeldować się w lokalu i zdobyć Kapsle 🍻", "🔒");
+          const authModal = document.getElementById("auth-modal");
+          if (authModal) authModal.style.display = "flex";
+          return;
+        }
+
+        // Find nearest venue or open report/checkin prompt
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              const lat = pos.coords.latitude;
+              const lng = pos.coords.longitude;
+              let nearest = null;
+              let minDist = Infinity;
+              (allVenues || []).forEach(v => {
+                if (!v.latitude || !v.longitude) return;
+                const d = Math.hypot(v.latitude - lat, v.longitude - lng);
+                if (d < minDist) {
+                  minDist = d;
+                  nearest = v;
+                }
+              });
+
+              if (nearest && minDist < 0.03) { // ~3km
+                fetch("/api/auth", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    action: "record-checkin",
+                    payload: {
+                      userId: currentUser.id,
+                      venueId: nearest.id,
+                      venueName: nearest.name,
+                      district: nearest.district,
+                      beerName: nearest.beer_name,
+                      beerPrice: nearest.beer_price_pln,
+                      latitude: nearest.latitude,
+                      longitude: nearest.longitude
+                    }
+                  })
+                }).then(() => {
+                  showAppToast("Zameldowno!", `Jesteś w: ${nearest.name}. Zgarniasz +10 Kapsli! 🍻`, "📍");
+                  initFriendsMap();
+                });
+              } else {
+                showAppToast("Wybierz lokal na mapie", "Kliknij dowolny lokal na mapie i wciśnij „Odwiedź”, aby się zeldować.", "📍");
+                window.__closeCommunity();
+              }
+            },
+            () => {
+              showAppToast("Wybierz lokal na mapie", "Kliknij dowolny lokal na mapie i wciśnij „Odwiedź”, aby się zeldować.", "📍");
+              window.__closeCommunity();
+            },
+            { timeout: 6000 }
+          );
+        } else {
+          showAppToast("Wybierz lokal na mapie", "Kliknij dowolny lokal na mapie i wciśnij „Odwiedź”, aby się zeldować.", "📍");
+          window.__closeCommunity();
+        }
+      });
+    }
+
+    // -------------------------------------------------------------------------
+    // Tab 3: BeReal-Style Live Bar Feed (Dual photo grid & cheers 🍻)
+    // -------------------------------------------------------------------------
+    async function loadLiveBarFeed() {
+      if (!feedGrid) return;
+      feedGrid.innerHTML = `<div class="loading-state-hint" style="grid-column: 1 / -1; padding: 24px;">Ładowanie najświeższych fotek z warszawskich barów... 📸</div>`;
+
+      try {
+        const res = await fetch("/api/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "get-live-feed" })
+        });
+        const data = await res.json();
+        const feed = data.feed || [];
+
+        if (feed.length === 0) {
+          feedGrid.innerHTML = `
+            <div class="empty-state-card" style="grid-column: 1 / -1;">
+              <div class="empty-icon">📸</div>
+              <div class="empty-title">Brak fotek z ostatnich 24h</div>
+              <p class="empty-sub">Bądź pierwszy! Kliknij „Dodaj fotkę”, uwiecznij kufel i zgarnij +15 Kapsli!</p>
+            </div>
+          `;
+          return;
+        }
+
+        feedGrid.innerHTML = feed.map(item => {
+          const timeAgo = formatTimeAgo(item.created_at);
+          const avatarContent = item.avatar_photo
+            ? `<img src="${escapeHtml(item.avatar_photo)}" alt="Avatar" />`
+            : escapeHtml(item.avatar_icon || "🍺");
+
+          return `
+            <div class="beer-bereal-card">
+              <div class="bereal-img-box">
+                <img src="${escapeHtml(item.photo_url)}" alt="Piwo w ${escapeHtml(item.venue_name)}" loading="lazy" />
+                <div class="bereal-pip-avatar" title="${escapeHtml(item.author_name)}">${avatarContent}</div>
+                ${item.beer_price ? `<div class="bereal-price-tag">${escapeHtml(String(item.beer_price))} zł</div>` : ""}
+              </div>
+              <div class="bereal-info-box">
+                <div class="bereal-venue-title" onclick="window.__openVenueById('${escapeHtml(item.venue_id)}')">
+                  📍 ${escapeHtml(item.venue_name)}
+                </div>
+                <div class="bereal-beer-sub">
+                  ${escapeHtml(item.beer_name || "Piwko")} • ${escapeHtml(item.district || "Warszawa")}
+                </div>
+                <div class="bereal-cheers-row">
+                  <button type="button" class="btn-cheers" onclick="window.__cheersFeedItem('${escapeHtml(item.id)}', this)">
+                    🍻 <span>${item.cheers_count || 1}</span>
+                  </button>
+                  <span class="bereal-time">${timeAgo}</span>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join("");
+      } catch (err) {
+        feedGrid.innerHTML = `<div class="error-state-hint" style="grid-column: 1 / -1;">Nie udało się pobrać Live Feedu.</div>`;
+      }
+    }
+
+    // Cheers Reaction
+    window.__cheersFeedItem = async function (reportId, btn) {
+      if (!btn) return;
+      if (btn.classList.contains("cheered")) return;
+
+      const countSpan = btn.querySelector("span");
+      const curCount = parseInt(countSpan ? countSpan.textContent : "1", 10) || 1;
+      if (countSpan) countSpan.textContent = curCount + 1;
+      btn.classList.add("cheered");
+
+      try {
+        await fetch("/api/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "react-cheers",
+            payload: { reportId }
+          })
+        });
+        showAppToast("Na zdrówko! 🍻", "Stuknięto się kuflem z piwoszem!", "🍻");
+      } catch (e) {
+        console.warn("Cheers reaction err:", e);
+      }
+    };
+
+    // Client-side compressed image upload for bar photo
+    if (btnAddPhoto && feedFileInput) {
+      btnAddPhoto.addEventListener("click", () => {
+        if (!currentUser) {
+          showAppToast("Zaloguj się!", "Musisz być zalogowany, aby dodać fotkę i otrzymać +15 Kapsli 📸", "🔒");
+          const authModal = document.getElementById("auth-modal");
+          if (authModal) authModal.style.display = "flex";
+          return;
+        }
+        feedFileInput.click();
+      });
+
+      feedFileInput.addEventListener("change", async (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+
+        showAppToast("Przetwarzanie zdjęcia...", "Optymalizujemy i przesyłamy fotkę z baru 📸", "⏳");
+
+        try {
+          // Compress via Canvas to max 1000px WebP
+          const img = new Image();
+          const reader = new FileReader();
+
+          reader.onload = function (readerEvent) {
+            img.onload = async function () {
+              const canvas = document.createElement("canvas");
+              const maxDim = 1000;
+              let width = img.width;
+              let height = img.height;
+
+              if (width > height && width > maxDim) {
+                height = Math.round((height * maxDim) / width);
+                width = maxDim;
+              } else if (height > maxDim) {
+                width = Math.round((width * maxDim) / height);
+                height = maxDim;
+              }
+
+              canvas.width = width;
+              canvas.height = height;
+              const ctx = canvas.getContext("2d");
+              ctx.drawImage(img, 0, 0, width, height);
+
+              const compressedBase64 = canvas.toDataURL("image/webp", 0.82);
+
+              // Upload to /api/upload
+              let photoUrl = compressedBase64;
+              try {
+                const upRes = await fetch("/api/upload", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    imageBase64: compressedBase64,
+                    contentType: "image/webp",
+                    fileName: `bar-feed-${Date.now()}`
+                  })
+                });
+                if (upRes.ok) {
+                  const upData = await upRes.json();
+                  if (upData.url) photoUrl = upData.url;
+                }
+              } catch (upErr) {
+                console.warn("Upload fallback to base64:", upErr);
+              }
+
+              // Post check-in with photo
+              await fetch("/api/auth", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  action: "record-checkin",
+                  payload: {
+                    userId: currentUser.id,
+                    venueId: "warszawa-live",
+                    venueName: "Bar w Warszawie",
+                    district: "Warszawa",
+                    beerName: "Świeże Piwko",
+                    beerPrice: 14.0,
+                    photoUrl: photoUrl
+                  }
+                })
+              });
+
+              showAppToast("Fotka opublikowana!", "Dodano do Live Feedu! Zgarniasz +15 Kapsli 👑", "🎉");
+              loadLiveBarFeed();
+            };
+            img.src = readerEvent.target.result;
+          };
+          reader.readAsDataURL(file);
+        } catch (err) {
+          showAppToast("Błąd wysyłania", "Spróbuj ponownie za chwilę.", "⚠️");
+        } finally {
+          feedFileInput.value = "";
+        }
+      });
+    }
+
+    // -------------------------------------------------------------------------
+    // Tab 4: Render Notifications & Activity
+    // -------------------------------------------------------------------------
     function renderNotificationsList() {
       if (!notifList) return;
       if (!currentUser) {

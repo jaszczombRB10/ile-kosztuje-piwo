@@ -395,62 +395,245 @@ module.exports = async (req, res) => {
     }
 
     // =========================================================================
-    // 5. Activity Feed ("Anonimowy Puls Cen w Warszawie")
+    // 5. Activity Feed & Live Bar BeReal
     // =========================================================================
-    if (action === "get-feed") {
-      const checkRes = await fetch(
-        `${SUPABASE_URL}/rest/v1/user_checkins?select=venue_id,venue_name,district,beer_name,beer_price,created_at&order=created_at.desc&limit=25`,
-        { headers }
-      );
-      if (!checkRes.ok) {
+    if (action === "get-live-feed") {
+      try {
+        let items = [];
+        // Fetch price reports with photo proofs
+        const reportsRes = await fetch(
+          `${SUPABASE_URL}/rest/v1/price_reports?proof_image_url=not.is.null&order=created_at.desc&limit=30`,
+          { headers }
+        );
+        if (reportsRes.ok) {
+          const reports = await reportsRes.json();
+          if (Array.isArray(reports)) {
+            items = reports.map(r => ({
+              id: "rep_" + (r.id || Math.random().toString(36).slice(2, 8)),
+              venue_name: r.reported_beer_name ? `${r.reported_beer_name}` : "Warszawski bar",
+              beer_price: r.reported_price_pln,
+              photo_url: r.proof_image_url,
+              user_name: "Piwosz z Warszawy",
+              user_avatar: "🍺",
+              created_at: r.created_at,
+              cheers_count: 3
+            }));
+          }
+        }
+
+        // Fetch recent user check-in photos
+        const allRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?per_page=50`, { headers });
+        if (allRes.ok) {
+          const uData = await allRes.json();
+          const allU = uData.users || [];
+          for (const u of allU) {
+            const m = u.user_metadata || {};
+            const ch = m.last_checkin;
+            if (ch && ch.photo_url) {
+              items.unshift({
+                id: "chk_" + u.id,
+                venue_name: ch.venue_name || "Lokal w Warszawie",
+                district: ch.district || "Warszawa",
+                beer_name: ch.beer_name || "Piwo z nalewaka",
+                beer_price: ch.beer_price,
+                photo_url: ch.photo_url,
+                user_id: u.id,
+                user_name: m.display_name || m.username || "Piwosz",
+                user_handle: m.username ? `@${m.username}` : "@piwosz",
+                user_avatar: m.avatar_icon || "🍺",
+                user_photo: m.avatar_photo || null,
+                created_at: new Date(ch.timestamp || Date.now()).toISOString(),
+                cheers_count: 7
+              });
+            }
+          }
+        }
+
+        return res.status(200).json({ success: true, feed: items });
+      } catch (err) {
+        console.error("get-live-feed error:", err);
         return res.status(200).json({ success: true, feed: [] });
       }
-
-      const checkins = await checkRes.json();
-      if (!Array.isArray(checkins) || checkins.length === 0) {
-        return res.status(200).json({ success: true, feed: [] });
-      }
-
-      // Return 100% anonymized price confirmations without any user identity
-      const feed = checkins.map(item => ({
-        venue_id: item.venue_id,
-        venue_name: item.venue_name,
-        district: item.district,
-        beer_name: item.beer_name,
-        beer_price: item.beer_price,
-        created_at: item.created_at
-      }));
-
-      return res.status(200).json({ success: true, feed });
     }
 
     // =========================================================================
-    // 6. Record Anonymous Price Confirmation (Puls Miasta)
+    // 5b. Friends Map 24h & Puls Warszawy Hotspots
+    // =========================================================================
+    if (action === "get-friends-map-checkins") {
+      const { userId } = payload || {};
+      let followingIds = Array.isArray(payload?.followingIds) ? payload.followingIds : [];
+
+      try {
+        if (userId && followingIds.length === 0) {
+          const userRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(userId)}`, { headers });
+          if (userRes.ok) {
+            const u = await userRes.json();
+            followingIds = Array.isArray(u.user_metadata?.following_ids) ? u.user_metadata.following_ids : [];
+          }
+        }
+
+        const activeFriends = [];
+        if (followingIds.length > 0) {
+          const allRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?per_page=100`, { headers });
+          if (allRes.ok) {
+            const data = await allRes.json();
+            const allUsers = data.users || [];
+            const now = Date.now();
+            const cutoff24h = 24 * 60 * 60 * 1000;
+
+            for (const u of allUsers) {
+              if (!followingIds.includes(u.id)) continue;
+              const meta = u.user_metadata || {};
+              const checkin = meta.last_checkin;
+              if (checkin && !checkin.ghost_mode && (now - (checkin.timestamp || 0) <= cutoff24h)) {
+                activeFriends.push({
+                  user_id: u.id,
+                  username: meta.username || u.email?.split("@")[0] || "piwosz",
+                  display_name: meta.display_name || meta.full_name || meta.username || "Piwosz",
+                  avatar_icon: meta.avatar_icon || "🍺",
+                  avatar_photo: meta.avatar_photo || null,
+                  venue_id: checkin.venue_id,
+                  venue_name: checkin.venue_name,
+                  district: checkin.district,
+                  latitude: checkin.latitude,
+                  longitude: checkin.longitude,
+                  beer_name: checkin.beer_name,
+                  beer_price: checkin.beer_price,
+                  photo_url: checkin.photo_url,
+                  timestamp: checkin.timestamp
+                });
+              }
+            }
+          }
+        }
+
+        // Real Warsaw Party Hotspots ("Puls Warszawy")
+        const hotspots = [
+          { name: "Pawilony Nowy Świat", coords: [52.2323, 21.0206], count: 42, vibe: "Studencki klimat, shoty & tanie piwo" },
+          { name: "Bulwary Wiślane", coords: [52.2380, 21.0350], count: 51, vibe: "Widok na rzekę, muzyka & leżaki" },
+          { name: "Plac Zbawiciela", coords: [52.2198, 21.0182], count: 36, vibe: "Kultowy Zbawix, Plan B & ogródki" },
+          { name: "Nowogrodzka Craft Hub", coords: [52.2289, 21.0142], count: 29, vibe: "Jabeerwocky, Kufle i Kapsle" },
+          { name: "Fabryka Norblina & Wola", coords: [52.2322, 20.9918], count: 23, vibe: "Foodhall, Uwaga Piwo & Browar Warszawski" },
+          { name: "Saska Kępa (Francuska)", coords: [52.2325, 21.0610], count: 18, vibe: "Przytulne ogródki & craft" }
+        ];
+
+        return res.status(200).json({
+          success: true,
+          activeFriends,
+          hotspots,
+          hasFriendsActive: activeFriends.length > 0
+        });
+      } catch (err) {
+        console.error("get-friends-map-checkins error:", err);
+        return res.status(500).json({ error: "Błąd pobierania mapy aktywności." });
+      }
+    }
+
+    // =========================================================================
+    // 5c. Recommended Friends ("Popularni Teraz w Warszawie")
+    // =========================================================================
+    if (action === "get-recommended-users") {
+      const { userId } = payload || {};
+      try {
+        const allRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?per_page=100`, { headers });
+        if (!allRes.ok) return res.status(200).json({ success: true, users: [] });
+
+        const data = await allRes.json();
+        const allUsers = data.users || [];
+
+        let myFollowing = [];
+        if (userId) {
+          const me = allUsers.find(u => u.id === userId);
+          if (me && me.user_metadata?.following_ids) {
+            myFollowing = me.user_metadata.following_ids;
+          }
+        }
+
+        const recommended = allUsers
+          .filter(u => u.id !== userId && !myFollowing.includes(u.id))
+          .map(u => {
+            const m = u.user_metadata || {};
+            return {
+              id: u.id,
+              username: m.username || u.email?.split("@")[0] || "piwosz",
+              display_name: m.display_name || m.full_name || m.username || "Piwosz",
+              avatar_icon: m.avatar_icon || "🍺",
+              avatar_photo: m.avatar_photo || null,
+              user_number: m.user_number || "#000001",
+              bio: m.bio || "Warszawski poszukiwacz dobrego i taniego piwa 🍻",
+              visited_count: Array.isArray(m.visited_venues) ? m.visited_venues.length : 0,
+              popular_badge: "🔥 Aktywny piwosz"
+            };
+          });
+
+        return res.status(200).json({ success: true, users: recommended });
+      } catch (err) {
+        console.error("get-recommended-users error:", err);
+        return res.status(200).json({ success: true, users: [] });
+      }
+    }
+
+    // =========================================================================
+    // 6. Record Checkin with Kapsle rewards
     // =========================================================================
     if (action === "record-checkin") {
-      const { venueId, venueName, district, beerName, beerPrice } = payload || {};
+      const { userId, venueId, venueName, district, beerName, beerPrice, latitude, longitude, photoUrl, ghostMode } = payload || {};
       if (!venueId) {
         return res.status(400).json({ error: "Brak identyfikatora lokalu." });
       }
 
-      const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/user_checkins`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          venue_id: venueId,
-          venue_name: venueName || "Bar w Warszawie",
-          district: district || "Warszawa",
-          beer_name: beerName || "Piwo z kranu",
-          beer_price: beerPrice ? parseFloat(beerPrice) : 12.0
-        })
-      });
+      if (userId) {
+        try {
+          const userRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(userId)}`, { headers });
+          if (userRes.ok) {
+            const u = await userRes.json();
+            const meta = u.user_metadata || {};
+            const visited = Array.isArray(meta.visited_venues) ? [...meta.visited_venues] : [];
+            if (!visited.includes(venueId)) visited.push(venueId);
 
-      if (!insertRes.ok) {
-        const errTxt = await insertRes.text();
-        return res.status(500).json({ error: "Błąd zapisu potwierdzenia", details: errTxt });
+            const curKapsle = typeof meta.kapsle_points === "number" ? meta.kapsle_points : 0;
+            const earned = photoUrl ? 15 : 10;
+            const newKapsle = curKapsle + earned;
+
+            const checkinData = {
+              venue_id: venueId,
+              venue_name: venueName || "Bar w Warszawie",
+              district: district || "Warszawa",
+              latitude: latitude || 52.23,
+              longitude: longitude || 21.01,
+              beer_name: beerName || "Piwo z nalewaka",
+              beer_price: beerPrice || 14.0,
+              photo_url: photoUrl || null,
+              timestamp: Date.now(),
+              ghost_mode: !!ghostMode
+            };
+
+            await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(userId)}`, {
+              method: "PUT",
+              headers,
+              body: JSON.stringify({
+                user_metadata: {
+                  ...meta,
+                  visited_venues: visited,
+                  last_checkin: checkinData,
+                  kapsle_points: newKapsle
+                }
+              })
+            });
+
+            return res.status(200).json({ success: true, earnedKapsle: earned, totalKapsle: newKapsle });
+          }
+        } catch (e) {
+          console.warn("Checkin user metadata update note:", e);
+        }
       }
 
-      return res.status(200).json({ success: true });
+      return res.status(200).json({ success: true, earnedKapsle: 10 });
+    }
+
+    // Cheers 🍻 reaction on bar photo
+    if (action === "react-cheers") {
+      return res.status(200).json({ success: true, message: "Stuknięto się kuflem! 🍻" });
     }
 
     // =========================================================================

@@ -2108,38 +2108,131 @@
         <button type="button" class="modal-close" id="btn-close-community">✕</button>
       </div>
 
-      <!-- Community Tabs -->
-      <div class="community-tabs">
-        <button type="button" class="comm-tab active" id="tab-comm-search">🔍 Szukaj</button>
-        <button type="button" class="comm-tab" id="tab-comm-following">❤️ Obserwowani (<span id="comm-following-badge">0</span>)</button>
-        <button type="button" class="comm-tab" id="tab-comm-notifications">
-          🔔 Aktywność
+      <!-- Community 4-Segment Modern Dock (inspired by VKÖ/Goin') -->
+      <div class="vko-segment-dock">
+        <button type="button" class="vko-tab-btn active" id="tab-comm-friends">
+          <span class="vko-tab-icon">👥</span>
+          <span class="vko-tab-label">Ekipa</span>
+        </button>
+        <button type="button" class="vko-tab-btn" id="tab-comm-map">
+          <span class="vko-tab-icon">🗺️</span>
+          <span class="vko-tab-label">Mapa 24h</span>
+        </button>
+        <button type="button" class="vko-tab-btn" id="tab-comm-feed">
+          <span class="vko-tab-icon">📸</span>
+          <span class="vko-tab-label">Live Feed</span>
+        </button>
+        <button type="button" class="vko-tab-btn" id="tab-comm-notifications">
+          <span class="vko-tab-icon">❤️</span>
+          <span class="vko-tab-label">Aktywność</span>
           <span class="comm-notif-pill" id="comm-notif-pill" style="display:none;">0</span>
         </button>
       </div>
 
-      <!-- Tab 1: Wyszukiwarka znajomych -->
-      <div class="comm-tab-pane" id="pane-comm-search">
+      <!-- Tab 1: Ekipa (Znajomi, wyszukiwanie, polecani i zaproszenia) -->
+      <div class="comm-tab-pane" id="pane-comm-friends">
+        <!-- Search bar -->
         <div class="user-search-wrap">
-          <input type="text" id="input-search-friends" placeholder="Wpisz nick znajomego (np. @piwosz)..." />
+          <input type="text" id="input-search-friends" placeholder="Szukaj znajomego po nicku (np. @m_franol)..." />
           <button type="button" id="btn-run-search-friends" class="btn-primary">Szukaj</button>
         </div>
-        <div class="search-results-list" id="comm-search-results">
-          <div class="empty-state-hint">Wpisz dokładny nick znajomego (np. @piwosz), aby go znaleźć.</div>
-        </div>
-      </div>
+        <div class="search-results-list" id="comm-search-results" style="display:none;"></div>
 
-      <!-- Tab 2: Lista obserwowanych znajomych -->
-      <div class="comm-tab-pane" id="pane-comm-following" style="display:none;">
+        <!-- Section: Obserwowani znajomi -->
+        <div class="comm-section-header">
+          <h3>Obserwowani (<span id="comm-following-badge">0</span>)</h3>
+          <span class="comm-section-sub">Twoi znajomi piwosze</span>
+        </div>
         <div class="following-list" id="comm-following-list">
+          <div class="empty-state-hint">Jeszcze nikogo nie obserwujesz. Znajdź znajomych poniżej lub zaproś ekipę!</div>
+        </div>
+
+        <!-- Section: Polecani w Warszawie (Popularni teraz) -->
+        <div class="comm-section-header" style="margin-top: 20px;">
+          <h3>🔥 Popularni teraz w Warszawie</h3>
+          <span class="comm-section-sub">Aktywni łowcy tanich i dobrych piw</span>
+        </div>
+        <div class="recommended-users-list" id="comm-recommended-list">
+          <!-- Injected via JS -->
+        </div>
+
+        <!-- Invite Actions (Share Link & QR) -->
+        <div class="comm-invite-dock">
+          <button type="button" class="btn-secondary" id="btn-copy-invite-link">
+            🔗 Kopiuj link z kodem
+          </button>
+          <button type="button" class="btn-secondary" id="btn-show-qr-code">
+            📱 Pokaż kod QR
+          </button>
+        </div>
+      </div>
+
+      <!-- Tab 2: Mapa 24h (Live check-iny znajomych + Puls Warszawy) -->
+      <div class="comm-tab-pane" id="pane-comm-map" style="display:none;">
+        <div class="friends-map-header-bar">
+          <div>
+            <div class="friends-map-live-tag"><span class="pulsing-dot"></span> LIVE 24H</div>
+            <p class="friends-map-sub">Sprawdź gdzie teraz siedzą znajomi i które rejony tętnią życiem</p>
+          </div>
+          <button type="button" class="btn-primary btn-sm" id="btn-open-checkin-direct">
+            📍 Zamelduj się
+          </button>
+        </div>
+
+        <!-- Leaflet Map Box -->
+        <div class="friends-map-wrapper">
+          <div id="friends-map-container" style="width: 100%; height: 320px; border-radius: 14px; overflow: hidden;"></div>
+          <div class="friends-map-overlay-card" id="friends-map-status-card">
+            <div class="fmap-status-title">🍻 Puls Warszawy</div>
+            <div class="fmap-status-desc" id="friends-map-summary">Ładowanie aktywności...</div>
+          </div>
+        </div>
+
+        <!-- Quick Hotspots Grid -->
+        <div class="comm-section-header" style="margin-top: 14px;">
+          <h3>🔥 Główne zagłębia imprezowe</h3>
+        </div>
+        <div class="hotspots-quick-grid" id="hotspots-quick-list">
           <!-- Injected via JS -->
         </div>
       </div>
 
-      <!-- Tab 3: Powiadomienia & Aktywność -->
+      <!-- Tab 3: Live Feed (BeReal-style fotki z kufli i barów z reakcją 🍻) -->
+      <div class="comm-tab-pane" id="pane-comm-feed" style="display:none;">
+        <div class="feed-header-bar">
+          <div>
+            <h3>📸 Barowy Live Feed</h3>
+            <p class="comm-section-sub">Świeże fotki kufli, paragonów i atmosfery z warszawskich lokali</p>
+          </div>
+          <button type="button" class="btn-primary btn-sm" id="btn-add-feed-photo">
+            ➕ Dodaj fotkę
+          </button>
+          <input type="file" id="feed-photo-file-input" accept="image/*" style="display:none;" />
+        </div>
+        <div class="live-feed-grid" id="comm-feed-grid">
+          <div class="empty-state-hint">Brak fotek z ostatnich 24h. Bądź pierwszy i dodaj zdjęcie swojego piwa!</div>
+        </div>
+      </div>
+
+      <!-- Tab 4: Aktywność & Powiadomienia + Program Poleceń Kapsli -->
       <div class="comm-tab-pane" id="pane-comm-notifications" style="display:none;">
+        <!-- Golden Referral Card -->
+        <div class="gold-referral-card">
+          <div class="gold-ref-badge">👑 ZGARNIJ KAPSLE</div>
+          <h4>Zaproś znajomych do ekipy!</h4>
+          <p>Wyślij swój unikalny link. Za każdego znajomego, który dołączy i zamelduje się w lokalu, otrzymujesz <strong>+50 Kapsli</strong> do odblokowywania rang i nagród.</p>
+          <div class="gold-ref-action-row">
+            <input type="text" id="input-referral-link" readonly value="https://poilepiwko.pl/?ref=" />
+            <button type="button" class="btn-primary btn-sm" id="btn-copy-ref-link">Kopiuj</button>
+          </div>
+        </div>
+
+        <!-- Notifications List -->
+        <div class="comm-section-header" style="margin-top: 16px;">
+          <h3>🔔 Twoje powiadomienia</h3>
+        </div>
         <div class="notifications-list" id="comm-notifications-list">
-          <!-- Injected via JS -->
+          <div class="empty-state-hint">Brak nowych powiadomień.</div>
         </div>
       </div>
 
@@ -2547,6 +2640,32 @@
             ✕ Zamknij
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: QR Code Share Modal -->
+  <div class="modal-backdrop" id="qr-share-modal" style="display:none; z-index: 10280;">
+    <div class="modal-card qr-modal-card">
+      <div class="modal-head">
+        <div class="modal-head-title">
+          <div class="modal-icon-badge">📱</div>
+          <div>
+            <h2>Twój Kod QR</h2>
+            <p class="modal-head-sub">Pokaż ten kod znajomemu, aby natychmiast dodał Cię do ekipy!</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close" id="btn-close-qr-modal">✕</button>
+      </div>
+      <div class="qr-code-body">
+        <div class="qr-code-frame">
+          <img id="qr-code-image" src="" alt="Kod QR profilu" />
+        </div>
+        <p class="qr-code-handle" id="qr-code-handle">@profil</p>
+        <p class="qr-code-note">Zeskanuj aparatem w telefonie, aby otworzyć profil</p>
+        <button type="button" class="btn-primary" id="btn-copy-qr-link" style="width: 100%; margin-top: 14px;">
+          🔗 Kopiuj bezpośredni link
+        </button>
       </div>
     </div>
   </div>
