@@ -7581,7 +7581,13 @@
       if (!friendsMapInstance) {
         friendsMapInstance = L.map("friends-map-container", {
           zoomControl: false,
-          attributionControl: false
+          attributionControl: false,
+          dragging: false,
+          touchZoom: false,
+          scrollWheelZoom: false,
+          doubleClickZoom: false,
+          boxZoom: false,
+          keyboard: false
         }).setView([52.232, 21.018], 13);
 
         L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
@@ -7589,6 +7595,9 @@
         }).addTo(friendsMapInstance);
 
         friendsMarkersLayer = L.layerGroup().addTo(friendsMapInstance);
+      } else {
+        if (friendsMapInstance.dragging) friendsMapInstance.dragging.disable();
+        if (friendsMapInstance.touchZoom) friendsMapInstance.touchZoom.disable();
       }
 
       friendsMapInstance.invalidateSize();

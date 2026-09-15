@@ -7655,7 +7655,8 @@ header,
   left: 0;
   right: 0;
   bottom: 0;
-  width: 100vw;
+  width: 100%;
+  max-width: 100%;
   height: 100vh;
   height: 100dvh;
   background: #0b1318;
@@ -7663,6 +7664,7 @@ header,
   display: none;
   flex-direction: column;
   overflow: hidden;
+  overflow-x: hidden;
   opacity: 0;
   transform: translateY(24px);
   transition: opacity 0.22s ease, transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
@@ -7789,9 +7791,12 @@ header,
 .community-page-body {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   padding: 8px 16px calc(76px + env(safe-area-inset-bottom, 24px)) 16px;
   box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
 }
 
 @media (min-width: 641px) {
@@ -8694,10 +8699,18 @@ header,
 .friends-map-wrapper {
   position: relative;
   width: 100%;
+  max-width: 100%;
   border-radius: 14px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  touch-action: pan-y !important;
+}
+
+#friends-map-container {
+  width: 100% !important;
+  max-width: 100% !important;
+  touch-action: pan-y !important;
 }
 
 .friends-map-overlay-card {
