@@ -347,6 +347,10 @@
         <span class="compass-icon">🧭</span>
         <span>Kompas</span>
       </button>
+      <button type="button" id="btn-sos-float" class="fab-sos-float" title="Piwny Anioł Stróż · SOS Ekipa i Bezpieczny Powrót" aria-label="Piwny Anioł Stróż SOS">
+        <span class="sos-float-icon">🛡️</span>
+        <span class="sos-float-label">SOS</span>
+      </button>
       <button type="button" id="btn-locate-float" class="fab-locate-float" title="Moja lokalizacja GPS – pokaż gdzie jestem" aria-label="Moja lokalizacja GPS">
         <span class="locate-icon">
           <svg class="locate-crosshair-svg" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -2676,6 +2680,108 @@
         <button type="button" class="btn-primary" id="btn-copy-qr-link" style="width: 100%; margin-top: 14px;">
           🔗 Kopiuj bezpośredni link
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Piwny Anioł Stróż / SOS Ekipa Modal -->
+  <div class="modal-backdrop" id="sos-modal" style="display:none; z-index: 10350;">
+    <div class="modal-card sos-modal-card">
+      <div class="modal-head sos-modal-head">
+        <div class="modal-head-title">
+          <div class="modal-icon-badge sos-badge-icon">🛡️</div>
+          <div>
+            <h2>Piwny Anioł Stróż</h2>
+            <p class="modal-head-sub">Bezpieczny powrót i szybka pomoc w nocy</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close" id="btn-close-sos-modal">✕</button>
+      </div>
+
+      <div class="sos-modal-content">
+        <!-- Live Detected Location Box -->
+        <div class="sos-location-card" id="sos-location-card">
+          <div class="sos-location-header">
+            <span class="sos-pin-icon">📍</span>
+            <span class="sos-location-title">Twoja bieżąca lokalizacja:</span>
+          </div>
+          <div class="sos-venue-detected" id="sos-venue-name">Wykrywanie najbliższego baru...</div>
+          <div class="sos-venue-coords" id="sos-venue-details">Pobieranie współrzędnych GPS...</div>
+        </div>
+
+        <!-- Step 1: Zaalarmuj znajomych -->
+        <div class="sos-action-block">
+          <div class="sos-block-label">
+            <span class="sos-step-tag">KROK 1</span>
+            <span>🚨 Zaalarmuj znajomych</span>
+          </div>
+          <button type="button" class="btn-sos-main" id="btn-send-sos-friends">
+            <span class="btn-sos-icon">📢</span>
+            <div class="btn-sos-text">
+              <span class="btn-sos-title">Wyślij alert SOS do Ekipy</span>
+              <span class="btn-sos-sub">Powiadom obserwowanych znajomych w aplikacji o Twojej lokalizacji</span>
+            </div>
+          </button>
+          <div class="sos-alert-status" id="sos-alert-status" style="display:none;"></div>
+
+          <!-- Direct 1-tap SMS & WhatsApp & Copy Share -->
+          <div class="sos-share-grid">
+            <a href="#" id="btn-sos-sms" class="sos-share-btn sos-btn-sms" target="_blank" rel="noopener" title="Wyślij SMS z gotowym tekstem i lokalizacją">
+              <span class="sos-share-icon">💬</span>
+              <span>Wyślij SMS</span>
+            </a>
+            <a href="#" id="btn-sos-whatsapp" class="sos-share-btn sos-btn-wa" target="_blank" rel="noopener" title="Wyślij przez WhatsApp">
+              <span class="sos-share-icon">🟢</span>
+              <span>WhatsApp</span>
+            </a>
+            <button type="button" id="btn-sos-copy" class="sos-share-btn sos-btn-copy" title="Kopiuj tekst do schowka">
+              <span class="sos-share-icon">📋</span>
+              <span id="btn-sos-copy-text">Kopiuj info</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 2: Bezpieczny Powrót (Bolt / Uber / Google Maps) -->
+        <div class="sos-action-block">
+          <div class="sos-block-label">
+            <span class="sos-step-tag">KROK 2</span>
+            <span>🚕 Bezpieczny powrót (Taxi / Nawigacja)</span>
+          </div>
+          <div class="sos-transport-grid">
+            <a href="https://bolt.eu" id="btn-sos-bolt" class="sos-transport-btn bolt-btn" target="_blank" rel="noopener">
+              <span class="transport-icon">⚡</span>
+              <div class="transport-info">
+                <span class="transport-title">Bolt</span>
+                <span class="transport-sub">Odbiór stąd</span>
+              </div>
+            </a>
+            <a href="https://m.uber.com" id="btn-sos-uber" class="sos-transport-btn uber-btn" target="_blank" rel="noopener">
+              <span class="transport-icon">🚗</span>
+              <div class="transport-info">
+                <span class="transport-title">Uber</span>
+                <span class="transport-sub">Szybki kurs</span>
+              </div>
+            </a>
+            <a href="https://www.google.com/maps/dir/?api=1&destination=Dom" id="btn-sos-gmaps-home" class="sos-transport-btn maps-btn" target="_blank" rel="noopener">
+              <span class="transport-icon">🧭</span>
+              <div class="transport-info">
+                <span class="transport-title">Do domu</span>
+                <span class="transport-sub">Google Maps</span>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <!-- Step 3: Kontakt Awaryjny ICE (In Case of Emergency) -->
+        <div class="sos-action-block">
+          <div class="sos-block-label">
+            <span class="sos-step-tag">KROK 3</span>
+            <span>👤 Zaufany kontakt (ICE)</span>
+          </div>
+          <div class="sos-ice-box" id="sos-ice-box">
+            <!-- Dynamic ICE contact content populated via JS -->
+          </div>
+        </div>
       </div>
     </div>
   </div>

@@ -2755,6 +2755,36 @@ header,
     line-height: 1 !important;
   }
 
+  /* SOS button - Mobile */
+  .fab-sos-float {
+    width: 44px !important;
+    height: 44px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%) !important;
+    border: 2px solid rgba(255, 255, 255, 0.45) !important;
+    box-shadow: 0 4px 18px rgba(239, 68, 68, 0.65), 0 2px 8px rgba(0, 0, 0, 0.6) !important;
+    cursor: pointer !important;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    animation: sos-pulse-glow 2.5s infinite !important;
+  }
+
+  .fab-sos-float:active {
+    transform: scale(0.90) !important;
+  }
+
+  .fab-sos-float span:not(.sos-float-icon) {
+    display: none !important;
+  }
+
+  .fab-sos-float .sos-float-icon {
+    font-size: 20px !important;
+    line-height: 1 !important;
+  }
+
   /* Locate GPS button */
   .fab-locate-float {
     position: static !important;
@@ -9144,6 +9174,32 @@ header,
   box-shadow: 0 6px 22px rgba(249, 115, 22, 0.6);
 }
 
+.fab-sos-float {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(239, 68, 68, 0.5);
+  transition: all 0.2s ease;
+  animation: sos-pulse-glow 2.5s infinite;
+}
+.fab-sos-float:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 6px 22px rgba(239, 68, 68, 0.75);
+}
+.fab-sos-float:active {
+  transform: scale(0.96);
+}
+
 .chip-compass {
   background: rgba(249, 115, 22, 0.15) !important;
   color: #fb923c !important;
@@ -13906,4 +13962,444 @@ body.theme-light .btn-card-download:hover {
 
 body.theme-light .club-card-hint {
   color: #64748b !important;
+}
+
+/* ==========================================================================
+   Piwny Anioł Stróż / SOS Ekipa & Safe Night Out
+   ========================================================================== */
+
+@keyframes sos-pulse-glow {
+  0%, 100% {
+    box-shadow: 0 4px 18px rgba(239, 68, 68, 0.5), 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 6px 24px rgba(239, 68, 68, 0.85), 0 0 0 6px rgba(239, 68, 68, 0);
+  }
+}
+
+.sos-modal-card {
+  max-width: 460px !important;
+  width: 100%;
+  border-radius: 22px !important;
+  background: linear-gradient(180deg, rgba(239, 68, 68, 0.12) 0%, rgba(15, 23, 22, 0.98) 18%) !important;
+  border: 1.5px solid rgba(239, 68, 68, 0.4) !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8), 0 0 35px rgba(239, 68, 68, 0.25) !important;
+  padding: 20px 20px 24px 20px !important;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.sos-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sos-badge-icon {
+  background: rgba(239, 68, 68, 0.2) !important;
+  border: 1px solid rgba(239, 68, 68, 0.5) !important;
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.3) !important;
+  font-size: 22px;
+}
+
+.sos-modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Location Card */
+.sos-location-card {
+  background: rgba(20, 30, 28, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sos-location-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sos-venue-detected {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #f8fafc;
+  line-height: 1.3;
+}
+
+.sos-venue-coords {
+  font-size: 0.78rem;
+  color: #10b981;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+/* Action Blocks */
+.sos-action-block {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sos-block-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.86rem;
+  font-weight: 800;
+  color: #f1f5f9;
+}
+
+.sos-step-tag {
+  background: rgba(239, 68, 68, 0.25);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  font-size: 0.68rem;
+  font-weight: 900;
+  padding: 2px 7px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+}
+
+/* Primary SOS Button */
+.btn-sos-main {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  border-radius: 14px;
+  padding: 12px 16px;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.45);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: left;
+}
+
+.btn-sos-main:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.65);
+}
+
+.btn-sos-main:active {
+  transform: scale(0.98);
+}
+
+.btn-sos-icon {
+  font-size: 26px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.btn-sos-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.btn-sos-title {
+  font-size: 0.96rem;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+
+.btn-sos-sub {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.25;
+}
+
+.sos-alert-status {
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-align: center;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #34d399;
+}
+
+/* 1-tap Sharing Grid */
+.sos-share-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.sos-share-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 6px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f1f5f9;
+}
+
+.sos-share-btn:active {
+  transform: scale(0.95);
+}
+
+.sos-share-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.sos-btn-sms {
+  background: rgba(59, 130, 246, 0.18);
+  border-color: rgba(59, 130, 246, 0.35);
+  color: #93c5fd;
+}
+.sos-btn-sms:hover {
+  background: rgba(59, 130, 246, 0.3);
+}
+
+.sos-btn-wa {
+  background: rgba(34, 197, 94, 0.18);
+  border-color: rgba(34, 197, 94, 0.35);
+  color: #86efac;
+}
+.sos-btn-wa:hover {
+  background: rgba(34, 197, 94, 0.3);
+}
+
+.sos-btn-copy {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #e2e8f0;
+}
+.sos-btn-copy:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+/* Transport Grid */
+.sos-transport-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.sos-transport-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 10px 6px;
+  border-radius: 12px;
+  text-decoration: none;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: #f8fafc;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.sos-transport-btn:active {
+  transform: scale(0.95);
+}
+
+.transport-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.transport-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.transport-title {
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.transport-sub {
+  font-size: 0.65rem;
+  color: #94a3b8;
+}
+
+.bolt-btn:hover {
+  background: rgba(34, 197, 94, 0.18);
+  border-color: rgba(34, 197, 94, 0.4);
+}
+
+.uber-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.maps-btn:hover {
+  background: rgba(59, 130, 246, 0.18);
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+/* ICE Box */
+.ice-saved-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.ice-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ice-name {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #f1f5f9;
+}
+
+.ice-phone {
+  font-size: 0.76rem;
+  color: #94a3b8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.ice-call-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-decoration: none;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.ice-call-btn:active {
+  transform: scale(0.95);
+}
+
+.ice-edit-btn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.ice-form-row {
+  display: flex;
+  gap: 8px;
+}
+
+.ice-input {
+  flex: 1;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 10px;
+  padding: 8px 10px;
+  color: #f8fafc;
+  font-size: 0.82rem;
+  outline: none;
+}
+
+.ice-input:focus {
+  border-color: #ef4444;
+}
+
+.ice-save-btn {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  color: #fca5a5;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.ice-save-btn:hover {
+  background: rgba(239, 68, 68, 0.35);
+}
+
+/* Light Theme Overrides for SOS */
+body.theme-light .sos-modal-card {
+  background: linear-gradient(180deg, rgba(239, 68, 68, 0.08) 0%, #ffffff 18%) !important;
+  border-color: rgba(239, 68, 68, 0.4) !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18), 0 0 30px rgba(239, 68, 68, 0.15) !important;
+}
+
+body.theme-light .sos-location-card {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+body.theme-light .sos-venue-detected {
+  color: #0f172a;
+}
+
+body.theme-light .sos-action-block {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+body.theme-light .sos-block-label {
+  color: #0f172a;
+}
+
+body.theme-light .sos-transport-btn {
+  background: #ffffff;
+  border-color: #e2e8f0;
+  color: #0f172a;
+}
+
+body.theme-light .transport-sub {
+  color: #64748b;
+}
+
+body.theme-light .ice-saved-card {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+body.theme-light .ice-name {
+  color: #0f172a;
+}
+
+body.theme-light .ice-input {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #0f172a;
 }

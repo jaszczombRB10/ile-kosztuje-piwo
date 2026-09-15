@@ -1032,6 +1032,103 @@ module.exports = async (req, res) => {
       });
     }
 
+    // =========================================================================
+    // 12. Trigger SOS Alert to Friends / Ekipa
+    // =========================================================================
+    if (action === "trigger-sos-alert") {
+      const { userId, venueName, address, latitude, longitude, note } = payload || {};
+      if (!userId) {
+        return res.status(400).json({ error: "Brak identyfikatora użytkownika." });
+      }
+
+      try {
+        const uRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(userId)}`, { headers });
+        if (!uRes.ok) {
+          return res.status(404).json({ error: "Nie znaleziono użytkownika." });
+        }
+        const userObj = await uRes.json();
+        const userMeta = userObj.user_metadata || {};
+        const fromName = userMeta.display_name || userMeta.username || "Piwosz z Twojej Ekipy";
+        const fromUsername = userMeta.username || userObj.email?.split("@")[0] || "znajomy";
+
+        const followers = Array.isArray(userMeta.follower_ids) ? userMeta.follower_ids : [];
+        const vName = venueName || "Warszawa";
+        const addr = address || "";
+        const alertIso = new Date().toISOString();
+
+        const sosNotif = {
+          id: "sos_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
+          type: "sos_alert",
+          fromUserId: userId,
+          fromUsername: fromUsername,
+          fromDisplayName: fromName,
+          fromAvatarIcon: "🚨",
+          venueName: vName,
+          address: addr,
+          latitude: typeof latitude === "number" ? latitude : null,
+          longitude: typeof longitude === "number" ? longitude : null,
+          note: note || "",
+          message: `🚨 SOS: ${fromName} potrzebuje wsparcia! Lokal: ${vName}${addr ? " (" + addr + ")" : ""}`,
+          createdAt: alertIso,
+          read: false
+        };
+
+        let notifiedCount = 0;
+        for (const fId of followers) {
+          try {
+            const fRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(fId)}`, { headers });
+            if (fRes.ok) {
+              const fUser = await fRes.json();
+              const fMeta = fUser.user_metadata || {};
+              let fNotifs = Array.isArray(fMeta.notifications) ? [...fMeta.notifications] : [];
+              fNotifs.unshift(sosNotif);
+              fNotifs = fNotifs.slice(0, 30);
+
+              await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(fId)}`, {
+                method: "PUT",
+                headers,
+                body: JSON.stringify({
+                  user_metadata: {
+                    ...fMeta,
+                    notifications: fNotifs
+                  }
+                })
+              });
+              notifiedCount++;
+            }
+          } catch (err) {
+            console.warn("SOS follower notify failed:", fId, err);
+          }
+        }
+
+        // Save last_sos_alert on sender user
+        await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(userId)}`, {
+          method: "PUT",
+          headers,
+          body: JSON.stringify({
+            user_metadata: {
+              ...userMeta,
+              last_sos_alert: {
+                ...sosNotif,
+                active: true
+              }
+            }
+          })
+        });
+
+        return res.status(200).json({
+          success: true,
+          notifiedCount,
+          message: notifiedCount > 0 
+            ? `Wysłano alert SOS do ${notifiedCount} ${notifiedCount === 1 ? "znajomego" : "znajomych"} z Twojej ekipy!` 
+            : "Zapisano alert SOS. Dodaj znajomych do ekipy, aby otrzymywali natychmiastowe powiadomienia."
+        });
+      } catch (err) {
+        console.error("trigger-sos-alert error:", err);
+        return res.status(500).json({ error: "Błąd podczas rozsyłania alertu SOS." });
+      }
+    }
+
     return res.status(400).json({ error: `Nieznana akcja API: ${action}` });
 
   } catch (err) {

@@ -5494,6 +5494,7 @@
     initRouletteModal();
     initStoryCardModal();
     initClubCardModal();
+    initSosFeature();
 
     // Deep linking: listen to URL hash changes
     window.addEventListener("hashchange", checkUrlHash);
@@ -5897,12 +5898,18 @@
             const newlyArrived = myNotifications.filter(n => !n.read && !prevKnown.has(n.id));
             if (newlyArrived.length > 0) {
               const latest = newlyArrived[0];
-              const toastIcon = latest.type === "cheers_toast" ? "🍻" : "👥";
-              showAppToast("Nowa aktywność od znajomego!", latest.message, toastIcon, 4500);
+              const isSos = latest.type === "sos_alert";
+              const toastIcon = isSos ? "🚨" : (latest.type === "cheers_toast" ? "🍻" : "👥");
+              const toastTitle = isSos ? "🚨 PILNY ALERT SOS OD ZNAJOMEGO!" : "Nowa aktywność od znajomego!";
+              showAppToast(toastTitle, latest.message, toastIcon, isSos ? 8000 : 4500);
+
+              if (isSos && typeof navigator !== "undefined" && navigator.vibrate) {
+                try { navigator.vibrate([300, 150, 300, 150, 400]); } catch (e) {}
+              }
 
               if (typeof Notification !== "undefined" && Notification.permission === "granted") {
                 try {
-                  new Notification("Po ile piwko? 🍻", {
+                  new Notification(isSos ? "🚨 ALERT SOS: ZNAJOMY POTRZEBUJE POMOCY!" : "Po ile piwko? 🍻", {
                     body: latest.message,
                     icon: "/icons/icon-192.png",
                     badge: "/icons/icon-192.png"
@@ -7986,37 +7993,64 @@
 
       notifList.innerHTML = myNotifications.map(n => {
         const isUnread = !n.read;
-        const avatarHtml = n.fromAvatarPhoto
-          ? `<img src="${escapeHtml(n.fromAvatarPhoto)}" class="notif-photo" alt="Avatar" />`
-          : escapeHtml(n.fromAvatarIcon || "🍺");
+        const isSos = n.type === "sos_alert";
+        const avatarHtml = isSos 
+          ? `<span style="font-size:22px;display:inline-block;animation:sos-pulse-glow 2s infinite;">🚨</span>` 
+          : (n.fromAvatarPhoto
+            ? `<img src="${escapeHtml(n.fromAvatarPhoto)}" class="notif-photo" alt="Avatar" />`
+            : escapeHtml(n.fromAvatarIcon || "🍺"));
         const timeAgo = formatTimeAgo(n.createdAt);
         const isFollowing = n.fromUserId ? myFollowingIds.includes(n.fromUserId) : false;
         const isMe = currentUser && currentUser.id === n.fromUserId;
 
         return `
-          <div class="notif-card ${isUnread ? "unread" : ""}">
+          <div class="notif-card ${isUnread ? "unread" : ""} ${isSos ? "notif-card-sos" : ""}" style="${isSos ? "border-color: rgba(239, 68, 68, 0.55); background: rgba(239, 68, 68, 0.08);" : ""}">
             <div class="notif-avatar" ${n.fromUsername ? `onclick="window.__openUserProfile('${escapeHtml(n.fromUsername)}')"` : ""}>
               ${avatarHtml}
             </div>
             <div class="notif-info" ${n.fromUsername ? `onclick="window.__openUserProfile('${escapeHtml(n.fromUsername)}')"` : ""}>
-              <div class="notif-msg">${escapeHtml(n.message || "Nowa aktywność")}</div>
+              <div class="notif-msg" style="${isSos ? "color: #fca5a5; font-weight: 800;" : ""}">${escapeHtml(n.message || "Nowa aktywność")}</div>
               <div class="notif-meta">
                 <span>🕒 ${timeAgo}</span>
                 ${n.fromUsername ? `<span>• @${escapeHtml(n.fromUsername)}</span>` : ""}
               </div>
             </div>
             <div class="notif-action">
-              ${(!isMe && n.fromUserId) ? `
+              ${isSos && typeof n.latitude === "number" && typeof n.longitude === "number" ? `
+                <button type="button" class="btn-notif-action" style="background: #ef4444; border-color: #fca5a5; color: #fff; font-weight: 800;" onclick="window.__flyToSosLocation(${n.latitude}, ${n.longitude}, '${escapeHtml(n.fromDisplayName || "Znajomy")}', '${escapeHtml(n.venueName || "")}')">
+                  📍 Na mapie
+                </button>
+              ` : ((!isMe && n.fromUserId) ? `
                 <button type="button" class="btn-notif-action ${isFollowing ? "following" : ""}" data-user-id="${escapeHtml(n.fromUserId)}" onclick="window.__toggleFollowFromNotif('${escapeHtml(n.fromUserId)}', this)">
                   ${isFollowing ? "✓ Obserwujesz" : "➕ Obserwuj zwrotnie"}
                 </button>
-              ` : ""}
+              ` : "")}
             </div>
           </div>
         `;
       }).join("");
     }
     window.__renderNotificationsList = renderNotificationsList;
+
+    window.__flyToSosLocation = function(lat, lng, name, venue) {
+      const commModal = document.getElementById("community-modal");
+      if (commModal) commModal.style.display = "none";
+      document.body.classList.remove("modal-open");
+      if (map) {
+        map.flyTo([lat, lng], 17, { duration: 1.2 });
+        L.popup()
+          .setLatLng([lat, lng])
+          .setContent(`
+            <div style="text-align:center;padding:6px;max-width:220px;">
+              <div style="font-size:22px;margin-bottom:4px;">🚨</div>
+              <strong style="color:#ef4444;font-size:14px;display:block;">Alert SOS: ${escapeHtml(name)}</strong>
+              ${venue ? `<div style="font-weight:700;color:#f8fafc;font-size:12px;margin-top:2px;">📍 ${escapeHtml(venue)}</div>` : ""}
+              <div style="font-size:11px;color:#94a3b8;margin-top:4px;">Znajomy potrzebuje pomocy lub odbioru!</div>
+            </div>
+          `)
+          .openOn(map);
+      }
+    };
   }
 
   // Global Follow / Unfollow Toggle
@@ -10613,6 +10647,267 @@
         showAppToast("Karta Pass 💳", `Twój numer klubowicza to ${currentProfile?.user_number || "#000001"}. Karta jest aktywna w Twoim profilu!`, "✅", 2800);
       });
     }
+  }
+
+  // ==========================================================================
+  // Piwny Anioł Stróż / SOS Ekipa & Safe Night Out
+  // ==========================================================================
+  function initSosFeature() {
+    const btnSosFloat = document.getElementById("btn-sos-float");
+    const sosModal = document.getElementById("sos-modal");
+    const btnCloseSosModal = document.getElementById("btn-close-sos-modal");
+    const sosVenueName = document.getElementById("sos-venue-name");
+    const sosVenueDetails = document.getElementById("sos-venue-details");
+    const btnSendSosFriends = document.getElementById("btn-send-sos-friends");
+    const sosAlertStatus = document.getElementById("sos-alert-status");
+    const btnSosSms = document.getElementById("btn-sos-sms");
+    const btnSosWhatsapp = document.getElementById("btn-sos-whatsapp");
+    const btnSosCopy = document.getElementById("btn-sos-copy");
+    const btnSosCopyText = document.getElementById("btn-sos-copy-text");
+    const btnSosBolt = document.getElementById("btn-sos-bolt");
+    const btnSosUber = document.getElementById("btn-sos-uber");
+    const btnSosGmapsHome = document.getElementById("btn-sos-gmaps-home");
+    const sosIceBox = document.getElementById("sos-ice-box");
+
+    if (!btnSosFloat || !sosModal) return;
+
+    let detectedVenue = null;
+    let detectedCoords = null;
+
+    function renderIceContact() {
+      if (!sosIceBox) return;
+      let ice = null;
+      try {
+        const stored = localStorage.getItem("poilepiwko_ice_contact");
+        if (stored) ice = JSON.parse(stored);
+      } catch (e) {}
+
+      if (ice && ice.phone) {
+        sosIceBox.innerHTML = `
+          <div class="ice-saved-card">
+            <div class="ice-details">
+              <span class="ice-name">👤 ${escapeHtml(ice.name || "Zaufany kontakt")}</span>
+              <span class="ice-phone">📞 ${escapeHtml(ice.phone)}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <a href="tel:${escapeHtml(ice.phone)}" class="ice-call-btn" title="Zadzwoń teraz">
+                <span>📞 Zadzwoń</span>
+              </a>
+              <button type="button" class="ice-edit-btn" id="btn-ice-edit" title="Zmień numer">✎</button>
+            </div>
+          </div>
+        `;
+        const btnEdit = document.getElementById("btn-ice-edit");
+        if (btnEdit) {
+          btnEdit.addEventListener("click", () => {
+            renderIceInput(ice.name, ice.phone);
+          });
+        }
+      } else {
+        renderIceInput("", "");
+      }
+    }
+
+    function renderIceInput(defaultName, defaultPhone) {
+      if (!sosIceBox) return;
+      sosIceBox.innerHTML = `
+        <div class="ice-form-row">
+          <input type="text" id="ice-input-name" class="ice-input" placeholder="Imię (np. Mama, Kumpel)" value="${escapeHtml(defaultName || "")}" maxlength="25" />
+          <input type="tel" id="ice-input-phone" class="ice-input" placeholder="Numer tel. (np. 500123456)" value="${escapeHtml(defaultPhone || "")}" maxlength="15" />
+          <button type="button" class="ice-save-btn" id="btn-save-ice">Zapisz</button>
+        </div>
+      `;
+      const btnSave = document.getElementById("btn-save-ice");
+      if (btnSave) {
+        btnSave.addEventListener("click", () => {
+          const nameInput = document.getElementById("ice-input-name");
+          const phoneInput = document.getElementById("ice-input-phone");
+          const name = nameInput ? nameInput.value.trim() : "";
+          const phone = phoneInput ? phoneInput.value.trim().replace(/\s+/g, "") : "";
+          if (!phone) {
+            showAppToast("Podaj numer telefonu!", "Wpisz numer do zaufanej osoby.", "⚠️");
+            return;
+          }
+          try {
+            localStorage.setItem("poilepiwko_ice_contact", JSON.stringify({ name: name || "Zaufany kontakt", phone }));
+            showAppToast("Zapisano kontakt ICE!", `Ustawiono: ${name || "Kontakt"} (${phone})`, "🛡️");
+            renderIceContact();
+          } catch (e) {}
+        });
+      }
+    }
+
+    function updateDetectedLocation() {
+      // Find coordinates: userLocation or map center or Warsaw Center
+      let coords = (userLocation && Array.isArray(userLocation) && userLocation.length === 2) 
+        ? userLocation 
+        : (map ? [map.getCenter().lat, map.getCenter().lng] : WARSAW_CENTER);
+      
+      detectedCoords = coords;
+
+      // Find nearest venue from allVenues
+      let nearest = null;
+      let minDistance = Infinity;
+
+      if (Array.isArray(allVenues) && allVenues.length > 0) {
+        for (const v of allVenues) {
+          if (typeof v.latitude === "number" && typeof v.longitude === "number") {
+            const d = calculateDistanceKm(coords[0], coords[1], v.latitude, v.longitude);
+            if (d < minDistance) {
+              minDistance = d;
+              nearest = v;
+            }
+          }
+        }
+      }
+
+      detectedVenue = nearest;
+
+      if (nearest) {
+        const distM = Math.round(minDistance * 1000);
+        const distStr = distM < 1000 ? `${distM} m od Ciebie` : `${minDistance.toFixed(1)} km`;
+        if (sosVenueName) {
+          sosVenueName.innerHTML = `🍺 ${escapeHtml(nearest.name)} <span style="font-size:0.75rem;font-weight:600;color:#94a3b8;">(${distStr})</span>`;
+        }
+        if (sosVenueDetails) {
+          const addr = nearest.address && nearest.address !== "Warszawa" ? nearest.address : (nearest.district || "Warszawa");
+          sosVenueDetails.textContent = `📍 ${addr} · ${coords[0].toFixed(5)}, ${coords[1].toFixed(5)}`;
+        }
+      } else {
+        if (sosVenueName) sosVenueName.textContent = "📍 Centrum Warszawy";
+        if (sosVenueDetails) sosVenueDetails.textContent = `${coords[0].toFixed(5)}, ${coords[1].toFixed(5)}`;
+      }
+
+      // Update Share Text & Links
+      const vTitle = nearest ? nearest.name : "Warszawa";
+      const vAddr = nearest ? (nearest.address && nearest.address !== "Warszawa" ? nearest.address : (nearest.district || "")) : "";
+      const mapsLink = `https://www.google.com/maps?q=${coords[0]},${coords[1]}`;
+
+      const shareMsg = `🚨 SOS PoIlePiwko: Potrzebuję pomocy/odebrania! Jestem w/przy: ${vTitle}${vAddr ? " (" + vAddr + ")" : ""}. Moje położenie: ${mapsLink}`;
+
+      if (btnSosSms) {
+        btnSosSms.href = `sms:?body=${encodeURIComponent(shareMsg)}`;
+      }
+      if (btnSosWhatsapp) {
+        btnSosWhatsapp.href = `https://wa.me/?text=${encodeURIComponent(shareMsg)}`;
+      }
+
+      // Taxi links
+      if (btnSosBolt) {
+        btnSosBolt.href = `https://bolt.eu/`;
+      }
+      if (btnSosUber) {
+        btnSosUber.href = `https://m.uber.com/ul/?action=setPickup&pickup[latitude]=${coords[0]}&pickup[longitude]=${coords[1]}`;
+      }
+      if (btnSosGmapsHome) {
+        btnSosGmapsHome.href = `https://www.google.com/maps/dir/?api=1&destination=Dom`;
+      }
+
+      // Copy handler
+      if (btnSosCopy) {
+        btnSosCopy.onclick = async () => {
+          try {
+            await navigator.clipboard.writeText(shareMsg);
+            if (btnSosCopyText) btnSosCopyText.textContent = "✓ Skopiowano!";
+            showAppToast("Skopiowano informację SOS!", "Możesz wkleić treść w dowolnej aplikacji.", "📋");
+            setTimeout(() => {
+              if (btnSosCopyText) btnSosCopyText.textContent = "Kopiuj info";
+            }, 2500);
+          } catch (e) {
+            showAppToast("Informacja SOS:", shareMsg, "📋", 6000);
+          }
+        };
+      }
+    }
+
+    function openSosModal() {
+      // Trigger fresh location check
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            setUserLocation([pos.coords.latitude, pos.coords.longitude], false, true);
+            updateDetectedLocation();
+          },
+          () => {
+            updateDetectedLocation();
+          },
+          { enableHighAccuracy: true, timeout: 5000, maximumAge: 10000 }
+        );
+      }
+      updateDetectedLocation();
+      renderIceContact();
+      if (sosAlertStatus) sosAlertStatus.style.display = "none";
+      if (btnSendSosFriends) {
+        btnSendSosFriends.disabled = false;
+        btnSendSosFriends.style.opacity = "1";
+      }
+
+      sosModal.style.display = "flex";
+      document.body.classList.add("modal-open");
+    }
+
+    function closeSosModal() {
+      sosModal.style.display = "none";
+      document.body.classList.remove("modal-open");
+    }
+
+    btnSosFloat.addEventListener("click", openSosModal);
+    if (btnCloseSosModal) btnCloseSosModal.addEventListener("click", closeSosModal);
+
+    sosModal.addEventListener("click", (e) => {
+      if (e.target === sosModal) closeSosModal();
+    });
+
+    // Send SOS alert to friends via backend
+    if (btnSendSosFriends) {
+      btnSendSosFriends.addEventListener("click", async () => {
+        if (!currentUser) {
+          showAppToast("Zaloguj się!", "Aby wysłać alert bezpośrednio do ekipy w aplikacji, musisz być zalogowany. Użyj przycisków SMS lub WhatsApp poniżej!", "🔒", 5000);
+          return;
+        }
+
+        btnSendSosFriends.disabled = true;
+        btnSendSosFriends.style.opacity = "0.7";
+
+        try {
+          const res = await fetch("/api/auth", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "trigger-sos-alert",
+              payload: {
+                userId: currentUser.id,
+                venueName: detectedVenue ? detectedVenue.name : "Warszawa",
+                address: detectedVenue ? detectedVenue.address : "",
+                latitude: detectedCoords ? detectedCoords[0] : null,
+                longitude: detectedCoords ? detectedCoords[1] : null
+              }
+            })
+          });
+
+          const data = await res.json();
+          if (res.ok && data.success) {
+            if (sosAlertStatus) {
+              sosAlertStatus.style.display = "block";
+              sosAlertStatus.innerHTML = `✅ ${escapeHtml(data.message || "Alert SOS został wysłany do znajomych!")}`;
+            }
+            showAppToast("Alert SOS wysłany!", data.message, "🚨", 5000);
+          } else {
+            showAppToast("Błąd alertu", data.error || "Nie udało się rozesłać alertu.", "⚠️");
+            btnSendSosFriends.disabled = false;
+            btnSendSosFriends.style.opacity = "1";
+          }
+        } catch (err) {
+          console.error("SOS trigger error:", err);
+          showAppToast("Błąd połączenia", "Użyj bezpośrednich przycisków SMS / WhatsApp poniżej!", "⚠️");
+          btnSendSosFriends.disabled = false;
+          btnSendSosFriends.style.opacity = "1";
+        }
+      });
+    }
+
+    // Expose globally
+    window.__openSosModal = openSosModal;
   }
 
   const FALLBACK_VENUES = [
