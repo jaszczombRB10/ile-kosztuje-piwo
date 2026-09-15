@@ -10711,10 +10711,12 @@
     function renderIceInput(defaultName, defaultPhone) {
       if (!sosIceBox) return;
       sosIceBox.innerHTML = `
-        <div class="ice-form-row">
-          <input type="text" id="ice-input-name" class="ice-input" placeholder="Imię (np. Mama, Kumpel)" value="${escapeHtml(defaultName || "")}" maxlength="25" />
-          <input type="tel" id="ice-input-phone" class="ice-input" placeholder="Numer tel. (np. 500123456)" value="${escapeHtml(defaultPhone || "")}" maxlength="15" />
-          <button type="button" class="ice-save-btn" id="btn-save-ice">Zapisz</button>
+        <div class="ice-form-box">
+          <div class="ice-inputs-row">
+            <input type="text" id="ice-input-name" class="ice-input" placeholder="Imię (np. Mama)" value="${escapeHtml(defaultName || "")}" maxlength="25" />
+            <input type="tel" id="ice-input-phone" class="ice-input" placeholder="Nr tel. (np. 500123456)" value="${escapeHtml(defaultPhone || "")}" maxlength="15" />
+          </div>
+          <button type="button" class="ice-save-btn" id="btn-save-ice">💾 Zapisz kontakt ICE</button>
         </div>
       `;
       const btnSave = document.getElementById("btn-save-ice");
@@ -10765,7 +10767,15 @@
 
       if (nearest) {
         const distM = Math.round(minDistance * 1000);
-        const distStr = distM < 1000 ? `${distM} m od Ciebie` : `${minDistance.toFixed(1)} km`;
+        let distStr = "";
+        if (minDistance > 50) {
+          distStr = minDistance > 500 ? "> 500 km" : `${Math.round(minDistance)} km`;
+        } else if (distM < 1000) {
+          distStr = `${distM} m`;
+        } else {
+          distStr = `${minDistance.toFixed(1)} km`;
+        }
+
         if (sosVenueName) {
           sosVenueName.innerHTML = `🍺 ${escapeHtml(nearest.name)} <span style="font-size:0.75rem;font-weight:600;color:#94a3b8;">(${distStr})</span>`;
         }
@@ -10842,11 +10852,13 @@
         btnSendSosFriends.style.opacity = "1";
       }
 
+      sosModal.classList.add("active");
       sosModal.style.display = "flex";
       document.body.classList.add("modal-open");
     }
 
     function closeSosModal() {
+      sosModal.classList.remove("active");
       sosModal.style.display = "none";
       document.body.classList.remove("modal-open");
     }
