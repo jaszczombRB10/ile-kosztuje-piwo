@@ -2094,23 +2094,30 @@
     </div>
   </div>
 
-  <!-- Community & Friends Modal ("Piwni Znajomi") -->
-  <div class="modal-backdrop" id="community-modal">
-    <div class="modal-card modal-card-wide community-modal-card">
-      <div class="modal-head">
-        <div class="modal-head-title">
-          <div class="modal-icon-badge">👥</div>
-          <div>
-            <h2>Piwni Znajomi</h2>
-            <p class="modal-head-sub">Wyszukuj znajomych, obserwuj ich profile i sprawdzaj zaliczone lokale (100% prywatności).</p>
-          </div>
+  <!-- Community & Friends Full-Screen Native Page View ("Piwni Znajomi") -->
+  <div class="app-page-view" id="community-modal" style="display:none;">
+    <div class="community-page-container">
+      <!-- Native Page Top App Bar -->
+      <div class="community-page-header">
+        <button type="button" class="btn-page-back" id="btn-close-community" title="Wróć do mapy">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          <span>Mapa</span>
+        </button>
+        <div class="community-header-center">
+          <h2>Społeczność & Ekipa</h2>
+          <span class="community-header-sub">Warszawscy Piwosze</span>
         </div>
-        <button type="button" class="modal-close" id="btn-close-community">✕</button>
+        <button type="button" class="btn-page-action" id="btn-header-qr-code" title="Pokaż mój kod QR">
+          <span>📱</span>
+        </button>
       </div>
 
-      <!-- Community 4-Segment Modern Dock (inspired by VKÖ/Goin') -->
-      <div class="vko-segment-dock">
-        <button type="button" class="vko-tab-btn active" id="tab-comm-friends">
+      <!-- Segmented Dock (Sticky under header) -->
+      <div class="vko-dock-wrapper">
+        <div class="vko-segment-dock">
+          <button type="button" class="vko-tab-btn active" id="tab-comm-friends">
           <span class="vko-tab-icon">👥</span>
           <span class="vko-tab-label">Ekipa</span>
         </button>
@@ -2128,9 +2135,12 @@
           <span class="comm-notif-pill" id="comm-notif-pill" style="display:none;">0</span>
         </button>
       </div>
+    </div>
 
-      <!-- Tab 1: Ekipa (Znajomi, wyszukiwanie, polecani i zaproszenia) -->
-      <div class="comm-tab-pane" id="pane-comm-friends">
+      <!-- Scrollable Full-Height Page Content Body -->
+      <div class="community-page-body">
+        <!-- Tab 1: Ekipa (Znajomi, wyszukiwanie, polecani i zaproszenia) -->
+        <div class="comm-tab-pane" id="pane-comm-friends">
         <!-- Search bar -->
         <div class="user-search-wrap">
           <input type="text" id="input-search-friends" placeholder="Szukaj znajomego po nicku (np. @m_franol)..." />
@@ -2235,9 +2245,9 @@
           <div class="empty-state-hint">Brak nowych powiadomień.</div>
         </div>
       </div>
-
     </div>
   </div>
+</div>
 
   <!-- Public User Card Modal (Podgląd profilu innego użytkownika / znajomego) -->
   <div class="modal-backdrop" id="public-profile-modal">

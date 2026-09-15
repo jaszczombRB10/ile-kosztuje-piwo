@@ -4860,8 +4860,12 @@
           if (window.__closeCompass) window.__closeCompass();
           if (window.__closeMobileSearch) window.__closeMobileSearch();
           if (window.__closeHappyHours) window.__closeHappyHours();
-          if (window.__openCommunity) {
-            window.__openCommunity(unreadNotificationsCount > 0 ? "notifications" : "search");
+          const commModal = document.getElementById("community-modal");
+          const isCommOpen = commModal && (commModal.classList.contains("active") || commModal.style.display === "flex");
+          if (isCommOpen) {
+            if (window.__closeCommunity) window.__closeCommunity();
+          } else if (window.__openCommunity) {
+            window.__openCommunity(unreadNotificationsCount > 0 ? "notifications" : "friends");
           }
         } else if (target === "promos" || target === "happyhour") {
           if (window.__closeRankingDrawer) window.__closeRankingDrawer();
@@ -7203,6 +7207,7 @@
     const qrHandle = document.getElementById("qr-code-handle");
     const btnCopyQrLink = document.getElementById("btn-copy-qr-link");
     const btnShowQr = document.getElementById("btn-show-qr-code");
+    const btnHeaderQr = document.getElementById("btn-header-qr-code");
     const btnCopyInviteLink = document.getElementById("btn-copy-invite-link");
     const btnCopyRefLink = document.getElementById("btn-copy-ref-link");
     const inputRefLink = document.getElementById("input-referral-link");
@@ -7270,6 +7275,11 @@
         modal.classList.add("active");
         modal.style.display = "flex";
       }
+      const navCommBtn = document.getElementById("nav-btn-community");
+      if (navCommBtn) {
+        if (window.__clearBottomNavActive) window.__clearBottomNavActive();
+        navCommBtn.classList.add("active");
+      }
       const commFollowingBadge = document.getElementById("comm-following-badge");
       if (commFollowingBadge) commFollowingBadge.textContent = myFollowingIds.length;
       updateNotificationBadges();
@@ -7288,11 +7298,8 @@
       if (window.__clearBottomNavActive) window.__clearBottomNavActive();
     };
 
-    if (btnClose && modal) {
+    if (btnClose) {
       btnClose.addEventListener("click", () => { window.__closeCommunity(); });
-      modal.addEventListener("click", (e) => {
-        if (e.target === modal) window.__closeCommunity();
-      });
     }
 
     // -------------------------------------------------------------------------
@@ -7322,17 +7329,18 @@
       });
     }
 
-    if (btnShowQr) {
-      btnShowQr.addEventListener("click", () => {
-        const url = getInviteUrl();
-        const myHandle = (currentUser && currentUser.user_metadata && currentUser.user_metadata.username) || "piwosz";
-        if (qrImage) {
-          qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(url)}`;
-        }
-        if (qrHandle) qrHandle.textContent = `@${myHandle}`;
-        if (qrModal) qrModal.style.display = "flex";
-      });
+    function openQrModal() {
+      const url = getInviteUrl();
+      const myHandle = (currentUser && currentUser.user_metadata && currentUser.user_metadata.username) || "piwosz";
+      if (qrImage) {
+        qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(url)}`;
+      }
+      if (qrHandle) qrHandle.textContent = `@${myHandle}`;
+      if (qrModal) qrModal.style.display = "flex";
     }
+
+    if (btnShowQr) btnShowQr.addEventListener("click", openQrModal);
+    if (btnHeaderQr) btnHeaderQr.addEventListener("click", openQrModal);
 
     if (qrCloseBtn && qrModal) {
       qrCloseBtn.addEventListener("click", () => { qrModal.style.display = "none"; });

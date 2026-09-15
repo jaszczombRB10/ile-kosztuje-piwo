@@ -7644,10 +7644,160 @@ header,
   border-color: #38bdf8;
 }
 
-/* Community Modal ("Untappd + Strava dla Warszawy") */
-.community-modal-card {
-  max-width: 520px;
+/* ==========================================================================
+   Full-Screen Native Page View (#community-modal)
+   Inspired by VKÖ / Goin' & Apple Native App Style
+   ========================================================================== */
+
+.app-page-view#community-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  background: #0b1318;
+  z-index: 9985; /* Below mobile bottom nav (9990) so dock stays visible */
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.22s ease, transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+}
+
+.app-page-view#community-modal.active,
+.app-page-view#community-modal[style*="display: flex"],
+.app-page-view#community-modal[style*="display:flex"] {
+  display: flex !important;
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+  pointer-events: auto !important;
+}
+
+.community-page-container {
+  display: flex;
+  flex-direction: column;
   width: 100%;
+  height: 100%;
+  max-width: 780px;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 1. Native Page Top App Bar */
+.community-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: max(14px, env(safe-area-inset-top, 14px)) 16px 12px 16px;
+  background: rgba(11, 19, 24, 0.96);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+  z-index: 20;
+}
+
+.btn-page-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #38bdf8;
+  font-size: 0.84rem;
+  font-weight: 700;
+  padding: 6px 12px 6px 8px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  touch-action: manipulation;
+}
+
+.btn-page-back:hover {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.35);
+  color: #7dd3fc;
+}
+
+.btn-page-back:active {
+  transform: scale(0.96);
+}
+
+.community-header-center {
+  text-align: center;
+}
+
+.community-header-center h2 {
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: #ffffff;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.community-header-sub {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  display: block;
+}
+
+.btn-page-action {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  touch-action: manipulation;
+}
+
+.btn-page-action:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(249, 115, 22, 0.4);
+}
+
+.btn-page-action:active {
+  transform: scale(0.95);
+}
+
+/* 2. Dock Wrapper (Sticky) */
+.vko-dock-wrapper {
+  padding: 10px 16px 8px 16px;
+  background: rgba(11, 19, 24, 0.95);
+  flex-shrink: 0;
+  z-index: 15;
+}
+
+.vko-dock-wrapper .vko-segment-dock {
+  margin: 0;
+}
+
+/* 3. Full-Height Scrollable Page Body */
+.community-page-body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 8px 16px calc(76px + env(safe-area-inset-bottom, 24px)) 16px;
+  box-sizing: border-box;
+}
+
+@media (min-width: 641px) {
+  .community-page-body {
+    padding-bottom: 90px;
+  }
 }
 
 .community-tabs {
