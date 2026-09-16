@@ -1638,7 +1638,7 @@ body.theme-light .venue-btn-edit.highlight-edit {
   border-radius: 10px;
   padding: 10px 12px;
   color: #fff;
-  font-size: 0.88rem;
+  font-size: 16px;
   outline: none;
 }
 
@@ -14560,4 +14560,276 @@ body.theme-light .ice-input {
   background: #ffffff;
   border-color: #cbd5e1;
   color: #0f172a;
+}
+
+/* ==========================================================================
+   Apple App Store Compliance & Mobile Ergonomics
+   (iOS Input Zoom, Account Deletion 5.1.1(v), UGC Report & Block 1.2)
+   ========================================================================== */
+
+/* 1. iOS Safari Auto-Zoom Prevention */
+@media screen and (max-width: 768px) {
+  input[type="text"],
+  input[type="password"],
+  input[type="email"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="search"],
+  select,
+  textarea,
+  .form-input,
+  .form-select,
+  .search-input,
+  #mobile-search-input,
+  .input-with-prefix input {
+    font-size: 16px !important;
+  }
+}
+
+/* 2. Account Deletion (Apple Guideline 5.1.1(v)) */
+.profile-danger-zone {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(239, 68, 68, 0.25);
+  text-align: center;
+}
+
+.btn-delete-account-trigger {
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  opacity: 0.8;
+}
+
+.btn-delete-account-trigger:hover,
+.btn-delete-account-trigger:active {
+  background: rgba(239, 68, 68, 0.12);
+  opacity: 1;
+}
+
+.modal-card-danger {
+  max-width: 440px;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  box-shadow: 0 10px 30px rgba(239, 68, 68, 0.15);
+}
+
+.modal-icon-danger {
+  background: rgba(239, 68, 68, 0.18) !important;
+  color: #ef4444 !important;
+}
+
+.danger-warning-box {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: #fca5a5;
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.danger-warning-box strong {
+  color: #ef4444;
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+}
+
+.danger-warning-box ul {
+  margin: 6px 0 0 18px;
+  padding: 0;
+}
+
+.danger-warning-box li {
+  margin-bottom: 4px;
+}
+
+.danger-actions-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 10px;
+}
+
+.btn-danger-solid {
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-danger-solid:hover:not(:disabled) {
+  background: #dc2626;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.4);
+}
+
+.btn-danger-solid:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: rgba(239, 68, 68, 0.5);
+}
+
+/* 3. UGC Moderation & Reporting (Apple Guideline 1.2) */
+.bereal-img-box {
+  position: relative;
+}
+
+.bereal-btn-report {
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #e2e8f0;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 6;
+}
+
+.bereal-btn-report:hover,
+.bereal-btn-report:active {
+  background: rgba(239, 68, 68, 0.85);
+  color: #fff;
+  border-color: #ef4444;
+}
+
+.ugc-report-modal-card {
+  max-width: 440px;
+}
+
+.ugc-report-target-info {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+.ugc-report-target-info strong {
+  color: #f1f5f9;
+}
+
+.ugc-reasons-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.ugc-reason-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #e2e8f0;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.ugc-reason-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.ugc-reason-item input[type="radio"] {
+  accent-color: var(--primary);
+  width: 17px;
+  height: 17px;
+  cursor: pointer;
+}
+
+.ugc-divider-text {
+  text-align: center;
+  font-size: 0.75rem;
+  color: #64748b;
+  margin: 6px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.btn-danger-outline {
+  background: transparent;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #ef4444;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-danger-outline:hover,
+.btn-danger-outline:active {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: #ef4444;
+}
+
+body.theme-light .btn-delete-account-trigger {
+  color: #dc2626;
+}
+
+body.theme-light .modal-card-danger {
+  background: #ffffff;
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+body.theme-light .danger-warning-box {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #991b1b;
+}
+
+body.theme-light .ugc-report-modal-card {
+  background: #ffffff;
+}
+
+body.theme-light .ugc-report-target-info {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #475569;
+}
+
+body.theme-light .ugc-report-target-info strong {
+  color: #0f172a;
+}
+
+body.theme-light .ugc-reason-item {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #1e293b;
+}
+
+body.theme-light .ugc-reason-item:hover {
+  background: #f1f5f9;
 }

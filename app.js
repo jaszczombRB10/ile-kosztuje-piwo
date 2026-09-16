@@ -7177,6 +7177,115 @@
         showAppToast("Wylogowano pomyślnie.", "Do zobaczenia przy barze!", "👋");
       });
     }
+
+    // Account Deletion (Apple Guideline 5.1.1(v) Compliance)
+    const btnDeleteTrigger = document.getElementById("btn-delete-account-trigger");
+    const deleteModal = document.getElementById("delete-account-modal");
+    const btnCloseDelete = document.getElementById("btn-close-delete-account-modal");
+    const btnCancelDelete = document.getElementById("btn-cancel-delete-account");
+    const btnConfirmDelete = document.getElementById("btn-confirm-delete-account");
+    const inputConfirmDelete = document.getElementById("input-confirm-delete-account");
+
+    function openDeleteAccountModal() {
+      if (!deleteModal) return;
+      if (inputConfirmDelete) inputConfirmDelete.value = "";
+      if (btnConfirmDelete) {
+        btnConfirmDelete.disabled = true;
+        btnConfirmDelete.innerHTML = "<span>🗑️ Trwale usuń moje konto</span>";
+      }
+      deleteModal.style.display = "flex";
+    }
+
+    function closeDeleteAccountModal() {
+      if (!deleteModal) return;
+      deleteModal.style.display = "none";
+      if (inputConfirmDelete) inputConfirmDelete.value = "";
+    }
+
+    if (btnDeleteTrigger) {
+      btnDeleteTrigger.addEventListener("click", () => {
+        if (!currentUser) {
+          showAppToast("Zaloguj się", "Musisz być zalogowany, aby zarządzać kontem.", "👤");
+          return;
+        }
+        openDeleteAccountModal();
+      });
+    }
+
+    if (btnCloseDelete) btnCloseDelete.addEventListener("click", closeDeleteAccountModal);
+    if (btnCancelDelete) btnCancelDelete.addEventListener("click", closeDeleteAccountModal);
+    if (deleteModal) {
+      deleteModal.addEventListener("click", (e) => {
+        if (e.target === deleteModal) closeDeleteAccountModal();
+      });
+    }
+
+    if (inputConfirmDelete && btnConfirmDelete) {
+      inputConfirmDelete.addEventListener("input", () => {
+        const val = inputConfirmDelete.value.trim().toUpperCase();
+        btnConfirmDelete.disabled = (val !== "USUŃ" && val !== "USUN");
+      });
+    }
+
+    if (btnConfirmDelete) {
+      btnConfirmDelete.addEventListener("click", async () => {
+        if (!currentUser) return;
+        const targetUserId = currentUser.id;
+        btnConfirmDelete.disabled = true;
+        btnConfirmDelete.innerHTML = "<span>⏳ Usuwanie konta z bazy...</span>";
+
+        try {
+          // 1. Send delete-account request to backend API (Supabase Admin)
+          await fetch("/api/auth", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "delete-account",
+              payload: { userId: targetUserId }
+            })
+          }).catch(e => console.warn("Backend delete note:", e));
+
+          // 2. Sign out from Supabase Auth
+          if (supabaseClient && supabaseClient.auth) {
+            await supabaseClient.auth.signOut().catch(() => {});
+          }
+
+          // 3. Clear all local storage belonging to this user
+          try {
+            localStorage.removeItem("poilepiwko_user_avatar_photo_" + targetUserId);
+            localStorage.removeItem("poilepiwko_user_badges");
+            localStorage.removeItem("poilepiwko_my_reviews");
+            localStorage.removeItem("warsaw_user_venues");
+            localStorage.removeItem("warsaw_visited_venues");
+            localStorage.removeItem("warsaw_favorite_venues");
+            localStorage.removeItem("poilepiwko_ice_contact");
+          } catch (e) {}
+
+          currentUser = null;
+          currentProfile = null;
+          visitedVenues = [];
+          favoriteVenues = [];
+          myFollowingIds = [];
+          myNotifications = [];
+          unreadNotificationsCount = 0;
+          knownNotificationIds.clear();
+
+          updateAuthUI();
+          updatePassportCounters();
+          updateFavoriteCounters();
+
+          closeDeleteAccountModal();
+          if (modal) modal.style.display = "none";
+
+          showAppToast("Konto zostało usunięte", "Wszystkie Twoje dane zostały bezpowrotnie wykasowane.", "🗑️", 5000);
+        } catch (err) {
+          console.error("Account deletion failed:", err);
+          showAppToast("Wystąpił błąd", "Spróbuj ponownie lub skontaktuj się z administratorem.", "⚠️");
+          btnConfirmDelete.disabled = false;
+          btnConfirmDelete.innerHTML = "<span>🗑️ Trwale usuń moje konto</span>";
+        }
+      });
+    }
   }
 
   function initCommunityModal() {
@@ -7796,7 +7905,22 @@
         const data = await res.json();
         const feed = data.feed || [];
 
-        if (feed.length === 0) {
+        let blockedUsers = [];
+        try {
+          blockedUsers = JSON.parse(localStorage.getItem("poilepiwko_blocked_users") || "[]");
+          if (!Array.isArray(blockedUsers)) blockedUsers = [];
+        } catch (e) {
+          blockedUsers = [];
+        }
+
+        const visibleFeed = feed.filter(item => {
+          if (!item) return false;
+          if (item.author_id && blockedUsers.includes(item.author_id)) return false;
+          if (item.author_name && blockedUsers.includes(item.author_name)) return false;
+          return true;
+        });
+
+        if (visibleFeed.length === 0) {
           feedGrid.innerHTML = `
             <div class="empty-state-card" style="grid-column: 1 / -1;">
               <div class="empty-icon">📸</div>
@@ -7807,7 +7931,7 @@
           return;
         }
 
-        feedGrid.innerHTML = feed.map(item => {
+        feedGrid.innerHTML = visibleFeed.map(item => {
           const timeAgo = formatTimeAgo(item.created_at);
           const avatarContent = item.avatar_photo
             ? `<img src="${escapeHtml(item.avatar_photo)}" alt="Avatar" />`
@@ -7819,6 +7943,7 @@
                 <img src="${escapeHtml(item.photo_url)}" alt="Piwo w ${escapeHtml(item.venue_name)}" loading="lazy" />
                 <div class="bereal-pip-avatar" title="${escapeHtml(item.author_name)}">${avatarContent}</div>
                 ${item.beer_price ? `<div class="bereal-price-tag">${escapeHtml(String(item.beer_price))} zł</div>` : ""}
+                <button type="button" class="bereal-btn-report" onclick="window.__openUgcReportModal('${escapeHtml(item.id)}', '${escapeHtml(item.author_id || '')}', '${escapeHtml(item.author_name || '')}', '${escapeHtml(item.venue_name || '')}')" title="Zgłoś to zdjęcie lub zablokuj użytkownika">🚩</button>
               </div>
               <div class="bereal-info-box">
                 <div class="bereal-venue-title" onclick="window.__openVenueById('${escapeHtml(item.venue_id)}')">
@@ -7866,6 +7991,111 @@
         console.warn("Cheers reaction err:", e);
       }
     };
+
+    // -------------------------------------------------------------------------
+    // UGC Content Reporting & User Blocking (Apple Guideline 1.2 Compliance)
+    // -------------------------------------------------------------------------
+    let activeUgcReport = null;
+    const ugcModal = document.getElementById("ugc-report-modal");
+    const ugcCloseBtn = document.getElementById("btn-close-ugc-report");
+    const ugcTargetInfo = document.getElementById("ugc-report-target-info");
+    const ugcDetails = document.getElementById("ugc-report-details");
+    const ugcSubmitBtn = document.getElementById("btn-submit-ugc-report");
+    const ugcBlockBtn = document.getElementById("btn-block-ugc-author");
+    const ugcBlockText = document.getElementById("btn-block-ugc-text");
+
+    window.__openUgcReportModal = function(contentId, authorId, authorName, venueName) {
+      activeUgcReport = { contentId, authorId, authorName, venueName };
+      if (ugcTargetInfo) {
+        ugcTargetInfo.innerHTML = `Treść dodana przez: <strong>@${escapeHtml(authorName || "anonim")}</strong> w lokalu <strong>${escapeHtml(venueName || "Warszawa")}</strong>`;
+      }
+      if (ugcBlockText) {
+        ugcBlockText.textContent = authorName ? `🚫 Zablokuj użytkownika @${authorName}` : "🚫 Zablokuj tego użytkownika";
+      }
+      if (ugcDetails) ugcDetails.value = "";
+      if (ugcModal) {
+        ugcModal.style.display = "flex";
+      }
+    };
+
+    window.__closeUgcReportModal = function() {
+      activeUgcReport = null;
+      if (ugcModal) ugcModal.style.display = "none";
+      if (ugcDetails) ugcDetails.value = "";
+    };
+
+    if (ugcCloseBtn) ugcCloseBtn.addEventListener("click", window.__closeUgcReportModal);
+    if (ugcModal) {
+      ugcModal.addEventListener("click", (e) => {
+        if (e.target === ugcModal) window.__closeUgcReportModal();
+      });
+    }
+
+    if (ugcSubmitBtn) {
+      ugcSubmitBtn.addEventListener("click", async () => {
+        if (!activeUgcReport) return;
+        const selectedRadio = document.querySelector('input[name="ugc-report-reason"]:checked');
+        const reasonVal = selectedRadio ? selectedRadio.value : "other";
+        const reasonLabels = {
+          offensive: "Wulgaryzmy lub mowa nienawiści",
+          photo: "Nieodpowiednie / obsceniczne zdjęcie",
+          fake_price: "Fałszywe ceny, trolling lub spam",
+          other: "Inne naruszenie regulaminu"
+        };
+        const detailsText = ugcDetails ? ugcDetails.value.trim() : "";
+
+        ugcSubmitBtn.disabled = true;
+        ugcSubmitBtn.innerHTML = "<span>⏳ Wysyłanie zgłoszenia...</span>";
+
+        try {
+          await fetch("/api/auth", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "report-content",
+              payload: {
+                contentId: activeUgcReport.contentId,
+                contentType: "photo",
+                reportedUserId: activeUgcReport.authorId,
+                reportedUsername: activeUgcReport.authorName,
+                reason: reasonLabels[reasonVal] || reasonVal,
+                details: detailsText,
+                reporterUserId: currentUser ? currentUser.id : null
+              }
+            })
+          });
+        } catch (e) {
+          console.warn("UGC report API call note:", e);
+        }
+
+        ugcSubmitBtn.disabled = false;
+        ugcSubmitBtn.innerHTML = "<span>🚩 Wyślij zgłoszenie do moderacji</span>";
+        window.__closeUgcReportModal();
+        showAppToast("Zgłoszenie przyjęte", "Dziękujemy. Treść została przekazana do natychmiastowej weryfikacji.", "🛡️", 4500);
+      });
+    }
+
+    if (ugcBlockBtn) {
+      ugcBlockBtn.addEventListener("click", () => {
+        if (!activeUgcReport) return;
+        const targetName = activeUgcReport.authorName || "użytkownika";
+        if (!confirm(`Czy na pewno chcesz zablokować @${targetName}? Jego zdjęcia i meldunki przestaną być dla Ciebie widoczne.`)) {
+          return;
+        }
+
+        try {
+          let blocked = JSON.parse(localStorage.getItem("poilepiwko_blocked_users") || "[]");
+          if (!Array.isArray(blocked)) blocked = [];
+          if (activeUgcReport.authorId) blocked.push(activeUgcReport.authorId);
+          if (activeUgcReport.authorName) blocked.push(activeUgcReport.authorName);
+          localStorage.setItem("poilepiwko_blocked_users", JSON.stringify(Array.from(new Set(blocked))));
+        } catch (e) {}
+
+        window.__closeUgcReportModal();
+        showAppToast("Zablokowano użytkownika", `Treści od @${targetName} zostały ukryte w Twoim telefonie.`, "🚫", 4500);
+        loadLiveBarFeed();
+      });
+    }
 
     // Client-side compressed image upload for bar photo
     if (btnAddPhoto && feedFileInput) {

@@ -1795,6 +1795,56 @@
         </button>
       </div>
 
+      <!-- Account Deletion Trigger (Apple App Store Guideline 5.1.1(v)) -->
+      <div class="profile-danger-zone">
+        <button type="button" class="btn-delete-account-trigger" id="btn-delete-account-trigger" title="Trwale usuń konto i powiązane dane z bazy serwisu">
+          🗑️ Usuń konto i dane
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modal: Potwierdzenie Usunięcia Konta (Apple Guideline 5.1.1(v)) -->
+  <div class="modal-backdrop" id="delete-account-modal" style="display:none; z-index: 10200;">
+    <div class="modal-card modal-card-danger">
+      <div class="modal-head">
+        <div class="modal-head-title">
+          <div class="modal-icon-badge modal-icon-danger">⚠️</div>
+          <div>
+            <h2>Usuń konto i dane</h2>
+            <p class="modal-head-sub">Nieodwracalna operacja usunięcia profilu</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close" id="btn-close-delete-account-modal" aria-label="Zamknij">✕</button>
+      </div>
+
+      <div class="danger-modal-body">
+        <div class="danger-warning-box">
+          <strong>Uwaga: Tej operacji nie można cofnąć!</strong>
+          <p>Jeśli zdecydujesz się usunąć konto w poilepiwko:</p>
+          <ul>
+            <li>Twój profil oraz nick zostaną natychmiast skasowane;</li>
+            <li>Utracisz zdobyte Kapsle, rangi i odznaki w Piwnym Paszporcie;</li>
+            <li>Twoje powiązania z ekipą i obserwowani znajomi zostaną usunięci;</li>
+            <li>Wszystkie dane osobowe zostaną bezpowrotnie usunięte z bazy danych (zgodnie z RODO i wymogami Apple).</li>
+          </ul>
+        </div>
+
+        <div class="form-group" style="margin-top: 14px;">
+          <label for="input-confirm-delete-account" class="form-label">Aby potwierdzić, wpisz wielkimi literami słowo: <strong>USUŃ</strong></label>
+          <input type="text" id="input-confirm-delete-account" class="form-input" placeholder="Wpisz USUŃ" autocomplete="off" />
+        </div>
+
+        <div class="danger-actions-grid" style="margin-top: 16px;">
+          <button type="button" class="btn-danger-solid" id="btn-confirm-delete-account" disabled>
+            <span>🗑️ Trwale usuń moje konto</span>
+          </button>
+          <button type="button" class="btn-secondary" id="btn-cancel-delete-account">
+            <span>Anuluj</span>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -2781,6 +2831,63 @@
           <div class="sos-ice-box" id="sos-ice-box">
             <!-- Dynamic ICE contact content populated via JS -->
           </div>
+        </div>
+      </div>
+    </div>
+  <!-- Modal: Zgłaszanie Treści & Blokowanie Użytkownika (Apple UGC Guideline 1.2) -->
+  <div class="modal-backdrop" id="ugc-report-modal" style="display:none; z-index: 10250;">
+    <div class="modal-card ugc-report-modal-card">
+      <div class="modal-head">
+        <div class="modal-head-title">
+          <div class="modal-icon-badge">🚩</div>
+          <div>
+            <h2 id="ugc-report-modal-title">Zgłoś treść</h2>
+            <p class="modal-head-sub" id="ugc-report-modal-sub">Dbamy o bezpieczną społeczność i rzetelne ceny</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close" id="btn-close-ugc-report" aria-label="Zamknij">✕</button>
+      </div>
+
+      <div class="ugc-report-body">
+        <div class="ugc-report-target-info" id="ugc-report-target-info">
+          <!-- Dynamic author / venue text -->
+        </div>
+
+        <div class="form-group" style="margin-top: 12px;">
+          <label class="form-label">Wybierz powód zgłoszenia:</label>
+          <div class="ugc-reasons-list">
+            <label class="ugc-reason-item">
+              <input type="radio" name="ugc-report-reason" value="offensive" checked />
+              <span>🤬 Wulgaryzmy, obraźliwe treści lub nienawiść</span>
+            </label>
+            <label class="ugc-reason-item">
+              <input type="radio" name="ugc-report-reason" value="photo" />
+              <span>📸 Nieodpowiednie / obsceniczne zdjęcie</span>
+            </label>
+            <label class="ugc-reason-item">
+              <input type="radio" name="ugc-report-reason" value="fake_price" />
+              <span>💸 Fałszywe ceny, trolling lub spam</span>
+            </label>
+            <label class="ugc-reason-item">
+              <input type="radio" name="ugc-report-reason" value="other" />
+              <span>⚠️ Inne naruszenie regulaminu</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 10px;">
+          <label for="ugc-report-details" class="form-label">Dodatkowy opis (opcjonalnie):</label>
+          <textarea id="ugc-report-details" class="form-input" rows="2" placeholder="Napisz krótko co jest nie tak..."></textarea>
+        </div>
+
+        <div class="ugc-actions-box" style="margin-top: 14px;">
+          <button type="button" class="btn-primary" id="btn-submit-ugc-report" style="width: 100%;">
+            <span>🚩 Wyślij zgłoszenie do moderacji</span>
+          </button>
+          <div class="ugc-divider-text">lub</div>
+          <button type="button" class="btn-danger-outline" id="btn-block-ugc-author" style="width: 100%;">
+            <span id="btn-block-ugc-text">🚫 Zablokuj tego użytkownika</span>
+          </button>
         </div>
       </div>
     </div>
