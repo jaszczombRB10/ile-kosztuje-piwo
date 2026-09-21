@@ -421,39 +421,57 @@ module.exports = async (req, res) => {
           }
         }
 
-        // Fetch recent user check-in photos
-        const allRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?per_page=50`, { headers });
+        // Fetch recent user check-in photos / BeReals
+        const allRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?per_page=100`, { headers });
         if (allRes.ok) {
           const uData = await allRes.json();
           const allU = uData.users || [];
           for (const u of allU) {
             const m = u.user_metadata || {};
-            const ch = m.last_checkin;
-            if (ch && ch.photo_url) {
-              items.unshift({
-                id: "chk_" + u.id,
-                venue_id: ch.venue_id || "",
-                venue_name: ch.venue_name || "Lokal w Warszawie",
-                district: ch.district || "Warszawa",
-                beer_name: ch.beer_name || "Piwo z nalewaka",
-                beer_price: ch.beer_price,
-                photo_url: ch.photo_url,
-                selfie_url: ch.selfie_url || null,
-                user_id: u.id,
-                author_id: u.id,
-                user_name: m.display_name || m.username || "Piwosz",
-                author_name: m.username || m.display_name || "Piwosz",
-                user_handle: m.username ? `@${m.username}` : "@piwosz",
-                user_avatar: m.avatar_icon || "🍺",
-                avatar_icon: m.avatar_icon || "🍺",
-                user_photo: m.avatar_photo || null,
-                avatar_photo: m.avatar_photo || null,
-                created_at: new Date(ch.timestamp || Date.now()).toISOString(),
-                cheers_count: 7
-              });
+            // Collect all BeReal posts for this user (or fallback to last_checkin)
+            let userPosts = [];
+            if (Array.isArray(m.bereal_posts) && m.bereal_posts.length > 0) {
+              userPosts = [...m.bereal_posts];
+            } else if (m.last_checkin && m.last_checkin.photo_url) {
+              userPosts = [m.last_checkin];
+            }
+
+            for (const ch of userPosts) {
+              if (ch && ch.photo_url) {
+                const postId = ch.id || ("chk_" + u.id + "_" + (ch.timestamp || ""));
+                items.push({
+                  id: postId,
+                  venue_id: ch.venue_id || "",
+                  venue_name: ch.venue_name || "Lokal w Warszawie",
+                  district: ch.district || "Warszawa",
+                  beer_name: ch.beer_name || "Piwo z nalewaka",
+                  beer_price: ch.beer_price,
+                  photo_url: ch.photo_url,
+                  selfie_url: ch.selfie_url || null,
+                  user_id: u.id,
+                  author_id: u.id,
+                  user_name: m.display_name || m.username || "Piwosz",
+                  author_name: m.username || m.display_name || "Piwosz",
+                  user_handle: m.username ? `@${m.username}` : "@piwosz",
+                  user_avatar: m.avatar_icon || "🍺",
+                  avatar_icon: m.avatar_icon || "🍺",
+                  user_photo: m.avatar_photo || null,
+                  avatar_photo: m.avatar_photo || null,
+                  created_at: new Date(ch.timestamp || Date.now()).toISOString(),
+                  timestamp: ch.timestamp || Date.now(),
+                  cheers_count: typeof ch.cheers_count === "number" ? ch.cheers_count : 5
+                });
+              }
             }
           }
         }
+
+        // Sort all feed items chronologically: freshest first!
+        items.sort((a, b) => {
+          const tA = a.timestamp || (a.created_at ? new Date(a.created_at).getTime() : 0);
+          const tB = b.timestamp || (b.created_at ? new Date(b.created_at).getTime() : 0);
+          return tB - tA;
+        });
 
         return res.status(200).json({ success: true, feed: items });
       } catch (err) {
@@ -599,9 +617,11 @@ module.exports = async (req, res) => {
 
             const curKapsle = typeof meta.kapsle_points === "number" ? meta.kapsle_points : 0;
             const earned = photoUrl ? 15 : 10;
-            const newKapsle = curKapsle + earned;
+            const now = Date.now();
+            const postId = "post_" + userId.slice(0, 8) + "_" + now;
 
             const checkinData = {
+              id: postId,
               venue_id: venueId,
               venue_name: venueName || "Bar w Warszawie",
               district: district || "Warszawa",
@@ -611,9 +631,23 @@ module.exports = async (req, res) => {
               beer_price: beerPrice || 14.0,
               photo_url: photoUrl || null,
               selfie_url: selfieUrl || null,
-              timestamp: Date.now(),
+              timestamp: now,
               ghost_mode: !!ghostMode
             };
+
+            let berealPosts = Array.isArray(meta.bereal_posts) ? [...meta.bereal_posts] : [];
+            // Preserve legacy single last_checkin if it was not in bereal_posts yet
+            if (berealPosts.length === 0 && meta.last_checkin && meta.last_checkin.photo_url) {
+              berealPosts.push({
+                ...meta.last_checkin,
+                id: meta.last_checkin.id || ("post_" + userId.slice(0, 8) + "_" + (meta.last_checkin.timestamp || (now - 1000)))
+              });
+            }
+
+            if (photoUrl) {
+              berealPosts.unshift(checkinData);
+              if (berealPosts.length > 50) berealPosts = berealPosts.slice(0, 50);
+            }
 
             await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(userId)}`, {
               method: "PUT",
@@ -623,12 +657,13 @@ module.exports = async (req, res) => {
                   ...meta,
                   visited_venues: visited,
                   last_checkin: checkinData,
+                  bereal_posts: berealPosts,
                   kapsle_points: newKapsle
                 }
               })
             });
 
-            return res.status(200).json({ success: true, earnedKapsle: earned, totalKapsle: newKapsle });
+            return res.status(200).json({ success: true, earnedKapsle: earned, totalKapsle: newKapsle, postId });
           }
         } catch (e) {
           console.warn("Checkin user metadata update note:", e);
@@ -636,6 +671,67 @@ module.exports = async (req, res) => {
       }
 
       return res.status(200).json({ success: true, earnedKapsle: 10 });
+    }
+
+    // =========================================================================
+    // 6b. Delete Live Feed Post (BeReal)
+    // =========================================================================
+    if (action === "delete-feed-post") {
+      const { userId, postId } = payload || {};
+      if (!userId || !postId) {
+        return res.status(400).json({ error: "Brak identyfikatora użytkownika lub posta." });
+      }
+
+      try {
+        const userRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(userId)}`, { headers });
+        if (!userRes.ok) {
+          return res.status(404).json({ error: "Nie znaleziono profilu użytkownika." });
+        }
+
+        const u = await userRes.json();
+        const meta = u.user_metadata || {};
+        let berealPosts = Array.isArray(meta.bereal_posts) ? [...meta.bereal_posts] : [];
+
+        // Filter out the deleted post
+        berealPosts = berealPosts.filter(p => {
+          if (!p) return false;
+          if (p.id === postId) return false;
+          if (("chk_" + userId) === postId) return false;
+          if (("chk_" + userId + "_" + (p.timestamp || "")) === postId) return false;
+          return true;
+        });
+
+        // Also check if last_checkin matches this post
+        let lastCheckin = meta.last_checkin;
+        if (lastCheckin && (
+          lastCheckin.id === postId || 
+          ("chk_" + userId) === postId || 
+          ("chk_" + userId + "_" + (lastCheckin.timestamp || "")) === postId
+        )) {
+          lastCheckin = berealPosts.length > 0 ? { ...berealPosts[0] } : null;
+        }
+
+        await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(userId)}`, {
+          method: "PUT",
+          headers,
+          body: JSON.stringify({
+            user_metadata: {
+              ...meta,
+              last_checkin: lastCheckin,
+              bereal_posts: berealPosts
+            }
+          })
+        });
+
+        return res.status(200).json({
+          success: true,
+          message: "Post został trwale usunięty z Live Feedu.",
+          remainingCount: berealPosts.length
+        });
+      } catch (err) {
+        console.error("delete-feed-post error:", err);
+        return res.status(500).json({ error: "Błąd podczas usuwania posta." });
+      }
     }
 
     // Cheers 🍻 reaction on bar photo

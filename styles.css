@@ -9689,6 +9689,52 @@ header,
   border-color: rgba(239, 68, 68, 0.3) !important;
 }
 
+.bereal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.bereal-btn-delete {
+  background: rgba(239, 68, 68, 0.12) !important;
+  border: 1px solid rgba(239, 68, 68, 0.28) !important;
+  color: #fca5a5 !important;
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 0.95rem !important;
+  cursor: pointer !important;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  flex-shrink: 0 !important;
+  padding: 0 !important;
+}
+
+.bereal-btn-delete:hover {
+  background: rgba(239, 68, 68, 0.25) !important;
+  border-color: rgba(239, 68, 68, 0.55) !important;
+  color: #fee2e2 !important;
+  transform: scale(1.08);
+}
+
+.bereal-btn-delete:active {
+  transform: scale(0.95);
+}
+
+.bereal-author-badge-me {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.14);
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  border-radius: 999px;
+  padding: 1px 6px;
+  line-height: 1.2;
+}
+
 /* 2. Photo Viewport with Dual BeReal PiP: Clean and unobstructed */
 .bereal-img-box,
 .bereal-viewport {
@@ -14338,6 +14384,23 @@ body.theme-light .btn-ig-following:hover {
   background: #fee2e2 !important;
   border-color: #fca5a5 !important;
   color: #dc2626 !important;
+}
+
+body.theme-light .bereal-btn-delete {
+  background: #fee2e2 !important;
+  border-color: #fca5a5 !important;
+  color: #ef4444 !important;
+}
+
+body.theme-light .bereal-btn-delete:hover {
+  background: #fecaca !important;
+  border-color: #f87171 !important;
+}
+
+body.theme-light .bereal-author-badge-me {
+  background: rgba(2, 132, 199, 0.12) !important;
+  border-color: rgba(2, 132, 199, 0.3) !important;
+  color: #0284c7 !important;
 }
 
 body.theme-light .user-search-card,

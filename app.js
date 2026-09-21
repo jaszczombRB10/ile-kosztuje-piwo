@@ -8373,10 +8373,11 @@
           const venueId = item.venue_id || "";
           const venueName = item.venue_name || "Warszawa";
           const authorId = item.author_id || item.user_id || "";
+          const isAuthor = currentUser && (currentUser.id === authorId || (currentUser.user_metadata && currentUser.user_metadata.username === authorName));
 
           return `
             <div class="beer-bereal-card" data-post-id="${escapeHtml(item.id)}">
-              <!-- 1. Post Header: Author info (Avatar, Handle, Location link & Time) + Report Flag -->
+              <!-- 1. Post Header: Author info + Actions (Delete for Author / Report for others) -->
               <div class="bereal-post-header">
                 <div class="bereal-author-box">
                   <div class="bereal-author-avatar" onclick="window.__openUserProfile('${escapeHtml(authorName)}')">
@@ -8387,6 +8388,7 @@
                       <span class="bereal-author-name" onclick="window.__openUserProfile('${escapeHtml(authorName)}')">
                         @${escapeHtml(authorName)}
                       </span>
+                      ${isAuthor ? `<span class="bereal-author-badge-me">Ty</span>` : ""}
                     </div>
                     <div class="bereal-sub-meta">
                       <span class="bereal-venue-link" onclick="window.__openVenueById('${escapeHtml(venueId)}')" title="Pokaż lokal na mapie">
@@ -8397,7 +8399,13 @@
                     </div>
                   </div>
                 </div>
-                <button type="button" class="bereal-btn-report" onclick="window.__openUgcReportModal('${escapeHtml(item.id)}', '${escapeHtml(authorId)}', '${escapeHtml(authorName)}', '${escapeHtml(venueName)}')" title="Zgłoś to zdjęcie lub zablokuj użytkownika">🚩</button>
+                <div class="bereal-header-actions">
+                  ${isAuthor ? `
+                    <button type="button" class="bereal-btn-delete" onclick="window.__deleteFeedPost('${escapeHtml(item.id)}', this)" title="Usuń swój post z Feedu">🗑️</button>
+                  ` : `
+                    <button type="button" class="bereal-btn-report" onclick="window.__openUgcReportModal('${escapeHtml(item.id)}', '${escapeHtml(authorId)}', '${escapeHtml(authorName)}', '${escapeHtml(venueName)}')" title="Zgłoś to zdjęcie lub zablokuj użytkownika">🚩</button>
+                  `}
+                </div>
               </div>
 
               <!-- 2. Dual BeReal / VSCO Viewport: Clean, unblocked, unobstructed photo -->
@@ -8438,6 +8446,69 @@
         feedGrid.innerHTML = `<div class="error-state-hint" style="grid-column: 1 / -1;">Nie udało się pobrać Live Feedu.</div>`;
       }
     }
+
+    // Delete BeReal / Feed Post
+    window.__deleteFeedPost = async function(postId, btnEl) {
+      if (!currentUser) {
+        showAppToast("Zaloguj się!", "Musisz być zalogowany, aby zarządzać postami.", "🔒");
+        return;
+      }
+
+      if (!confirm("Czy na pewno chcesz usunąć ten post z Live Feedu?")) {
+        return;
+      }
+
+      if (btnEl) btnEl.disabled = true;
+
+      try {
+        const res = await fetch("/api/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "delete-feed-post",
+            payload: {
+              userId: currentUser.id,
+              postId: postId
+            }
+          })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          showAppToast("Usunięto post", "Twój BeReal został trwale usunięty 🗑️", "✓");
+
+          const card = btnEl ? btnEl.closest(".beer-bereal-card") : document.querySelector(`.beer-bereal-card[data-post-id="${postId}"]`);
+          if (card) {
+            card.style.transition = "all 0.25s ease";
+            card.style.opacity = "0";
+            card.style.transform = "scale(0.92)";
+            setTimeout(() => {
+              card.remove();
+              if (feedGrid && feedGrid.querySelectorAll(".beer-bereal-card").length === 0) {
+                feedGrid.innerHTML = `
+                  <div class="empty-state-card" style="grid-column: 1 / -1;">
+                    <div class="empty-icon">📸</div>
+                    <div class="empty-title">Pusto z ostatnich 24h</div>
+                    <p class="empty-sub">Pijesz coś na mieście? Cyknij fotę kufla i dodaj do Live Feedu!</p>
+                  </div>
+                `;
+              }
+            }, 250);
+          }
+
+          if (typeof window.__refreshCommunityFriends === "function") {
+            window.__refreshCommunityFriends();
+          }
+        } else {
+          showAppToast("Błąd", data.error || "Nie udało się usunąć posta.", "⚠️");
+          if (btnEl) btnEl.disabled = false;
+        }
+      } catch (err) {
+        console.error("Delete post error:", err);
+        showAppToast("Błąd", "Problem z połączeniem z serwerem.", "⚠️");
+        if (btnEl) btnEl.disabled = false;
+      }
+    };
 
     // Swap helpers for BeReal Cards & Review Screen
     window.__swapBeRealCardImages = function(pipEl) {
