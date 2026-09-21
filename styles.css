@@ -6454,6 +6454,38 @@ header,
   transform: scale(0.92) !important;
 }
 
+.btn-header-theme {
+  width: 42px !important;
+  height: 42px !important;
+  min-width: 42px !important;
+  min-height: 42px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.16) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.35) !important;
+  color: #ffffff !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  font-size: 1.15rem !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45) !important;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  -webkit-tap-highlight-color: transparent !important;
+  touch-action: manipulation !important;
+}
+
+.btn-header-theme:hover {
+  background: rgba(249, 115, 22, 0.35) !important;
+  border-color: #f97316 !important;
+  color: #fb923c !important;
+  transform: scale(1.06) !important;
+}
+
+.btn-header-theme:active {
+  background: rgba(249, 115, 22, 0.6) !important;
+  transform: scale(0.92) !important;
+}
+
 .brand-pill {
   background: rgba(249, 115, 22, 0.15);
   color: #fb923c;
@@ -6690,25 +6722,26 @@ header,
   background: rgba(255, 255, 255, 0.045);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 18px;
-  padding: 12px 6px;
+  padding: 10px 8px;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: space-around;
   backdrop-filter: blur(8px);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
 }
 
 .stat-unit {
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 3px;
   text-align: center;
   background: none;
   border: none;
-  padding: 4px 2px;
+  padding: 6px 2px;
   cursor: pointer;
   border-radius: 12px;
   transition: all 0.15s ease;
@@ -6730,29 +6763,51 @@ header,
 .stat-unit-icon {
   font-size: 1.15rem;
   line-height: 1;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .stat-unit-val {
-  font-size: 1.25rem;
+  font-size: 1.35rem;
   font-weight: 800;
   color: #ffffff;
-  line-height: 1.1;
-  font-family: inherit;
+  line-height: 1;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  letter-spacing: -0.5px;
+  text-align: center;
+  width: 100%;
 }
 
 .stat-unit-lbl {
-  font-size: 0.68rem;
-  font-weight: 600;
+  font-size: 0.65rem;
+  font-weight: 700;
   color: #94a3b8;
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
 }
 
 .stat-unit-sep {
   width: 1px;
-  height: 28px;
+  height: 32px;
   background: rgba(255, 255, 255, 0.08);
   flex-shrink: 0;
+  align-self: center;
 }
 
 /* ==========================================================================
@@ -12267,6 +12322,7 @@ body.theme-light .brand-pill {
 }
 
 body.theme-light .btn-header-share,
+body.theme-light .btn-header-theme,
 body.theme-light .modal-close-goin {
   background: #f1f5f9 !important;
   color: #334155 !important;

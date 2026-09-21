@@ -6792,7 +6792,7 @@
         }
       }
       if (heroName) heroName.textContent = prof.display_name || prof.username;
-      if (heroHandle) heroHandle.textContent = `@${(prof.username || "krystian").toUpperCase()}`;
+      if (heroHandle) heroHandle.textContent = `@${(prof.username || "krystian").toLowerCase()}`;
       if (userNumEl) userNumEl.textContent = prof.user_number || "#000001";
       if (rankTitle) rankTitle.textContent = rank.title;
       if (statVisited) statVisited.textContent = visitedVenues.length;
@@ -6808,22 +6808,12 @@
       }
       if (statFriends) statFriends.textContent = String(frCount);
 
-      // Sub-modal stats tiles
-      const tileVisited = document.getElementById("stats-tile-visited");
-      const tileBadges = document.getElementById("stats-tile-badges");
-      const tileFavs = document.getElementById("stats-tile-favs");
-      const tileSavings = document.getElementById("stats-tile-savings");
-      if (tileVisited) tileVisited.textContent = String(visitedVenues.length);
-      if (tileBadges) tileBadges.textContent = String(loadUnlockedBadges().length);
-      if (tileFavs) tileFavs.textContent = String(favoriteVenues.length);
-      if (tileSavings) tileSavings.textContent = `~${Math.max(visitedVenues.length * 4.5, 35).toFixed(0)} zł`;
-
       if (bioDisplay) bioDisplay.textContent = prof.bio || "Warszawski poszukiwacz dobrego i taniego piwa 🍻";
       if (valBeer) valBeer.textContent = prof.favorite_beer || "Wszystkie dobre!";
       if (valDistrict) valDistrict.textContent = prof.favorite_district || "Cała Warszawa";
       if (valVibe) valVibe.textContent = prof.vibe_tags || "Kraft, Ogródki, Pub Quiz";
 
-      // Progress bar (Vad Kostar Ölen / Goin' style)
+      // Progress bar (Goin' style)
       const rankProg = calculateRankProgress(visitedVenues.length);
       const progressFill = document.getElementById("prof-progress-fill");
       const progressPercent = document.getElementById("prof-progress-percent");
@@ -6832,92 +6822,6 @@
       if (progressFill) progressFill.style.width = `${rankProg.percent}%`;
       if (progressPercent) progressPercent.textContent = `${rankProg.percent}%`;
       if (progressTarget) progressTarget.textContent = `Następna ranga: ${rankProg.nextTitle}`;
-
-      // Paszport preview & rank progress on main profile
-      const passFill = document.getElementById("prof-pass-fill");
-      const passPct = document.getElementById("prof-pass-pct");
-      const passProgressSub = document.getElementById("prof-pass-progress-sub");
-      const badgesPreviewList = document.getElementById("prof-badges-preview-list");
-
-      if (passFill) passFill.style.width = `${rankProg.percent}%`;
-      if (passPct) passPct.textContent = `${rankProg.percent}%`;
-      if (passProgressSub) {
-        passProgressSub.textContent = `${rankProg.nextTitle} (${rankProg.percent}%)`;
-      }
-
-      if (badgesPreviewList) {
-        const vMap = {};
-        if (Array.isArray(allVenues)) {
-          allVenues.forEach(v => { vMap[v.id] = v; });
-        }
-        badgesPreviewList.innerHTML = PASSPORT_BADGES.map(badge => {
-          let evaluation = { unlocked: false, progress: "0/1" };
-          try {
-            if (typeof badge.check === "function") {
-              evaluation = badge.check(visitedVenues, vMap);
-            }
-          } catch (e) {}
-          const isUnlocked = evaluation.unlocked;
-          return `
-            <div class="vko-badge-pill-card ${isUnlocked ? 'unlocked' : 'locked'}" onclick="window.__openPassport && window.__openPassport()" title="${escapeHtml(badge.name)}: ${escapeHtml(badge.desc)} (${evaluation.progress})">
-              <span class="vko-badge-pill-icon">${badge.icon || '🎖️'}</span>
-              <div class="vko-badge-pill-info">
-                <span class="vko-badge-pill-name">${escapeHtml(badge.name)}</span>
-                <span class="vko-badge-pill-prog">${isUnlocked ? 'Zdobyta ✓' : evaluation.progress}</span>
-              </div>
-            </div>
-          `;
-        }).join("");
-      }
-
-      // Check-ins feed (Visited venues or BeReal)
-      const checkinsList = document.getElementById("prof-checkins-list");
-      const emptyCheckins = document.getElementById("prof-empty-checkins");
-      const checkinsBadgeCount = document.getElementById("prof-checkins-badge-count");
-
-      if (checkinsBadgeCount) {
-        checkinsBadgeCount.textContent = String(visitedVenues.length);
-      }
-
-      if (visitedVenues.length === 0) {
-        if (checkinsList) {
-          checkinsList.innerHTML = "";
-          checkinsList.style.display = "none";
-        }
-        if (emptyCheckins) emptyCheckins.style.display = "flex";
-      } else {
-        if (emptyCheckins) emptyCheckins.style.display = "none";
-        if (checkinsList) {
-          checkinsList.style.display = "flex";
-          const vMap = {};
-          if (Array.isArray(allVenues)) {
-            allVenues.forEach(v => { vMap[v.id] = v; });
-          }
-          const recentVisited = [...visitedVenues].reverse();
-          checkinsList.innerHTML = recentVisited.map(vid => {
-            const v = vMap[vid] || { id: vid, name: "Bar w Warszawie", district: "Warszawa", beer_price_pln: 14 };
-            const priceLabel = v.beer_price_pln ? `${v.beer_price_pln.toFixed(0)} zł` : "—";
-            return `
-              <div class="vko-checkin-card" onclick="window.__zoomToVenue('${escapeHtml(v.id)}')">
-                <div class="vko-checkin-thumb">
-                  <span>🍺</span>
-                </div>
-                <div class="vko-checkin-details">
-                  <div class="vko-checkin-name">${escapeHtml(v.name)}</div>
-                  <div class="vko-checkin-sub">
-                    <span>📍 ${escapeHtml(v.district || 'Warszawa')}</span>
-                    ${v.beer_name ? `<span class="vko-checkin-beer-name">· ${escapeHtml(v.beer_name)}</span>` : ''}
-                  </div>
-                </div>
-                <div class="vko-checkin-right">
-                  <span class="vko-checkin-price">${priceLabel}</span>
-                  <span class="vko-checkin-status-badge">✓ Zameldowny</span>
-                </div>
-              </div>
-            `;
-          }).join("");
-        }
-      }
 
       // Theme icon update
       const profThemeIcon = document.getElementById("prof-theme-icon");
@@ -7008,15 +6912,7 @@
       btnCloseBottom.addEventListener("click", () => { window.__closeMyProfile(); });
     }
 
-    // Vad Kostar Ölen Header Controls
-    const btnTopRank = document.getElementById("prof-top-ranking-btn");
-    if (btnTopRank) {
-      btnTopRank.addEventListener("click", () => {
-        window.__closeMyProfile();
-        if (window.__openRankingDrawer) window.__openRankingDrawer();
-      });
-    }
-
+    // Profile Header Moon Theme Toggle
     const btnTopTheme = document.getElementById("prof-top-theme-btn");
     function updateProfThemeIcon() {
       const profThemeIcon = document.getElementById("prof-theme-icon");
@@ -7033,124 +6929,26 @@
       });
     }
 
-    // Account Settings Modal
-    const btnTopSettings = document.getElementById("prof-top-settings-btn");
-    const settingsModal = document.getElementById("account-settings-modal");
-    const btnCloseSettings = document.getElementById("btn-close-settings");
-    if (btnTopSettings && settingsModal) {
-      btnTopSettings.addEventListener("click", () => {
-        settingsModal.classList.add("active");
-        settingsModal.style.display = "flex";
+    // Avatar Click -> Quick Edit Profile
+    const heroAvatarEl = document.getElementById("prof-hero-avatar");
+    if (heroAvatarEl) {
+      heroAvatarEl.style.cursor = "pointer";
+      heroAvatarEl.title = "Kliknij, aby edytować profil";
+      heroAvatarEl.addEventListener("click", () => {
+        if (window.__openEditProfileModal) window.__openEditProfileModal();
       });
     }
-    if (btnCloseSettings && settingsModal) {
-      btnCloseSettings.addEventListener("click", () => {
-        settingsModal.classList.remove("active");
-        settingsModal.style.display = "none";
-      });
-      settingsModal.addEventListener("click", (e) => {
-        if (e.target === settingsModal) {
-          settingsModal.classList.remove("active");
-          settingsModal.style.display = "none";
+
+    // Hero Action Buttons (Pass Card, Story)
+
+    const btnOpenClubCard = document.getElementById("btn-open-club-card");
+    if (btnOpenClubCard) {
+      btnOpenClubCard.addEventListener("click", () => {
+        const cModal = document.getElementById("club-card-modal");
+        if (cModal) {
+          cModal.classList.add("active");
+          cModal.style.display = "flex";
         }
-      });
-    }
-
-    // User Statistics Modal
-    const btnOpenStats = document.getElementById("btn-open-user-stats");
-    const statsModal = document.getElementById("user-stats-modal");
-    const btnCloseStats = document.getElementById("btn-close-stats");
-    if (btnOpenStats && statsModal) {
-      btnOpenStats.addEventListener("click", () => {
-        statsModal.classList.add("active");
-        statsModal.style.display = "flex";
-      });
-    }
-    if (btnCloseStats && statsModal) {
-      btnCloseStats.addEventListener("click", () => {
-        statsModal.classList.remove("active");
-        statsModal.style.display = "none";
-      });
-      statsModal.addEventListener("click", (e) => {
-        if (e.target === statsModal) {
-          statsModal.classList.remove("active");
-          statsModal.style.display = "none";
-        }
-      });
-    }
-
-    // Avatar Box Click & Pencil Click -> Edit Profile
-    const avatarBox = document.getElementById("prof-hero-avatar-box");
-    const btnAvatarEdit = document.getElementById("btn-avatar-quick-edit");
-    if (avatarBox) {
-      avatarBox.addEventListener("click", () => {
-        if (window.__openEditProfileModal) window.__openEditProfileModal();
-      });
-    }
-    if (btnAvatarEdit) {
-      btnAvatarEdit.addEventListener("click", (e) => {
-        e.stopPropagation();
-        if (window.__openEditProfileModal) window.__openEditProfileModal();
-      });
-    }
-
-    // BeReal CTA in Empty Check-ins
-    const btnProfBereal = document.getElementById("btn-prof-bereal-cta");
-    const btnBerealEmpty = document.getElementById("btn-prof-bereal-empty-cta");
-    function triggerBerealFromProfile() {
-      window.__closeMyProfile();
-      const camBtn = document.getElementById("btn-open-bereal-camera");
-      if (camBtn) camBtn.click();
-      else if (typeof openBerealCameraModal === "function") openBerealCameraModal();
-    }
-    if (btnProfBereal) {
-      btnProfBereal.addEventListener("click", triggerBerealFromProfile);
-    }
-    if (btnBerealEmpty) {
-      btnBerealEmpty.addEventListener("click", triggerBerealFromProfile);
-    }
-
-    // Open Full Passport from Profile Card
-    const btnOpenFullPass = document.getElementById("btn-open-full-passport");
-    if (btnOpenFullPass) {
-      btnOpenFullPass.addEventListener("click", () => {
-        window.__closeMyProfile();
-        if (window.__openPassport) window.__openPassport();
-      });
-    }
-
-    // Settings Modal Links
-    const sEdit = document.getElementById("btn-setting-edit-profile");
-    if (sEdit) {
-      sEdit.addEventListener("click", () => {
-        if (settingsModal) { settingsModal.classList.remove("active"); settingsModal.style.display = "none"; }
-        if (window.__openEditProfileModal) window.__openEditProfileModal();
-      });
-    }
-    const sClub = document.getElementById("btn-setting-club-card");
-    if (sClub) {
-      sClub.addEventListener("click", () => {
-        if (settingsModal) { settingsModal.classList.remove("active"); settingsModal.style.display = "none"; }
-        const cBtn = document.getElementById("btn-open-club-card");
-        if (cBtn) cBtn.click();
-      });
-    }
-    const sFriends = document.getElementById("btn-setting-friends");
-    if (sFriends) {
-      sFriends.addEventListener("click", () => {
-        if (settingsModal) { settingsModal.classList.remove("active"); settingsModal.style.display = "none"; }
-        window.__closeMyProfile();
-        if (window.__openCommunity) window.__openCommunity();
-      });
-    }
-    const sTheme = document.getElementById("btn-setting-theme");
-    if (sTheme) {
-      sTheme.addEventListener("click", () => {
-        const cur = document.documentElement.getAttribute("data-theme") || "dark";
-        const next = cur === "light" ? "dark" : "light";
-        applyTheme(next);
-        const lbl = document.getElementById("setting-theme-label");
-        if (lbl) lbl.textContent = next === "light" ? "Jasny" : "Ciemny";
       });
     }
 
