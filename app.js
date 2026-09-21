@@ -964,14 +964,6 @@
         });
 
       marker._venueData = venue;
-      marker.on("click", () => {
-        if (window.innerWidth <= 820 && window.__openVkoVenueSheet) {
-          setTimeout(() => {
-            if (marker.closePopup) marker.closePopup();
-            window.__openVkoVenueSheet(venue, "map");
-          }, 40);
-        }
-      });
       marker.on("popupopen", () => {
         const v = marker._venueData;
         if (v) {
@@ -1007,9 +999,6 @@
 
     updateZoomOverview();
     renderRankingList(filtered);
-    if (window.__renderExploreBars) {
-      window.__renderExploreBars(filtered);
-    }
   }
 
   // Update District Select Dropdown with Live Bar Counts
@@ -4877,8 +4866,7 @@
         const target = item.getAttribute("data-target");
         clearBottomNavActive();
         item.classList.add("active");
-
-        if (target === "explore") {
+        if (target === "community" || target === "friends" || target === "spolecznosc") {
           if (window.__closeRankingDrawer) window.__closeRankingDrawer();
           if (baroModal) baroModal.classList.remove("active");
           closeModal();
@@ -4886,36 +4874,6 @@
           if (window.__closeCompass) window.__closeCompass();
           if (window.__closeMobileSearch) window.__closeMobileSearch();
           if (window.__closeHappyHours) window.__closeHappyHours();
-          if (window.__closeCommunity) window.__closeCommunity();
-          if (window.__closeVkoModals) window.__closeVkoModals();
-          if (window.__showExploreView) window.__showExploreView(true);
-        } else if (target === "map") {
-          if (window.__closeRankingDrawer) window.__closeRankingDrawer();
-          if (baroModal) baroModal.classList.remove("active");
-          closeModal();
-          if (window.__closePubCrawl) window.__closePubCrawl();
-          if (window.__closeCompass) window.__closeCompass();
-          if (window.__closeMobileSearch) window.__closeMobileSearch();
-          if (window.__closeHappyHours) window.__closeHappyHours();
-          if (window.__closeCommunity) window.__closeCommunity();
-          if (window.__closeVkoModals) window.__closeVkoModals();
-          if (window.__showExploreView) window.__showExploreView(false);
-          if (map) {
-            map.invalidateSize();
-            if (userLocation) {
-              map.setView(userLocation, 15);
-            }
-          }
-        } else if (target === "community" || target === "friends" || target === "spolecznosc") {
-          if (window.__showExploreView) window.__showExploreView(false);
-          if (window.__closeRankingDrawer) window.__closeRankingDrawer();
-          if (baroModal) baroModal.classList.remove("active");
-          closeModal();
-          if (window.__closePubCrawl) window.__closePubCrawl();
-          if (window.__closeCompass) window.__closeCompass();
-          if (window.__closeMobileSearch) window.__closeMobileSearch();
-          if (window.__closeHappyHours) window.__closeHappyHours();
-          if (window.__closeVkoModals) window.__closeVkoModals();
           const commModal = document.getElementById("community-modal");
           const isCommOpen = commModal && (commModal.classList.contains("active") || commModal.style.display === "flex");
           if (isCommOpen) {
@@ -4923,40 +4881,23 @@
           } else if (window.__openCommunity) {
             window.__openCommunity(unreadNotificationsCount > 0 ? "notifications" : "friends");
           }
-        } else if (target === "games" || target === "spel") {
-          if (window.__showExploreView) window.__showExploreView(false);
+        } else if (target === "promos" || target === "happyhour") {
           if (window.__closeRankingDrawer) window.__closeRankingDrawer();
           if (baroModal) baroModal.classList.remove("active");
           closeModal();
           if (window.__closePubCrawl) window.__closePubCrawl();
           if (window.__closeCompass) window.__closeCompass();
           if (window.__closeMobileSearch) window.__closeMobileSearch();
-          if (window.__closeHappyHours) window.__closeHappyHours();
-          if (window.__closeCommunity) window.__closeCommunity();
-          if (window.__openVkoGames) window.__openVkoGames();
-        } else if (target === "profile") {
-          if (window.__showExploreView) window.__showExploreView(false);
-          if (window.__closeRankingDrawer) window.__closeRankingDrawer();
-          if (baroModal) baroModal.classList.remove("active");
-          if (window.__closeHappyHours) window.__closeHappyHours();
-          closeModal();
-          if (window.__closePubCrawl) window.__closePubCrawl();
-          if (window.__closeCompass) window.__closeCompass();
-          if (window.__closeMobileSearch) window.__closeMobileSearch();
-          if (window.__closeCommunity) window.__closeCommunity();
-          if (window.__openVkoProfile) {
-            window.__openVkoProfile();
-          } else if (currentUser && currentProfile) {
-            if (window.__openMyProfile) window.__openMyProfile();
+          if (window.__openHappyHours) {
+            window.__openHappyHours();
           } else {
-            const profModal = document.getElementById("profile-modal");
-            if (profModal) {
-              profModal.classList.add("active");
-              profModal.style.display = "flex";
+            const hhModal = document.getElementById("happyhour-modal");
+            if (hhModal) {
+              if (typeof renderHappyHourModal === "function") renderHappyHourModal();
+              hhModal.classList.add("active");
             }
           }
         } else if (target === "ranking") {
-          if (window.__showExploreView) window.__showExploreView(false);
           if (baroModal) baroModal.classList.remove("active");
           if (window.__closeHappyHours) window.__closeHappyHours();
           closeModal();
@@ -4972,6 +4913,59 @@
               if (window.__openRankingDrawer) window.__openRankingDrawer();
             }
           }
+        } else if (target === "compass") {
+          if (window.__closeRankingDrawer) window.__closeRankingDrawer();
+          if (baroModal) baroModal.classList.remove("active");
+          if (window.__closeHappyHours) window.__closeHappyHours();
+          closeModal();
+          if (window.__closePubCrawl) window.__closePubCrawl();
+          if (window.__closeMobileSearch) window.__closeMobileSearch();
+          if (window.__openCompass) window.__openCompass();
+        } else if (target === "pubcrawl") {
+          if (window.__closeRankingDrawer) window.__closeRankingDrawer();
+          if (baroModal) baroModal.classList.remove("active");
+          if (window.__closeHappyHours) window.__closeHappyHours();
+          closeModal();
+          if (window.__closeCompass) window.__closeCompass();
+          if (window.__closeMobileSearch) window.__closeMobileSearch();
+          if (window.__openPubCrawl) window.__openPubCrawl();
+        } else if (target === "profile") {
+          if (window.__closeRankingDrawer) window.__closeRankingDrawer();
+          if (baroModal) baroModal.classList.remove("active");
+          if (window.__closeHappyHours) window.__closeHappyHours();
+          closeModal();
+          if (window.__closePubCrawl) window.__closePubCrawl();
+          if (window.__closeCompass) window.__closeCompass();
+          if (window.__closeMobileSearch) window.__closeMobileSearch();
+          if (currentUser && currentProfile) {
+            if (window.__openMyProfile) window.__openMyProfile();
+          } else {
+            if (window.__openAuth) {
+              window.__openAuth();
+            } else {
+              const authModal = document.getElementById("auth-modal");
+              if (authModal) {
+                authModal.classList.add("active");
+                authModal.style.display = "flex";
+              }
+            }
+          }
+        } else if (target === "barometer") {
+          if (window.__closeRankingDrawer) window.__closeRankingDrawer();
+          if (window.__closeHappyHours) window.__closeHappyHours();
+          if (window.__closePubCrawl) window.__closePubCrawl();
+          if (window.__closeCompass) window.__closeCompass();
+          if (window.__closeMobileSearch) window.__closeMobileSearch();
+          if (btnBarometer) btnBarometer.click();
+        } else if (target === "add") {
+          if (window.__closeRankingDrawer) window.__closeRankingDrawer();
+          if (baroModal) baroModal.classList.remove("active");
+          if (window.__closeHappyHours) window.__closeHappyHours();
+          if (window.__closePubCrawl) window.__closePubCrawl();
+          if (window.__closeCompass) window.__closeCompass();
+          if (window.__closeMobileSearch) window.__closeMobileSearch();
+          openAddModal();
+          setTimeout(() => item.classList.remove("active"), 250);
         }
       });
     });
@@ -18355,775 +18349,6 @@
     setTimeout(checkUrlHash, 250);
   }
 
-  /* ==========================================================================
-     VAD KOSTAR ÖLEN (ÖLKARTAN) NATIVE iOS CONTROLLER FOR POILEPIWKO
-     ========================================================================== */
-  function initVkoSystem() {
-    const exploreView = document.getElementById("explore-view");
-    const venueSheet = document.getElementById("venue-detail-sheet");
-    const eventSheet = document.getElementById("event-detail-sheet");
-    const filterModal = document.getElementById("filter-modal");
-    const profileModal = document.getElementById("profile-modal");
-    const statsModal = document.getElementById("user-stats-modal");
-    const accountModal = document.getElementById("account-settings-modal");
-    const gamesModal = document.getElementById("games-modal");
-    const peklekenModal = document.getElementById("pekleken-modal");
-
-    let currentSelectedVenue = null;
-
-    function closeVkoModals() {
-      if (venueSheet) venueSheet.style.display = "none";
-      if (eventSheet) eventSheet.style.display = "none";
-      if (statsModal) statsModal.style.display = "none";
-      if (accountModal) accountModal.style.display = "none";
-      if (gamesModal) gamesModal.style.display = "none";
-      if (peklekenModal) peklekenModal.style.display = "none";
-      if (filterModal) {
-        filterModal.classList.remove("active");
-        filterModal.style.display = "none";
-      }
-      if (profileModal) {
-        profileModal.classList.remove("active");
-        profileModal.style.display = "none";
-      }
-    }
-    window.__closeVkoModals = closeVkoModals;
-
-    // Show or hide Explore View
-    function showExploreView(show) {
-      if (!exploreView) return;
-      const mapTopBar = document.getElementById("vko-map-top-bar");
-      const mapBottomControls = document.getElementById("vko-map-bottom-controls");
-      const legendPill = document.querySelector(".legend-pill");
-      if (show) {
-        exploreView.style.display = "flex";
-        if (mapTopBar) mapTopBar.style.display = "none";
-        if (mapBottomControls) mapBottomControls.style.display = "none";
-        if (legendPill) legendPill.style.display = "none";
-        renderExploreBars();
-        renderExploreEvents();
-        const expBtn = document.getElementById("nav-btn-explore");
-        if (expBtn && window.__clearBottomNavActive) {
-          window.__clearBottomNavActive();
-          expBtn.classList.add("active");
-        }
-      } else {
-        exploreView.style.display = "none";
-        if (mapTopBar) mapTopBar.style.display = "flex";
-        if (mapBottomControls) mapBottomControls.style.display = "flex";
-        if (legendPill) legendPill.style.display = "flex";
-      }
-    }
-    window.__showExploreView = showExploreView;
-
-    // Segmented control in Explore View
-    const segBars = document.getElementById("seg-btn-bars");
-    const segEvents = document.getElementById("seg-btn-events");
-    const paneBars = document.getElementById("explore-pane-bars");
-    const paneEvents = document.getElementById("explore-pane-events");
-
-    if (segBars && segEvents && paneBars && paneEvents) {
-      segBars.addEventListener("click", () => {
-        segBars.classList.add("active");
-        segEvents.classList.remove("active");
-        paneBars.classList.add("active");
-        paneEvents.classList.remove("active");
-      });
-      segEvents.addEventListener("click", () => {
-        segEvents.classList.add("active");
-        segBars.classList.remove("active");
-        paneEvents.classList.add("active");
-        paneBars.classList.remove("active");
-      });
-    }
-
-    // Render Explore Bars (media_1790002342651.png)
-    function renderExploreBars(venuesToRender = null) {
-      const container = document.getElementById("explore-bars-list");
-      if (!container) return;
-
-      const list = (venuesToRender || allVenues).slice();
-      if (userLocation) {
-        list.forEach(v => {
-          v._distKm = calculateDistanceKm(userLocation[0], userLocation[1], v.latitude, v.longitude);
-        });
-        list.sort((a, b) => (a._distKm || 999) - (b._distKm || 999));
-      } else {
-        list.sort((a, b) => (a.beer_price_pln || 99) - (b.beer_price_pln || 99));
-      }
-
-      const displayList = list.slice(0, 60);
-      container.innerHTML = displayList.map(v => {
-        const isOpen = isVenueOpen(v);
-        let distText = "";
-        if (userLocation && v._distKm !== undefined) {
-          const dM = Math.round(v._distKm * 1000);
-          distText = dM < 1000 ? `${dM} m` : `${v._distKm.toFixed(1)} km`;
-        } else {
-          distText = v.district || "Warszawa";
-        }
-
-        const hoursText = isOpen
-          ? `<span class="vko-bar-hours open"><span class="vko-green-dot"></span> Otwarte teraz${v.hours ? ' · ' + escapeHtml(formatDisplayHours(v.hours)) : ''}</span>`
-          : `<span class="vko-bar-hours closed">Zamknięte</span>`;
-
-        return `
-          <div class="vko-bar-card" data-venue-id="${v.id}">
-            <div class="vko-bar-card-left">
-              <div class="vko-bar-name">${escapeHtml(v.name)}</div>
-              <div class="vko-bar-meta">
-                <span>📍 ${distText}</span>
-                <span>·</span>
-                ${hoursText}
-              </div>
-            </div>
-            <div class="vko-bar-card-right">
-              <span class="vko-bar-beer-icon">🍺</span>
-              <span class="vko-bar-price-tag">${v.beer_price_pln ? v.beer_price_pln.toFixed(0) : '14'}</span>
-              <span class="vko-bar-price-curr">zł</span>
-            </div>
-          </div>
-        `;
-      }).join("");
-
-      container.querySelectorAll(".vko-bar-card").forEach(card => {
-        card.addEventListener("click", () => {
-          const vId = card.getAttribute("data-venue-id");
-          const v = allVenues.find(item => item.id === vId);
-          if (v) openVkoVenueSheet(v, "explore");
-        });
-      });
-    }
-    window.__renderExploreBars = renderExploreBars;
-
-    // Mock Warsaw Events (media_1790002334903.png)
-    const mockEvents = [
-      {
-        id: "ev-1",
-        title: "PUB QUIZ WARSZAWSKI",
-        category: "QUIZ",
-        time: "Dzisiaj · 19:00 - 21:00",
-        venueName: "BANIALUKA",
-        address: "Krakowskie Przedmieście 63",
-        isFree: true,
-        desc: "Wielki poniedziałkowy turniej wiedzy barowej! Zbierz drużynę do 6 osób. Do wygrania darmowe kolejki piwa i vouchery na bar.",
-        imgEmoji: "🧠"
-      },
-      {
-        id: "ev-2",
-        title: "KARAOKE & SHOTS",
-        category: "KARAOKE",
-        time: "Dzisiaj · 21:00 - 02:00",
-        venueName: "PIJALNIA WÓDKI I PIWA",
-        address: "Nowy Świat 19",
-        isFree: true,
-        desc: "Śpiewaj swoje ulubione hity, złap piwko w super cenie i baw się ze znajomymi do rana.",
-        imgEmoji: "🎤"
-      },
-      {
-        id: "ev-3",
-        title: "TRANSMISJA MECZU NA ŻYWO",
-        category: "MECZ",
-        time: "Jutro · 20:45 - 23:00",
-        venueName: "CHMIELNA PUB",
-        address: "Chmielna 10",
-        isFree: true,
-        desc: "Mecz na 8 wielkich telebimach z dźwiękiem na żywo! Dzban piwa 1.5L w promocyjnej cenie.",
-        imgEmoji: "⚽"
-      },
-      {
-        id: "ev-4",
-        title: "WIECZÓR GIER PLANSZOWYCH",
-        category: "GRY",
-        time: "Jutro · 18:30 - 22:30",
-        venueName: "PARADOX CAFE",
-        address: "Anielewicza 2",
-        isFree: true,
-        desc: "Ponad 400 gier planszowych i bar z piwami rzemieślniczymi oraz cydrem. Wstęp wolny dla każdego!",
-        imgEmoji: "🎲"
-      }
-    ];
-
-    function renderExploreEvents() {
-      const container = document.getElementById("explore-events-list");
-      if (!container) return;
-
-      const tonight = mockEvents.filter((_, idx) => idx < 2);
-      const tomorrow = mockEvents.filter((_, idx) => idx >= 2);
-
-      container.innerHTML = `
-        <div class="vko-events-group">
-          <div class="vko-event-section-title">DZISIAJ W MIEŚCIE</div>
-          <div class="vko-event-featured-card" data-event-id="${tonight[0].id}">
-            <div class="vko-event-img-banner">
-              <span class="vko-event-category-badge">${tonight[0].category}</span>
-              <span style="font-size:3.5rem;line-height:1;">${tonight[0].imgEmoji}</span>
-            </div>
-            <div class="vko-event-featured-content">
-              <div class="vko-event-card-title">${tonight[0].title}</div>
-              <div class="vko-event-meta-row">
-                <span>🕒 ${tonight[0].time}</span>
-                <span class="vko-badge-free">WSTĘP WOLNY</span>
-              </div>
-              <div style="font-size:0.8rem;color:#94a3b8;margin-top:2px;">📍 ${tonight[0].venueName} · ${tonight[0].address}</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="vko-events-group" style="margin-top: 14px;">
-          <div class="vko-event-section-title">JUTRO</div>
-          <div style="display:flex;flex-direction:column;gap:10px;">
-            ${tomorrow.map(ev => `
-              <div class="vko-event-compact-card" data-event-id="${ev.id}">
-                <div class="vko-event-thumb">${ev.imgEmoji}</div>
-                <div class="vko-event-compact-info">
-                  <div class="vko-event-compact-title">${ev.title}</div>
-                  <div class="vko-event-compact-sub">🕒 ${ev.time}</div>
-                  <div class="vko-event-compact-sub">📍 ${ev.venueName}</div>
-                </div>
-                <span class="vko-badge-free">FREE</span>
-              </div>
-            `).join("")}
-          </div>
-        </div>
-      `;
-
-      container.querySelectorAll("[data-event-id]").forEach(card => {
-        card.addEventListener("click", () => {
-          const evId = card.getAttribute("data-event-id");
-          const ev = mockEvents.find(e => e.id === evId);
-          if (ev) openVkoEventSheet(ev);
-        });
-      });
-    }
-
-    // Open Event Detail Sheet (media_1790002321268.png)
-    function openVkoEventSheet(ev) {
-      if (!eventSheet) return;
-      const vName = document.getElementById("vko-event-venue-name");
-      if (vName) vName.textContent = ev.venueName;
-      const bTitle = document.getElementById("vko-event-banner-title");
-      if (bTitle) bTitle.textContent = ev.title;
-      const catPill = document.getElementById("vko-event-category-pill");
-      if (catPill) catPill.textContent = ev.category;
-      const timeStr = document.getElementById("vko-event-time-str");
-      if (timeStr) timeStr.textContent = ev.time;
-      const locStr = document.getElementById("vko-event-venue-loc");
-      if (locStr) locStr.textContent = ev.address;
-      const descEl = document.getElementById("vko-event-desc");
-      if (descEl) descEl.textContent = ev.desc;
-      eventSheet.style.display = "flex";
-    }
-
-    const btnCloseEvent = document.getElementById("vko-event-btn-close");
-    if (btnCloseEvent) btnCloseEvent.addEventListener("click", () => {
-      if (eventSheet) eventSheet.style.display = "none";
-    });
-
-    // Open Venue Detail Bottom Sheet (media_1790002379147.png & media_1790002353091.png)
-    function openVkoVenueSheet(venue, source = "map") {
-      if (!venueSheet || !venue) return;
-      currentSelectedVenue = venue;
-
-      const nameEl = document.getElementById("vko-sheet-name");
-      if (nameEl) nameEl.textContent = venue.name || "LOKAL";
-
-      const favBtn = document.getElementById("vko-sheet-btn-fav");
-      if (favBtn) {
-        favBtn.textContent = isVenueFavorite(venue.id) ? "❤️" : "🤍";
-        favBtn.onclick = (e) => {
-          e.stopPropagation();
-          toggleVenueFavorite(venue.id);
-          favBtn.textContent = isVenueFavorite(venue.id) ? "❤️" : "🤍";
-        };
-      }
-
-      const siteLink = document.getElementById("vko-sheet-website");
-      if (siteLink) {
-        if (venue.website) {
-          siteLink.href = venue.website;
-          siteLink.textContent = "Strona lokalu ↗";
-        } else {
-          siteLink.href = `https://www.google.com/search?q=${encodeURIComponent(venue.name + ' Warszawa')}`;
-          siteLink.textContent = "Szukaj w Google ↗";
-        }
-      }
-
-      const distAddrEl = document.getElementById("vko-sheet-dist-addr");
-      if (distAddrEl) {
-        let distPart = "";
-        if (userLocation) {
-          const dKm = calculateDistanceKm(userLocation[0], userLocation[1], venue.latitude, venue.longitude);
-          const dM = Math.round(dKm * 1000);
-          distPart = (dM < 1000 ? `${dM} m` : `${dKm.toFixed(1)} km`) + " · ";
-        }
-        distAddrEl.textContent = `${distPart}${venue.address || venue.district || 'Warszawa'}`;
-      }
-
-      // DRINKS Card
-      const drinksTitle = document.getElementById("vko-drinks-title");
-      if (drinksTitle) drinksTitle.textContent = (venue.beer_name || "Piwo lane / z nalewaka").toUpperCase();
-
-      const drinksSize = document.getElementById("vko-drinks-size");
-      if (drinksSize) drinksSize.textContent = `${(venue.beer_size_ml || 500) / 1000} l`;
-
-      const priceVal = document.getElementById("vko-drinks-price-val");
-      if (priceVal) priceVal.textContent = venue.beer_price_pln ? venue.beer_price_pln.toFixed(0) : "14";
-
-      // OPENING HOURS Weekly Schedule
-      const hoursText = venue.hours ? formatDisplayHours(venue.hours) : "16:00 - 02:00";
-      const days = ["Niedziela", "Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota"];
-      const dayIdx = new Date().getDay();
-      const currentDayName = days[dayIdx];
-
-      const todayTag = document.getElementById("vko-hours-today-tag");
-      if (todayTag) todayTag.textContent = `(Dzisiaj, ${currentDayName})`;
-
-      const statusText = document.getElementById("vko-hours-status-text");
-      if (statusText) statusText.textContent = isVenueOpen(venue) ? hoursText : "Zamknięte";
-
-      const weekListEl = document.getElementById("vko-hours-week-list");
-      if (weekListEl) {
-        const weekDays = [
-          { name: "Poniedziałek", idx: 1 },
-          { name: "Wtorek", idx: 2 },
-          { name: "Środa", idx: 3 },
-          { name: "Czwartek", idx: 4 },
-          { name: "Piątek", idx: 5 },
-          { name: "Sobota", idx: 6 },
-          { name: "Niedziela", idx: 0 }
-        ];
-        weekListEl.innerHTML = weekDays.map(d => {
-          const isToday = d.idx === dayIdx;
-          return `
-            <div class="vko-hours-day-row ${isToday ? 'active-day' : ''}">
-              <div class="vko-day-name-box">
-                ${isToday ? '<span class="vko-green-dot"></span>' : ''}
-                <span>${d.name}</span>
-              </div>
-              <span>${hoursText}</span>
-            </div>
-          `;
-        }).join("");
-      }
-
-      // Configure Main CTA Button
-      const mainBtn = document.getElementById("vko-sheet-btn-main");
-      if (mainBtn) {
-        if (source === "explore") {
-          mainBtn.textContent = "POKAŻ NA MAPIE";
-          mainBtn.onclick = () => {
-            showExploreView(false);
-            if (map) {
-              map.setView([venue.latitude, venue.longitude], 17);
-              setTimeout(() => openVkoVenueSheet(venue, "map"), 300);
-            }
-          };
-        } else {
-          mainBtn.textContent = "CHECK IN HERE";
-          mainBtn.onclick = () => {
-            venueSheet.style.display = "none";
-            if (window.__openBerealCamera) {
-              window.__openBerealCamera(venue);
-            } else if (window.__openAddModal) {
-              window.__openAddModal();
-            }
-          };
-        }
-      }
-
-      // Feedback button
-      const feedBtn = document.getElementById("vko-sheet-btn-feedback");
-      if (feedBtn) {
-        feedBtn.onclick = () => {
-          venueSheet.style.display = "none";
-          if (window.__openEditModal) window.__openEditModal(venue);
-          else alert(`Zgłoś aktualną cenę dla ${venue.name}`);
-        };
-      }
-
-      // Navigate button
-      const navBtn = document.getElementById("vko-sheet-btn-navigate");
-      if (navBtn) {
-        navBtn.onclick = () => {
-          const navUrl = buildGoogleMapsNavigationUrl(venue);
-          window.open(navUrl, "_blank", "noopener");
-        };
-      }
-
-      venueSheet.style.display = "flex";
-    }
-    window.__openVkoVenueSheet = openVkoVenueSheet;
-
-    const closeVenueBtn = document.getElementById("vko-sheet-btn-close");
-    if (closeVenueBtn) {
-      closeVenueBtn.addEventListener("click", () => {
-        if (venueSheet) venueSheet.style.display = "none";
-      });
-    }
-    if (venueSheet) {
-      venueSheet.addEventListener("click", (e) => {
-        if (e.target === venueSheet) venueSheet.style.display = "none";
-      });
-    }
-
-    // Toggle hours accordion in sheet
-    const hoursAccordionBtn = document.getElementById("vko-hours-accordion-btn");
-    const hoursCollapse = document.getElementById("vko-hours-collapse");
-    const hoursChevron = document.getElementById("vko-hours-chevron");
-    if (hoursAccordionBtn && hoursCollapse) {
-      hoursAccordionBtn.addEventListener("click", () => {
-        const isCollapsed = hoursCollapse.style.display === "none";
-        hoursCollapse.style.display = isCollapsed ? "block" : "none";
-        if (hoursChevron) hoursChevron.textContent = isCollapsed ? "⌃" : "⌄";
-      });
-    }
-
-    // Floating Search & Filter buttons inside Explore View
-    const floatSearch = document.getElementById("vko-float-search");
-    if (floatSearch) {
-      floatSearch.addEventListener("click", () => {
-        const sInput = document.getElementById("search-input");
-        if (sInput) {
-          sInput.scrollIntoView({ behavior: "smooth" });
-          sInput.focus();
-        }
-      });
-    }
-    const floatFilter = document.getElementById("vko-float-filter");
-    if (floatFilter) {
-      floatFilter.addEventListener("click", () => {
-        if (filterModal) {
-          filterModal.classList.add("active");
-          filterModal.style.display = "flex";
-        }
-      });
-    }
-
-    // Map Top Bar Controls
-    const topFilterBtn = document.getElementById("btn-vko-filters");
-    if (topFilterBtn) {
-      topFilterBtn.addEventListener("click", () => {
-        if (filterModal) {
-          filterModal.classList.add("active");
-          filterModal.style.display = "flex";
-        }
-      });
-    }
-    const topTimeBtn = document.getElementById("btn-vko-time");
-    if (topTimeBtn) {
-      topTimeBtn.addEventListener("click", () => {
-        const openNowSwitch = document.getElementById("vko-switch-open-now");
-        if (openNowSwitch) {
-          openNowSwitch.checked = !openNowSwitch.checked;
-          topTimeBtn.style.color = openNowSwitch.checked ? "#34d399" : "#f1f5f9";
-          currentFilters.openNow = openNowSwitch.checked;
-          filterVenues();
-        }
-      });
-    }
-    function updateClock() {
-      const clockEl = document.getElementById("vko-clock-text");
-      if (clockEl) {
-        const now = new Date();
-        const hh = String(now.getHours()).padStart(2, "0");
-        const mm = String(now.getMinutes()).padStart(2, "0");
-        clockEl.textContent = `${hh}:${mm}`;
-      }
-    }
-    updateClock();
-    setInterval(updateClock, 30000);
-
-    const topLayersBtn = document.getElementById("btn-vko-layers");
-    if (topLayersBtn) {
-      topLayersBtn.addEventListener("click", () => {
-        const distSelect = document.getElementById("district-select");
-        if (distSelect) distSelect.focus();
-      });
-    }
-
-    // Bottom-left GPS locator pill
-    const vkoMyLoc = document.getElementById("btn-vko-my-location");
-    if (vkoMyLoc) {
-      vkoMyLoc.addEventListener("click", () => {
-        const oldLocBtn = document.getElementById("btn-locate-float");
-        if (oldLocBtn) oldLocBtn.click();
-        else if (userLocation && map) map.setView(userLocation, 16);
-      });
-    }
-
-    // Daily reward button
-    const dailyBtn = document.getElementById("btn-vko-daily-reward");
-    if (dailyBtn) {
-      dailyBtn.addEventListener("click", () => {
-        alert("👑 DZIENNY BONUS: Otrzymałeś +50 Kapsli za dzisiejszą aktywność w Warszawie!");
-        const capsEl = document.getElementById("prof-caps-count");
-        if (capsEl) {
-          const cur = parseInt(capsEl.textContent, 10) || 275;
-          capsEl.textContent = String(cur + 50);
-        }
-      });
-    }
-
-    // Filter Modal: Category Tiles
-    const catTiles = document.querySelectorAll(".vko-cat-tile");
-    catTiles.forEach(tile => {
-      tile.addEventListener("click", () => {
-        catTiles.forEach(t => t.classList.remove("active"));
-        tile.classList.add("active");
-        const cat = tile.getAttribute("data-drink-cat");
-        if (cat === "beer") currentFilters.craft = false;
-        else if (cat === "bubbles" || cat === "wine" || cat === "cider") currentFilters.craft = true;
-        filterVenues();
-      });
-    });
-
-    // Filter Modal: Price Slider
-    const vkoSlider = document.getElementById("filter-price-slider");
-    const vkoSliderLabel = document.getElementById("vko-slider-price-label");
-    if (vkoSlider && vkoSliderLabel) {
-      vkoSlider.addEventListener("input", () => {
-        const val = parseInt(vkoSlider.value, 10);
-        if (val >= 30) {
-          vkoSliderLabel.textContent = "Any price (Dowolna cena)";
-          currentFilters.priceTier = "all";
-        } else {
-          vkoSliderLabel.textContent = `Do ${val} zł za piwo`;
-          currentFilters.priceTier = val <= 12 ? "tier-low" : (val <= 18 ? "tier-mid" : "tier-high");
-        }
-        filterVenues();
-      });
-    }
-
-    // Filter Modal: Toggles
-    const openNowSw = document.getElementById("vko-switch-open-now");
-    if (openNowSw) {
-      openNowSw.addEventListener("change", () => {
-        currentFilters.openNow = openNowSw.checked;
-        filterVenues();
-      });
-    }
-    const hhSw = document.getElementById("vko-switch-happy-hour");
-    if (hhSw) {
-      hhSw.addEventListener("change", () => {
-        currentFilters.happyHour = hhSw.checked;
-        filterVenues();
-      });
-    }
-
-    // Filter Modal: Activities pills
-    const actPills = document.querySelectorAll(".vko-activity-pill");
-    actPills.forEach(pill => {
-      pill.addEventListener("click", () => {
-        pill.classList.toggle("active");
-        const act = pill.getAttribute("data-act");
-        const type = pill.getAttribute("data-type");
-        if (act === "craft") currentFilters.craft = pill.classList.contains("active");
-        if (type === "favorites") currentFilters.favorites = pill.classList.contains("active");
-        filterVenues();
-      });
-    });
-
-    // Reset All Filters
-    const resetFiltersBtn = document.getElementById("btn-filter-reset");
-    if (resetFiltersBtn) {
-      resetFiltersBtn.addEventListener("click", () => {
-        currentFilters.district = "all";
-        currentFilters.priceTier = "all";
-        currentFilters.openNow = false;
-        currentFilters.craft = false;
-        currentFilters.favorites = false;
-        currentFilters.happyHour = false;
-        if (openNowSw) openNowSw.checked = false;
-        if (hhSw) hhSw.checked = false;
-        if (vkoSlider) vkoSlider.value = 30;
-        if (vkoSliderLabel) vkoSliderLabel.textContent = "Any price";
-        actPills.forEach(p => p.classList.remove("active"));
-        catTiles.forEach(t => t.classList.remove("active"));
-        if (catTiles[0]) catTiles[0].classList.add("active");
-        filterVenues();
-      });
-    }
-
-    // Apply Filters button
-    const applyFiltersBtn = document.getElementById("btn-filter-apply");
-    if (applyFiltersBtn) {
-      applyFiltersBtn.addEventListener("click", () => {
-        if (filterModal) {
-          filterModal.classList.remove("active");
-          filterModal.style.display = "none";
-        }
-        renderExploreBars();
-      });
-    }
-
-    // Profile View (media_1790002397641.png)
-    function openVkoProfile() {
-      if (!profileModal) return;
-      const handleEl = document.getElementById("prof-hero-handle");
-      if (handleEl) {
-        if (currentProfile && currentProfile.username) {
-          handleEl.textContent = `@${currentProfile.username.toUpperCase()}`;
-        } else {
-          handleEl.textContent = "@KRYSTIAN";
-        }
-      }
-      const frEl = document.getElementById("prof-stat-friends");
-      if (frEl) {
-        let frCount = 0;
-        try {
-          const savedFr = localStorage.getItem("poilepiwko_friends");
-          if (savedFr) frCount = JSON.parse(savedFr).length;
-        } catch (e) {}
-        frEl.textContent = String(frCount);
-      }
-
-      const chkEl = document.getElementById("prof-stat-checkins");
-      if (chkEl) {
-        const vCount = (typeof visitedVenues !== "undefined" && Array.isArray(visitedVenues)) ? visitedVenues.length : 0;
-        chkEl.textContent = String(vCount);
-      }
-
-      const plEl = document.getElementById("prof-stat-visited");
-      if (plEl) {
-        const vCount = (typeof visitedVenues !== "undefined" && Array.isArray(visitedVenues)) ? visitedVenues.length : 0;
-        plEl.textContent = String(vCount);
-      }
-
-      profileModal.classList.add("active");
-      profileModal.style.display = "flex";
-    }
-    window.__openVkoProfile = openVkoProfile;
-
-    const btnOpenStats = document.getElementById("btn-open-user-stats");
-    if (btnOpenStats && statsModal) {
-      btnOpenStats.addEventListener("click", () => {
-        statsModal.style.display = "flex";
-      });
-    }
-    const btnCloseStats = document.getElementById("btn-close-stats");
-    if (btnCloseStats && statsModal) {
-      btnCloseStats.addEventListener("click", () => {
-        statsModal.style.display = "none";
-      });
-    }
-
-    const btnProfileAcc = document.getElementById("btn-profile-account");
-    if (btnProfileAcc && accountModal) {
-      btnProfileAcc.addEventListener("click", () => {
-        accountModal.style.display = "flex";
-      });
-    }
-    const btnCloseAcc = document.getElementById("btn-close-account");
-    if (btnCloseAcc && accountModal) {
-      btnCloseAcc.addEventListener("click", () => {
-        accountModal.style.display = "none";
-      });
-    }
-
-    const btnProfTheme = document.getElementById("btn-profile-theme");
-    if (btnProfTheme) {
-      btnProfTheme.addEventListener("click", () => {
-        const curTheme = document.body.classList.contains("theme-light") ? "light" : "dark";
-        const nextTheme = curTheme === "light" ? "dark" : "light";
-        applyTheme(nextTheme);
-        localStorage.setItem("theme_preference", nextTheme);
-      });
-    }
-
-    // Games Hub (vko_appstore_6.png)
-    function openVkoGames() {
-      if (gamesModal) gamesModal.style.display = "flex";
-    }
-    window.__openVkoGames = openVkoGames;
-
-    const btnCloseGames = document.getElementById("btn-close-games");
-    if (btnCloseGames && gamesModal) {
-      btnCloseGames.addEventListener("click", () => {
-        gamesModal.style.display = "none";
-      });
-    }
-
-    // Pekleken Questions Deck
-    const peklekenQuestions = [
-      "Kto najszybciej wypije całe piwo na hejnał?",
-      "Kto wyda dzisiaj najwięcej kasy na barze?",
-      "Kto z nas zaśnie w nocnym autobusie?",
-      "Kto pierwszy zgubi klucze albo telefon?",
-      "Kto najczęściej zamawia shoty dla wszystkich?",
-      "Kto po 3 piwach zaczyna mówić po angielsku?",
-      "Kto jutro rano napisze 'nigdy więcej nie piję'?",
-      "Kto ma najlepszą tolerancję na chmiel?",
-      "Kto najdłużej wybiera piwo przy barze?",
-      "Kto z nas wpadłby na pomysł nocnego kebaba o 4 rano?",
-      "Kto zna najwięcej barmanów w Warszawie?",
-      "Kto najszybciej zatańczy na stole?",
-      "Kto zrobi najśmieszniejsze zdjęcie w BeReal dzisiejszej nocy?"
-    ];
-    let peklekenIdx = 0;
-
-    const tilePekleken = document.getElementById("tile-game-pekleken");
-    if (tilePekleken && peklekenModal) {
-      tilePekleken.addEventListener("click", () => {
-        if (gamesModal) gamesModal.style.display = "none";
-        peklekenIdx = 0;
-        const numEl = document.getElementById("pekleken-card-num");
-        if (numEl) numEl.textContent = `KARTA #${peklekenIdx + 1}`;
-        const txtEl = document.getElementById("pekleken-card-text");
-        if (txtEl) txtEl.textContent = peklekenQuestions[peklekenIdx];
-        peklekenModal.style.display = "flex";
-      });
-    }
-    const btnNextPekleken = document.getElementById("btn-pekleken-next");
-    if (btnNextPekleken) {
-      btnNextPekleken.addEventListener("click", () => {
-        peklekenIdx = (peklekenIdx + 1) % peklekenQuestions.length;
-        const numEl = document.getElementById("pekleken-card-num");
-        if (numEl) numEl.textContent = `KARTA #${peklekenIdx + 1}`;
-        const txtEl = document.getElementById("pekleken-card-text");
-        if (txtEl) txtEl.textContent = peklekenQuestions[peklekenIdx];
-      });
-    }
-    const btnClosePekleken = document.getElementById("btn-close-pekleken");
-    if (btnClosePekleken && peklekenModal) {
-      btnClosePekleken.addEventListener("click", () => {
-        peklekenModal.style.display = "none";
-      });
-    }
-
-    const tileRoulette = document.getElementById("tile-game-roulette");
-    if (tileRoulette) {
-      tileRoulette.addEventListener("click", () => {
-        if (gamesModal) gamesModal.style.display = "none";
-        const oldRoulette = document.getElementById("btn-roulette-float");
-        if (oldRoulette) oldRoulette.click();
-      });
-    }
-
-    const tileQuiz = document.getElementById("tile-game-quiz");
-    if (tileQuiz) {
-      tileQuiz.addEventListener("click", () => {
-        if (gamesModal) gamesModal.style.display = "none";
-        const oldQuiz = document.getElementById("btn-pubquiz-float");
-        if (oldQuiz) oldQuiz.click();
-      });
-    }
-
-    const tileTruth = document.getElementById("tile-game-truth");
-    if (tileTruth) {
-      tileTruth.addEventListener("click", () => {
-        if (gamesModal) gamesModal.style.display = "none";
-        const dares = [
-          "PRAWDA: Jaka jest najbardziej przypałowa rzecz jaką zrobiłeś/aś po piwie?",
-          "WYZWANIE: Zamów następną kolejkę mówiąc z czeskim akcentem!",
-          "PRAWDA: Jaki jest Twój ulubiony tani bar w Warszawie, o którym nikomu nie mówisz?",
-          "WYZWANIE: Wypij toast za zdrowie losowej osoby siedzącej przy sąsiednim stoliku!"
-        ];
-        alert(dares[Math.floor(Math.random() * dares.length)]);
-      });
-    }
-  }
-
   // Boot Application
   function boot() {
     applyTheme(getSavedThemePreference());
@@ -19132,7 +18357,6 @@
     setupEventListeners();
     loadVenues();
     initUserGeolocation();
-    initVkoSystem();
 
     // Register Service Worker for PWA with automatic update detection
     if ("serviceWorker" in navigator) {
