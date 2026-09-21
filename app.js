@@ -2305,12 +2305,19 @@
       });
 
       const popupHtml = `
-        <div style="min-width:175px; font-family:inherit;">
-          <div style="font-size:0.75rem; font-weight:800; color:#fb923c; text-transform:uppercase; margin-bottom:2px;">Przystanek #${idx + 1} Pub Crawl</div>
-          <div style="font-size:1rem; font-weight:800; color:#fff; margin-bottom:4px;">${escapeHtml(v.name)}</div>
-          <div style="font-size:0.85rem; color:#4ade80; font-weight:700; margin-bottom:6px;">🍺 ${v.beer_price_pln.toFixed(2)} zł <span style="font-size:0.72rem; color:#94a3b8; font-weight:400;">(${escapeHtml(v.beer_name || 'Piwo')})</span></div>
-          <div style="font-size:0.74rem; color:#94a3b8; margin-bottom:8px;">📍 ${escapeHtml(v.address || v.district)}</div>
-          <button onclick="window.__zoomToVenue('${v.id}')" style="width:100%; background:#f97316; color:#fff; border:none; border-radius:6px; padding:6px 8px; font-size:0.75rem; font-weight:700; cursor:pointer;">Pokaż szczegóły lokalu</button>
+        <div class="crawl-popup-card">
+          <div class="crawl-popup-header">
+            <span class="crawl-popup-badge">🚶 Przystanek #${idx + 1} z ${route.stops.length}</span>
+          </div>
+          <div class="crawl-popup-title">${escapeHtml(v.name)}</div>
+          <div class="crawl-popup-price">
+            🍺 ${v.beer_price_pln.toFixed(2)} zł
+            <span class="crawl-popup-beer-name">(${escapeHtml(v.beer_name || 'Piwo z nalewaka')})</span>
+          </div>
+          <div class="crawl-popup-address">📍 ${escapeHtml(v.address || v.district)}</div>
+          <button type="button" class="crawl-popup-btn" onclick="window.__zoomToVenue('${v.id}')">
+            Pokaż szczegóły lokalu
+          </button>
         </div>
       `;
 
@@ -2320,6 +2327,7 @@
 
       crawlMarkerInstances.push({ marker, stop, idx });
     });
+    window.__crawlMarkerInstances = crawlMarkerInstances;
 
     map.fitBounds(mainPoly.getBounds(), { padding: [60, 60], maxZoom: 16 });
 
@@ -2332,6 +2340,8 @@
 
     if (window.__closePubCrawl) window.__closePubCrawl();
   }
+  window.__showCrawlOnMap = showCrawlOnMap;
+  window.__generatePubCrawlRoute = generatePubCrawlRoute;
 
   function clearCrawlFromMap() {
     if (crawlMapLayer) {
@@ -7753,11 +7763,11 @@
 
           const timeAgo = formatTimeAgo(f.timestamp);
           const popupContent = `
-            <div style="font-family:sans-serif;min-width:160px;">
-              <strong style="color:#ff5722;font-size:13px;">${escapeHtml(f.display_name)}</strong>
-              <div style="font-size:11px;color:#64748b;">@${escapeHtml(f.username)} • ${timeAgo}</div>
-              <div style="margin-top:6px;font-size:12px;font-weight:700;">📍 ${escapeHtml(f.venue_name || "Lokal")}</div>
-              ${f.beer_name ? `<div style="font-size:11px;color:#10b981;font-weight:700;">🍺 ${escapeHtml(f.beer_name)} (${f.beer_price || 12} zł)</div>` : ""}
+            <div style="font-family:inherit;min-width:170px;padding:14px 16px 12px 16px;box-sizing:border-box;">
+              <strong style="color:#ff5722;font-size:14px;">${escapeHtml(f.display_name)}</strong>
+              <div style="font-size:11px;color:#94a3b8;margin-top:2px;">@${escapeHtml(f.username)} • ${timeAgo}</div>
+              <div style="margin-top:6px;font-size:12px;font-weight:700;color:#fff;">📍 ${escapeHtml(f.venue_name || "Lokal")}</div>
+              ${f.beer_name ? `<div style="font-size:11px;color:#4ade80;font-weight:700;margin-top:2px;">🍺 ${escapeHtml(f.beer_name)} (${f.beer_price || 12} zł)</div>` : ""}
             </div>
           `;
 
@@ -7779,10 +7789,10 @@
           });
 
           const popupContent = `
-            <div style="font-family:sans-serif;min-width:180px;">
+            <div style="font-family:inherit;min-width:180px;padding:14px 16px 12px 16px;box-sizing:border-box;">
               <div style="font-size:11px;font-weight:800;color:#ea580c;text-transform:uppercase;">🔥 GORĄCY REJON</div>
-              <strong style="font-size:13px;display:block;margin:2px 0;">${escapeHtml(h.name)}</strong>
-              <div style="font-size:11px;color:#64748b;line-height:1.3;">${escapeHtml(h.vibe)}</div>
+              <strong style="font-size:13px;display:block;margin:3px 0;color:#fff;">${escapeHtml(h.name)}</strong>
+              <div style="font-size:11px;color:#94a3b8;line-height:1.35;">${escapeHtml(h.vibe)}</div>
               <div style="margin-top:6px;font-size:11px;font-weight:700;color:#ef4444;">~${h.count} piwoszy w ciągu 24h</div>
             </div>
           `;
@@ -17815,6 +17825,7 @@
               shot_price_pln: v.shot_price_pln ? parseFloat(v.shot_price_pln) : null
             }));
           console.log(`Loaded ${allVenues.length} venues directly from Supabase!`);
+          window.allVenues = allVenues;
           applyLocalVotes();
           updateDistrictCounts();
           updateBarometerStats();
