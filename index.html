@@ -2268,9 +2268,14 @@
             <h3>📸 Barowy Live Feed</h3>
             <p class="comm-section-sub">Świeże fotki kufli, paragonów i atmosfery z warszawskich lokali</p>
           </div>
-          <button type="button" class="btn-primary btn-sm" id="btn-add-feed-photo">
-            ➕ Dodaj fotkę
-          </button>
+          <div class="feed-actions-group">
+            <button type="button" class="btn-primary btn-sm btn-bereal-camera-trigger" id="btn-open-bereal-camera">
+              📸 Zrób BeReal
+            </button>
+            <button type="button" class="btn-secondary btn-sm" id="btn-add-feed-photo" title="Dodaj zdjęcie z galerii">
+              📁 Z pliku
+            </button>
+          </div>
           <input type="file" id="feed-photo-file-input" accept="image/*" style="display:none;" />
         </div>
         <div class="live-feed-grid" id="comm-feed-grid">
@@ -2731,6 +2736,105 @@
           🔗 Kopiuj bezpośredni link
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- Modal: Piwny BeReal Camera Modal -->
+  <div class="modal-backdrop" id="bereal-camera-modal" style="display:none; z-index: 10400;">
+    <div class="modal-card bereal-camera-modal-card">
+      <div class="modal-head">
+        <div class="modal-head-title">
+          <div class="modal-icon-badge">📸</div>
+          <div>
+            <h2>Piwny BeReal</h2>
+            <p class="modal-head-sub" id="bereal-step-desc">KROK 1/2: Zrób zdjęcie piwka lub baru</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close" id="btn-close-bereal-camera">✕</button>
+      </div>
+
+      <!-- Stage 1: Active Camera Viewfinder -->
+      <div id="bereal-viewfinder-stage">
+        <div class="bereal-camera-viewport">
+          <video id="bereal-video" playsinline autoplay muted></video>
+          <canvas id="bereal-canvas" style="display:none;"></canvas>
+
+          <!-- Floating badge indicating current camera step -->
+          <div class="bereal-stage-badge" id="bereal-stage-badge">
+            🍺 Zdjęcie Piwa (1/2)
+          </div>
+
+          <!-- PiP preview of the 1st shot while snapping the selfie -->
+          <div class="bereal-camera-pip" id="bereal-camera-pip" style="display:none;">
+            <img id="bereal-pip-preview-img" src="" alt="Pierwsze zdjęcie" />
+          </div>
+
+          <!-- Flip camera button (front / back) -->
+          <button type="button" class="bereal-flip-btn" id="btn-bereal-flip" title="Obróć kamerę">
+            🔄
+          </button>
+        </div>
+
+        <!-- Shutter Controls -->
+        <div class="bereal-camera-controls">
+          <button type="button" class="bereal-btn-secondary" id="btn-bereal-gallery" title="Wybierz z galerii">
+            🖼️ Galeria
+          </button>
+          
+          <button type="button" class="bereal-shutter-btn" id="btn-bereal-shutter" title="Zrób zdjęcie">
+            <div class="shutter-inner"></div>
+          </button>
+
+          <button type="button" class="bereal-btn-secondary" id="btn-bereal-skip-selfie" style="display:none;" title="Pomiń selfie">
+            Pomiń ⏭️
+          </button>
+          <div class="bereal-ctrl-placeholder" id="bereal-ctrl-placeholder"></div>
+        </div>
+      </div>
+
+      <!-- Stage 2: Post Review & Publish Form -->
+      <div id="bereal-review-stage" style="display:none;">
+        <div class="bereal-preview-wrapper" onclick="window.__swapBerealReviewImages()">
+          <img id="bereal-review-main" src="" alt="Główne zdjęcie" />
+          <div class="bereal-review-pip" title="Kliknij, aby zamienić zdjęcia">
+            <img id="bereal-review-pip" src="" alt="Selfie" />
+            <span class="pip-swap-hint">🔄</span>
+          </div>
+          <div class="bereal-preview-tip">👆 Dotknij, aby zamienić widok (jak w BeReal)</div>
+        </div>
+
+        <div class="bereal-publish-form">
+          <div class="form-group">
+            <label class="form-label" for="bereal-select-venue">📍 W jakim lokalu jesteś?</label>
+            <div class="bereal-venue-select-wrap">
+              <select id="bereal-select-venue" class="form-select">
+                <option value="warszawa-live">Wybierz lokal z listy...</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label" for="bereal-input-beer">🍺 Jakie piwo pijesz?</label>
+              <input type="text" id="bereal-input-beer" class="form-input" placeholder="np. Kozel, Hazy IPA..." maxlength="40" />
+            </div>
+            <div class="form-group" style="max-width: 120px;">
+              <label class="form-label" for="bereal-input-price">💰 Cena (zł)</label>
+              <input type="number" id="bereal-input-price" class="form-input" placeholder="np. 15.00" step="0.5" min="0" max="99" />
+            </div>
+          </div>
+
+          <div class="bereal-review-actions">
+            <button type="button" class="btn-secondary" id="btn-bereal-retake">
+              🔄 Powtórz
+            </button>
+            <button type="button" class="btn-primary" id="btn-bereal-publish">
+              🚀 Opublikuj w Feedzie
+            </button>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 

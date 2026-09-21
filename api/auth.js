@@ -437,6 +437,7 @@ module.exports = async (req, res) => {
                 beer_name: ch.beer_name || "Piwo z nalewaka",
                 beer_price: ch.beer_price,
                 photo_url: ch.photo_url,
+                selfie_url: ch.selfie_url || null,
                 user_id: u.id,
                 user_name: m.display_name || m.username || "Piwosz",
                 user_handle: m.username ? `@${m.username}` : "@piwosz",
@@ -577,7 +578,7 @@ module.exports = async (req, res) => {
     // 6. Record Checkin with Kapsle rewards
     // =========================================================================
     if (action === "record-checkin") {
-      const { userId, venueId, venueName, district, beerName, beerPrice, latitude, longitude, photoUrl, ghostMode } = payload || {};
+      const { userId, venueId, venueName, district, beerName, beerPrice, latitude, longitude, photoUrl, selfieUrl, ghostMode } = payload || {};
       if (!venueId) {
         return res.status(400).json({ error: "Brak identyfikatora lokalu." });
       }
@@ -604,6 +605,7 @@ module.exports = async (req, res) => {
               beer_name: beerName || "Piwo z nalewaka",
               beer_price: beerPrice || 14.0,
               photo_url: photoUrl || null,
+              selfie_url: selfieUrl || null,
               timestamp: Date.now(),
               ghost_mode: !!ghostMode
             };

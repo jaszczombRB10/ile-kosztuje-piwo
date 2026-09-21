@@ -8045,31 +8045,68 @@
 
         feedGrid.innerHTML = visibleFeed.map(item => {
           const timeAgo = formatTimeAgo(item.created_at);
-          const avatarContent = item.avatar_photo
+          const authorAvatarContent = item.avatar_photo
             ? `<img src="${escapeHtml(item.avatar_photo)}" alt="Avatar" />`
             : escapeHtml(item.avatar_icon || "🍺");
 
           return `
-            <div class="beer-bereal-card">
-              <div class="bereal-img-box">
-                <img src="${escapeHtml(item.photo_url)}" alt="Piwo w ${escapeHtml(item.venue_name)}" loading="lazy" />
-                <div class="bereal-pip-avatar" title="${escapeHtml(item.author_name)}">${avatarContent}</div>
-                ${item.beer_price ? `<div class="bereal-price-tag">${escapeHtml(String(item.beer_price))} zł</div>` : ""}
+            <div class="beer-bereal-card" data-post-id="${escapeHtml(item.id)}">
+              <!-- 1. Post Header: Author info (Avatar, Handle, Time) & Report Flag -->
+              <div class="bereal-post-header">
+                <div class="bereal-author-box" ${item.author_name ? `onclick="window.__openUserProfile('${escapeHtml(item.author_name)}')"` : ""}>
+                  <div class="bereal-author-avatar">
+                    ${authorAvatarContent}
+                  </div>
+                  <div class="bereal-author-meta">
+                    <span class="bereal-author-name">@${escapeHtml(item.author_name || "piwosz")}</span>
+                    <span class="bereal-post-time">${timeAgo}</span>
+                  </div>
+                </div>
                 <button type="button" class="bereal-btn-report" onclick="window.__openUgcReportModal('${escapeHtml(item.id)}', '${escapeHtml(item.author_id || '')}', '${escapeHtml(item.author_name || '')}', '${escapeHtml(item.venue_name || '')}')" title="Zgłoś to zdjęcie lub zablokuj użytkownika">🚩</button>
               </div>
-              <div class="bereal-info-box">
-                <div class="bereal-venue-title" onclick="window.__openVenueById('${escapeHtml(item.venue_id)}')">
-                  📍 ${escapeHtml(item.venue_name)}
+
+              <!-- 2. Dual BeReal Viewport -->
+              <div class="bereal-viewport">
+                <img class="bereal-main-img" src="${escapeHtml(item.photo_url)}" alt="Piwo w ${escapeHtml(item.venue_name)}" loading="lazy" />
+                
+                <!-- Picture-in-Picture selfie or avatar with tap-to-swap -->
+                ${item.selfie_url ? `
+                  <div class="bereal-pip-box" onclick="window.__swapBeRealCardImages(this)" title="Dotknij, aby zamienić widok aparatów">
+                    <img class="bereal-pip-img" src="${escapeHtml(item.selfie_url)}" alt="Selfie" />
+                    <span class="bereal-pip-flip-hint">🔄</span>
+                  </div>
+                ` : (item.avatar_photo ? `
+                  <div class="bereal-pip-box" style="cursor: default;" title="${escapeHtml(item.author_name || '')}">
+                    <img class="bereal-pip-img" src="${escapeHtml(item.avatar_photo)}" alt="Avatar" />
+                  </div>
+                ` : `
+                  <div class="bereal-pip-box" style="cursor: default; font-size: 1.8rem;" title="${escapeHtml(item.author_name || '')}">
+                    ${escapeHtml(item.avatar_icon || "🍺")}
+                  </div>
+                `)}
+
+                <!-- Bottom-Left: Venue Pill -->
+                <div class="bereal-overlay-venue" onclick="window.__openVenueById('${escapeHtml(item.venue_id || '')}')" title="Pokaż ten lokal na mapie">
+                  📍 ${escapeHtml(item.venue_name || "Warszawa")}
                 </div>
-                <div class="bereal-beer-sub">
-                  ${escapeHtml(item.beer_name || "Piwko")} • ${escapeHtml(item.district || "Warszawa")}
+
+                <!-- Bottom-Right: Price Badge -->
+                ${item.beer_price ? `
+                  <div class="bereal-overlay-price">
+                    ${escapeHtml(String(item.beer_price))} zł
+                  </div>
+                ` : ""}
+              </div>
+
+              <!-- 3. Post Footer -->
+              <div class="bereal-post-footer">
+                <div class="bereal-beer-desc" title="${escapeHtml(item.beer_name || "Świeże Piwko")}">
+                  🍺 ${escapeHtml(item.beer_name || "Świeże Piwko")}
+                  ${item.district ? `<span style="font-weight: 500; font-size: 0.78rem; opacity: 0.75;"> • ${escapeHtml(item.district)}</span>` : ""}
                 </div>
-                <div class="bereal-cheers-row">
-                  <button type="button" class="btn-cheers" onclick="window.__cheersFeedItem('${escapeHtml(item.id)}', this)">
-                    🍻 <span>${item.cheers_count || 1}</span>
-                  </button>
-                  <span class="bereal-time">${timeAgo}</span>
-                </div>
+                <button type="button" class="bereal-cheers-btn" onclick="window.__cheersFeedItem('${escapeHtml(item.id)}', this)" title="Wznieś toast z piwoszem!">
+                  🍻 <span>${item.cheers_count || 1}</span>
+                </button>
               </div>
             </div>
           `;
@@ -8078,6 +8115,33 @@
         feedGrid.innerHTML = `<div class="error-state-hint" style="grid-column: 1 / -1;">Nie udało się pobrać Live Feedu.</div>`;
       }
     }
+
+    // Swap helpers for BeReal Cards & Review Screen
+    window.__swapBeRealCardImages = function(pipEl) {
+      if (!pipEl) return;
+      const viewport = pipEl.closest('.bereal-viewport') || pipEl.closest('.bereal-img-box');
+      if (!viewport) return;
+      const mainImg = viewport.querySelector('.bereal-main-img');
+      const pipImg = pipEl.querySelector('.bereal-pip-img');
+      if (!mainImg || !pipImg || !pipImg.src) return;
+
+      pipEl.style.transform = 'scale(0.85)';
+      const tempSrc = mainImg.src;
+      mainImg.src = pipImg.src;
+      pipImg.src = tempSrc;
+      setTimeout(() => {
+        pipEl.style.transform = '';
+      }, 180);
+    };
+
+    window.__swapBerealReviewImages = function() {
+      const mainImg = document.getElementById("bereal-review-main");
+      const pipImg = document.getElementById("bereal-review-pip");
+      if (!mainImg || !pipImg || !pipImg.src) return;
+      const tempSrc = mainImg.src;
+      mainImg.src = pipImg.src;
+      pipImg.src = tempSrc;
+    };
 
     // Cheers Reaction
     window.__cheersFeedItem = async function (reportId, btn) {
@@ -8209,7 +8273,371 @@
       });
     }
 
-    // Client-side compressed image upload for bar photo
+    // -------------------------------------------------------------------------
+    // In-App Dual BeReal Camera System & Review Controller
+    // -------------------------------------------------------------------------
+    const btnOpenBereal = document.getElementById("btn-open-bereal-camera");
+    const berealModal = document.getElementById("bereal-camera-modal");
+    const btnCloseBereal = document.getElementById("btn-close-bereal-camera");
+    const berealVideo = document.getElementById("bereal-video");
+    const berealCanvas = document.getElementById("bereal-canvas");
+    const berealStageBadge = document.getElementById("bereal-stage-badge");
+    const berealStepDesc = document.getElementById("bereal-step-desc");
+    const berealCameraPip = document.getElementById("bereal-camera-pip");
+    const berealPipPreviewImg = document.getElementById("bereal-pip-preview-img");
+    const btnBerealFlip = document.getElementById("btn-bereal-flip");
+    const btnBerealShutter = document.getElementById("btn-bereal-shutter");
+    const btnBerealGallery = document.getElementById("btn-bereal-gallery");
+    const btnBerealSkipSelfie = document.getElementById("btn-bereal-skip-selfie");
+    const berealViewfinderStage = document.getElementById("bereal-viewfinder-stage");
+    const berealReviewStage = document.getElementById("bereal-review-stage");
+    const berealReviewMain = document.getElementById("bereal-review-main");
+    const berealReviewPip = document.getElementById("bereal-review-pip");
+    const berealSelectVenue = document.getElementById("bereal-select-venue");
+    const berealInputBeer = document.getElementById("bereal-input-beer");
+    const berealInputPrice = document.getElementById("bereal-input-price");
+    const btnBerealRetake = document.getElementById("btn-bereal-retake");
+    const btnBerealPublish = document.getElementById("btn-bereal-publish");
+
+    let berealMediaStream = null;
+    let berealFacingMode = "environment"; // Step 1: back camera
+    let berealCurrentStep = 1; // 1 = beer/bar, 2 = selfie
+    let berealShot1 = null; // main photo base64
+    let berealShot2 = null; // selfie photo base64
+
+    async function startBerealCameraStream() {
+      stopBerealCameraStream();
+      if (!berealVideo) return;
+
+      try {
+        const constraints = {
+          video: {
+            facingMode: { ideal: berealFacingMode },
+            width: { ideal: 1280 },
+            height: { ideal: 1600 }
+          },
+          audio: false
+        };
+
+        let stream = null;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia(constraints);
+        } catch (initialErr) {
+          console.warn("Retrying getUserMedia with basic video constraint:", initialErr);
+          stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        }
+
+        berealMediaStream = stream;
+        berealVideo.srcObject = stream;
+        berealVideo.setAttribute("playsinline", "true");
+        await berealVideo.play();
+
+        if (berealFacingMode === "user") {
+          berealVideo.classList.add("mirror");
+        } else {
+          berealVideo.classList.remove("mirror");
+        }
+      } catch (err) {
+        console.warn("Camera stream access failed:", err);
+        showAppToast("Kamera niedostępna", "Nie udało się uruchomić aparatu. Możesz wybrać zdjęcie z galerii.", "📷", 4000);
+      }
+    }
+
+    function stopBerealCameraStream() {
+      if (berealMediaStream) {
+        try {
+          berealMediaStream.getTracks().forEach(t => t.stop());
+        } catch (e) {}
+        berealMediaStream = null;
+      }
+      if (berealVideo) {
+        berealVideo.srcObject = null;
+      }
+    }
+
+    function openBerealCameraModal() {
+      if (!currentUser) {
+        showAppToast("Zaloguj się!", "Musisz być zalogowany, aby dodać fotkę w stylu BeReal 📸", "🔒");
+        const authModal = document.getElementById("auth-modal");
+        if (authModal) authModal.style.display = "flex";
+        return;
+      }
+
+      berealCurrentStep = 1;
+      berealShot1 = null;
+      berealShot2 = null;
+      berealFacingMode = "environment";
+
+      if (berealViewfinderStage) berealViewfinderStage.style.display = "block";
+      if (berealReviewStage) berealReviewStage.style.display = "none";
+      if (berealStageBadge) berealStageBadge.textContent = "🍺 Zdjęcie Piwa (1/2)";
+      if (berealStepDesc) berealStepDesc.textContent = "KROK 1/2: Zrób zdjęcie piwka lub baru";
+      if (berealCameraPip) berealCameraPip.style.display = "none";
+      if (btnBerealSkipSelfie) btnBerealSkipSelfie.style.display = "none";
+      if (btnBerealGallery) btnBerealGallery.style.display = "inline-flex";
+
+      if (berealModal) berealModal.style.display = "flex";
+      startBerealCameraStream();
+    }
+
+    function closeBerealCameraModal() {
+      stopBerealCameraStream();
+      if (berealModal) berealModal.style.display = "none";
+    }
+
+    function captureFrameFromVideo() {
+      if (!berealVideo || !berealCanvas) return null;
+      const vW = berealVideo.videoWidth || 960;
+      const vH = berealVideo.videoHeight || 1280;
+
+      // 4:5 aspect ratio crop
+      let cropW = vW;
+      let cropH = Math.round(vW * 1.25);
+      let cropX = 0;
+      let cropY = Math.round((vH - cropH) / 2);
+      if (cropH > vH) {
+        cropH = vH;
+        cropW = Math.round(vH * 0.8);
+        cropX = Math.round((vW - cropW) / 2);
+        cropY = 0;
+      }
+
+      const outW = 800;
+      const outH = 1000;
+      berealCanvas.width = outW;
+      berealCanvas.height = outH;
+      const ctx = berealCanvas.getContext("2d");
+
+      ctx.save();
+      if (berealFacingMode === "user") {
+        ctx.translate(outW, 0);
+        ctx.scale(-1, 1);
+      }
+      ctx.drawImage(berealVideo, cropX, cropY, cropW, cropH, 0, 0, outW, outH);
+      ctx.restore();
+
+      return berealCanvas.toDataURL("image/webp", 0.84);
+    }
+
+    function populateBerealVenueDropdown() {
+      if (!berealSelectVenue) return;
+      berealSelectVenue.innerHTML = "";
+
+      let venuesList = Array.isArray(allVenues) && allVenues.length > 0 ? [...allVenues] : [];
+
+      if (venuesList.length === 0) {
+        const opt = document.createElement("option");
+        opt.value = "warszawa-live";
+        opt.textContent = "Bar w Warszawie";
+        berealSelectVenue.appendChild(opt);
+        return;
+      }
+
+      // Proximity sorting if user coordinates are available
+      if (userLocation && Array.isArray(userLocation) && userLocation.length === 2) {
+        venuesList.sort((a, b) => {
+          const distA = calculateDistanceKm(userLocation[0], userLocation[1], a.latitude, a.longitude);
+          const distB = calculateDistanceKm(userLocation[0], userLocation[1], b.latitude, b.longitude);
+          return distA - distB;
+        });
+      } else {
+        venuesList.sort((a, b) => (a.name || "").localeCompare(b.name || "", "pl"));
+      }
+
+      venuesList.forEach((v, idx) => {
+        const opt = document.createElement("option");
+        opt.value = v.id;
+        let distLabel = "";
+        if (userLocation && Array.isArray(userLocation) && userLocation.length === 2 && v.latitude && v.longitude) {
+          const d = calculateDistanceKm(userLocation[0], userLocation[1], v.latitude, v.longitude);
+          distLabel = d < 1 ? ` (${Math.round(d * 1000)} m)` : ` (${d.toFixed(1)} km)`;
+        }
+        opt.textContent = `${v.name}${v.district ? ` [${v.district}]` : ""}${distLabel}`;
+        if (idx === 0) {
+          opt.selected = true;
+          if (v.beer_price_pln && berealInputPrice && !berealInputPrice.value) {
+            berealInputPrice.value = v.beer_price_pln.toFixed(2);
+          }
+        }
+        berealSelectVenue.appendChild(opt);
+      });
+
+      berealSelectVenue.onchange = function() {
+        const chosenId = berealSelectVenue.value;
+        const found = (allVenues || []).find(v => v.id === chosenId);
+        if (found && found.beer_price_pln && berealInputPrice) {
+          berealInputPrice.value = found.beer_price_pln.toFixed(2);
+        }
+      };
+    }
+
+    function goToBerealReviewStage() {
+      stopBerealCameraStream();
+      if (berealViewfinderStage) berealViewfinderStage.style.display = "none";
+      if (berealReviewStage) berealReviewStage.style.display = "block";
+      if (berealStepDesc) berealStepDesc.textContent = "Sprawdź fotkę i wybierz lokal przed wrzuceniem";
+
+      if (berealReviewMain) berealReviewMain.src = berealShot1 || "";
+
+      if (berealShot2) {
+        if (berealReviewPip) berealReviewPip.src = berealShot2;
+        if (berealReviewPip && berealReviewPip.parentElement) berealReviewPip.parentElement.style.display = "block";
+      } else if (currentUser && (currentUser.avatar_photo || (currentUser.user_metadata && currentUser.user_metadata.avatar_photo))) {
+        const av = currentUser.avatar_photo || currentUser.user_metadata.avatar_photo;
+        if (berealReviewPip) berealReviewPip.src = av;
+        if (berealReviewPip && berealReviewPip.parentElement) berealReviewPip.parentElement.style.display = "block";
+      } else {
+        if (berealReviewPip && berealReviewPip.parentElement) berealReviewPip.parentElement.style.display = "none";
+      }
+
+      populateBerealVenueDropdown();
+    }
+
+    // Helper: Upload base64 image
+    async function uploadBase64Image(dataUrl, prefix) {
+      if (!dataUrl || !dataUrl.startsWith("data:")) return dataUrl;
+      try {
+        const upRes = await fetch("/api/upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            imageBase64: dataUrl,
+            contentType: "image/webp",
+            fileName: `${prefix}-${Date.now()}`
+          })
+        });
+        if (upRes.ok) {
+          const upData = await upRes.json();
+          if (upData.url) return upData.url;
+        }
+      } catch (err) {
+        console.warn("Upload fallback error:", err);
+      }
+      return dataUrl;
+    }
+
+    // Wiring up BeReal Camera Event Listeners
+    if (btnOpenBereal) {
+      btnOpenBereal.addEventListener("click", openBerealCameraModal);
+    }
+
+    if (btnCloseBereal) {
+      btnCloseBereal.addEventListener("click", closeBerealCameraModal);
+    }
+
+    if (berealModal) {
+      berealModal.addEventListener("click", (e) => {
+        if (e.target === berealModal) closeBerealCameraModal();
+      });
+    }
+
+    if (btnBerealFlip) {
+      btnBerealFlip.addEventListener("click", () => {
+        berealFacingMode = (berealFacingMode === "environment" ? "user" : "environment");
+        startBerealCameraStream();
+      });
+    }
+
+    if (btnBerealShutter) {
+      btnBerealShutter.addEventListener("click", () => {
+        const snap = captureFrameFromVideo();
+        if (!snap) return;
+
+        if (berealCurrentStep === 1) {
+          berealShot1 = snap;
+          berealCurrentStep = 2;
+
+          if (berealCameraPip) {
+            berealCameraPip.style.display = "block";
+            if (berealPipPreviewImg) berealPipPreviewImg.src = berealShot1;
+          }
+          if (berealStageBadge) berealStageBadge.textContent = "🤳 Selfie Piwosza (2/2)";
+          if (berealStepDesc) berealStepDesc.textContent = "KROK 2/2: Pora na Twoje selfie z piwkiem!";
+          if (btnBerealSkipSelfie) btnBerealSkipSelfie.style.display = "inline-flex";
+          if (btnBerealGallery) btnBerealGallery.style.display = "none";
+
+          berealFacingMode = "user";
+          startBerealCameraStream();
+        } else if (berealCurrentStep === 2) {
+          berealShot2 = snap;
+          goToBerealReviewStage();
+        }
+      });
+    }
+
+    if (btnBerealSkipSelfie) {
+      btnBerealSkipSelfie.addEventListener("click", () => {
+        berealShot2 = null;
+        goToBerealReviewStage();
+      });
+    }
+
+    if (btnBerealRetake) {
+      btnBerealRetake.addEventListener("click", () => {
+        berealCurrentStep = 1;
+        berealShot1 = null;
+        berealShot2 = null;
+        berealFacingMode = "environment";
+
+        if (berealViewfinderStage) berealViewfinderStage.style.display = "block";
+        if (berealReviewStage) berealReviewStage.style.display = "none";
+        if (berealStageBadge) berealStageBadge.textContent = "🍺 Zdjęcie Piwa (1/2)";
+        if (berealStepDesc) berealStepDesc.textContent = "KROK 1/2: Zrób zdjęcie piwka lub baru";
+        if (berealCameraPip) berealCameraPip.style.display = "none";
+        if (btnBerealSkipSelfie) btnBerealSkipSelfie.style.display = "none";
+        if (btnBerealGallery) btnBerealGallery.style.display = "inline-flex";
+
+        startBerealCameraStream();
+      });
+    }
+
+    // Gallery File Picker Handler (Used by both "📁 Z pliku" and "🖼️ Galeria")
+    function handleFileSelectionForFeed(file) {
+      if (!file) return;
+      showAppToast("Wczytywanie zdjęcia...", "Dopasowujemy format do BeReal 📸", "⏳");
+
+      const reader = new FileReader();
+      reader.onload = function (readerEvent) {
+        const img = new Image();
+        img.onload = function () {
+          const width = img.width;
+          const height = img.height;
+
+          // Crop or scale to 4:5 aspect ratio
+          let cropW = width;
+          let cropH = Math.round(width * 1.25);
+          let cropX = 0;
+          let cropY = Math.round((height - cropH) / 2);
+          if (cropH > height) {
+            cropH = height;
+            cropW = Math.round(height * 0.8);
+            cropX = Math.round((width - cropW) / 2);
+            cropY = 0;
+          }
+
+          const canvas = document.createElement("canvas");
+          canvas.width = 800;
+          canvas.height = 1000;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, 800, 1000);
+
+          berealShot1 = canvas.toDataURL("image/webp", 0.84);
+          berealShot2 = null;
+
+          if (berealModal) berealModal.style.display = "flex";
+          goToBerealReviewStage();
+        };
+        img.src = readerEvent.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    if (btnBerealGallery && feedFileInput) {
+      btnBerealGallery.addEventListener("click", () => {
+        feedFileInput.click();
+      });
+    }
+
     if (btnAddPhoto && feedFileInput) {
       btnAddPhoto.addEventListener("click", () => {
         if (!currentUser) {
@@ -8221,87 +8649,76 @@
         feedFileInput.click();
       });
 
-      feedFileInput.addEventListener("change", async (e) => {
+      feedFileInput.addEventListener("change", (e) => {
         const file = e.target.files && e.target.files[0];
-        if (!file) return;
+        if (file) {
+          handleFileSelectionForFeed(file);
+        }
+        feedFileInput.value = "";
+      });
+    }
 
-        showAppToast("Przetwarzanie zdjęcia...", "Optymalizujemy i przesyłamy fotkę z baru 📸", "⏳");
+    // Publish BeReal Check-in
+    if (btnBerealPublish) {
+      btnBerealPublish.addEventListener("click", async () => {
+        if (!currentUser) {
+          showAppToast("Zaloguj się!", "Musisz być zalogowany, aby dodać post.", "🔒");
+          return;
+        }
+        if (!berealShot1) {
+          showAppToast("Brak zdjęcia", "Zrób zdjęcie piwa przed publikacją.", "⚠️");
+          return;
+        }
+
+        btnBerealPublish.disabled = true;
+        btnBerealPublish.innerHTML = `<span>⏳ Opublikuj w Feedzie...</span>`;
 
         try {
-          // Compress via Canvas to max 1000px WebP
-          const img = new Image();
-          const reader = new FileReader();
+          // 1. Upload shots
+          const mainUrl = await uploadBase64Image(berealShot1, "bereal-beer");
+          let selfieUrl = null;
+          if (berealShot2) {
+            selfieUrl = await uploadBase64Image(berealShot2, "bereal-selfie");
+          }
 
-          reader.onload = function (readerEvent) {
-            img.onload = async function () {
-              const canvas = document.createElement("canvas");
-              const maxDim = 1000;
-              let width = img.width;
-              let height = img.height;
+          // 2. Determine venue details
+          const venueId = (berealSelectVenue && berealSelectVenue.value) || "warszawa-live";
+          const venueObj = (allVenues || []).find(v => v.id === venueId);
+          const venueName = venueObj ? venueObj.name : (venueId === "warszawa-live" ? "Bar w Warszawie" : "Lokal");
+          const district = venueObj ? (venueObj.district || "Warszawa") : "Warszawa";
+          const beerName = (berealInputBeer && berealInputBeer.value.trim()) || "Świeże Piwko";
+          const beerPrice = (berealInputPrice && berealInputPrice.value)
+            ? parseFloat(berealInputPrice.value)
+            : (venueObj && typeof venueObj.beer_price_pln === "number" ? venueObj.beer_price_pln : 14.0);
 
-              if (width > height && width > maxDim) {
-                height = Math.round((height * maxDim) / width);
-                width = maxDim;
-              } else if (height > maxDim) {
-                width = Math.round((width * maxDim) / height);
-                height = maxDim;
+          // 3. Post to backend
+          await fetch("/api/auth", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "record-checkin",
+              payload: {
+                userId: currentUser.id,
+                venueId: venueId,
+                venueName: venueName,
+                district: district,
+                beerName: beerName,
+                beerPrice: beerPrice,
+                photoUrl: mainUrl,
+                selfieUrl: selfieUrl
               }
+            })
+          });
 
-              canvas.width = width;
-              canvas.height = height;
-              const ctx = canvas.getContext("2d");
-              ctx.drawImage(img, 0, 0, width, height);
-
-              const compressedBase64 = canvas.toDataURL("image/webp", 0.82);
-
-              // Upload to /api/upload
-              let photoUrl = compressedBase64;
-              try {
-                const upRes = await fetch("/api/upload", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    imageBase64: compressedBase64,
-                    contentType: "image/webp",
-                    fileName: `bar-feed-${Date.now()}`
-                  })
-                });
-                if (upRes.ok) {
-                  const upData = await upRes.json();
-                  if (upData.url) photoUrl = upData.url;
-                }
-              } catch (upErr) {
-                console.warn("Upload fallback to base64:", upErr);
-              }
-
-              // Post check-in with photo
-              await fetch("/api/auth", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  action: "record-checkin",
-                  payload: {
-                    userId: currentUser.id,
-                    venueId: "warszawa-live",
-                    venueName: "Bar w Warszawie",
-                    district: "Warszawa",
-                    beerName: "Świeże Piwko",
-                    beerPrice: 14.0,
-                    photoUrl: photoUrl
-                  }
-                })
-              });
-
-              showAppToast("Fotka opublikowana!", "Dodano do Live Feedu! Twoje piwo jest na liście 🍻", "🎉");
-              loadLiveBarFeed();
-            };
-            img.src = readerEvent.target.result;
-          };
-          reader.readAsDataURL(file);
+          showAppToast("BeReal opublikowany! 🎉", "Twoje piwko wylądowało w Live Feedzie!", "🍻", 4000);
+          closeBerealCameraModal();
+          loadLiveBarFeed();
         } catch (err) {
-          showAppToast("Błąd wysyłania", "Spróbuj ponownie za chwilę.", "⚠️");
+          console.error("Publish error:", err);
+          showAppToast("Błąd publikacji", "Spróbuj ponownie za chwilę.", "⚠️");
         } finally {
-          feedFileInput.value = "";
+          btnBerealPublish.disabled = false;
+          btnBerealPublish.innerHTML = `<span>🚀 Opublikuj w Feedzie</span>`;
         }
       });
     }

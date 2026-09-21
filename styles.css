@@ -8943,25 +8943,48 @@ header,
   margin: 0;
 }
 
-.live-feed-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-  max-height: 440px;
-  overflow-y: auto;
-  padding: 2px;
+.feed-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.beer-bereal-card {
-  position: relative;
-  background: #0f172a;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 14px;
-  overflow: hidden;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
-  transition: transform 0.2s ease;
+.btn-bereal-camera-trigger {
+  background: linear-gradient(135deg, #ff5722 0%, #ea580c 100%) !important;
+  color: #fff !important;
+  font-weight: 800 !important;
+  box-shadow: 0 4px 14px rgba(234, 88, 12, 0.4) !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.live-feed-grid {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+  max-height: calc(100vh - 220px);
+  overflow-y: auto;
+  padding: 6px 2px 40px 2px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Iconic BeReal Post Card */
+.beer-bereal-card {
+  position: relative;
+  width: 100%;
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .beer-bereal-card:hover {
@@ -8969,115 +8992,489 @@ header,
   border-color: rgba(249, 115, 22, 0.4);
 }
 
-.bereal-img-box {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 4/5;
-  background: #1e293b;
-  overflow: hidden;
-}
-
-.bereal-img-box img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.bereal-pip-avatar {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: rgba(15, 23, 42, 0.85);
-  border: 2px solid #ff5722;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
-  z-index: 2;
-  overflow: hidden;
-}
-
-.bereal-pip-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.bereal-price-tag {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(6px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #facc15;
-  font-size: 0.72rem;
-  font-weight: 800;
-  padding: 2px 7px;
-  border-radius: 999px;
-  z-index: 2;
-}
-
-.bereal-info-box {
-  padding: 8px 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.bereal-venue-title {
-  font-size: 0.78rem;
-  font-weight: 800;
-  color: #fff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  cursor: pointer;
-}
-
-.bereal-beer-sub {
-  font-size: 0.68rem;
-  color: #94a3b8;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.bereal-cheers-row {
+/* 1. Card Header: Author info & Report flag separated */
+.bereal-post-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 4px;
-  padding-top: 4px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 10px 14px 8px 14px;
 }
 
-.btn-cheers {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #fff;
-  padding: 3px 8px;
-  border-radius: 8px;
-  font-size: 0.72rem;
-  font-weight: 700;
+.bereal-author-box {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
   cursor: pointer;
+}
+
+.bereal-author-avatar {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid #ff5722;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  overflow: hidden;
+}
+
+.bereal-author-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bereal-author-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.bereal-author-name {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #f8fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bereal-post-time {
+  font-size: 0.7rem;
+  color: #94a3b8;
+}
+
+.bereal-btn-report {
+  position: static !important;
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  color: #94a3b8 !important;
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 6px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 0.85rem !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  flex-shrink: 0;
+}
+
+.bereal-btn-report:hover {
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: #ef4444 !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
+}
+
+/* 2. Photo Viewport with Dual BeReal PiP */
+.bereal-img-box,
+.bereal-viewport {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4/5;
+  background: #020617;
+  overflow: hidden;
+  user-select: none;
+}
+
+.bereal-main-img,
+.bereal-img-box > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* Picture-in-Picture Inset (Selfie or Main) */
+.bereal-pip-box,
+.bereal-pip-avatar {
+  position: absolute !important;
+  top: 12px !important;
+  left: 12px !important;
+  right: auto !important;
+  bottom: auto !important;
+  width: 76px !important;
+  height: 100px !important;
+  border-radius: 14px !important;
+  overflow: hidden !important;
+  border: 2px solid #ffffff !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.55) !important;
+  background: #1e293b !important;
+  z-index: 5 !important;
+  cursor: pointer !important;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.bereal-pip-box:active,
+.bereal-pip-avatar:active {
+  transform: scale(0.92) !important;
+}
+
+.bereal-pip-img,
+.bereal-pip-avatar img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+
+.bereal-pip-flip-hint {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 0.65rem;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+  pointer-events: none;
+}
+
+/* Photo Badges: Venue (Bottom-Left) and Price (Bottom-Right) */
+.bereal-overlay-venue,
+.bereal-venue-title {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  background: rgba(15, 23, 42, 0.84);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 5px 12px;
+  border-radius: 999px;
+  z-index: 4;
+  max-width: 65%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.bereal-overlay-venue:hover,
+.bereal-venue-title:hover {
+  background: rgba(234, 88, 12, 0.95);
+  border-color: #f97316;
+}
+
+.bereal-overlay-price,
+.bereal-price-tag {
+  position: absolute !important;
+  bottom: 12px !important;
+  right: 12px !important;
+  top: auto !important;
+  left: auto !important;
+  background: rgba(0, 0, 0, 0.82) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border: 1.5px solid rgba(250, 204, 21, 0.5) !important;
+  color: #facc15 !important;
+  font-size: 0.82rem !important;
+  font-weight: 900 !important;
+  padding: 5px 12px !important;
+  border-radius: 999px !important;
+  z-index: 4 !important;
+  letter-spacing: 0.02em !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* 3. Card Footer */
+.bereal-post-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px 12px 14px;
+  gap: 10px;
+}
+
+.bereal-beer-desc {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #cbd5e1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.bereal-cheers-btn,
+.btn-cheers {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
   transition: all 0.15s ease;
+  flex-shrink: 0;
 }
 
+.bereal-cheers-btn:hover,
 .btn-cheers:hover {
-  background: rgba(245, 158, 11, 0.2);
+  background: rgba(245, 158, 11, 0.25);
   border-color: #f59e0b;
+  transform: scale(1.04);
 }
 
+.bereal-cheers-btn.cheered,
 .btn-cheers.cheered {
   background: linear-gradient(135deg, #f59e0b, #ea580c);
+  border-color: transparent;
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(234, 88, 12, 0.4);
+}
+
+/* ==========================================================================
+   Piwny BeReal In-App Camera Modal
+   ========================================================================== */
+.bereal-camera-modal-card {
+  max-width: 440px !important;
+  width: 95% !important;
+  border-radius: 22px !important;
+  overflow: hidden !important;
+}
+
+.bereal-camera-viewport {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4/5;
+  background: #000;
+  border-radius: 18px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#bereal-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.2s ease;
+}
+
+#bereal-video.mirror {
+  transform: scaleX(-1);
+}
+
+.bereal-stage-badge {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  font-size: 0.76rem;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 999px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.bereal-camera-pip {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 72px;
+  height: 96px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  z-index: 10;
+}
+
+.bereal-camera-pip img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bereal-flip-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 1.15rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: transform 0.2s ease;
+}
+
+.bereal-flip-btn:active {
+  transform: rotate(180deg) scale(0.9);
+}
+
+.bereal-camera-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 12px 6px 12px;
+  gap: 10px;
+}
+
+.bereal-shutter-btn {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: transparent;
+  border: 4px solid #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.1s ease;
+}
+
+.bereal-shutter-btn:active {
+  transform: scale(0.9);
+}
+
+.bereal-shutter-btn .shutter-inner {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #ffffff;
+  transition: background 0.15s ease;
+}
+
+.bereal-shutter-btn:active .shutter-inner {
+  background: #ea580c;
+}
+
+.bereal-btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.bereal-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* Stage 2 Review in Modal */
+.bereal-preview-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4/5;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #000;
+  cursor: pointer;
+}
+
+#bereal-review-main {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.bereal-review-pip {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 76px;
+  height: 100px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid #ffffff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+  z-index: 5;
+}
+
+.bereal-review-pip img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pip-swap-hint {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+}
+
+.bereal-preview-tip {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(6px);
+  color: #f1f5f9;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.bereal-publish-form {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bereal-review-actions {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 10px;
+  margin-top: 6px;
+}
   border-color: transparent;
   color: #fff;
 }
@@ -13490,6 +13887,63 @@ body.theme-light .btn-cheers.cheered {
   background: linear-gradient(135deg, #f59e0b, #ea580c) !important;
   border-color: transparent !important;
   color: #ffffff !important;
+}
+
+body.theme-light .bereal-author-name {
+  color: #0f172a !important;
+}
+
+body.theme-light .bereal-post-time {
+  color: #64748b !important;
+}
+
+body.theme-light .bereal-beer-desc {
+  color: #1e293b !important;
+}
+
+body.theme-light .bereal-cheers-btn {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #1e293b !important;
+}
+
+body.theme-light .bereal-cheers-btn:hover {
+  background: #fef3c7 !important;
+  border-color: #f59e0b !important;
+  color: #b45309 !important;
+}
+
+body.theme-light .bereal-cheers-btn.cheered {
+  background: linear-gradient(135deg, #f59e0b, #ea580c) !important;
+  border-color: transparent !important;
+  color: #ffffff !important;
+}
+
+body.theme-light .bereal-btn-report {
+  color: #94a3b8 !important;
+}
+
+body.theme-light .bereal-btn-report:hover {
+  color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.1) !important;
+}
+
+body.theme-light .bereal-shutter-btn {
+  border-color: #ea580c !important;
+}
+
+body.theme-light .bereal-shutter-btn .shutter-inner {
+  background: #ea580c !important;
+}
+
+body.theme-light .bereal-btn-secondary {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #1e293b !important;
+}
+
+body.theme-light .bereal-btn-secondary:hover {
+  background: #e2e8f0 !important;
 }
 
 body.theme-light .bereal-time {
