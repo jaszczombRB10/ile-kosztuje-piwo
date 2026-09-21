@@ -16297,7 +16297,7 @@ body.theme-light .ugc-reason-item:hover {
   height: 40px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   padding: 0 14px;
   border-radius: 9999px;
   background: rgba(255, 255, 255, 0.06);
@@ -16310,7 +16310,20 @@ body.theme-light .ugc-reason-item:hover {
 }
 
 .vko-caps-icon {
-  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #f59e0b;
+}
+
+/* Scrollable Profile Body */
+.vko-prof-scroll-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* 2. Hero Section */
@@ -16318,28 +16331,28 @@ body.theme-light .ugc-reason-item:hover {
   display: flex;
   align-items: center;
   gap: 18px;
-  padding: 20px 20px 14px 20px;
+  padding: 18px 20px 12px 20px;
   flex-shrink: 0;
 }
 
 .vko-prof-avatar-box {
   position: relative;
-  width: 82px;
-  height: 82px;
+  width: 80px;
+  height: 80px;
   flex-shrink: 0;
   cursor: pointer;
 }
 
 .vko-prof-avatar-badge {
-  width: 82px;
-  height: 82px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   background: radial-gradient(circle, rgba(234, 88, 12, 0.2), #132220 80%);
   border: 2px solid rgba(255, 255, 255, 0.16);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2.3rem;
+  font-size: 2.2rem;
   overflow: hidden;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
 }
@@ -16381,21 +16394,43 @@ body.theme-light .ugc-reason-item:hover {
 
 .vko-prof-handle-row {
   display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.vko-prof-handle-with-num {
+  display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 12px;
   flex-wrap: wrap;
 }
 
 .vko-prof-handle {
   margin: 0;
-  font-size: 1.4rem;
+  font-size: 1.35rem;
   font-weight: 800;
   color: #fff;
   letter-spacing: 0.5px;
   text-transform: uppercase;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   line-height: 1.2;
+}
+
+.vko-user-num-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(245, 158, 11, 0.14);
+  border: 1px solid rgba(245, 158, 11, 0.38);
+  color: #f59e0b;
+  font-family: 'Space Mono', monospace, ui-monospace, monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
 }
 
 .vko-prof-rank-tag {
@@ -16459,12 +16494,12 @@ body.theme-light .ugc-reason-item:hover {
 }
 
 .vko-prof-btn {
-  height: 44px;
+  height: 42px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
   color: #f1f5f9;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 800;
   letter-spacing: 0.8px;
   text-transform: uppercase;
@@ -16486,7 +16521,7 @@ body.theme-light .ugc-reason-item:hover {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 0 20px 14px 20px;
+  padding: 0 20px 12px 20px;
   flex-shrink: 0;
 }
 
@@ -16510,57 +16545,354 @@ body.theme-light .ugc-reason-item:hover {
   background: rgba(255, 255, 255, 0.08);
 }
 
-/* 5. Feed Section */
-.vko-prof-feed {
-  flex: 1;
-  overflow-y: auto;
-  padding: 24px 20px 40px 20px;
+/* 5. Paszport & Osiągnięcia Module on Profile */
+.vko-passport-unified-card {
+  margin: 0 20px 12px 20px;
+  padding: 13px 15px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 240px;
-  background: rgba(0, 0, 0, 0.18);
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  gap: 9px;
+  flex-shrink: 0;
 }
 
-.vko-empty-feed {
+.vko-pass-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.vko-pass-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vko-pass-icon {
+  font-size: 22px;
+}
+
+.vko-pass-title {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.3px;
+  margin: 0;
+}
+
+.vko-pass-subtitle {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin: 1px 0 0 0;
+}
+
+.vko-pass-open-full-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #f59e0b;
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.vko-pass-open-full-btn:active {
+  transform: scale(0.95);
+  background: rgba(245, 158, 11, 0.2);
+}
+
+.vko-pass-progress-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vko-pass-progress-bar {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.vko-pass-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ea580c, #f59e0b);
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+.vko-pass-progress-pct {
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: #f59e0b;
+  font-family: 'Space Mono', monospace;
+}
+
+/* Badges preview row */
+.vko-badges-preview-scroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+
+.vko-badges-preview-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.vko-badge-pill-card {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.vko-badge-pill-card.unlocked {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+.vko-badge-pill-card:active {
+  transform: scale(0.95);
+}
+
+.vko-badge-pill-icon {
+  font-size: 16px;
+}
+
+.vko-badge-pill-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.vko-badge-pill-name {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  white-space: nowrap;
+}
+
+.vko-badge-pill-prog {
+  font-size: 0.62rem;
+  color: #94a3b8;
+}
+
+.vko-badge-pill-card.unlocked .vko-badge-pill-prog {
+  color: #f59e0b;
+  font-weight: 700;
+}
+
+/* 6. Check-ins & Activity Feed Section */
+.vko-checkins-section {
+  padding: 4px 20px 30px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.vko-checkins-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.vko-checkins-head-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.vko-checkins-count-badge {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.vko-btn-add-checkin {
+  background: rgba(234, 88, 12, 0.14);
+  border: 1px solid rgba(234, 88, 12, 0.35);
+  color: #f97316;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.vko-btn-add-checkin:active {
+  transform: scale(0.95);
+  background: rgba(234, 88, 12, 0.25);
+}
+
+.vko-checkins-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vko-checkin-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.vko-checkin-card:hover,
+.vko-checkin-card:active {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(245, 158, 11, 0.3);
+  transform: translateY(-1px);
+}
+
+.vko-checkin-thumb {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.22), rgba(20, 30, 30, 0.9));
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  flex-shrink: 0;
+}
+
+.vko-checkin-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.vko-checkin-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.2px;
+}
+
+.vko-checkin-sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vko-checkin-beer-name {
+  opacity: 0.8;
+}
+
+.vko-checkin-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.vko-checkin-price {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #f59e0b;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  letter-spacing: 0.3px;
+}
+
+.vko-checkin-status-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  padding: 1px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.2px;
+}
+
+/* Compact Empty State */
+.vko-empty-feed-compact {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  max-width: 280px;
+  padding: 20px 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  gap: 8px;
 }
 
-.vko-empty-cam {
-  margin-bottom: 12px;
-  opacity: 0.65;
+.vko-empty-feed-compact .vko-empty-cam {
+  margin-bottom: 2px;
+  opacity: 0.5;
 }
 
-.vko-empty-heading {
-  margin: 0 0 6px 0;
-  font-size: 1.15rem;
+.vko-empty-feed-compact .vko-empty-heading {
+  font-size: 0.92rem;
+  margin: 0;
+  color: #e2e8f0;
   font-weight: 800;
-  color: #fff;
-  letter-spacing: 0.6px;
   text-transform: uppercase;
 }
 
-.vko-empty-sub {
-  margin: 0 0 20px 0;
-  font-size: 0.82rem;
+.vko-empty-feed-compact .vko-empty-sub {
+  font-size: 0.78rem;
+  margin: 0 0 8px 0;
   color: #94a3b8;
-  line-height: 1.4;
+  max-width: 240px;
+  line-height: 1.35;
 }
 
 .vko-prof-orange-cta {
   width: 100%;
-  height: 48px;
+  height: 44px;
   background: linear-gradient(135deg, #ea580c, #f97316);
   border: none;
   border-radius: 12px;
   color: #fff;
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   font-weight: 800;
   letter-spacing: 0.8px;
   text-transform: uppercase;

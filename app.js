@@ -6833,7 +6833,98 @@
       if (progressPercent) progressPercent.textContent = `${rankProg.percent}%`;
       if (progressTarget) progressTarget.textContent = `Następna ranga: ${rankProg.nextTitle}`;
 
-      // Achievements list (Goin' style)
+      // Paszport preview & rank progress on main profile
+      const passFill = document.getElementById("prof-pass-fill");
+      const passPct = document.getElementById("prof-pass-pct");
+      const passProgressSub = document.getElementById("prof-pass-progress-sub");
+      const badgesPreviewList = document.getElementById("prof-badges-preview-list");
+
+      if (passFill) passFill.style.width = `${rankProg.percent}%`;
+      if (passPct) passPct.textContent = `${rankProg.percent}%`;
+      if (passProgressSub) {
+        passProgressSub.textContent = `${rankProg.nextTitle} (${rankProg.percent}%)`;
+      }
+
+      if (badgesPreviewList) {
+        const vMap = {};
+        if (Array.isArray(allVenues)) {
+          allVenues.forEach(v => { vMap[v.id] = v; });
+        }
+        badgesPreviewList.innerHTML = PASSPORT_BADGES.map(badge => {
+          let evaluation = { unlocked: false, progress: "0/1" };
+          try {
+            if (typeof badge.check === "function") {
+              evaluation = badge.check(visitedVenues, vMap);
+            }
+          } catch (e) {}
+          const isUnlocked = evaluation.unlocked;
+          return `
+            <div class="vko-badge-pill-card ${isUnlocked ? 'unlocked' : 'locked'}" onclick="window.__openPassport && window.__openPassport()" title="${escapeHtml(badge.name)}: ${escapeHtml(badge.desc)} (${evaluation.progress})">
+              <span class="vko-badge-pill-icon">${badge.icon || '🎖️'}</span>
+              <div class="vko-badge-pill-info">
+                <span class="vko-badge-pill-name">${escapeHtml(badge.name)}</span>
+                <span class="vko-badge-pill-prog">${isUnlocked ? 'Zdobyta ✓' : evaluation.progress}</span>
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
+
+      // Check-ins feed (Visited venues or BeReal)
+      const checkinsList = document.getElementById("prof-checkins-list");
+      const emptyCheckins = document.getElementById("prof-empty-checkins");
+      const checkinsBadgeCount = document.getElementById("prof-checkins-badge-count");
+
+      if (checkinsBadgeCount) {
+        checkinsBadgeCount.textContent = String(visitedVenues.length);
+      }
+
+      if (visitedVenues.length === 0) {
+        if (checkinsList) {
+          checkinsList.innerHTML = "";
+          checkinsList.style.display = "none";
+        }
+        if (emptyCheckins) emptyCheckins.style.display = "flex";
+      } else {
+        if (emptyCheckins) emptyCheckins.style.display = "none";
+        if (checkinsList) {
+          checkinsList.style.display = "flex";
+          const vMap = {};
+          if (Array.isArray(allVenues)) {
+            allVenues.forEach(v => { vMap[v.id] = v; });
+          }
+          const recentVisited = [...visitedVenues].reverse();
+          checkinsList.innerHTML = recentVisited.map(vid => {
+            const v = vMap[vid] || { id: vid, name: "Bar w Warszawie", district: "Warszawa", beer_price_pln: 14 };
+            const priceLabel = v.beer_price_pln ? `${v.beer_price_pln.toFixed(0)} zł` : "—";
+            return `
+              <div class="vko-checkin-card" onclick="window.__zoomToVenue('${escapeHtml(v.id)}')">
+                <div class="vko-checkin-thumb">
+                  <span>🍺</span>
+                </div>
+                <div class="vko-checkin-details">
+                  <div class="vko-checkin-name">${escapeHtml(v.name)}</div>
+                  <div class="vko-checkin-sub">
+                    <span>📍 ${escapeHtml(v.district || 'Warszawa')}</span>
+                    ${v.beer_name ? `<span class="vko-checkin-beer-name">· ${escapeHtml(v.beer_name)}</span>` : ''}
+                  </div>
+                </div>
+                <div class="vko-checkin-right">
+                  <span class="vko-checkin-price">${priceLabel}</span>
+                  <span class="vko-checkin-status-badge">✓ Zameldowny</span>
+                </div>
+              </div>
+            `;
+          }).join("");
+        }
+      }
+
+      // Theme icon update
+      const profThemeIcon = document.getElementById("prof-theme-icon");
+      const curTheme = document.documentElement.getAttribute("data-theme") || "dark";
+      if (profThemeIcon) profThemeIcon.textContent = curTheme === "light" ? "☀️" : "🌙";
+
+      // Achievements list (Goin' style modal)
       const achievementsList = document.getElementById("prof-achievements-list");
       if (achievementsList) {
         const vMap = {};
@@ -6927,12 +7018,18 @@
     }
 
     const btnTopTheme = document.getElementById("prof-top-theme-btn");
+    function updateProfThemeIcon() {
+      const profThemeIcon = document.getElementById("prof-theme-icon");
+      const cur = document.documentElement.getAttribute("data-theme") || "dark";
+      if (profThemeIcon) profThemeIcon.textContent = cur === "light" ? "☀️" : "🌙";
+    }
     if (btnTopTheme) {
       btnTopTheme.addEventListener("click", () => {
         const cur = document.documentElement.getAttribute("data-theme") || "dark";
         const next = cur === "light" ? "dark" : "light";
         applyTheme(next);
-        showAppToast(next === "light" ? "☀️ Włączono motyw jasny" : "🌙 Włączono motyw ciemny", "", "🎨");
+        updateProfThemeIcon();
+        showAppToast(next === "light" ? "☀️ Włączono motyw jasny" : "🌙 Włączono motyw ciemny", "", "🌙");
       });
     }
 
@@ -6999,12 +7096,26 @@
 
     // BeReal CTA in Empty Check-ins
     const btnProfBereal = document.getElementById("btn-prof-bereal-cta");
+    const btnBerealEmpty = document.getElementById("btn-prof-bereal-empty-cta");
+    function triggerBerealFromProfile() {
+      window.__closeMyProfile();
+      const camBtn = document.getElementById("btn-open-bereal-camera");
+      if (camBtn) camBtn.click();
+      else if (typeof openBerealCameraModal === "function") openBerealCameraModal();
+    }
     if (btnProfBereal) {
-      btnProfBereal.addEventListener("click", () => {
+      btnProfBereal.addEventListener("click", triggerBerealFromProfile);
+    }
+    if (btnBerealEmpty) {
+      btnBerealEmpty.addEventListener("click", triggerBerealFromProfile);
+    }
+
+    // Open Full Passport from Profile Card
+    const btnOpenFullPass = document.getElementById("btn-open-full-passport");
+    if (btnOpenFullPass) {
+      btnOpenFullPass.addEventListener("click", () => {
         window.__closeMyProfile();
-        const camBtn = document.getElementById("btn-open-bereal-camera");
-        if (camBtn) camBtn.click();
-        else if (typeof openBerealCameraModal === "function") openBerealCameraModal();
+        if (window.__openPassport) window.__openPassport();
       });
     }
 
