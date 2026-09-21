@@ -93,6 +93,11 @@
   let knownNotificationIds = new Set();
   let isFetchingNotifications = false;
 
+  window.__setMockUser = function(user, followingIds) {
+    currentUser = user;
+    if (Array.isArray(followingIds)) myFollowingIds = followingIds;
+  };
+
   function loadFavoriteVenues() {
     try {
       const raw = localStorage.getItem(FAVORITES_STORAGE_KEY);
@@ -7476,6 +7481,7 @@
     // Controls
     const searchInput = document.getElementById("input-search-friends");
     const btnRunSearch = document.getElementById("btn-run-search-friends");
+    const btnClearSearch = document.getElementById("btn-clear-search-friends");
     const searchResults = document.getElementById("comm-search-results");
     const followingList = document.getElementById("comm-following-list");
     const recommendedList = document.getElementById("comm-recommended-list");
@@ -7484,6 +7490,20 @@
     const feedFileInput = document.getElementById("feed-photo-file-input");
     const btnAddPhoto = document.getElementById("btn-add-feed-photo");
     const btnCheckinDirect = document.getElementById("btn-open-checkin-direct");
+
+    // Instagram Ekipa Elements
+    const storiesRail = document.getElementById("ig-stories-rail");
+    const storiesActiveCount = document.getElementById("ig-stories-active-count");
+    const chipFriendsAll = document.getElementById("chip-friends-all");
+    const chipFriendsActive = document.getElementById("chip-friends-active");
+    const chipFriendsTop = document.getElementById("chip-friends-top");
+    const commActiveBadge = document.getElementById("comm-active-badge");
+
+    // Instagram Community State
+    let cachedFollowingUsers = [];
+    let cachedActiveCheckins = [];
+    let currentFriendsFilter = "all"; // "all" | "active" | "top"
+    let currentFriendsSearchQuery = "";
 
     // QR Share & Referral Elements
     const qrModal = document.getElementById("qr-share-modal");
@@ -7706,24 +7726,140 @@
       }
     }
 
+    // -------------------------------------------------------------------------
+    // Instagram-Style Friends Tab: Instant Filter, Chips & Stories Rail
+    // -------------------------------------------------------------------------
     if (btnRunSearch) btnRunSearch.addEventListener("click", searchFriends);
+
     if (searchInput) {
+      searchInput.addEventListener("input", () => {
+        const val = searchInput.value.trim();
+        currentFriendsSearchQuery = val;
+        if (btnClearSearch) {
+          btnClearSearch.style.display = val ? "flex" : "none";
+        }
+        renderFriendsList();
+        if (!val && searchResults) {
+          searchResults.style.display = "none";
+        }
+      });
+
       searchInput.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
           e.preventDefault();
+          // If searching globally or pressing enter
           searchFriends();
-        }
-      });
-      searchInput.addEventListener("input", () => {
-        if (!searchInput.value.trim() && searchResults) {
-          searchResults.style.display = "none";
         }
       });
     }
 
-    // Load Following List
-    async function loadFollowingList() {
+    if (btnClearSearch) {
+      btnClearSearch.addEventListener("click", () => {
+        if (searchInput) searchInput.value = "";
+        btnClearSearch.style.display = "none";
+        currentFriendsSearchQuery = "";
+        if (searchResults) searchResults.style.display = "none";
+        renderFriendsList();
+      });
+    }
+
+    // Filter Chips setup ("Wszyscy", "🟢 Na piwie", "🏆 Ranking")
+    const chipsList = [
+      { el: chipFriendsAll, filter: "all" },
+      { el: chipFriendsActive, filter: "active" },
+      { el: chipFriendsTop, filter: "top" }
+    ];
+
+    chipsList.forEach(({ el, filter }) => {
+      if (!el) return;
+      el.addEventListener("click", () => {
+        chipsList.forEach(c => c.el && c.el.classList.remove("active"));
+        el.classList.add("active");
+        currentFriendsFilter = filter;
+        renderFriendsList();
+      });
+    });
+
+    // 1. Render Stories Rail ("Na mieście teraz 🍻")
+    function renderStoriesRail() {
+      if (!storiesRail) return;
+
+      const activeCount = cachedActiveCheckins.length;
+      if (storiesActiveCount) {
+        storiesActiveCount.textContent = activeCount === 1 ? "1 aktywny" : `${activeCount} aktywnych`;
+      }
+      if (commActiveBadge) {
+        commActiveBadge.textContent = activeCount;
+      }
+
+      // Check current user check-in status
+      const myMeta = currentUser?.user_metadata || {};
+      const myLastCheckin = myMeta.last_checkin;
+      const now = Date.now();
+      const cutoff24h = 24 * 60 * 60 * 1000;
+      const isMyCheckinActive = myLastCheckin && !myLastCheckin.ghost_mode && (now - (myLastCheckin.timestamp || 0) <= cutoff24h);
+
+      const myAvatarHtml = myMeta.avatar_photo
+        ? `<img src="${escapeHtml(myMeta.avatar_photo)}" alt="Ty" />`
+        : escapeHtml(myMeta.avatar_icon || "🍺");
+
+      let html = `
+        <div class="ig-story-item" id="ig-my-story-btn">
+          <div class="ig-story-ring-wrap">
+            <div class="ig-story-ring ${isMyCheckinActive ? "active-story" : ""}">
+              <div class="ig-story-avatar">${myAvatarHtml}</div>
+            </div>
+            ${isMyCheckinActive ? `<div class="ig-story-pin-badge" title="Jesteś zameldowany!">📍</div>` : `<div class="ig-story-plus" title="Dodaj meldunek">+</div>`}
+          </div>
+          <span class="ig-story-label">Twój meldunek</span>
+          <span class="ig-story-venue">${isMyCheckinActive ? escapeHtml(myLastCheckin.venue_name || "W lokalu") : "Dodaj +"}</span>
+        </div>
+      `;
+
+      if (cachedActiveCheckins.length > 0) {
+        cachedActiveCheckins.forEach(f => {
+          const friendAvatarHtml = f.avatar_photo
+            ? `<img src="${escapeHtml(f.avatar_photo)}" alt="Avatar" />`
+            : escapeHtml(f.avatar_icon || "🍺");
+          const shortName = f.display_name || f.username || "Znajomy";
+          const shortVenue = f.venue_name ? f.venue_name.replace(/^(Pub|Bar|Klub|Restauracja)\s+/i, "") : "W lokalu";
+
+          html += `
+            <div class="ig-story-item" onclick="window.__openUserProfile('${escapeHtml(f.username)}')">
+              <div class="ig-story-ring-wrap">
+                <div class="ig-story-ring active-story">
+                  <div class="ig-story-avatar">${friendAvatarHtml}</div>
+                </div>
+                <div class="ig-story-pin-badge">🍻</div>
+              </div>
+              <span class="ig-story-label" title="${escapeHtml(shortName)}">${escapeHtml(shortName)}</span>
+              <span class="ig-story-venue" title="${escapeHtml(f.venue_name || "")}">📍 ${escapeHtml(shortVenue)}</span>
+            </div>
+          `;
+        });
+      }
+
+      storiesRail.innerHTML = html;
+
+      const myStoryBtn = document.getElementById("ig-my-story-btn");
+      if (myStoryBtn) {
+        myStoryBtn.addEventListener("click", () => {
+          if (btnCheckinDirect) {
+            btnCheckinDirect.click();
+          } else if (typeof window.__openCheckinModal === "function") {
+            window.__openCheckinModal();
+          } else {
+            showAppToast("Meldunek", "Wybierz lokal na mapie, aby się zameldować! 🍺", "📍");
+            switchTab("map");
+          }
+        });
+      }
+    }
+
+    // 2. Render Friends List (Instagram User Rows, 0ms Instant Search & Filter)
+    function renderFriendsList() {
       if (!followingList) return;
+
       if (!currentUser) {
         followingList.innerHTML = `
           <div class="empty-state-card">
@@ -7735,7 +7871,7 @@
         return;
       }
 
-      if (myFollowingIds.length === 0) {
+      if (cachedFollowingUsers.length === 0) {
         followingList.innerHTML = `
           <div class="empty-state-card">
             <div class="empty-icon">👥</div>
@@ -7746,62 +7882,173 @@
         return;
       }
 
-      followingList.innerHTML = `<div class="loading-state-hint">Ładowanie listy znajomych... 🍻</div>`;
+      // Filter by query (instant client-side search across 100+ friends)
+      const q = (currentFriendsSearchQuery || "").toLowerCase().trim();
+      let filtered = cachedFollowingUsers.filter(u => {
+        if (!q) return true;
+        const name = (u.display_name || "").toLowerCase();
+        const username = (u.username || "").toLowerCase();
+        return name.includes(q) || username.includes(q);
+      });
 
-      try {
-        const res = await fetch("/api/auth", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "get-following",
-            payload: { userId: currentUser.id, userIds: myFollowingIds }
-          })
+      // Filter by chip
+      if (currentFriendsFilter === "active") {
+        filtered = filtered.filter(u => {
+          return cachedActiveCheckins.some(f => f.user_id === u.id || f.username === u.username);
         });
-        const data = await res.json();
-        if (Array.isArray(data.followingIds)) {
-          myFollowingIds = data.followingIds;
-          const commFollowingBadge = document.getElementById("comm-following-badge");
-          if (commFollowingBadge) commFollowingBadge.textContent = myFollowingIds.length;
+      } else if (currentFriendsFilter === "top") {
+        filtered = [...filtered].sort((a, b) => {
+          const aCount = Array.isArray(a.visited_venues) ? a.visited_venues.length : 0;
+          const bCount = Array.isArray(b.visited_venues) ? b.visited_venues.length : 0;
+          return bCount - aCount;
+        });
+      }
+
+      // Handle empty filter/search results
+      if (filtered.length === 0) {
+        if (q) {
+          followingList.innerHTML = `
+            <div class="empty-state-card" style="padding: 24px 16px;">
+              <div class="empty-icon">🔍</div>
+              <div class="empty-title">Brak w Twojej ekipie</div>
+              <p class="empty-sub">Nie masz w obserwowanych nikogo pasującego do "${escapeHtml(currentFriendsSearchQuery)}".</p>
+              <button type="button" class="btn-secondary" id="btn-search-global-fallback" style="margin-top:12px; font-size:0.82rem; padding: 7px 16px;">
+                🌍 Szukaj "@${escapeHtml(currentFriendsSearchQuery)}" w całej Warszawie
+              </button>
+            </div>
+          `;
+          const fallbackBtn = document.getElementById("btn-search-global-fallback");
+          if (fallbackBtn) {
+            fallbackBtn.addEventListener("click", searchFriends);
+          }
+          return;
         }
 
-        const users = data.users || [];
-        if (users.length === 0) {
+        if (currentFriendsFilter === "active") {
           followingList.innerHTML = `
-            <div class="empty-state-card">
-              <div class="empty-icon">👥</div>
-              <div class="empty-title">Brak obserwowanych</div>
-              <p class="empty-sub">Dodaj piwoszy z listy poniżej!</p>
+            <div class="empty-state-card" style="padding: 24px 16px;">
+              <div class="empty-icon">😴</div>
+              <div class="empty-title">Nikt teraz nie pije</div>
+              <p class="empty-sub">Żaden z Twoich znajomych nie zameldował się jeszcze dzisiaj w barze. Bądź pierwszy!</p>
             </div>
           `;
           return;
         }
+      }
 
-        followingList.innerHTML = users.map(u => {
-          const visitedCount = Array.isArray(u.visited_venues) ? u.visited_venues.length : 0;
-          const avatarHtml = u.avatar_photo
-            ? `<img src="${escapeHtml(u.avatar_photo)}" class="user-card-photo" alt="Avatar" />`
-            : escapeHtml(u.avatar_icon || "🍺");
+      // Render modern Instagram-style rows
+      followingList.innerHTML = filtered.map(u => {
+        const visitedCount = Array.isArray(u.visited_venues) ? u.visited_venues.length : 0;
+        const avatarHtml = u.avatar_photo
+          ? `<img src="${escapeHtml(u.avatar_photo)}" alt="Avatar" />`
+          : escapeHtml(u.avatar_icon || "🍺");
 
-          return `
-            <div class="user-search-card">
-              <div class="user-card-avatar" onclick="window.__openUserProfile('${escapeHtml(u.username)}')">${avatarHtml}</div>
-              <div class="user-card-info" onclick="window.__openUserProfile('${escapeHtml(u.username)}')">
-                <div class="user-card-name">${escapeHtml(u.display_name || u.username)}</div>
-                <div class="user-card-handle">@${escapeHtml(u.username)} • <span>🎖️ ${visitedCount} lokali</span></div>
-                ${u.bio ? `<div class="user-card-bio">${escapeHtml(u.bio)}</div>` : ""}
+        const activeCheckin = cachedActiveCheckins.find(f => f.user_id === u.id || f.username === u.username);
+        const isActive = !!activeCheckin;
+        const activeVenue = activeCheckin ? activeCheckin.venue_name : null;
+
+        return `
+          <div class="ig-friend-row">
+            <div class="ig-friend-avatar-wrap" onclick="window.__openUserProfile('${escapeHtml(u.username)}')">
+              <div class="ig-friend-avatar ${isActive ? "has-live-checkin" : ""}">
+                ${avatarHtml}
               </div>
-              <div class="user-card-action">
-                <button type="button" class="btn-follow-toggle following" data-user-id="${u.id}" onclick="window.__toggleFollowUser('${u.id}', this)">
-                  ✓ Obserwujesz
-                </button>
-              </div>
+              ${isActive ? `<div class="ig-friend-live-dot" title="Teraz w lokalu!"></div>` : ""}
             </div>
-          `;
-        }).join("");
+            <div class="ig-friend-info" onclick="window.__openUserProfile('${escapeHtml(u.username)}')">
+              <div class="ig-friend-name-row">
+                <span class="ig-friend-name">${escapeHtml(u.display_name || u.username)}</span>
+              </div>
+              <div class="ig-friend-handle-row">
+                <span>@${escapeHtml(u.username)}</span>
+                <span>•</span>
+                <span class="ig-friend-bars-count">🎖️ ${visitedCount} lokali</span>
+              </div>
+              ${isActive ? `
+                <div class="ig-friend-active-tag">
+                  🟢 w: ${escapeHtml(activeVenue || "lokalu")}
+                </div>
+              ` : ""}
+            </div>
+            <div class="ig-friend-action">
+              <button type="button" class="btn-ig-following" data-user-id="${u.id}" onclick="window.__toggleFollowUser('${u.id}', this)">
+                Obserwujesz
+              </button>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    // 3. Load Following List & Stories Data
+    async function loadFollowingList() {
+      if (!followingList) return;
+      if (!currentUser) {
+        followingList.innerHTML = `
+          <div class="empty-state-card">
+            <div class="empty-icon">🔒</div>
+            <div class="empty-title">Zaloguj się</div>
+            <p class="empty-sub">Zaloguj się na swoje konto, aby widzieć listę obserwowanych piwoszy!</p>
+          </div>
+        `;
+        renderStoriesRail();
+        return;
+      }
+
+      if (myFollowingIds.length === 0) {
+        cachedFollowingUsers = [];
+        cachedActiveCheckins = [];
+        renderStoriesRail();
+        renderFriendsList();
+        return;
+      }
+
+      followingList.innerHTML = `<div class="loading-state-hint">Ładowanie Twojej ekipy... 🍻</div>`;
+
+      try {
+        const [resFollowing, resCheckins] = await Promise.all([
+          fetch("/api/auth", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "get-following",
+              payload: { userId: currentUser.id, userIds: myFollowingIds }
+            })
+          }),
+          fetch("/api/auth", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "get-friends-map-checkins",
+              payload: { userId: currentUser.id, followingIds: myFollowingIds }
+            })
+          })
+        ]);
+
+        const dataFollowing = await resFollowing.json();
+        const dataCheckins = resCheckins.ok ? await resCheckins.json() : { activeFriends: [] };
+
+        if (Array.isArray(dataFollowing.followingIds)) {
+          myFollowingIds = dataFollowing.followingIds;
+          const commFollowingBadge = document.getElementById("comm-following-badge");
+          if (commFollowingBadge) commFollowingBadge.textContent = myFollowingIds.length;
+        }
+
+        cachedFollowingUsers = dataFollowing.users || [];
+        cachedActiveCheckins = dataCheckins.activeFriends || [];
+
+        renderStoriesRail();
+        renderFriendsList();
       } catch (err) {
+        console.warn("Failed to load following list:", err);
         followingList.innerHTML = `<div class="error-state-hint">Nie udało się załadować listy obserwowanych.</div>`;
       }
     }
+
+    // Expose community refresh hook
+    window.__refreshCommunityFriends = function() {
+      loadFollowingList();
+    };
 
     // Load Recommended Friends (Popularni teraz w Warszawie)
     async function loadRecommendedFriends() {
@@ -8895,6 +9142,20 @@
             btn.textContent = "➕ Obserwuj zwrotnie";
           }
         });
+
+        document.querySelectorAll(`.btn-ig-following[data-user-id="${targetUserId}"]`).forEach(btn => {
+          if (data.isFollowing) {
+            btn.classList.add("following");
+            btn.textContent = "Obserwujesz";
+          } else {
+            btn.classList.remove("following");
+            btn.textContent = "➕ Obserwuj";
+          }
+        });
+
+        if (typeof window.__refreshCommunityFriends === "function") {
+          window.__refreshCommunityFriends();
+        }
 
         // Update public profile modal follow button if currently open for this user
         const pubprofFollowBtn = document.getElementById("btn-pubprof-follow-toggle");

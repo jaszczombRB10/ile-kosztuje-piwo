@@ -2164,42 +2164,74 @@
       <!-- Scrollable Full-Height Page Content Body -->
       <div class="community-page-body">
         <!-- Tab 1: Ekipa (Znajomi, wyszukiwanie, polecani i zaproszenia) -->
+        <!-- Tab 1: Ekipa (Instagram Style: Stories, Instant Search, Filter Chips, Sleek Rows) -->
         <div class="comm-tab-pane" id="pane-comm-friends">
-        <!-- Search bar -->
-        <div class="user-search-wrap">
-          <input type="text" id="input-search-friends" placeholder="Szukaj znajomego po nicku (np. @m_franol)..." />
-          <button type="button" id="btn-run-search-friends" class="btn-primary">Szukaj</button>
-        </div>
-        <div class="search-results-list" id="comm-search-results" style="display:none;"></div>
+          
+          <!-- 1. Instagram Stories Rail: Na mieście teraz 🍻 -->
+          <div class="ig-stories-section">
+            <div class="ig-stories-header">
+              <span class="ig-stories-title">⚡ NA MIEŚCIE TERAZ</span>
+              <span class="ig-stories-sub" id="ig-stories-active-count">0 aktywnych</span>
+            </div>
+            <div class="ig-stories-scroll" id="ig-stories-rail">
+              <!-- Dynamically populated via JS: your check-in story bubble + active friends -->
+            </div>
+          </div>
 
-        <!-- Section: Obserwowani znajomi -->
-        <div class="comm-section-header">
-          <h3>Obserwowani (<span id="comm-following-badge">0</span>)</h3>
-          <span class="comm-section-sub">Twoi znajomi piwosze</span>
-        </div>
-        <div class="following-list" id="comm-following-list">
-          <div class="empty-state-hint">Jeszcze nikogo nie obserwujesz. Znajdź znajomych poniżej lub zaproś ekipę!</div>
-        </div>
+          <!-- 2. Instagram Search & Filter Bar -->
+          <div class="ig-search-filter-wrap">
+            <div class="ig-search-box">
+              <span class="ig-search-icon">🔍</span>
+              <input type="text" id="input-search-friends" placeholder="Szukaj w ekipie (@nick, imię)..." autocomplete="off" />
+              <button type="button" class="ig-search-clear-btn" id="btn-clear-search-friends" style="display:none;" title="Wyczyść wyszukiwanie">✕</button>
+            </div>
+            <button type="button" id="btn-run-search-friends" class="ig-global-search-btn" title="Szukaj nowych osób w całej Warszawie">
+              <span>Szukaj</span>
+            </button>
+          </div>
 
-        <!-- Section: Polecani w Warszawie (Popularni teraz) -->
-        <div class="comm-section-header" style="margin-top: 20px;">
-          <h3>🔥 Popularni teraz w Warszawie</h3>
-          <span class="comm-section-sub">Aktywni łowcy tanich i dobrych piw</span>
-        </div>
-        <div class="recommended-users-list" id="comm-recommended-list">
-          <!-- Injected via JS -->
-        </div>
+          <!-- 3. Quick Filter Chips -->
+          <div class="ig-filter-chips-row">
+            <button type="button" class="ig-chip active" id="chip-friends-all" data-filter="all">
+              <span>Wszyscy</span>
+              <span class="ig-chip-count" id="comm-following-badge">0</span>
+            </button>
+            <button type="button" class="ig-chip" id="chip-friends-active" data-filter="active">
+              <span>🟢 Na piwie</span>
+              <span class="ig-chip-count" id="comm-active-badge">0</span>
+            </button>
+            <button type="button" class="ig-chip" id="chip-friends-top" data-filter="top">
+              <span>🏆 Ranking barów</span>
+            </button>
+          </div>
 
-        <!-- Invite Actions (Share Link & QR) -->
-        <div class="comm-invite-dock">
-          <button type="button" class="btn-secondary" id="btn-copy-invite-link">
-            🔗 Kopiuj link z kodem
-          </button>
-          <button type="button" class="btn-secondary" id="btn-show-qr-code">
-            📱 Pokaż kod QR
-          </button>
+          <!-- Global search results container (if searching new users on platform) -->
+          <div class="search-results-list" id="comm-search-results" style="display:none;"></div>
+
+          <!-- 4. Friends List (Instagram User Rows) -->
+          <div class="following-list ig-friends-list" id="comm-following-list">
+            <div class="empty-state-hint">Ładowanie Twojej ekipy... 🍻</div>
+          </div>
+
+          <!-- 5. Section: Polecani w Warszawie (Popularni teraz) -->
+          <div class="comm-section-header" style="margin-top: 24px;">
+            <h3>🔥 Popularni teraz w Warszawie</h3>
+            <span class="comm-section-sub">Aktywni łowcy tanich i dobrych piw</span>
+          </div>
+          <div class="recommended-users-list" id="comm-recommended-list">
+            <!-- Injected via JS -->
+          </div>
+
+          <!-- Invite Actions (Share Link & QR) -->
+          <div class="comm-invite-dock">
+            <button type="button" class="btn-secondary" id="btn-copy-invite-link">
+              🔗 Kopiuj link z kodem
+            </button>
+            <button type="button" class="btn-secondary" id="btn-show-qr-code">
+              📱 Pokaż kod QR
+            </button>
+          </div>
         </div>
-      </div>
 
       <!-- Tab 2: Mapa 24h (Live check-iny znajomych + Puls Warszawy) -->
       <div class="comm-tab-pane" id="pane-comm-map" style="display:none;">
