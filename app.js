@@ -8045,34 +8045,38 @@
 
         feedGrid.innerHTML = visibleFeed.map(item => {
           const timeAgo = formatTimeAgo(item.created_at);
-          const authorAvatarContent = item.avatar_photo
-            ? `<img src="${escapeHtml(item.avatar_photo)}" alt="Avatar" />`
-            : escapeHtml(item.avatar_icon || "🍺");
+          const authorName = item.author_name || item.user_name || "piwosz";
+          const authorAvatarContent = (item.avatar_photo || item.user_photo)
+            ? `<img src="${escapeHtml(item.avatar_photo || item.user_photo)}" alt="Avatar" />`
+            : escapeHtml(item.avatar_icon || item.user_avatar || "🍺");
+          const venueId = item.venue_id || "";
+          const venueName = item.venue_name || "Warszawa";
+          const authorId = item.author_id || item.user_id || "";
 
           return `
             <div class="beer-bereal-card" data-post-id="${escapeHtml(item.id)}">
               <!-- 1. Post Header: Author info (Avatar, Handle, Location link & Time) + Report Flag -->
               <div class="bereal-post-header">
                 <div class="bereal-author-box">
-                  <div class="bereal-author-avatar" ${item.author_name ? `onclick="window.__openUserProfile('${escapeHtml(item.author_name)}')"` : ""}>
+                  <div class="bereal-author-avatar" onclick="window.__openUserProfile('${escapeHtml(authorName)}')">
                     ${authorAvatarContent}
                   </div>
                   <div class="bereal-author-meta">
                     <div class="bereal-author-name-row">
-                      <span class="bereal-author-name" ${item.author_name ? `onclick="window.__openUserProfile('${escapeHtml(item.author_name)}')"` : ""}>
-                        @${escapeHtml(item.author_name || "piwosz")}
+                      <span class="bereal-author-name" onclick="window.__openUserProfile('${escapeHtml(authorName)}')">
+                        @${escapeHtml(authorName)}
                       </span>
                     </div>
                     <div class="bereal-sub-meta">
-                      <span class="bereal-venue-link" onclick="window.__openVenueById('${escapeHtml(item.venue_id || '')}')" title="Pokaż lokal na mapie">
-                        📍 ${escapeHtml(item.venue_name || "Warszawa")}
+                      <span class="bereal-venue-link" onclick="window.__openVenueById('${escapeHtml(venueId)}')" title="Pokaż lokal na mapie">
+                        📍 ${escapeHtml(venueName)}
                       </span>
                       <span class="bereal-meta-dot">•</span>
                       <span class="bereal-post-time">${timeAgo}</span>
                     </div>
                   </div>
                 </div>
-                <button type="button" class="bereal-btn-report" onclick="window.__openUgcReportModal('${escapeHtml(item.id)}', '${escapeHtml(item.author_id || '')}', '${escapeHtml(item.author_name || '')}', '${escapeHtml(item.venue_name || '')}')" title="Zgłoś to zdjęcie lub zablokuj użytkownika">🚩</button>
+                <button type="button" class="bereal-btn-report" onclick="window.__openUgcReportModal('${escapeHtml(item.id)}', '${escapeHtml(authorId)}', '${escapeHtml(authorName)}', '${escapeHtml(venueName)}')" title="Zgłoś to zdjęcie lub zablokuj użytkownika">🚩</button>
               </div>
 
               <!-- 2. Dual BeReal / VSCO Viewport: Clean, unblocked, unobstructed photo -->
@@ -8488,6 +8492,8 @@
       }
 
       populateBerealVenueDropdown();
+      const card = document.querySelector(".bereal-camera-modal-card");
+      if (card) card.scrollTop = 0;
     }
 
     // Helper: Upload base64 image
@@ -8647,6 +8653,23 @@
         } finally {
           btnBerealPublish.disabled = false;
           btnBerealPublish.innerHTML = `<span>🚀 Opublikuj w Feedzie</span>`;
+        }
+      });
+    }
+
+    if (berealInputBeer) {
+      berealInputBeer.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          if (btnBerealPublish) btnBerealPublish.click();
+        }
+      });
+    }
+    if (berealInputPrice) {
+      berealInputPrice.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          if (btnBerealPublish) btnBerealPublish.click();
         }
       });
     }

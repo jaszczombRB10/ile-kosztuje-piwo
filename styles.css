@@ -9265,7 +9265,9 @@ header,
   max-width: 440px !important;
   width: 95% !important;
   border-radius: 22px !important;
-  overflow: hidden !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
 }
 
 .bereal-camera-viewport {
@@ -9410,11 +9412,14 @@ header,
 .bereal-preview-wrapper {
   position: relative;
   width: 100%;
+  max-width: 220px;
   aspect-ratio: 4/5;
-  border-radius: 18px;
+  border-radius: 16px;
   overflow: hidden;
   background: #000;
   cursor: pointer;
+  margin: 0 auto 6px auto;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
 }
 
 #bereal-review-main {
@@ -9426,14 +9431,14 @@ header,
 
 .bereal-review-pip {
   position: absolute;
-  top: 12px;
-  left: 12px;
-  width: 76px;
-  height: 100px;
-  border-radius: 12px;
+  top: 10px;
+  left: 10px;
+  width: 60px;
+  height: 80px;
+  border-radius: 10px;
   overflow: hidden;
   border: 2px solid #ffffff;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
   z-index: 5;
 }
 
@@ -9475,7 +9480,7 @@ header,
 }
 
 .bereal-publish-form {
-  margin-top: 14px;
+  margin-top: 10px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -9485,10 +9490,48 @@ header,
   display: grid;
   grid-template-columns: 1fr 2fr;
   gap: 10px;
-  margin-top: 6px;
+  margin-top: 8px;
+  padding-bottom: 4px;
 }
-  border-color: transparent;
-  color: #fff;
+
+#btn-bereal-publish {
+  background: linear-gradient(135deg, #ea580c 0%, #f97316 100%) !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  font-size: 0.95rem !important;
+  padding: 13px 16px !important;
+  border-radius: 14px !important;
+  border: none !important;
+  box-shadow: 0 4px 16px rgba(234, 88, 12, 0.4) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  cursor: pointer !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+#btn-bereal-publish:active {
+  transform: scale(0.98) !important;
+}
+
+#btn-bereal-retake {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #f1f5f9 !important;
+  font-weight: 700 !important;
+  font-size: 0.88rem !important;
+  padding: 13px 12px !important;
+  border-radius: 14px !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: background 0.15s ease !important;
+}
+
+#btn-bereal-retake:active {
+  transform: scale(0.98) !important;
 }
 
 .bereal-time {
@@ -13971,6 +14014,16 @@ body.theme-light .bereal-btn-secondary {
 }
 
 body.theme-light .bereal-btn-secondary:hover {
+  background: #e2e8f0 !important;
+}
+
+body.theme-light #btn-bereal-retake {
+  background: #f1f5f9 !important;
+  color: #1e293b !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+body.theme-light #btn-bereal-retake:hover {
   background: #e2e8f0 !important;
 }
 

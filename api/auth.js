@@ -432,6 +432,7 @@ module.exports = async (req, res) => {
             if (ch && ch.photo_url) {
               items.unshift({
                 id: "chk_" + u.id,
+                venue_id: ch.venue_id || "",
                 venue_name: ch.venue_name || "Lokal w Warszawie",
                 district: ch.district || "Warszawa",
                 beer_name: ch.beer_name || "Piwo z nalewaka",
@@ -439,10 +440,14 @@ module.exports = async (req, res) => {
                 photo_url: ch.photo_url,
                 selfie_url: ch.selfie_url || null,
                 user_id: u.id,
+                author_id: u.id,
                 user_name: m.display_name || m.username || "Piwosz",
+                author_name: m.username || m.display_name || "Piwosz",
                 user_handle: m.username ? `@${m.username}` : "@piwosz",
                 user_avatar: m.avatar_icon || "🍺",
+                avatar_icon: m.avatar_icon || "🍺",
                 user_photo: m.avatar_photo || null,
+                avatar_photo: m.avatar_photo || null,
                 created_at: new Date(ch.timestamp || Date.now()).toISOString(),
                 cheers_count: 7
               });
