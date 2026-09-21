@@ -6696,7 +6696,6 @@
     const btnClose = document.getElementById("btn-close-profile");
     const btnLogout = document.getElementById("btn-logout");
     const btnShareMyProfile = document.getElementById("btn-share-my-profile");
-    const btnOpenCommFromProf = document.getElementById("btn-open-community-from-profile");
     const btnToggleEdit = document.getElementById("btn-toggle-edit-profile");
     const btnCancelEdit = document.getElementById("btn-cancel-edit-profile");
     const formEdit = document.getElementById("form-edit-profile");
@@ -6962,12 +6961,7 @@
       });
     }
 
-    if (btnOpenCommFromProf) {
-      btnOpenCommFromProf.addEventListener("click", () => {
-        if (modal) { modal.classList.remove("active"); modal.style.display = "none"; }
-        if (window.__openCommunity) window.__openCommunity();
-      });
-    }
+
 
     // Share profile helper function (reused by multiple buttons)
     function shareMyProfileLink() {
