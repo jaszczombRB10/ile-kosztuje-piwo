@@ -9018,7 +9018,7 @@
             : (venueObj && typeof venueObj.beer_price_pln === "number" ? venueObj.beer_price_pln : 14.0);
 
           // 3. Post to backend
-          await fetch("/api/auth", {
+          const res = await fetch("/api/auth", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -9036,12 +9036,35 @@
             })
           });
 
+          const resData = await res.json();
+          if (!res.ok || !resData.success) {
+            throw new Error(resData.error || "Błąd podczas publikacji w feedzie.");
+          }
+
+          // Update local user state
+          if (currentUser) {
+            if (!currentUser.user_metadata) currentUser.user_metadata = {};
+            currentUser.user_metadata.last_checkin = {
+              venue_id: venueId,
+              venue_name: venueName,
+              district: district,
+              beer_name: beerName,
+              beer_price: beerPrice,
+              photo_url: mainUrl,
+              selfie_url: selfieUrl,
+              timestamp: Date.now()
+            };
+          }
+
           showAppToast("BeReal opublikowany! 🎉", "Twoje piwko wylądowało w Live Feedzie!", "🍻", 4000);
           closeBerealCameraModal();
-          loadLiveBarFeed();
+          await loadLiveBarFeed();
+          if (typeof window.__refreshCommunityFriends === "function") {
+            window.__refreshCommunityFriends();
+          }
         } catch (err) {
           console.error("Publish error:", err);
-          showAppToast("Błąd publikacji", "Spróbuj ponownie za chwilę.", "⚠️");
+          showAppToast("Błąd publikacji", err.message || "Spróbuj ponownie za chwilę.", "⚠️");
         } finally {
           btnBerealPublish.disabled = false;
           btnBerealPublish.innerHTML = `<span>🚀 Opublikuj w Feedzie</span>`;

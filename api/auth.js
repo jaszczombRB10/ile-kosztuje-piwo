@@ -617,6 +617,7 @@ module.exports = async (req, res) => {
 
             const curKapsle = typeof meta.kapsle_points === "number" ? meta.kapsle_points : 0;
             const earned = photoUrl ? 15 : 10;
+            const newKapsle = curKapsle + earned;
             const now = Date.now();
             const postId = "post_" + userId.slice(0, 8) + "_" + now;
 
@@ -649,7 +650,7 @@ module.exports = async (req, res) => {
               if (berealPosts.length > 50) berealPosts = berealPosts.slice(0, 50);
             }
 
-            await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(userId)}`, {
+            const putRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(userId)}`, {
               method: "PUT",
               headers,
               body: JSON.stringify({
@@ -663,10 +664,20 @@ module.exports = async (req, res) => {
               })
             });
 
+            if (!putRes.ok) {
+              const errText = await putRes.text();
+              console.error("[Record Checkin] Failed to update user metadata:", errText);
+              return res.status(500).json({ error: "Nie udało się zapisać meldunku w bazie.", details: errText });
+            }
+
             return res.status(200).json({ success: true, earnedKapsle: earned, totalKapsle: newKapsle, postId });
+          } else {
+            console.error("[Record Checkin] Failed to fetch user profile:", userRes.status);
+            return res.status(500).json({ error: "Nie udało się pobrać profilu użytkownika." });
           }
         } catch (e) {
-          console.warn("Checkin user metadata update note:", e);
+          console.error("[Record Checkin] Exception:", e);
+          return res.status(500).json({ error: "Błąd serwera podczas zapisu meldunku." });
         }
       }
 
