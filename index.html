@@ -2272,11 +2272,7 @@
             <button type="button" class="btn-primary btn-sm btn-bereal-camera-trigger" id="btn-open-bereal-camera">
               📸 Zrób BeReal
             </button>
-            <button type="button" class="btn-secondary btn-sm" id="btn-add-feed-photo" title="Dodaj zdjęcie z galerii">
-              📁 Z pliku
-            </button>
           </div>
-          <input type="file" id="feed-photo-file-input" accept="image/*" style="display:none;" />
         </div>
         <div class="live-feed-grid" id="comm-feed-grid">
           <div class="empty-state-hint">Brak fotek z ostatnich 24h. Bądź pierwszy i dodaj zdjęcie swojego piwa!</div>
@@ -2775,11 +2771,9 @@
           </button>
         </div>
 
-        <!-- Shutter Controls -->
+        <!-- Shutter Controls (Camera only) -->
         <div class="bereal-camera-controls">
-          <button type="button" class="bereal-btn-secondary" id="btn-bereal-gallery" title="Wybierz z galerii">
-            🖼️ Galeria
-          </button>
+          <div class="bereal-ctrl-placeholder"></div>
           
           <button type="button" class="bereal-shutter-btn" id="btn-bereal-shutter" title="Zrób zdjęcie">
             <div class="shutter-inner"></div>

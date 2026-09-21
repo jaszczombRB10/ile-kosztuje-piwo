@@ -8051,21 +8051,31 @@
 
           return `
             <div class="beer-bereal-card" data-post-id="${escapeHtml(item.id)}">
-              <!-- 1. Post Header: Author info (Avatar, Handle, Time) & Report Flag -->
+              <!-- 1. Post Header: Author info (Avatar, Handle, Location link & Time) + Report Flag -->
               <div class="bereal-post-header">
-                <div class="bereal-author-box" ${item.author_name ? `onclick="window.__openUserProfile('${escapeHtml(item.author_name)}')"` : ""}>
-                  <div class="bereal-author-avatar">
+                <div class="bereal-author-box">
+                  <div class="bereal-author-avatar" ${item.author_name ? `onclick="window.__openUserProfile('${escapeHtml(item.author_name)}')"` : ""}>
                     ${authorAvatarContent}
                   </div>
                   <div class="bereal-author-meta">
-                    <span class="bereal-author-name">@${escapeHtml(item.author_name || "piwosz")}</span>
-                    <span class="bereal-post-time">${timeAgo}</span>
+                    <div class="bereal-author-name-row">
+                      <span class="bereal-author-name" ${item.author_name ? `onclick="window.__openUserProfile('${escapeHtml(item.author_name)}')"` : ""}>
+                        @${escapeHtml(item.author_name || "piwosz")}
+                      </span>
+                    </div>
+                    <div class="bereal-sub-meta">
+                      <span class="bereal-venue-link" onclick="window.__openVenueById('${escapeHtml(item.venue_id || '')}')" title="Pokaż lokal na mapie">
+                        📍 ${escapeHtml(item.venue_name || "Warszawa")}
+                      </span>
+                      <span class="bereal-meta-dot">•</span>
+                      <span class="bereal-post-time">${timeAgo}</span>
+                    </div>
                   </div>
                 </div>
                 <button type="button" class="bereal-btn-report" onclick="window.__openUgcReportModal('${escapeHtml(item.id)}', '${escapeHtml(item.author_id || '')}', '${escapeHtml(item.author_name || '')}', '${escapeHtml(item.venue_name || '')}')" title="Zgłoś to zdjęcie lub zablokuj użytkownika">🚩</button>
               </div>
 
-              <!-- 2. Dual BeReal Viewport -->
+              <!-- 2. Dual BeReal / VSCO Viewport: Clean, unblocked, unobstructed photo -->
               <div class="bereal-viewport">
                 <img class="bereal-main-img" src="${escapeHtml(item.photo_url)}" alt="Piwo w ${escapeHtml(item.venue_name)}" loading="lazy" />
                 
@@ -8084,25 +8094,13 @@
                     ${escapeHtml(item.avatar_icon || "🍺")}
                   </div>
                 `)}
-
-                <!-- Bottom-Left: Venue Pill -->
-                <div class="bereal-overlay-venue" onclick="window.__openVenueById('${escapeHtml(item.venue_id || '')}')" title="Pokaż ten lokal na mapie">
-                  📍 ${escapeHtml(item.venue_name || "Warszawa")}
-                </div>
-
-                <!-- Bottom-Right: Price Badge -->
-                ${item.beer_price ? `
-                  <div class="bereal-overlay-price">
-                    ${escapeHtml(String(item.beer_price))} zł
-                  </div>
-                ` : ""}
               </div>
 
-              <!-- 3. Post Footer -->
+              <!-- 3. Post Footer: Clean caption (Beer Name + Price Badge) & Cheers Toast button -->
               <div class="bereal-post-footer">
-                <div class="bereal-beer-desc" title="${escapeHtml(item.beer_name || "Świeże Piwko")}">
-                  🍺 ${escapeHtml(item.beer_name || "Świeże Piwko")}
-                  ${item.district ? `<span style="font-weight: 500; font-size: 0.78rem; opacity: 0.75;"> • ${escapeHtml(item.district)}</span>` : ""}
+                <div class="bereal-caption-box">
+                  <span class="bereal-beer-name">🍺 ${escapeHtml(item.beer_name || "Świeże Piwko")}</span>
+                  ${item.beer_price ? `<span class="bereal-price-pill">${escapeHtml(String(item.beer_price))} zł</span>` : ""}
                 </div>
                 <button type="button" class="bereal-cheers-btn" onclick="window.__cheersFeedItem('${escapeHtml(item.id)}', this)" title="Wznieś toast z piwoszem!">
                   🍻 <span>${item.cheers_count || 1}</span>
@@ -8374,7 +8372,6 @@
       if (berealStepDesc) berealStepDesc.textContent = "KROK 1/2: Zrób zdjęcie piwka lub baru";
       if (berealCameraPip) berealCameraPip.style.display = "none";
       if (btnBerealSkipSelfie) btnBerealSkipSelfie.style.display = "none";
-      if (btnBerealGallery) btnBerealGallery.style.display = "inline-flex";
 
       if (berealModal) berealModal.style.display = "flex";
       startBerealCameraStream();
@@ -8554,7 +8551,6 @@
           if (berealStageBadge) berealStageBadge.textContent = "🤳 Selfie Piwosza (2/2)";
           if (berealStepDesc) berealStepDesc.textContent = "KROK 2/2: Pora na Twoje selfie z piwkiem!";
           if (btnBerealSkipSelfie) btnBerealSkipSelfie.style.display = "inline-flex";
-          if (btnBerealGallery) btnBerealGallery.style.display = "none";
 
           berealFacingMode = "user";
           startBerealCameraStream();
@@ -8585,76 +8581,8 @@
         if (berealStepDesc) berealStepDesc.textContent = "KROK 1/2: Zrób zdjęcie piwka lub baru";
         if (berealCameraPip) berealCameraPip.style.display = "none";
         if (btnBerealSkipSelfie) btnBerealSkipSelfie.style.display = "none";
-        if (btnBerealGallery) btnBerealGallery.style.display = "inline-flex";
 
         startBerealCameraStream();
-      });
-    }
-
-    // Gallery File Picker Handler (Used by both "📁 Z pliku" and "🖼️ Galeria")
-    function handleFileSelectionForFeed(file) {
-      if (!file) return;
-      showAppToast("Wczytywanie zdjęcia...", "Dopasowujemy format do BeReal 📸", "⏳");
-
-      const reader = new FileReader();
-      reader.onload = function (readerEvent) {
-        const img = new Image();
-        img.onload = function () {
-          const width = img.width;
-          const height = img.height;
-
-          // Crop or scale to 4:5 aspect ratio
-          let cropW = width;
-          let cropH = Math.round(width * 1.25);
-          let cropX = 0;
-          let cropY = Math.round((height - cropH) / 2);
-          if (cropH > height) {
-            cropH = height;
-            cropW = Math.round(height * 0.8);
-            cropX = Math.round((width - cropW) / 2);
-            cropY = 0;
-          }
-
-          const canvas = document.createElement("canvas");
-          canvas.width = 800;
-          canvas.height = 1000;
-          const ctx = canvas.getContext("2d");
-          ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, 800, 1000);
-
-          berealShot1 = canvas.toDataURL("image/webp", 0.84);
-          berealShot2 = null;
-
-          if (berealModal) berealModal.style.display = "flex";
-          goToBerealReviewStage();
-        };
-        img.src = readerEvent.target.result;
-      };
-      reader.readAsDataURL(file);
-    }
-
-    if (btnBerealGallery && feedFileInput) {
-      btnBerealGallery.addEventListener("click", () => {
-        feedFileInput.click();
-      });
-    }
-
-    if (btnAddPhoto && feedFileInput) {
-      btnAddPhoto.addEventListener("click", () => {
-        if (!currentUser) {
-          showAppToast("Zaloguj się!", "Musisz być zalogowany, aby dodać fotkę z baru 📸", "🔒");
-          const authModal = document.getElementById("auth-modal");
-          if (authModal) authModal.style.display = "flex";
-          return;
-        }
-        feedFileInput.click();
-      });
-
-      feedFileInput.addEventListener("change", (e) => {
-        const file = e.target.files && e.target.files[0];
-        if (file) {
-          handleFileSelectionForFeed(file);
-        }
-        feedFileInput.value = "";
       });
     }
 
