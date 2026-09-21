@@ -2616,22 +2616,9 @@ header,
     padding: 14px 14px 12px 14px;
   }
 
-  /* Top Floating Glass Controls */
+  /* Top Floating Glass Controls (Replaced by Vad Kostar Ölen .vko-map-top-bar) */
   .mobile-floating-top {
-    display: flex !important;
-    position: fixed;
-    top: calc(12px + env(safe-area-inset-top, 14px));
-    left: 14px;
-    right: 14px;
-    z-index: 950;
-    align-items: center;
-    justify-content: space-between;
-    gap: 6px;
-    pointer-events: none;
-  }
-
-  .mobile-floating-top > * {
-    pointer-events: auto;
+    display: none !important;
   }
 
   .fab-top-btn {
@@ -2776,23 +2763,9 @@ header,
     border-color: #f97316;
   }
 
-  /* Mobile Floating Action Stack (Bottom Right on Map) */
+  /* Mobile Floating Action Stack (Replaced by Vad Kostar Ölen .vko-map-bottom-controls) */
   .fab-stack-right {
-    display: flex !important;
-    position: fixed !important;
-    bottom: calc(64px + env(safe-area-inset-bottom, 20px)) !important;
-    right: 14px !important;
-    left: auto !important;
-    top: auto !important;
-    z-index: 920 !important;
-    flex-direction: column !important;
-    gap: 10px !important;
-    align-items: flex-end !important;
-    pointer-events: none !important;
-  }
-
-  .fab-stack-right > * {
-    pointer-events: auto !important;
+    display: none !important;
   }
 
   /* Ruletka button - Glowing round neon circle button on map */
@@ -16222,4 +16195,1604 @@ body.theme-light .ugc-reason-item {
 
 body.theme-light .ugc-reason-item:hover {
   background: #f1f5f9;
+}
+
+/* ==========================================================================
+   VAD KOSTAR ÖLEN (ÖLKARTAN) NATIVE iOS DESIGN SYSTEM FOR POILEPIWKO
+   ========================================================================== */
+
+/* --- 1. Map Top Bar & Floating Controls --- */
+.vko-map-top-bar {
+  position: fixed;
+  top: calc(12px + env(safe-area-inset-top, 10px));
+  left: 14px;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.vko-top-btn,
+.vko-top-time-pill {
+  pointer-events: auto;
+  background: rgba(15, 23, 22, 0.85);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f1f5f9;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.vko-top-btn {
+  width: 44px;
+  height: 44px;
+  position: relative;
+}
+
+.vko-top-btn:active,
+.vko-top-time-pill:active {
+  transform: scale(0.94);
+  background: rgba(26, 38, 36, 0.95);
+}
+
+.vko-top-time-pill {
+  height: 42px;
+  padding: 0 16px;
+  gap: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+}
+
+.vko-time-edit {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin-left: 2px;
+}
+
+.vko-filter-dot {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f97316;
+  box-shadow: 0 0 6px #f97316;
+}
+
+.vko-map-bottom-controls {
+  position: fixed;
+  bottom: calc(64px + env(safe-area-inset-bottom, 20px));
+  left: 14px;
+  right: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.vko-my-location-pill {
+  pointer-events: auto;
+  height: 44px;
+  padding: 0 18px;
+  background: rgba(14, 23, 21, 0.90);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 9999px;
+  color: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5);
+  transition: all 0.15s ease;
+}
+
+.vko-my-location-pill:active {
+  transform: scale(0.95);
+  background: #1f312e;
+}
+
+.vko-daily-circle-btn {
+  pointer-events: auto;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #253330 0%, #0e1715 100%);
+  border: 2px solid #f97316;
+  box-shadow: 0 0 16px rgba(249, 115, 22, 0.4), 0 4px 14px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.vko-daily-circle-btn:active {
+  transform: scale(0.92);
+}
+
+.vko-daily-badge-icon {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.vko-daily-badge-label {
+  font-size: 7px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: #f97316;
+  margin-top: 1px;
+}
+
+/* --- 2. Explore View (Zakładka Odkrywaj) --- */
+.vko-explore-view {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: calc(54px + env(safe-area-inset-bottom, 20px));
+  background: #0d1715;
+  background: linear-gradient(180deg, #101c1a 0%, #0a1210 100%);
+  z-index: 900;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.vko-explore-header {
+  padding: calc(14px + env(safe-area-inset-top, 10px)) 16px 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.vko-explore-mascot img {
+  border-radius: 50%;
+  border: 1.5px solid #f97316;
+  display: block;
+}
+
+.vko-explore-city-select-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 6px 14px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+}
+
+.vko-city-title {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-weight: 800;
+  font-size: 0.92rem;
+  letter-spacing: 0.06em;
+  color: #f8fafc;
+}
+
+.vko-city-chevron {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.vko-btn-header-search {
+  background: none;
+  border: none;
+  color: #f8fafc;
+  padding: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Segmented Control */
+.vko-segmented-control {
+  display: flex;
+  background: #152220;
+  border-radius: 9999px;
+  padding: 3px;
+  margin: 4px 16px 12px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.vko-seg-btn {
+  flex: 1;
+  padding: 9px 0;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.vko-seg-btn.active {
+  background: #ea580c;
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(234, 88, 12, 0.45);
+}
+
+.vko-explore-pane {
+  display: none;
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 4px 16px 80px 16px;
+  position: relative;
+}
+
+.vko-explore-pane.active {
+  display: block;
+}
+
+/* Bars List & Cards (media_1790002342651.png) */
+.vko-bars-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.vko-bar-card {
+  background: #14201e;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 15px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.vko-bar-card:active {
+  background: #1b2c29;
+  transform: scale(0.99);
+}
+
+.vko-bar-card-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding-right: 12px;
+}
+
+.vko-bar-name {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #f8fafc;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vko-bar-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+.vko-bar-hours {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.vko-bar-hours.open {
+  color: #34d399;
+}
+
+.vko-bar-hours.closed {
+  color: #94a3b8;
+}
+
+.vko-bar-card-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.vko-bar-beer-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.vko-bar-price-tag {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 1.15rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  color: #fbbf24;
+}
+
+.vko-bar-price-curr {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #fbbf24;
+  margin-left: 2px;
+}
+
+/* Floating Pills over Explore List (media_1790002342651.png) */
+.vko-floating-pills-bar {
+  position: fixed;
+  bottom: calc(64px + env(safe-area-inset-bottom, 20px));
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  pointer-events: none;
+  z-index: 950;
+}
+
+.vko-float-pill-btn {
+  pointer-events: auto;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(20, 32, 30, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.55);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.vko-float-pill-btn:active {
+  transform: scale(0.92);
+  background: #ea580c;
+}
+
+/* Events List (media_1790002334903.png) */
+.vko-events-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.vko-event-section-title {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #94a3b8;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.vko-event-featured-card {
+  background: #14201e;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.vko-event-featured-card:active {
+  transform: scale(0.99);
+}
+
+.vko-event-img-banner {
+  height: 140px;
+  background: linear-gradient(135deg, #1e3a35 0%, #0d1715 100%);
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  padding: 14px;
+}
+
+.vko-event-category-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  text-transform: uppercase;
+}
+
+.vko-event-featured-content {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.vko-event-card-title {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #f8fafc;
+}
+
+.vko-event-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+.vko-badge-free {
+  background: rgba(34, 197, 94, 0.16);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  letter-spacing: 0.04em;
+}
+
+/* Compact Event Card (Tomorrow) */
+.vko-event-compact-card {
+  background: #14201e;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.vko-event-thumb {
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  background: #1e322f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.vko-event-compact-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.vko-event-compact-title {
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: #f8fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vko-event-compact-sub {
+  font-size: 0.78rem;
+  color: #94a3b8;
+}
+
+/* --- 3. Bottom Sheet Venue Drawer (media_1790002379147.png & media_1790002353091.png) --- */
+.vko-sheet-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 10050;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: vkoFadeIn 0.2s ease;
+}
+
+@keyframes vkoFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.vko-sheet-card {
+  width: 100%;
+  max-width: 520px;
+  background: #0f1917;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: none;
+  border-radius: 26px 26px 0 0;
+  padding: 10px 18px calc(24px + env(safe-area-inset-bottom, 16px)) 18px;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.75);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 88vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  animation: vkoSlideUp 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes vkoSlideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.vko-sheet-drag-handle {
+  width: 38px;
+  height: 4.5px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.22);
+  margin: 4px auto 8px auto;
+  flex-shrink: 0;
+}
+
+.vko-sheet-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.vko-sheet-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.vko-sheet-name {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 1.45rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  color: #ffffff;
+  text-transform: uppercase;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.vko-sheet-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vko-btn-fav,
+.vko-btn-close {
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  color: #f8fafc;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.15s ease;
+}
+
+.vko-btn-fav:active,
+.vko-btn-close:active {
+  transform: scale(0.9);
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.vko-sheet-website-link {
+  font-size: 0.85rem;
+  color: #cbd5e1;
+  text-decoration: underline;
+  width: fit-content;
+  margin-top: 2px;
+}
+
+.vko-sheet-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin-top: 4px;
+}
+
+.vko-section-label {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 0.95rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: #f8fafc;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+/* DRINKS Gold Border Card (Screenshot media_1790002379147.png) */
+.vko-drinks-card {
+  background: #172421;
+  border: 1.5px solid #eab308;
+  border-radius: 16px;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 0 16px rgba(234, 179, 8, 0.15);
+}
+
+.vko-drinks-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.vko-drinks-icon-box {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.vko-drinks-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.vko-drinks-title {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 1.05rem;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  color: #ffffff;
+  text-transform: uppercase;
+}
+
+.vko-drinks-size {
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+.vko-drinks-price {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #ffffff;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.vko-price-curr {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #cbd5e1;
+}
+
+/* OPENING HOURS Accordion (media_1790002379147.png) */
+.vko-hours-accordion-btn {
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 6px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  color: #f8fafc;
+}
+
+.vko-hours-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vko-hours-label {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-weight: 900;
+  font-size: 0.95rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.vko-hours-today-tag {
+  font-size: 0.82rem;
+  color: #94a3b8;
+}
+
+.vko-hours-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vko-hours-status-text {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+.vko-hours-chevron {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  transition: transform 0.2s ease;
+}
+
+.vko-hours-week-list {
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vko-hours-day-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+.vko-hours-day-row.active-day {
+  color: #34d399;
+  font-weight: 700;
+}
+
+.vko-day-name-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vko-green-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #34d399;
+}
+
+/* Bottom Fixed CTAs in Drawer */
+.vko-sheet-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.vko-btn-cta-orange {
+  width: 100%;
+  background: #ff5722;
+  background: linear-gradient(135deg, #ff6b35 0%, #f95716 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 14px;
+  padding: 15px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 1.05rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(249, 87, 22, 0.35);
+  transition: all 0.15s ease;
+}
+
+.vko-btn-cta-orange:active {
+  transform: scale(0.98);
+  filter: brightness(1.1);
+}
+
+.vko-sheet-btn-row {
+  display: flex;
+  gap: 10px;
+}
+
+.vko-btn-sub {
+  flex: 1;
+  padding: 13px;
+  border: none;
+  border-radius: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.vko-btn-feedback {
+  background: #192725;
+  color: #f1f5f9;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.vko-btn-take-me {
+  background: #10423a;
+  color: #5eead4;
+  border: 1px solid rgba(94, 234, 212, 0.2);
+}
+
+.vko-btn-sub:active {
+  transform: scale(0.97);
+}
+
+/* --- 4. Filters Modal (Screenshot media_1790002437187.png) --- */
+.vko-filters-card {
+  max-width: 480px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  background: #0f1917;
+  border-radius: 24px;
+}
+
+.vko-filters-head {
+  padding: 18px 20px 14px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.vko-filters-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vko-filter-head-icon {
+  color: #f97316;
+}
+
+.vko-filter-head-title {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 1.25rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  color: #ffffff;
+  margin: 0;
+}
+
+.vko-filters-body {
+  padding: 16px 20px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Top 4 Drink Category Tiles */
+.vko-drinks-cat-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.vko-cat-tile {
+  background: #142220;
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 14px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.vko-cat-tile.active {
+  border-color: #f59e0b;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.25);
+  background: #1b2e2a;
+}
+
+.vko-cat-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.vko-cat-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #f1f5f9;
+}
+
+.vko-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.vko-filter-group-title {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 0.9rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Price Slider Container */
+.vko-price-slider-box {
+  background: #142220;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.vko-slider-title-row {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.vko-range-slider {
+  width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 9999px;
+  background: #253935;
+  outline: none;
+  accent-color: #f97316;
+}
+
+.vko-range-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #f97316;
+  box-shadow: 0 0 10px rgba(249, 115, 22, 0.6);
+  cursor: pointer;
+}
+
+.vko-slider-scale {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #ea580c;
+  margin-top: -2px;
+}
+
+/* Toggle Switch Rows */
+.vko-toggle-row {
+  background: #142220;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  padding: 13px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.vko-toggle-label-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: #f8fafc;
+}
+
+.vko-row-dot.green {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 6px #22c55e;
+}
+
+.vko-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.vko-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.vko-switch-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #263835;
+  border-radius: 9999px;
+  transition: 0.2s;
+}
+
+.vko-switch-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: #ffffff;
+  border-radius: 50%;
+  transition: 0.2s;
+}
+
+.vko-switch input:checked + .vko-switch-slider {
+  background-color: #f97316;
+}
+
+.vko-switch input:checked + .vko-switch-slider:before {
+  transform: translateX(20px);
+}
+
+/* Pill Grids (Activities & Place Type) */
+.vko-pill-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.vko-activity-pill {
+  background: #142220;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  padding: 8px 14px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.vko-activity-pill.active {
+  background: #ea580c;
+  border-color: #f97316;
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(234, 88, 12, 0.35);
+}
+
+.vko-filters-footer {
+  padding: 14px 20px calc(14px + env(safe-area-inset-bottom, 10px)) 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  gap: 12px;
+  background: #0f1917;
+}
+
+.vko-btn-reset-all {
+  flex: 1;
+  background: #192725;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 14px;
+  color: #f1f5f9;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.vko-btn-apply-filters {
+  flex: 1.4;
+  background: #ff5722;
+  background: linear-gradient(135deg, #ff6b35 0%, #f95716 100%);
+  border: none;
+  border-radius: 14px;
+  padding: 14px;
+  color: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 0.95rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(249, 87, 22, 0.35);
+}
+
+/* --- 5. Profile Tab (Screenshot media_1790002397641.png) --- */
+.vko-profile-card {
+  max-width: 480px;
+  background: #0f1917;
+  border-radius: 26px 26px 0 0;
+  padding: 14px 18px calc(24px + env(safe-area-inset-bottom, 16px)) 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.vko-prof-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.vko-prof-top-left,
+.vko-prof-top-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vko-prof-icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.15rem;
+}
+
+.vko-prof-caps-pill {
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #f97316;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-weight: 800;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.vko-prof-user-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.vko-prof-avatar-wrap {
+  position: relative;
+  width: 104px;
+  height: 104px;
+}
+
+.vko-prof-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.vko-prof-avatar-edit-btn {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #ea580c;
+  border: 2px solid #0f1917;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.vko-prof-handle {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 1.55rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: #ffffff;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+/* 3-Column Stats Row */
+.vko-prof-stats-row {
+  display: flex;
+  width: 100%;
+  max-width: 320px;
+  justify-content: space-around;
+  margin: 4px 0;
+}
+
+.vko-stat-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.vko-stat-val {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: #ffffff;
+}
+
+.vko-stat-lbl {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+/* 2 Action Buttons */
+.vko-prof-btn-row {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.vko-prof-btn {
+  flex: 1;
+  background: #142220;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 13px;
+  color: #f1f5f9;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.vko-prof-btn:active {
+  transform: scale(0.97);
+  background: #1d322f;
+}
+
+/* Empty Check-ins Area */
+.vko-prof-gallery-section {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.vko-prof-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 30px 16px;
+  gap: 8px;
+}
+
+.vko-empty-camera-icon {
+  color: #475569;
+  margin-bottom: 4px;
+}
+
+.vko-empty-title {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 1.1rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: #ffffff;
+  text-transform: uppercase;
+}
+
+.vko-empty-sub {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  max-width: 240px;
+}
+
+/* --- 6. Sub Modals: Statistics, Account, Games --- */
+.vko-stats-card,
+.vko-account-card,
+.vko-games-card,
+.vko-pekleken-card {
+  max-width: 480px;
+  background: #0f1917;
+  border-radius: 24px;
+  padding: 0;
+  overflow: hidden;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.vko-stats-body {
+  padding: 30px 20px;
+}
+
+.vko-stats-empty-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 60px 16px;
+  gap: 12px;
+}
+
+.vko-stats-empty-title {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 1.25rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  color: #ffffff;
+  text-transform: uppercase;
+}
+
+.vko-stats-empty-desc {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #94a3b8;
+  max-width: 260px;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+}
+
+.vko-account-body {
+  padding: 18px 20px 30px 20px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.vko-account-sec-title {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: #94a3b8;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.vko-account-menu {
+  display: flex;
+  flex-direction: column;
+  background: #142220;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.vko-menu-item {
+  width: 100%;
+  background: none;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  padding: 15px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #f8fafc;
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: left;
+}
+
+.vko-menu-item:last-child {
+  border-bottom: none;
+}
+
+.vko-menu-item:active {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.vko-menu-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vko-menu-right-val {
+  font-size: 0.82rem;
+  color: #94a3b8;
+}
+
+.vko-menu-chevron {
+  color: #64748b;
+  font-size: 1.2rem;
+}
+
+/* Games Hub */
+.vko-games-body {
+  padding: 16px 20px 30px 20px;
+  overflow-y: auto;
+}
+
+.vko-games-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.vko-game-tile {
+  background: #142220;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.vko-game-tile:active {
+  transform: scale(0.99);
+  background: #1c302d;
+}
+
+.vko-game-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.vko-game-icon {
+  font-size: 1.5rem;
+}
+
+.vko-game-badge {
+  background: rgba(249, 115, 22, 0.15);
+  color: #f97316;
+  border: 1px solid rgba(249, 115, 22, 0.3);
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  padding: 3px 8px;
+  border-radius: 9999px;
+}
+
+.vko-game-title {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 1.1rem;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  color: #ffffff;
+  margin: 2px 0;
+}
+
+.vko-game-desc {
+  font-size: 0.84rem;
+  color: #94a3b8;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.vko-btn-game-play {
+  align-self: flex-start;
+  margin-top: 6px;
+  background: none;
+  border: none;
+  color: #f97316;
+  font-weight: 800;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* Pekleken Interactive Card Deck */
+.vko-pekleken-body {
+  padding: 24px 20px 30px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.vko-card-deck-stack {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.vko-pekleken-card-item {
+  width: 100%;
+  max-width: 360px;
+  background: linear-gradient(135deg, #182825 0%, #101c1a 100%);
+  border: 1.5px solid #f97316;
+  border-radius: 20px;
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+}
+
+.vko-card-number {
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: #f97316;
+  text-transform: uppercase;
+}
+
+.vko-pekleken-prompt {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: #ffffff;
+  line-height: 1.35;
+}
+
+.vko-card-instruction {
+  font-size: 0.85rem;
+  color: #94a3b8;
 }

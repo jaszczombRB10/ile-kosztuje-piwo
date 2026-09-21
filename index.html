@@ -310,6 +310,69 @@
       </div>
     </div>
 
+    <!-- Native Vad Kostar Ölen Map Top Bar -->
+    <div class="vko-map-top-bar" id="vko-map-top-bar">
+      <button type="button" class="vko-top-btn" id="btn-vko-filters" title="Filtry barów">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
+        <span id="vko-filter-active-dot" class="vko-filter-dot" style="display:none;"></span>
+      </button>
+      <button type="button" class="vko-top-time-pill" id="btn-vko-time" title="Godzina i status otwarcia">
+        <span class="vko-time-icon">⏰</span>
+        <span id="vko-clock-text">16:54</span>
+        <span class="vko-time-edit">✎</span>
+      </button>
+      <button type="button" class="vko-top-btn" id="btn-vko-layers" title="Zmień widok mapy / dzielnicę">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+      </button>
+    </div>
+
+    <!-- Explore View (Zakładka Odkrywaj z Vad Kostar Ölen) -->
+    <div class="vko-explore-view" id="explore-view">
+      <!-- Top Header -->
+      <div class="vko-explore-header">
+        <div class="vko-explore-mascot">
+          <img src="icons/syrenka-hero.png" alt="Syrenka" width="34" height="34" />
+        </div>
+        <div class="vko-explore-city-select-wrap" id="vko-city-selector-btn">
+          <span class="vko-city-title" id="vko-current-city-label">WARSZAWA</span>
+          <span class="vko-city-chevron">⌵</span>
+        </div>
+        <button type="button" class="vko-btn-header-search" id="vko-explore-top-search" title="Szukaj">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        </button>
+      </div>
+
+      <!-- Segmented Control: [ BARY ] | [ WYDARZENIA ] -->
+      <div class="vko-segmented-control">
+        <button type="button" class="vko-seg-btn active" id="seg-btn-bars" data-tab="bars">BARY</button>
+        <button type="button" class="vko-seg-btn" id="seg-btn-events" data-tab="events">WYDARZENIA</button>
+      </div>
+
+      <!-- Pane 1: Bars List -->
+      <div class="vko-explore-pane active" id="explore-pane-bars">
+        <div class="vko-bars-list" id="explore-bars-list">
+          <!-- Injected via JavaScript -->
+        </div>
+
+        <!-- Floating Pills over list: [ 🔍 ] & [ 🎛️ ] -->
+        <div class="vko-floating-pills-bar">
+          <button type="button" class="vko-float-pill-btn" id="vko-float-search" title="Wyszukaj bar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          </button>
+          <button type="button" class="vko-float-pill-btn" id="vko-float-filter" title="Filtry">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Pane 2: Events List -->
+      <div class="vko-explore-pane" id="explore-pane-events">
+        <div class="vko-events-list" id="explore-events-list">
+          <!-- Injected via JavaScript -->
+        </div>
+      </div>
+    </div>
+
     <!-- Map Canvas -->
     <div id="map"></div>
     <div id="map-toast" class="map-toast" style="display:none;" aria-live="polite"></div>
@@ -333,37 +396,25 @@
       </div>
     </div>
 
-    <!-- Floating Action Buttons -->
-    <div class="fab-stack-right">
-      <button type="button" id="btn-roulette-float" class="fab-roulette-float" title="Piwna Ruletka – Wylosuj bar na dziś!">
-        <span class="roulette-float-icon">🎲</span>
-        <span>Ruletka</span>
+    <!-- Native Vad Kostar Ölen Floating Map Controls -->
+    <div class="vko-map-bottom-controls" id="vko-map-bottom-controls">
+      <button type="button" class="vko-my-location-pill" id="btn-vko-my-location" title="Moja lokalizacja GPS">
+        <span class="vko-loc-icon">📍</span>
+        <span>MOJA POZYCJA</span>
       </button>
-      <button type="button" id="btn-pubquiz-float" class="fab-pubquiz-float" title="Warszawski Pub Quiz – Zagraj teraz!">
-        <span class="quiz-float-icon">🧠</span>
-        <span>Pub Quiz</span>
+      <button type="button" class="vko-daily-circle-btn" id="btn-vko-daily-reward" title="Dzienny bonus kapsli">
+        <span class="vko-daily-badge-icon">👑</span>
+        <span class="vko-daily-badge-label">DAILY</span>
       </button>
-      <button type="button" id="btn-compass-float" class="fab-compass-float" title="Uruchom Piwny Kompas (Radar)">
-        <span class="compass-icon">🧭</span>
-        <span>Kompas</span>
-      </button>
-      <button type="button" id="btn-sos-float" class="fab-sos-float" title="Piwny Anioł Stróż · SOS Ekipa i Bezpieczny Powrót" aria-label="Piwny Anioł Stróż SOS">
-        <span class="sos-float-icon">🛡️</span>
-        <span class="sos-float-label">SOS</span>
-      </button>
-      <button type="button" id="btn-locate-float" class="fab-locate-float" title="Moja lokalizacja GPS – pokaż gdzie jestem" aria-label="Moja lokalizacja GPS">
-        <span class="locate-icon">
-          <svg class="locate-crosshair-svg" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="7"></circle>
-            <line x1="12" y1="1" x2="12" y2="5"></line>
-            <line x1="12" y1="19" x2="12" y2="23"></line>
-            <line x1="1" y1="12" x2="5" y2="12"></line>
-            <line x1="19" y1="12" x2="23" y2="12"></line>
-            <circle cx="12" cy="12" r="2.5" fill="currentColor"></circle>
-          </svg>
-        </span>
-        <span class="locate-label">Moja pozycja</span>
-      </button>
+    </div>
+
+    <!-- Legacy / Off-canvas Action Buttons (Kept for event listener compatibility) -->
+    <div class="fab-stack-right" style="display:none;" aria-hidden="true">
+      <button type="button" id="btn-roulette-float">Ruletka</button>
+      <button type="button" id="btn-pubquiz-float">Pub Quiz</button>
+      <button type="button" id="btn-compass-float">Kompas</button>
+      <button type="button" id="btn-sos-float">SOS</button>
+      <button type="button" id="btn-locate-float">Moja pozycja</button>
     </div>
 
     <!-- Bottom Left Legend -->
@@ -415,129 +466,275 @@
       </div>
     </div>
 
-  <!-- Filter Modal: Comprehensive Filtering & Price Ranges -->
-  <div class="modal-backdrop" id="filter-modal">
-    <div class="modal-card filter-modal-card">
-      <div class="modal-head">
-        <div class="modal-head-title">
-          <div class="modal-icon-badge">🎛️</div>
-          <div>
-            <h2>Filtry</h2>
-            <p class="modal-head-sub">Ustaw cenę, promki studenckie lub kraft</p>
+  <!-- Native Vad Kostar Ölen Venue Detail Drawer (Bottom Sheet) -->
+  <div class="vko-sheet-backdrop" id="venue-detail-sheet" style="display:none;">
+    <div class="vko-sheet-card" id="venue-sheet-card">
+      <div class="vko-sheet-drag-handle"></div>
+      <div class="vko-sheet-header">
+        <div class="vko-sheet-title-row">
+          <h2 class="vko-sheet-name" id="vko-sheet-name">NAZWA LOKALU</h2>
+          <div class="vko-sheet-actions">
+            <button type="button" class="vko-btn-fav" id="vko-sheet-btn-fav" aria-label="Ulubione" title="Dodaj do ulubionych">🤍</button>
+            <button type="button" class="vko-btn-close" id="vko-sheet-btn-close" aria-label="Zamknij">✕</button>
           </div>
+        </div>
+        <div class="vko-sheet-subtitle-row">
+          <a href="#" target="_blank" rel="noopener" class="vko-sheet-website-link" id="vko-sheet-website">Strona www</a>
+        </div>
+        <div class="vko-sheet-meta" id="vko-sheet-meta">
+          <span class="vko-meta-pin">📍</span>
+          <span id="vko-sheet-dist-addr">350 m · Ulica 12</span>
+        </div>
+      </div>
+
+      <!-- Section: DRINKS -->
+      <div class="vko-sheet-section">
+        <div class="vko-section-label">DRINKS</div>
+        <div class="vko-drinks-card" id="vko-drinks-card">
+          <div class="vko-drinks-left">
+            <div class="vko-drinks-icon-box">🍺</div>
+            <div class="vko-drinks-info">
+              <div class="vko-drinks-title" id="vko-drinks-title">PIWO Z NALEWAKA</div>
+              <div class="vko-drinks-size" id="vko-drinks-size">0.5 l</div>
+            </div>
+          </div>
+          <div class="vko-drinks-price" id="vko-drinks-price">
+            <span class="vko-price-val" id="vko-drinks-price-val">14</span>
+            <span class="vko-price-curr">ZŁ</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: OPENING HOURS -->
+      <div class="vko-sheet-section">
+        <button type="button" class="vko-hours-accordion-btn" id="vko-hours-accordion-btn" aria-expanded="false">
+          <div class="vko-hours-left">
+            <span class="vko-hours-label">OPENING HOURS</span>
+            <span class="vko-hours-today-tag" id="vko-hours-today-tag">(Dzisiaj, Poniedziałek)</span>
+          </div>
+          <div class="vko-hours-right">
+            <span class="vko-hours-status-text" id="vko-hours-status-text">16:00 - 02:00</span>
+            <span class="vko-hours-chevron" id="vko-hours-chevron">⌃</span>
+          </div>
+        </button>
+        <div class="vko-hours-collapse" id="vko-hours-collapse" style="display:block;">
+          <div class="vko-hours-week-list" id="vko-hours-week-list">
+            <!-- Rendered via JavaScript with green dot on today -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Fixed CTAs -->
+      <div class="vko-sheet-footer">
+        <button type="button" class="vko-btn-cta-orange" id="vko-sheet-btn-main">
+          CHECK IN HERE
+        </button>
+        <div class="vko-sheet-btn-row">
+          <button type="button" class="vko-btn-sub vko-btn-feedback" id="vko-sheet-btn-feedback">
+            GIVE US FEEDBACK
+          </button>
+          <button type="button" class="vko-btn-sub vko-btn-take-me" id="vko-sheet-btn-navigate">
+            TAKE ME THERE ↗
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Native Vad Kostar Ölen Event Detail Drawer -->
+  <div class="vko-sheet-backdrop" id="event-detail-sheet" style="display:none;">
+    <div class="vko-sheet-card vko-event-sheet-card">
+      <div class="vko-sheet-drag-handle"></div>
+      <div class="vko-sheet-header">
+        <div class="vko-sheet-title-row">
+          <h2 class="vko-sheet-name" id="vko-event-venue-name">THE OLD BREWER</h2>
+          <div class="vko-sheet-actions">
+            <button type="button" class="vko-btn-fav" id="vko-event-btn-fav">🤍</button>
+            <button type="button" class="vko-btn-close" id="vko-event-btn-close">✕</button>
+          </div>
+        </div>
+        <a href="#" target="_blank" rel="noopener" class="vko-sheet-website-link" id="vko-event-website">Strona www</a>
+      </div>
+
+      <!-- Segmented: [ PRICES & TIMES ] | [ EVENT ] -->
+      <div class="vko-segmented-control" style="margin: 8px 16px 14px 16px;">
+        <button type="button" class="vko-seg-btn" id="seg-event-prices">CENNIK & GODZINY</button>
+        <button type="button" class="vko-seg-btn active" id="seg-event-details">WYDARZENIE</button>
+      </div>
+
+      <!-- Event Body -->
+      <div class="vko-event-body" id="vko-event-body">
+        <div class="vko-event-banner-box">
+          <div class="vko-event-badge-pill" id="vko-event-category-pill">QUIZ</div>
+          <div class="vko-event-title-banner" id="vko-event-banner-title">PUB QUIZ</div>
+        </div>
+        <div class="vko-event-meta-info">
+          <div class="vko-event-meta-line">
+            <span class="vko-ev-icon">🕒</span>
+            <span id="vko-event-time-str">Dzisiaj · 19:00 - 21:00</span>
+          </div>
+          <div class="vko-event-meta-line">
+            <span class="vko-ev-icon">📍</span>
+            <span id="vko-event-venue-loc">Krakowskie Przedmieście 63</span>
+          </div>
+          <div class="vko-event-meta-line vko-event-price-line">
+            <span class="vko-ev-icon">🎟️</span>
+            <span class="vko-badge-free" id="vko-event-free-badge">WSTĘP WOLNY</span>
+          </div>
+        </div>
+        <div class="vko-event-description" id="vko-event-desc">
+          Zbierz ekipę i sprawdź swoją wiedzę w warszawskim pub quizie! Do wygrania darmowe kolejki piwa i zniżki na barze.
+        </div>
+      </div>
+
+      <!-- Bottom CTAs -->
+      <div class="vko-sheet-footer">
+        <button type="button" class="vko-btn-sub" id="vko-event-btn-more" style="width:100%;margin-bottom:8px;background:rgba(255,255,255,0.08);">
+          WIĘCEJ INFORMACJI
+        </button>
+        <div class="vko-sheet-btn-row">
+          <button type="button" class="vko-btn-sub vko-btn-feedback" id="vko-event-btn-feedback">
+            GIVE US FEEDBACK
+          </button>
+          <button type="button" class="vko-btn-sub vko-btn-take-me" id="vko-event-btn-navigate">
+            TAKE ME THERE ↗
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Modal: Vad Kostar Ölen Style (Screenshot media_1790002437187.png) -->
+  <div class="modal-backdrop" id="filter-modal">
+    <div class="modal-card filter-modal-card vko-filters-card">
+      <div class="modal-head vko-filters-head">
+        <div class="vko-filters-title-wrap">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" class="vko-filter-head-icon"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
+          <h2 class="vko-filter-head-title">FILTERS</h2>
         </div>
         <button type="button" class="modal-close" id="btn-close-filter">✕</button>
       </div>
 
-      <div class="filter-modal-content">
-        <!-- Section 1: Ceny piwa -->
-        <div class="filter-section">
-          <label class="filter-section-title">
-            <span>💰 Przedział cenowy (lane 0.5L)</span>
-          </label>
-          <div class="filter-price-grid">
-            <button type="button" class="filter-price-card active" data-price="all">
-              <span class="price-card-icon">✨</span>
-              <span class="price-card-title">Wszystkie</span>
-              <span class="price-card-desc">Dowolny przedział</span>
-            </button>
-            <button type="button" class="filter-price-card tier-low" data-price="tier-low">
-              <span class="price-card-icon">🟢</span>
-              <span class="price-card-title">≤ 12 zł</span>
-              <span class="price-card-desc">Tanie & Studenckie</span>
-            </button>
-            <button type="button" class="filter-price-card tier-mid" data-price="tier-mid">
-              <span class="price-card-icon">🟡</span>
-              <span class="price-card-title">13 - 18 zł</span>
-              <span class="price-card-desc">Standard Warszawski</span>
-            </button>
-            <button type="button" class="filter-price-card tier-high" data-price="tier-high">
-              <span class="price-card-icon">🔴</span>
-              <span class="price-card-title">19+ zł</span>
-              <span class="price-card-desc">Kraft & Premium</span>
-            </button>
-          </div>
+      <div class="filter-modal-content vko-filters-body">
+        <!-- Drinks Category Row (Beer, Cider, Wine, Bubbles) -->
+        <div class="vko-drinks-cat-row">
+          <button type="button" class="vko-cat-tile active" data-drink-cat="beer" id="vko-cat-beer">
+            <span class="vko-cat-icon">🍺</span>
+            <span class="vko-cat-label">BEER</span>
+          </button>
+          <button type="button" class="vko-cat-tile" data-drink-cat="cider" id="vko-cat-cider">
+            <span class="vko-cat-icon">🍏</span>
+            <span class="vko-cat-label">CIDER</span>
+          </button>
+          <button type="button" class="vko-cat-tile" data-drink-cat="wine" id="vko-cat-wine">
+            <span class="vko-cat-icon">🍷</span>
+            <span class="vko-cat-label">WINE</span>
+          </button>
+          <button type="button" class="vko-cat-tile" data-drink-cat="bubbles" id="vko-cat-bubbles">
+            <span class="vko-cat-icon">🥂</span>
+            <span class="vko-cat-label">BUBBLES</span>
+          </button>
+        </div>
 
-          <!-- Quick Max Price Slider -->
-          <div class="filter-slider-box">
-            <div class="filter-slider-header">
-              <span>Maksymalna cena za piwo:</span>
-              <strong id="filter-slider-val">Dowolna</strong>
+        <!-- Section: FILTER -->
+        <div class="vko-filter-group">
+          <div class="vko-filter-group-title">FILTER</div>
+          
+          <!-- Price Slider Container -->
+          <div class="vko-price-slider-box">
+            <div class="vko-slider-title-row">
+              <span id="vko-slider-price-label">Any price</span>
             </div>
-            <input type="range" id="filter-price-slider" min="10" max="35" step="1" value="35" class="filter-slider" />
-            <div class="filter-slider-labels">
-              <span>10 zł</span>
-              <span>15 zł</span>
-              <span>20 zł</span>
-              <span>25 zł</span>
-              <span>30+ zł</span>
+            <div class="vko-slider-wrap">
+              <input type="range" id="filter-price-slider" min="10" max="30" step="1" value="30" class="vko-range-slider" />
+              <div class="vko-slider-scale">
+                <span>0</span>
+                <span>12</span>
+                <span>18</span>
+                <span>24</span>
+                <span>30+ zł</span>
+              </div>
             </div>
           </div>
+
+          <!-- Open Now Toggle Row -->
+          <div class="vko-toggle-row" id="filter-row-open-now">
+            <div class="vko-toggle-label-wrap">
+              <span class="vko-row-dot green"></span>
+              <span class="vko-toggle-name">Open now</span>
+            </div>
+            <label class="vko-switch">
+              <input type="checkbox" id="vko-switch-open-now" />
+              <span class="vko-switch-slider"></span>
+            </label>
+          </div>
+
+          <!-- Happy Hour Toggle Row -->
+          <div class="vko-toggle-row" id="filter-row-happy-hour">
+            <div class="vko-toggle-label-wrap">
+              <span class="vko-row-icon">🎁</span>
+              <span class="vko-toggle-name">Happy Hour</span>
+            </div>
+            <label class="vko-switch">
+              <input type="checkbox" id="vko-switch-happy-hour" />
+              <span class="vko-switch-slider"></span>
+            </label>
+          </div>
         </div>
 
-        <!-- Section 2: Dostępność & Promocje -->
-        <div class="filter-section">
-          <label class="filter-section-title">
-            <span>🕒 Godziny i Promocje</span>
-          </label>
-          <div class="filter-toggle-grid">
-            <button type="button" class="filter-toggle-btn" id="filter-toggle-open" data-toggle="openNow">
-              <span class="toggle-icon">🟢</span>
-              <div class="toggle-text">
-                <span class="toggle-title">Otwarte teraz</span>
-                <span class="toggle-desc">Tylko bary otwarte w tej chwili</span>
-              </div>
-              <span class="toggle-check">✓</span>
+        <!-- Section: ACTIVITIES -->
+        <div class="vko-filter-group">
+          <div class="vko-filter-group-title">
+            <span class="vko-grp-icon">🎯</span>
+            <span>ACTIVITIES</span>
+          </div>
+          <div class="vko-pill-grid">
+            <button type="button" class="vko-activity-pill" data-act="billiards">
+              <span class="vko-act-icon">🎱</span> Billiards
             </button>
-            <button type="button" class="filter-toggle-btn" id="filter-toggle-happyhour" data-toggle="happyHourOnly">
-              <span class="toggle-icon">⚡</span>
-              <div class="toggle-text">
-                <span class="toggle-title">Happy Hour</span>
-                <span class="toggle-desc">Lokale z aktualnymi promocjami</span>
-              </div>
-              <span class="toggle-check">✓</span>
+            <button type="button" class="vko-activity-pill" data-act="darts">
+              <span class="vko-act-icon">🎯</span> Darts
+            </button>
+            <button type="button" class="vko-activity-pill" data-act="tablefootball">
+              <span class="vko-act-icon">🔀</span> Piłkarzyki
+            </button>
+            <button type="button" class="vko-activity-pill" data-act="bowling">
+              <span class="vko-act-icon">🎳</span> Bowling
+            </button>
+            <button type="button" class="vko-activity-pill" data-act="karaoke">
+              <span class="vko-act-icon">🎵</span> Karaoke
+            </button>
+            <button type="button" class="vko-activity-pill" data-act="craft">
+              <span class="vko-act-icon">⭐</span> Craft Beer
             </button>
           </div>
         </div>
 
-        <!-- Section 3: Klimat & Wybór piwa -->
-        <div class="filter-section">
-          <label class="filter-section-title">
-            <span>⭐ Klimat & Wybór piwa</span>
-          </label>
-          <div class="filter-toggle-grid">
-            <button type="button" class="filter-toggle-btn" id="filter-toggle-craft" data-toggle="craftOnly">
-              <span class="toggle-icon">⭐</span>
-              <div class="toggle-text">
-                <span class="toggle-title">Piwa rzemieślnicze (Kraft)</span>
-                <span class="toggle-desc">Wielokran, browary autorskie, IPA</span>
-              </div>
-              <span class="toggle-check">✓</span>
+        <!-- Section: PLACE TYPE -->
+        <div class="vko-filter-group">
+          <div class="vko-filter-group-title">
+            <span class="vko-grp-icon">☀️</span>
+            <span>PLACE TYPE</span>
+          </div>
+          <div class="vko-pill-grid">
+            <button type="button" class="vko-activity-pill" data-type="outdoor">
+              <span class="vko-act-icon">☀️</span> Outdoor seating
             </button>
-            <button type="button" class="filter-toggle-btn" id="filter-toggle-nonalco" data-toggle="nonAlcoholicOnly">
-              <span class="toggle-icon">🌱</span>
-              <div class="toggle-text">
-                <span class="toggle-title">Bezalkoholowe / 0.0%</span>
-                <span class="toggle-desc">Lokale z opcjami bezalkoholowymi</span>
-              </div>
-              <span class="toggle-check">✓</span>
+            <button type="button" class="vko-activity-pill" data-type="sports">
+              <span class="vko-act-icon">⚽</span> Sports bar
             </button>
-            <button type="button" class="filter-toggle-btn" id="filter-toggle-favorites" data-toggle="favoritesOnly">
-              <span class="toggle-icon">❤️</span>
-              <div class="toggle-text">
-                <span class="toggle-title">Tylko ulubione bary</span>
-                <span class="toggle-desc">Lokale z Twojej listy ulubionych</span>
-              </div>
-              <span class="toggle-check">✓</span>
+            <button type="button" class="vko-activity-pill" data-type="favorites">
+              <span class="vko-act-icon">❤️</span> Ulubione
             </button>
           </div>
         </div>
 
-        <!-- Section 4: Dzielnica / Zagłębie -->
-        <div class="filter-section">
-          <label class="filter-section-title">
-            <span>📍 Dzielnica / Zagłębie</span>
-          </label>
+        <!-- District Selection Quick Chips -->
+        <div class="vko-filter-group">
+          <div class="vko-filter-group-title">
+            <span class="vko-grp-icon">📍</span>
+            <span>DZIELNICA</span>
+          </div>
           <div class="filter-district-chips" id="filter-district-chips">
             <button type="button" class="filter-dist-chip active" data-dist="all">🏙️ Cała Warszawa</button>
             <button type="button" class="filter-dist-chip" data-dist="Pawilony">🔥 Pawilony</button>
@@ -546,17 +743,17 @@
             <button type="button" class="filter-dist-chip" data-dist="Mokotów">Mokotów</button>
             <button type="button" class="filter-dist-chip" data-dist="Wola">Wola</button>
             <button type="button" class="filter-dist-chip" data-dist="Praga Północ">Praga Północ</button>
-            <button type="button" class="filter-dist-chip" data-dist="Ochota">Ochota</button>
-            <button type="button" class="filter-dist-chip" data-dist="Żoliborz">Żoliborz</button>
           </div>
         </div>
       </div>
 
-      <!-- Sticky Action Footer -->
-      <div class="filter-modal-footer">
-        <button type="button" class="btn-filter-reset" id="btn-filter-reset">Wyczyść</button>
-        <button type="button" class="btn-filter-apply" id="btn-filter-apply">
-          Pokaż (<span id="filter-matching-count">0</span> miejsc)
+      <!-- Sticky Action Footer: [ ↺ RESET ALL ] | [ APPLY FILTERS ] -->
+      <div class="vko-filters-footer">
+        <button type="button" class="vko-btn-reset-all" id="btn-filter-reset">
+          <span class="vko-reset-icon">↺</span> RESET ALL
+        </button>
+        <button type="button" class="vko-btn-apply-filters" id="btn-filter-apply">
+          APPLY FILTERS
         </button>
       </div>
     </div>
@@ -986,50 +1183,51 @@
     <span>➕ Dodaj bar</span>
   </button>
 
-  <!-- Mobile Bottom Navigation Bar (Native App Dock) -->
+  <!-- Mobile Bottom Navigation Bar (Native App Dock - Vad Kostar Ölen 5-Tab System) -->
   <nav class="mobile-bottom-nav" id="mobile-bottom-nav" aria-label="Nawigacja dolna">
-    <button type="button" class="nav-item" id="nav-btn-community" data-target="community" title="Piwni Znajomi & Aktywność">
+    <button type="button" class="nav-item active" id="nav-btn-explore" data-target="explore" title="Odkrywaj bary i wydarzenia">
+      <span class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </span>
+      <span class="nav-label">Odkrywaj</span>
+    </button>
+    <button type="button" class="nav-item" id="nav-btn-community" data-target="community" title="Znajomi i Feed">
       <span class="nav-icon nav-icon-relative">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
           <circle cx="9" cy="7" r="4"></circle>
           <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
           <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
         </svg>
-        <span class="nav-badge-dot" id="nav-community-dot" style="display:none;"></span>
+        <span class="nav-badge-pill" id="nav-community-badge">1</span>
       </span>
       <span class="nav-label">Znajomi</span>
     </button>
-    <button type="button" class="nav-item" id="nav-btn-ranking" data-target="ranking" title="Ranking najtańszego piwa">
-      <span class="nav-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
-          <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
-          <path d="M4 22h16"></path>
-          <path d="M10 14.66V17c0 .55-.45 1-1 1H8v2h8v-2h-1c-.55 0-1-.45-1-1v-2.34"></path>
-          <path d="M18 4H6v7a6 6 0 0 0 12 0V4Z"></path>
-        </svg>
-      </span>
-      <span class="nav-label">Ranking</span>
-    </button>
-    <button type="button" class="nav-item nav-item-hero" id="nav-btn-hero-compass" data-target="compass" title="Piwny Kompas – Radar GPS na 1 klik">
+    <button type="button" class="nav-item nav-item-hero" id="nav-btn-hero-map" data-target="map" title="Mapa barów">
       <div class="hero-ring">
         <img src="icons/syrenka-hero.png" alt="Syrenka Warszawska z piwkiem" class="hero-syrenka-icon" width="40" height="40" />
       </div>
+      <span class="nav-label" style="font-size:8px;margin-top:1px;">Mapa</span>
     </button>
-    <button type="button" class="nav-item" id="nav-btn-pubcrawl" data-target="pubcrawl" title="Pub Crawl">
+    <button type="button" class="nav-item" id="nav-btn-games" data-target="games" title="Gry barowe">
       <span class="nav-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="6" cy="19" r="3"></circle>
-          <path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"></path>
-          <circle cx="18" cy="5" r="3"></circle>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="3" ry="3"></rect>
+          <circle cx="8" cy="8" r="1.5" fill="currentColor"></circle>
+          <circle cx="16" cy="8" r="1.5" fill="currentColor"></circle>
+          <circle cx="12" cy="12" r="1.5" fill="currentColor"></circle>
+          <circle cx="8" cy="16" r="1.5" fill="currentColor"></circle>
+          <circle cx="16" cy="16" r="1.5" fill="currentColor"></circle>
         </svg>
       </span>
-      <span class="nav-label">Pub Crawl</span>
+      <span class="nav-label">Gry</span>
     </button>
-    <button type="button" class="nav-item" id="nav-btn-profile" data-target="profile" title="Mój profil i konto">
+    <button type="button" class="nav-item" id="nav-btn-profile" data-target="profile" title="Mój profil">
       <span class="nav-icon" id="nav-profile-icon-wrap">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
           <circle cx="12" cy="7" r="4"></circle>
         </svg>
@@ -1611,144 +1809,284 @@
     </div>
   </div>
 
-  <!-- User Profile Modal (Goin' Inspired UI) -->
+  <!-- User Profile Modal (Vad Kostar Ölen Style - Screenshot media_1790002397641.png) -->
   <div class="modal-backdrop" id="profile-modal">
-    <div class="modal-card modal-card-goin profile-modal-card">
+    <div class="modal-card modal-card-goin vko-profile-card">
       
-      <!-- Top Navigation & Close -->
-      <div class="goin-modal-header">
-        <div class="goin-header-drag-bar" aria-hidden="true"></div>
-        <div class="goin-header-brand">
-          <span class="brand-pill">🍺 poilepiwko</span>
+      <!-- Top Action Bar: [ 🏆 ] [ 🛒 275 ] ... [ 🎨 ] [ 👤 ] [ ✕ ] -->
+      <div class="vko-prof-top-bar">
+        <div class="vko-prof-top-left">
+          <button type="button" class="vko-prof-icon-btn" id="btn-profile-ranking" title="Ranking piwny">
+            <span class="vko-btn-ico">🏆</span>
+          </button>
+          <button type="button" class="vko-prof-caps-pill" id="btn-profile-caps" title="Sklep Kapsli i Nagrody">
+            <span class="vko-btn-ico">🛒</span>
+            <span class="vko-caps-count" id="prof-caps-count">275</span>
+          </button>
         </div>
-        <div class="goin-header-actions">
-          <button type="button" class="btn-header-share" id="btn-share-profile-header" aria-label="Udostępnij profil" title="Udostępnij swój profil">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
-              <polyline points="16 6 12 2 8 6"></polyline>
-              <line x1="12" y1="2" x2="12" y2="15"></line>
+        <div class="vko-prof-top-right">
+          <button type="button" class="vko-prof-icon-btn" id="btn-profile-theme" title="Zmień motyw">
+            <span class="vko-btn-ico">🎨</span>
+          </button>
+          <button type="button" class="vko-prof-icon-btn" id="btn-profile-account" title="Ustawienia konta">
+            <span class="vko-btn-ico">👤</span>
+          </button>
+          <button type="button" class="modal-close" id="btn-close-profile" title="Zamknij profil">✕</button>
+        </div>
+      </div>
+
+      <!-- User Card -->
+      <div class="vko-prof-user-box">
+        <div class="vko-prof-avatar-wrap">
+          <img src="icons/icon-192.png" alt="Awatar użytkownika" id="prof-avatar-img" class="vko-prof-avatar-img" />
+          <button type="button" class="vko-prof-avatar-edit-btn" id="btn-edit-avatar-icon" title="Zmień zdjęcie">✎</button>
+        </div>
+        <h2 class="vko-prof-handle" id="prof-hero-handle">@KRYSTIAN</h2>
+        
+        <!-- 3-Column Stats Row: FRIENDS | CHECKINS | PLACES -->
+        <div class="vko-prof-stats-row">
+          <div class="vko-stat-col" id="prof-col-friends">
+            <div class="vko-stat-val" id="prof-stat-friends">0</div>
+            <div class="vko-stat-lbl">ZNAJOMI</div>
+          </div>
+          <div class="vko-stat-col" id="prof-col-checkins">
+            <div class="vko-stat-val" id="prof-stat-checkins">0</div>
+            <div class="vko-stat-lbl">CHECK-INS</div>
+          </div>
+          <div class="vko-stat-col" id="prof-col-places">
+            <div class="vko-stat-val" id="prof-stat-visited">0</div>
+            <div class="vko-stat-lbl">MIEJSCA</div>
+          </div>
+        </div>
+
+        <!-- 2 Action Buttons Row: [ STATISTICS ] [ SHARE PROFILE ] -->
+        <div class="vko-prof-btn-row">
+          <button type="button" class="vko-prof-btn" id="btn-open-user-stats">
+            STATYSTYKI
+          </button>
+          <button type="button" class="vko-prof-btn" id="btn-share-profile-header">
+            UDOSTĘPNIJ PROFIL
+          </button>
+        </div>
+      </div>
+
+      <!-- Body: Check-ins Gallery or Empty State -->
+      <div class="vko-prof-gallery-section">
+        <div class="vko-prof-empty-state" id="prof-empty-checkins">
+          <div class="vko-empty-camera-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+              <circle cx="12" cy="13" r="4"></circle>
             </svg>
+          </div>
+          <div class="vko-empty-title">BRAK CHECK-INÓW</div>
+          <div class="vko-empty-sub">Twoje zdjęcia z warszawskich barów pojawią się tutaj</div>
+          <button type="button" class="vko-btn-cta-orange" style="max-width:220px;margin-top:14px;padding:10px 16px;font-size:0.9rem;" onclick="window.__openAddModal ? window.__openAddModal() : null">
+            📸 Zrób pierwszy BeReal
           </button>
-          <button type="button" class="modal-close-goin" id="btn-close-profile" aria-label="Zamknij profil" title="Zamknij profil i wróć do mapy">✕</button>
+        </div>
+
+        <div class="vko-prof-grid" id="prof-checkins-grid" style="display:none;">
+          <!-- User photos injected dynamically -->
         </div>
       </div>
 
-      <!-- Hero Banner (Goin' Style) -->
-      <div class="profile-goin-hero">
-        <div class="goin-hero-content">
-          <div class="goin-hero-left">
-            <div class="goin-name-row">
-              <h2 id="prof-hero-name">Piwosz</h2>
-              <span class="user-num-badge" id="prof-user-number" title="Twój numer wczesnego piwosza w poilepiwko">#000001</span>
-            </div>
-            <div class="goin-handle-row">
-              <span class="profile-handle" id="prof-hero-handle">@piwosz</span>
-              <span class="profile-rank-tag" id="prof-rank-title">Początkujący Piwosz</span>
-            </div>
-
-            <p class="goin-bio-text" id="prof-bio-display">Warszawski poszukiwacz dobrego i taniego piwa 🍻</p>
-
-            <!-- Tags List with clean icons (Goin' style) -->
-            <div class="goin-tags-list">
-              <div class="goin-tag-item" id="prof-tag-beer-wrap">
-                <span class="goin-tag-icon">🍺</span>
-                <span class="goin-tag-val" id="prof-val-beer">Wszystkie dobre!</span>
-              </div>
-              <div class="goin-tag-item" id="prof-tag-dist-wrap">
-                <span class="goin-tag-icon">📍</span>
-                <span class="goin-tag-val" id="prof-val-district">Cała Warszawa</span>
-              </div>
-              <div class="goin-tag-item" id="prof-tag-vibe-wrap">
-                <span class="goin-tag-icon">❤️</span>
-                <span class="goin-tag-val" id="prof-val-vibe">Kraft, Ogródki, Pub Quiz</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="goin-hero-right">
-            <div class="goin-avatar-frame">
-              <div class="goin-avatar-badge" id="prof-hero-avatar">🍻</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Profile Actions Bar: Clean 3-Button Row -->
-        <div class="profile-hero-actions-bar">
-          <button type="button" class="btn-hero-action btn-hero-edit" id="btn-toggle-edit-profile" title="Edytuj profil i preferencje">
-            <span class="btn-hero-action-icon">✏️</span>
-            <span>Edytuj</span>
-          </button>
-          <button type="button" class="btn-hero-action btn-hero-club" id="btn-open-club-card" title="Otwórz wirtualną Kartę Klubu PoIlePiwko Pass (-10% rabat)">
-            <span class="btn-hero-action-icon">💳</span>
-            <span>Karta Pass</span>
-          </button>
-          <button type="button" class="btn-hero-action btn-hero-story" id="btn-open-story-card" title="Wygeneruj kartę na Instagram Story">
-            <span class="btn-hero-action-icon">📸</span>
-            <span>Story</span>
-          </button>
-        </div>
+      <!-- Hidden compatibility elements for existing JavaScript bindings -->
+      <div style="display:none;" aria-hidden="true">
+        <span id="prof-hero-name">Krystian</span>
+        <span id="prof-user-number">#000001</span>
+        <span id="prof-rank-title">Początkujący Piwosz</span>
+        <span id="prof-bio-display">Warszawski piwosz</span>
+        <span id="prof-val-beer">Wszystkie dobre!</span>
+        <span id="prof-val-district">Cała Warszawa</span>
+        <span id="prof-val-vibe">Kraft</span>
+        <span id="prof-hero-avatar">🍻</span>
+        <span id="prof-stat-badges">0</span>
+        <span id="prof-stat-favorites">0</span>
+        <button id="btn-toggle-edit-profile"></button>
+        <button id="btn-open-club-card"></button>
+        <button id="btn-open-story-card"></button>
+        <button id="prof-stat-btn-visited"></button>
+        <button id="prof-stat-btn-badges"></button>
+        <button id="prof-stat-btn-favorites"></button>
+        <button id="prof-stat-btn-friends"></button>
+        <div id="prof-achievements-list"></div>
       </div>
 
-      <!-- Unified Dark Glass Stats Grid (Interactive) -->
-      <div class="profile-stats-unified">
-        <button type="button" class="stat-unit" id="prof-stat-btn-visited" title="Zobacz odwiedzone bary">
-          <div class="stat-unit-icon">🍺</div>
-          <div class="stat-unit-val" id="prof-stat-visited">0</div>
-          <div class="stat-unit-lbl">Bary</div>
-        </button>
-        <div class="stat-unit-sep"></div>
-        <button type="button" class="stat-unit" id="prof-stat-btn-badges" title="Pokaż zdobyte odznaki">
-          <div class="stat-unit-icon">🎖️</div>
-          <div class="stat-unit-val" id="prof-stat-badges">0</div>
-          <div class="stat-unit-lbl">Odznaki</div>
-        </button>
-        <div class="stat-unit-sep"></div>
-        <button type="button" class="stat-unit" id="prof-stat-btn-favorites" title="Pokaż ulubione lokale na mapie">
-          <div class="stat-unit-icon">❤️</div>
-          <div class="stat-unit-val" id="prof-stat-favorites">0</div>
-          <div class="stat-unit-lbl">Ulubione</div>
-        </button>
-        <div class="stat-unit-sep"></div>
-        <button type="button" class="stat-unit" id="prof-stat-btn-friends" title="Przejdź do listy znajomych">
-          <div class="stat-unit-icon">👥</div>
-          <div class="stat-unit-val" id="prof-stat-friends">0</div>
-          <div class="stat-unit-lbl">Znajomi</div>
-        </button>
+    </div>
+  </div>
+
+  <!-- User Statistics Modal (Vad Kostar Ölen Screenshot media_1790002390031.png) -->
+  <div class="modal-backdrop" id="user-stats-modal" style="display:none; z-index: 10120;">
+    <div class="modal-card vko-stats-card">
+      <div class="modal-head vko-filters-head">
+        <h2 class="vko-filter-head-title">STATISTICS</h2>
+        <button type="button" class="modal-close" id="btn-close-stats">✕</button>
       </div>
-
-      <!-- Unified Achievements & Rank Card (Pasek postępu + Odznaki w 1 zgrabnej karcie) -->
-      <div class="profile-achievements-unified-card" id="profile-achievements-card">
-        <!-- Postęp do następnej rangi -->
-        <div class="achievements-unified-top">
-          <div class="progress-clean-head">
-            <span class="progress-clean-title">
-              <span class="progress-clean-icon">🎯</span>
-              <span id="prof-progress-target">Następna ranga: Koneser Kraftu</span>
-            </span>
-            <span class="progress-clean-pct" id="prof-progress-percent">16%</span>
-          </div>
-          <div class="progress-clean-track">
-            <div class="progress-clean-fill" id="prof-progress-fill" style="width: 16%;"></div>
-          </div>
+      <div class="vko-stats-body" id="vko-stats-body">
+        <div class="vko-stats-empty-box" id="vko-stats-empty">
+          <div class="vko-stats-empty-title">NO STATISTICS YET</div>
+          <div class="vko-stats-empty-desc">CHECK IN AT A BAR TO START COLLECTING STATISTICS!</div>
         </div>
-
-        <!-- Akordeon odznak -->
-        <button type="button" class="achievements-section-toggle" id="btn-toggle-achievements" aria-expanded="false" title="Rozwiń listę odznak">
-          <div class="achievements-toggle-left">
-            <span class="achievements-section-title">🎖️ Osiągnięcia & Paszport</span>
-            <span class="achievements-count-badge" id="prof-achievements-count">0/8</span>
+        <div class="vko-stats-content" id="vko-stats-filled" style="display:none;">
+          <div class="vko-stats-tile">
+            <span class="vko-stat-num" id="stats-total-liters">0.0 L</span>
+            <span class="vko-stat-label">WYPITEGO PIWA</span>
           </div>
-          <div class="achievements-toggle-right">
-            <span class="achievements-toggle-hint" id="achievements-toggle-hint">Rozwiń</span>
-            <span class="achievements-chevron">▼</span>
+          <div class="vko-stats-tile">
+            <span class="vko-stat-num" id="stats-saved-money">0 ZŁ</span>
+            <span class="vko-stat-label">ZAOSZCZĘDZONE</span>
           </div>
-        </button>
-        <div class="achievements-collapse-wrapper" id="prof-achievements-wrapper">
-          <div class="achievements-list" id="prof-achievements-list">
-            <!-- Injected via JavaScript dynamically -->
+          <div class="vko-stats-tile">
+            <span class="vko-stat-num" id="stats-streak-days">1 DZIEŃ</span>
+            <span class="vko-stat-label">PASSA DNI</span>
+          </div>
+          <div class="vko-stats-tile">
+            <span class="vko-stat-num" id="stats-fav-district">ŚRÓDMIEŚCIE</span>
+            <span class="vko-stat-label">ULUBIONA DZIELNICA</span>
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Account Settings Modal (Vad Kostar Ölen Screenshot media_1790002406001.png) -->
+  <div class="modal-backdrop" id="account-settings-modal" style="display:none; z-index: 10130;">
+    <div class="modal-card vko-account-card">
+      <div class="modal-head vko-filters-head">
+        <h2 class="vko-filter-head-title">ACCOUNT</h2>
+        <button type="button" class="modal-close" id="btn-close-account">✕</button>
+      </div>
+      <div class="vko-account-body">
+        <div class="vko-account-sec-title">SETTINGS AND ACTIVITY</div>
+        <div class="vko-account-menu">
+          <button type="button" class="vko-menu-item" id="menu-acc-profile">
+            <span class="vko-menu-left"><span class="vko-menu-icon">👤</span> ACCOUNT SETTINGS</span>
+            <span class="vko-menu-chevron">›</span>
+          </button>
+          <button type="button" class="vko-menu-item" id="menu-acc-support">
+            <span class="vko-menu-left"><span class="vko-menu-icon">💬</span> MY SUPPORT CHATS</span>
+            <span class="vko-menu-chevron">›</span>
+          </button>
+          <button type="button" class="vko-menu-item" id="menu-acc-privacy">
+            <span class="vko-menu-left"><span class="vko-menu-icon">🔒</span> ACCOUNT PRIVACY</span>
+            <span class="vko-menu-right-val">Public ›</span>
+          </button>
+          <button type="button" class="vko-menu-item" id="menu-acc-contacts">
+            <span class="vko-menu-left"><span class="vko-menu-icon">👥</span> CONTACTS & DISCOVERABILITY</span>
+            <span class="vko-menu-chevron">›</span>
+          </button>
+          <button type="button" class="vko-menu-item" id="menu-acc-notifications">
+            <span class="vko-menu-left"><span class="vko-menu-icon">🔔</span> PUSH NOTIFICATIONS</span>
+            <span class="vko-menu-chevron">›</span>
+          </button>
+          <button type="button" class="vko-menu-item" id="menu-acc-email">
+            <span class="vko-menu-left"><span class="vko-menu-icon">✉️</span> EMAIL VERIFICATION</span>
+            <span class="vko-menu-right-val">Zweryfikowano ›</span>
+          </button>
+          <button type="button" class="vko-menu-item" id="menu-acc-bestbar">
+            <span class="vko-menu-left"><span class="vko-menu-icon">🍺</span> BEST BAR NEAR YOU</span>
+            <span class="vko-menu-right-val">On ›</span>
+          </button>
+          <button type="button" class="vko-menu-item" id="menu-acc-language">
+            <span class="vko-menu-left"><span class="vko-menu-icon">🌐</span> LANGUAGE</span>
+            <span class="vko-menu-right-val">Polski ›</span>
+          </button>
+        </div>
+
+        <div class="vko-account-sec-title" style="margin-top: 20px;">EARN AND ENGAGE</div>
+        <div class="vko-account-menu">
+          <button type="button" class="vko-menu-item" id="menu-acc-suggest">
+            <span class="vko-menu-left"><span class="vko-menu-icon">🎧</span> SUGGEST A FEATURE</span>
+            <span class="vko-menu-chevron">›</span>
+          </button>
+          <button type="button" class="vko-menu-item" id="menu-acc-logout" style="color: #ef4444;">
+            <span class="vko-menu-left"><span class="vko-menu-icon">🚪</span> WYLOGUJ SIĘ</span>
+            <span class="vko-menu-chevron">›</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Games Hub Modal (Vad Kostar Ölen Screenshot vko_appstore_6.png) -->
+  <div class="modal-backdrop" id="games-modal" style="display:none; z-index: 10140;">
+    <div class="modal-card vko-games-card">
+      <div class="modal-head vko-filters-head">
+        <h2 class="vko-filter-head-title">🎲 GRY BAROWE</h2>
+        <button type="button" class="modal-close" id="btn-close-games">✕</button>
+      </div>
+      <div class="vko-games-body">
+        <div class="vko-games-grid">
+          <!-- Game 1: Pekleken / Kto z nas -->
+          <div class="vko-game-tile" id="tile-game-pekleken">
+            <div class="vko-game-top">
+              <span class="vko-game-icon">👉</span>
+              <span class="vko-game-badge">IMPREZA</span>
+            </div>
+            <h3 class="vko-game-title">KTO Z NAS? (PEKLEKEN)</h3>
+            <p class="vko-game-desc">Wskażcie palcem osobę, która najbardziej pasuje do pytania. Kto ma najwięcej głosów — pije!</p>
+            <button type="button" class="vko-btn-game-play">Zagraj teraz →</button>
+          </div>
+
+          <!-- Game 2: Utmaningshjulet / Ruletka Wyzwań -->
+          <div class="vko-game-tile" id="tile-game-roulette">
+            <div class="vko-game-top">
+              <span class="vko-game-icon">🎰</span>
+              <span class="vko-game-badge">LOSUJ</span>
+            </div>
+            <h3 class="vko-game-title">PIWNA RULETKA</h3>
+            <p class="vko-game-desc">Nie wiesz gdzie iść albo jakie wyzwanie zrobić? Zakręć kołem i zdaj się na warszawski los.</p>
+            <button type="button" class="vko-btn-game-play">Zakręć kołem →</button>
+          </div>
+
+          <!-- Game 3: Prawda czy Wyzwanie -->
+          <div class="vko-game-tile" id="tile-game-truth">
+            <div class="vko-game-top">
+              <span class="vko-game-icon">🔥</span>
+              <span class="vko-game-badge">PIKANTNE</span>
+            </div>
+            <h3 class="vko-game-title">PRAWDA CZY WYZWANIE</h3>
+            <p class="vko-game-desc">Szczere barowe zwierzenia lub szalone zadania przy kuflu ze znajomymi.</p>
+            <button type="button" class="vko-btn-game-play">Rozpocznij →</button>
+          </div>
+
+          <!-- Game 4: Barowa Trivia / Quiz -->
+          <div class="vko-game-tile" id="tile-game-quiz">
+            <div class="vko-game-top">
+              <span class="vko-game-icon">🧠</span>
+              <span class="vko-game-badge">QUIZ</span>
+            </div>
+            <h3 class="vko-game-title">WARSZAWSKI PUB QUIZ</h3>
+            <p class="vko-game-desc">Sprawdź swoją wiedzę o piwie, historii Warszawy i barowych legendach!</p>
+            <button type="button" class="vko-btn-game-play">Zagraj quiz →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pekleken (Kto z nas) Interactive Game Modal -->
+  <div class="modal-backdrop" id="pekleken-modal" style="display:none; z-index: 10160;">
+    <div class="modal-card vko-pekleken-card">
+      <div class="modal-head vko-filters-head">
+        <h2 class="vko-filter-head-title">👉 KTO Z NAS?</h2>
+        <button type="button" class="modal-close" id="btn-close-pekleken">✕</button>
+      </div>
+      <div class="vko-pekleken-body">
+        <div class="vko-card-deck-stack">
+          <div class="vko-pekleken-card-item">
+            <div class="vko-card-number" id="pekleken-card-num">KARTA #1</div>
+            <div class="vko-pekleken-prompt" id="pekleken-card-text">Kto najszybciej wypije całe piwo na hejnał?</div>
+            <div class="vko-card-instruction">Na 3-4 wszyscy wskazują palcem! Przegrany pije łyka.</div>
+          </div>
+        </div>
+        <button type="button" class="vko-btn-cta-orange" id="btn-pekleken-next" style="margin-top:20px;">
+          KOLEJNA KARTA →
+        </button>
+      </div>
+    </div>
+  </div>
 
       <!-- Single Elegant Community Banner -->
       <button type="button" class="profile-community-banner" id="btn-open-community-from-profile" title="Przejdź do znajomych i szukaj osób">
