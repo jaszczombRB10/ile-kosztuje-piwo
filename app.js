@@ -4937,18 +4937,8 @@
           if (window.__closePubCrawl) window.__closePubCrawl();
           if (window.__closeCompass) window.__closeCompass();
           if (window.__closeMobileSearch) window.__closeMobileSearch();
-          if (currentUser && currentProfile) {
-            if (window.__openMyProfile) window.__openMyProfile();
-          } else {
-            if (window.__openAuth) {
-              window.__openAuth();
-            } else {
-              const authModal = document.getElementById("auth-modal");
-              if (authModal) {
-                authModal.classList.add("active");
-                authModal.style.display = "flex";
-              }
-            }
+          if (window.__openMyProfile) {
+            window.__openMyProfile();
           }
         } else if (target === "barometer") {
           if (window.__closeRankingDrawer) window.__closeRankingDrawer();
@@ -6751,8 +6741,28 @@
       }
     }
 
+    function getEffectiveProfile() {
+      if (currentProfile) return currentProfile;
+      try {
+        const saved = localStorage.getItem("poilepiwko_user_profile");
+        if (saved) return JSON.parse(saved);
+      } catch (e) {}
+      return {
+        username: "krystian",
+        display_name: "Krystian",
+        avatar_icon: "🍺",
+        avatar_photo: null,
+        caps_balance: 275,
+        bio: "Warszawski poszukiwacz dobrego i taniego piwa 🍻",
+        favorite_beer: "Wszystkie dobre!",
+        favorite_district: "Śródmieście",
+        vibe_tags: "Kraft, Ogródki, Pub Quiz",
+        user_number: "#000001"
+      };
+    }
+
     function renderMyProfile() {
-      if (!currentProfile) return;
+      const prof = getEffectiveProfile();
       const rank = calculateUserRank(visitedVenues.length);
 
       const heroAvatar = document.getElementById("prof-hero-avatar");
@@ -6768,28 +6778,52 @@
       const valBeer = document.getElementById("prof-val-beer");
       const valDistrict = document.getElementById("prof-val-district");
       const valVibe = document.getElementById("prof-val-vibe");
+      const capsCountEl = document.getElementById("prof-caps-count");
+
+      if (capsCountEl) {
+        capsCountEl.textContent = String(prof.caps_balance || 275);
+      }
 
       if (heroAvatar) {
-        if (currentProfile.avatar_photo) {
-          heroAvatar.innerHTML = `<img src="${escapeHtml(currentProfile.avatar_photo)}" class="profile-hero-photo" alt="Zdjęcie profilowe" />`;
+        if (prof.avatar_photo) {
+          heroAvatar.innerHTML = `<img src="${escapeHtml(prof.avatar_photo)}" class="profile-hero-photo" alt="Zdjęcie profilowe" />`;
         } else {
-          heroAvatar.textContent = currentProfile.avatar_icon || "🍺";
+          heroAvatar.textContent = prof.avatar_icon || "🍺";
         }
       }
-      if (heroName) heroName.textContent = currentProfile.display_name || currentProfile.username;
-      if (heroHandle) heroHandle.textContent = `@${currentProfile.username}`;
-      if (userNumEl) userNumEl.textContent = currentProfile.user_number || "#000001";
+      if (heroName) heroName.textContent = prof.display_name || prof.username;
+      if (heroHandle) heroHandle.textContent = `@${(prof.username || "krystian").toUpperCase()}`;
+      if (userNumEl) userNumEl.textContent = prof.user_number || "#000001";
       if (rankTitle) rankTitle.textContent = rank.title;
       if (statVisited) statVisited.textContent = visitedVenues.length;
       if (statBadges) statBadges.textContent = loadUnlockedBadges().length;
       if (statFavorites) statFavorites.textContent = favoriteVenues.length;
-      if (statFriends) statFriends.textContent = myFollowingIds.length;
-      if (bioDisplay) bioDisplay.textContent = currentProfile.bio || "Warszawski poszukiwacz dobrego i taniego piwa 🍻";
-      if (valBeer) valBeer.textContent = currentProfile.favorite_beer || "Wszystkie dobre!";
-      if (valDistrict) valDistrict.textContent = currentProfile.favorite_district || "Cała Warszawa";
-      if (valVibe) valVibe.textContent = currentProfile.vibe_tags || "Kraft, Ogródki, Pub Quiz";
 
-      // Progress bar (Goin' style: "Get the most out of poilepiwko")
+      let frCount = myFollowingIds.length;
+      if (!frCount) {
+        try {
+          const sf = localStorage.getItem("poilepiwko_friends");
+          if (sf) frCount = JSON.parse(sf).length;
+        } catch(e) {}
+      }
+      if (statFriends) statFriends.textContent = String(frCount);
+
+      // Sub-modal stats tiles
+      const tileVisited = document.getElementById("stats-tile-visited");
+      const tileBadges = document.getElementById("stats-tile-badges");
+      const tileFavs = document.getElementById("stats-tile-favs");
+      const tileSavings = document.getElementById("stats-tile-savings");
+      if (tileVisited) tileVisited.textContent = String(visitedVenues.length);
+      if (tileBadges) tileBadges.textContent = String(loadUnlockedBadges().length);
+      if (tileFavs) tileFavs.textContent = String(favoriteVenues.length);
+      if (tileSavings) tileSavings.textContent = `~${Math.max(visitedVenues.length * 4.5, 35).toFixed(0)} zł`;
+
+      if (bioDisplay) bioDisplay.textContent = prof.bio || "Warszawski poszukiwacz dobrego i taniego piwa 🍻";
+      if (valBeer) valBeer.textContent = prof.favorite_beer || "Wszystkie dobre!";
+      if (valDistrict) valDistrict.textContent = prof.favorite_district || "Cała Warszawa";
+      if (valVibe) valVibe.textContent = prof.vibe_tags || "Kraft, Ogródki, Pub Quiz";
+
+      // Progress bar (Vad Kostar Ölen / Goin' style)
       const rankProg = calculateRankProgress(visitedVenues.length);
       const progressFill = document.getElementById("prof-progress-fill");
       const progressPercent = document.getElementById("prof-progress-percent");
@@ -6797,7 +6831,7 @@
 
       if (progressFill) progressFill.style.width = `${rankProg.percent}%`;
       if (progressPercent) progressPercent.textContent = `${rankProg.percent}%`;
-      if (progressTarget) progressTarget.textContent = rankProg.nextTitle;
+      if (progressTarget) progressTarget.textContent = `Następna ranga: ${rankProg.nextTitle}`;
 
       // Achievements list (Goin' style)
       const achievementsList = document.getElementById("prof-achievements-list");
@@ -6844,23 +6878,19 @@
       const editDist = document.getElementById("edit-fav-district");
       const editVibe = document.getElementById("edit-vibe-tags");
 
-      if (editUser) editUser.value = currentProfile.username || "";
-      if (editName) editName.value = currentProfile.display_name || "";
-      if (editBio) editBio.value = currentProfile.bio || "";
-      if (editBeer) editBeer.value = currentProfile.favorite_beer || "";
-      if (editDist) editDist.value = currentProfile.favorite_district || "";
-      if (editVibe) editVibe.value = currentProfile.vibe_tags || "";
+      if (editUser) editUser.value = prof.username || "";
+      if (editName) editName.value = prof.display_name || "";
+      if (editBio) editBio.value = prof.bio || "";
+      if (editBeer) editBeer.value = prof.favorite_beer || "";
+      if (editDist) editDist.value = prof.favorite_district || "";
+      if (editVibe) editVibe.value = prof.vibe_tags || "";
 
-      editSelectedPhoto = currentProfile.avatar_photo || null;
-      editSelectedAvatar = currentProfile.avatar_icon || "🍺";
+      editSelectedPhoto = prof.avatar_photo || null;
+      editSelectedAvatar = prof.avatar_icon || "🍺";
       updateEditModalAvatarPreview();
     }
 
     window.__openMyProfile = function () {
-      if (!currentUser) {
-        if (window.__openAuth) window.__openAuth();
-        return;
-      }
       renderMyProfile();
       if (modal) {
         modal.classList.add("active");
@@ -6887,6 +6917,132 @@
       btnCloseBottom.addEventListener("click", () => { window.__closeMyProfile(); });
     }
 
+    // Vad Kostar Ölen Header Controls
+    const btnTopRank = document.getElementById("prof-top-ranking-btn");
+    if (btnTopRank) {
+      btnTopRank.addEventListener("click", () => {
+        window.__closeMyProfile();
+        if (window.__openRankingDrawer) window.__openRankingDrawer();
+      });
+    }
+
+    const btnTopTheme = document.getElementById("prof-top-theme-btn");
+    if (btnTopTheme) {
+      btnTopTheme.addEventListener("click", () => {
+        const cur = document.documentElement.getAttribute("data-theme") || "dark";
+        const next = cur === "light" ? "dark" : "light";
+        applyTheme(next);
+        showAppToast(next === "light" ? "☀️ Włączono motyw jasny" : "🌙 Włączono motyw ciemny", "", "🎨");
+      });
+    }
+
+    // Account Settings Modal
+    const btnTopSettings = document.getElementById("prof-top-settings-btn");
+    const settingsModal = document.getElementById("account-settings-modal");
+    const btnCloseSettings = document.getElementById("btn-close-settings");
+    if (btnTopSettings && settingsModal) {
+      btnTopSettings.addEventListener("click", () => {
+        settingsModal.classList.add("active");
+        settingsModal.style.display = "flex";
+      });
+    }
+    if (btnCloseSettings && settingsModal) {
+      btnCloseSettings.addEventListener("click", () => {
+        settingsModal.classList.remove("active");
+        settingsModal.style.display = "none";
+      });
+      settingsModal.addEventListener("click", (e) => {
+        if (e.target === settingsModal) {
+          settingsModal.classList.remove("active");
+          settingsModal.style.display = "none";
+        }
+      });
+    }
+
+    // User Statistics Modal
+    const btnOpenStats = document.getElementById("btn-open-user-stats");
+    const statsModal = document.getElementById("user-stats-modal");
+    const btnCloseStats = document.getElementById("btn-close-stats");
+    if (btnOpenStats && statsModal) {
+      btnOpenStats.addEventListener("click", () => {
+        statsModal.classList.add("active");
+        statsModal.style.display = "flex";
+      });
+    }
+    if (btnCloseStats && statsModal) {
+      btnCloseStats.addEventListener("click", () => {
+        statsModal.classList.remove("active");
+        statsModal.style.display = "none";
+      });
+      statsModal.addEventListener("click", (e) => {
+        if (e.target === statsModal) {
+          statsModal.classList.remove("active");
+          statsModal.style.display = "none";
+        }
+      });
+    }
+
+    // Avatar Box Click & Pencil Click -> Edit Profile
+    const avatarBox = document.getElementById("prof-hero-avatar-box");
+    const btnAvatarEdit = document.getElementById("btn-avatar-quick-edit");
+    if (avatarBox) {
+      avatarBox.addEventListener("click", () => {
+        if (window.__openEditProfileModal) window.__openEditProfileModal();
+      });
+    }
+    if (btnAvatarEdit) {
+      btnAvatarEdit.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (window.__openEditProfileModal) window.__openEditProfileModal();
+      });
+    }
+
+    // BeReal CTA in Empty Check-ins
+    const btnProfBereal = document.getElementById("btn-prof-bereal-cta");
+    if (btnProfBereal) {
+      btnProfBereal.addEventListener("click", () => {
+        window.__closeMyProfile();
+        const camBtn = document.getElementById("btn-open-bereal-camera");
+        if (camBtn) camBtn.click();
+        else if (typeof openBerealCameraModal === "function") openBerealCameraModal();
+      });
+    }
+
+    // Settings Modal Links
+    const sEdit = document.getElementById("btn-setting-edit-profile");
+    if (sEdit) {
+      sEdit.addEventListener("click", () => {
+        if (settingsModal) { settingsModal.classList.remove("active"); settingsModal.style.display = "none"; }
+        if (window.__openEditProfileModal) window.__openEditProfileModal();
+      });
+    }
+    const sClub = document.getElementById("btn-setting-club-card");
+    if (sClub) {
+      sClub.addEventListener("click", () => {
+        if (settingsModal) { settingsModal.classList.remove("active"); settingsModal.style.display = "none"; }
+        const cBtn = document.getElementById("btn-open-club-card");
+        if (cBtn) cBtn.click();
+      });
+    }
+    const sFriends = document.getElementById("btn-setting-friends");
+    if (sFriends) {
+      sFriends.addEventListener("click", () => {
+        if (settingsModal) { settingsModal.classList.remove("active"); settingsModal.style.display = "none"; }
+        window.__closeMyProfile();
+        if (window.__openCommunity) window.__openCommunity();
+      });
+    }
+    const sTheme = document.getElementById("btn-setting-theme");
+    if (sTheme) {
+      sTheme.addEventListener("click", () => {
+        const cur = document.documentElement.getAttribute("data-theme") || "dark";
+        const next = cur === "light" ? "dark" : "light";
+        applyTheme(next);
+        const lbl = document.getElementById("setting-theme-label");
+        if (lbl) lbl.textContent = next === "light" ? "Jasny" : "Ciemny";
+      });
+    }
+
     const tagVibeWrap = document.getElementById("prof-tag-vibe-wrap");
     if (tagVibeWrap) {
       tagVibeWrap.style.cursor = "pointer";
@@ -6906,10 +7062,10 @@
 
     // Share profile helper function (reused by multiple buttons)
     function shareMyProfileLink() {
-      if (!currentProfile) return;
-      const url = `${window.location.origin}/#@${currentProfile.username}`;
+      const prof = getEffectiveProfile();
+      const url = `${window.location.origin}/#@${prof.username || "krystian"}`;
       if (navigator.share) {
-        navigator.share({ title: `${currentProfile.display_name || currentProfile.username} na poilepiwko`, url: url }).catch(() => {});
+        navigator.share({ title: `${prof.display_name || prof.username} na poilepiwko`, url: url }).catch(() => {});
       } else if (navigator.clipboard) {
         navigator.clipboard.writeText(url).then(() => {
           showAppToast("Skopiowano link do profilu!", url, "📤");
@@ -7026,7 +7182,7 @@
 
     // Edit Profile Modal functions
     window.__openEditProfileModal = function () {
-      if (!currentProfile) return;
+      const prof = getEffectiveProfile();
       const editUser = document.getElementById("edit-username");
       const editName = document.getElementById("edit-display-name");
       const editBio = document.getElementById("edit-bio");
@@ -7034,15 +7190,15 @@
       const editDist = document.getElementById("edit-fav-district");
       const editVibe = document.getElementById("edit-vibe-tags");
 
-      if (editUser) editUser.value = currentProfile.username || "";
-      if (editName) editName.value = currentProfile.display_name || "";
-      if (editBio) editBio.value = currentProfile.bio || "";
-      if (editBeer) editBeer.value = currentProfile.favorite_beer || "";
-      if (editDist) editDist.value = currentProfile.favorite_district || "";
-      if (editVibe) editVibe.value = currentProfile.vibe_tags || "";
+      if (editUser) editUser.value = prof.username || "";
+      if (editName) editName.value = prof.display_name || "";
+      if (editBio) editBio.value = prof.bio || "";
+      if (editBeer) editBeer.value = prof.favorite_beer || "";
+      if (editDist) editDist.value = prof.favorite_district || "";
+      if (editVibe) editVibe.value = prof.vibe_tags || "";
 
-      editSelectedPhoto = currentProfile.avatar_photo || null;
-      editSelectedAvatar = currentProfile.avatar_icon || "🍺";
+      editSelectedPhoto = prof.avatar_photo || null;
+      editSelectedAvatar = prof.avatar_icon || "🍺";
       updateEditModalAvatarPreview();
 
       if (editModal) {
@@ -7231,6 +7387,7 @@
           currentProfile.favorite_beer = editBeer;
           currentProfile.favorite_district = editDist;
           currentProfile.vibe_tags = editVibeTags;
+          localStorage.setItem("poilepiwko_user_profile", JSON.stringify(currentProfile));
           if (currentUser) {
             localStorage.setItem("poilepiwko_user_avatar_photo_" + currentUser.id, editSelectedPhoto || "");
             if (supabaseClient && supabaseClient.auth) {
@@ -7243,6 +7400,20 @@
               }).catch(() => {});
             }
           }
+        } else {
+          currentProfile = {
+            id: "guest-user",
+            username: editUsername || "krystian",
+            display_name: editName,
+            avatar_icon: editSelectedAvatar,
+            avatar_photo: editSelectedPhoto || null,
+            bio: editBio,
+            favorite_beer: editBeer,
+            favorite_district: editDist,
+            vibe_tags: editVibeTags,
+            caps_balance: 275
+          };
+          localStorage.setItem("poilepiwko_user_profile", JSON.stringify(currentProfile));
         }
 
         renderMyProfile();

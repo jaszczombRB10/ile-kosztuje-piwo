@@ -16223,3 +16223,584 @@ body.theme-light .ugc-reason-item {
 body.theme-light .ugc-reason-item:hover {
   background: #f1f5f9;
 }
+
+/* =========================================================
+   Vad Kostar Ölen Style Clean Profile View & Modals
+   ========================================================= */
+.vko-profile-card {
+  max-width: 440px;
+  width: 100%;
+  max-height: 90vh;
+  background: #0b1413;
+  background: -webkit-linear-gradient(bottom, #080f0e, #0e1a19);
+  background: linear-gradient(180deg, #0e1a19 0%, #080f0e 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 28px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+  position: relative;
+}
+
+@media (max-width: 640px) {
+  .vko-profile-card {
+    max-width: 100%;
+    height: 92vh;
+    max-height: 92vh;
+    border-radius: 28px 28px 0 0;
+    margin-top: auto;
+    margin-bottom: 0;
+  }
+}
+
+/* 1. Header Bar */
+.vko-prof-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px 12px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
+}
+
+.vko-prof-header-left,
+.vko-prof-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vko-icon-circle-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f1f5f9;
+  font-size: 17px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.vko-icon-circle-btn:active {
+  transform: scale(0.92);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.vko-caps-pill {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f1f5f9;
+  font-weight: 800;
+  font-size: 0.95rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  letter-spacing: 0.3px;
+}
+
+.vko-caps-icon {
+  font-size: 16px;
+}
+
+/* 2. Hero Section */
+.vko-prof-hero {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 20px 20px 14px 20px;
+  flex-shrink: 0;
+}
+
+.vko-prof-avatar-box {
+  position: relative;
+  width: 82px;
+  height: 82px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.vko-prof-avatar-badge {
+  width: 82px;
+  height: 82px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(234, 88, 12, 0.2), #132220 80%);
+  border: 2px solid rgba(255, 255, 255, 0.16);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.3rem;
+  overflow: hidden;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.vko-prof-avatar-badge img.profile-hero-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.vko-prof-avatar-edit-badge {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #ea580c;
+  color: #fff;
+  border: 2px solid #0b1413;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  transition: transform 0.15s ease;
+}
+
+.vko-prof-avatar-edit-badge:active {
+  transform: scale(0.9);
+}
+
+.vko-prof-hero-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.vko-prof-handle-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.vko-prof-handle {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.2;
+}
+
+.vko-prof-rank-tag {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #ea580c;
+  background: rgba(234, 88, 12, 0.14);
+  border: 1px solid rgba(234, 88, 12, 0.3);
+  padding: 2px 7px;
+  border-radius: 6px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.vko-prof-stats-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.vko-prof-stat-item {
+  background: none;
+  border: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.15s ease;
+}
+
+.vko-prof-stat-item:active {
+  opacity: 0.7;
+}
+
+.vko-stat-val {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.1;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.vko-stat-key {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+/* 3. Primary Action Buttons */
+.vko-prof-actions-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 0 20px 10px 20px;
+  flex-shrink: 0;
+}
+
+.vko-prof-btn {
+  height: 44px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  color: #f1f5f9;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.vko-prof-btn:active {
+  transform: scale(0.97);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* 4. Secondary Sub-row */
+.vko-prof-sub-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 20px 14px 20px;
+  flex-shrink: 0;
+}
+
+.vko-sub-pill-btn {
+  flex: 1;
+  height: 34px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  color: #cbd5e1;
+  font-size: 0.72rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.vko-sub-pill-btn:active {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* 5. Feed Section */
+.vko-prof-feed {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 20px 40px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 240px;
+  background: rgba(0, 0, 0, 0.18);
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.vko-empty-feed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 280px;
+}
+
+.vko-empty-cam {
+  margin-bottom: 12px;
+  opacity: 0.65;
+}
+
+.vko-empty-heading {
+  margin: 0 0 6px 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.vko-empty-sub {
+  margin: 0 0 20px 0;
+  font-size: 0.82rem;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+.vko-prof-orange-cta {
+  width: 100%;
+  height: 48px;
+  background: linear-gradient(135deg, #ea580c, #f97316);
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(234, 88, 12, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.vko-prof-orange-cta:active {
+  transform: scale(0.96);
+  box-shadow: 0 2px 8px rgba(234, 88, 12, 0.2);
+}
+
+/* Sub-modals: Stats & Settings Cards */
+.vko-stats-card,
+.vko-settings-card {
+  max-width: 440px;
+  width: 100%;
+  max-height: 88vh;
+  background: #0b1413;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 28px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.9);
+}
+
+@media (max-width: 640px) {
+  .vko-stats-card,
+  .vko-settings-card {
+    max-width: 100%;
+    height: 90vh;
+    border-radius: 28px 28px 0 0;
+    margin-top: auto;
+    margin-bottom: 0;
+  }
+}
+
+.vko-submodal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.vko-submodal-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.vko-submodal-body,
+.vko-settings-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 20px 32px 20px;
+}
+
+/* Stats Progress Box */
+.vko-stats-rank-box {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.vko-stats-rank-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.vko-stats-rank-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vko-stats-rank-pct {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #ea580c;
+}
+
+.vko-stats-progress-track {
+  height: 7px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.vko-stats-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ea580c, #f97316);
+  border-radius: 9999px;
+  transition: width 0.4s ease;
+}
+
+/* Stats Summary 4-Grid */
+.vko-stats-summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.vko-stat-tile {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.vko-stat-tile-icon {
+  font-size: 1.2rem;
+  margin-bottom: 4px;
+}
+
+.vko-stat-tile-val {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.1;
+}
+
+.vko-stat-tile-lbl {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 0.5px;
+  margin-top: 4px;
+}
+
+/* Stats Achievements Section */
+.vko-stats-achievements-sec {
+  margin-top: 14px;
+}
+
+.vko-stats-sec-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.vko-stats-sec-title {
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: #cbd5e1;
+}
+
+.vko-stats-sec-count {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #ea580c;
+  background: rgba(234, 88, 12, 0.12);
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+
+/* Settings List */
+.vko-settings-group-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 8px;
+  padding-left: 4px;
+}
+
+.vko-settings-list {
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.vko-setting-item {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  color: #f1f5f9;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  font-size: 0.88rem;
+  transition: background 0.15s ease;
+}
+
+.vko-setting-item:last-child {
+  border-bottom: none;
+}
+
+.vko-setting-item:active {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.vko-setting-icon {
+  font-size: 1.1rem;
+  margin-right: 12px;
+  width: 22px;
+  text-align: center;
+}
+
+.vko-setting-text {
+  flex: 1;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.vko-setting-val {
+  font-size: 0.76rem;
+  color: #94a3b8;
+  margin-right: 8px;
+}
+
+.vko-setting-chevron {
+  font-size: 1.1rem;
+  color: #475569;
+}
