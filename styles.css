@@ -8229,12 +8229,15 @@ header,
   font-weight: 700;
 }
 
-.empty-state-hint {
+.empty-state-hint,
+.error-state-hint,
+.loading-state-hint {
   text-align: center;
   color: #94a3b8;
   font-size: 0.82rem;
   padding: 24px 16px;
   line-height: 1.45;
+  grid-column: 1 / -1;
 }
 
 .empty-state-card {
@@ -13094,9 +13097,80 @@ body.theme-light .btn-crawl-ghost:hover {
 /* -------------------------------------------------------------------------- */
 /* 5. PIWNI ZNAJOMI & SPOŁECZNOŚĆ (#community-modal)                          */
 /* -------------------------------------------------------------------------- */
-body.theme-light .community-modal-card {
-  background: #ffffff !important;
+body.theme-light .app-page-view#community-modal {
+  background: #f8fafc !important;
   color: #0f172a !important;
+}
+
+body.theme-light .community-page-container {
+  background: #f8fafc !important;
+}
+
+/* 1. Header */
+body.theme-light .community-page-header {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+}
+
+body.theme-light .community-header-center h2 {
+  color: #0f172a !important;
+}
+
+body.theme-light .community-header-sub {
+  color: #64748b !important;
+}
+
+body.theme-light .btn-page-back {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0284c7 !important;
+}
+
+body.theme-light .btn-page-back:hover {
+  background: #e0f2fe !important;
+  border-color: #38bdf8 !important;
+  color: #0369a1 !important;
+}
+
+body.theme-light .btn-page-action {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .btn-page-action:hover {
+  background: #fee2e2 !important;
+  border-color: #fca5a5 !important;
+  color: #ea580c !important;
+}
+
+/* 2. Dock & Tabs */
+body.theme-light .vko-dock-wrapper {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+body.theme-light .vko-segment-dock {
+  background: #e2e8f0 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+body.theme-light .vko-tab-btn {
+  color: #475569 !important;
+}
+
+body.theme-light .vko-tab-btn:hover {
+  color: #0f172a !important;
+  background: rgba(0, 0, 0, 0.05) !important;
+}
+
+body.theme-light .vko-tab-btn.active {
+  background: linear-gradient(135deg, #ff5722 0%, #ea580c 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(234, 88, 12, 0.35) !important;
+  border-color: transparent !important;
 }
 
 body.theme-light .community-tabs {
@@ -13114,31 +13188,54 @@ body.theme-light .comm-tab.active {
   box-shadow: 0 2px 8px rgba(234, 88, 12, 0.3) !important;
 }
 
+/* 3. Body & Section Headers */
+body.theme-light .community-page-body {
+  background: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .comm-section-header h3 {
+  color: #0f172a !important;
+}
+
+body.theme-light .comm-section-sub {
+  color: #64748b !important;
+}
+
+/* 4. Tab 1 - Znajomi & Users */
 body.theme-light .user-search-wrap input {
   background: #ffffff !important;
   border: 1px solid #cbd5e1 !important;
   color: #0f172a !important;
 }
 
+body.theme-light .user-search-wrap input::placeholder {
+  color: #94a3b8 !important;
+}
+
 body.theme-light .user-search-card,
-body.theme-light .user-card-item {
+body.theme-light .user-card-item,
+body.theme-light .recommended-user-card {
   background: #ffffff !important;
   border: 1px solid #e2e8f0 !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
 }
 
 body.theme-light .user-search-card:hover,
-body.theme-light .user-card-item:hover {
+body.theme-light .user-card-item:hover,
+body.theme-light .recommended-user-card:hover {
   background: #f8fafc !important;
   border-color: #cbd5e1 !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
 }
 
-body.theme-light .user-card-name {
+body.theme-light .user-card-name,
+body.theme-light .rec-user-name {
   color: #0f172a !important;
 }
 
-body.theme-light .user-card-handle {
+body.theme-light .user-card-handle,
+body.theme-light .rec-user-meta {
   color: #64748b !important;
 }
 
@@ -13150,10 +13247,17 @@ body.theme-light .user-card-bio {
   color: #475569 !important;
 }
 
-body.theme-light .user-card-avatar {
+body.theme-light .user-card-avatar,
+body.theme-light .rec-user-avatar {
   background: #f1f5f9 !important;
-  border-color: #fcd34d !important;
+  border-color: #f59e0b !important;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06) !important;
+}
+
+body.theme-light .rec-user-badge {
+  background: #ffedd5 !important;
+  color: #c2410c !important;
+  border: 1px solid #fed7aa !important;
 }
 
 body.theme-light .btn-follow-toggle {
@@ -13182,9 +13286,251 @@ body.theme-light .badge-me {
   border: 1px solid #e2e8f0 !important;
 }
 
-body.theme-light .empty-state-card {
+body.theme-light .comm-invite-dock {
+  border-top: 1px solid #e2e8f0 !important;
+}
+
+body.theme-light .comm-invite-dock button.btn-secondary {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .comm-invite-dock button.btn-secondary:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+}
+
+/* 5. Tab 2 - 24h Mapa & Hotspots */
+body.theme-light .friends-map-sub {
+  color: #64748b !important;
+}
+
+body.theme-light .friends-map-wrapper {
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+}
+
+body.theme-light .friends-map-overlay-card {
+  background: rgba(255, 255, 255, 0.94) !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1) !important;
+}
+
+body.theme-light .fmap-status-title {
+  color: #d97706 !important;
+}
+
+body.theme-light .fmap-status-desc {
+  color: #475569 !important;
+}
+
+body.theme-light .hotspot-chip-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+}
+
+body.theme-light .hotspot-chip-card:hover {
   background: #f8fafc !important;
   border-color: #cbd5e1 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.07) !important;
+}
+
+body.theme-light .hotspot-name {
+  color: #0f172a !important;
+}
+
+body.theme-light .hotspot-vibe {
+  color: #64748b !important;
+}
+
+body.theme-light .hotspot-count-pill {
+  background: #fee2e2 !important;
+  color: #dc2626 !important;
+}
+
+/* Leaflet popups on friends map */
+body.theme-light .fmap-popup-card {
+  font-family: inherit;
+  min-width: 170px;
+  padding: 12px 14px 10px 14px;
+  box-sizing: border-box;
+  color: #0f172a !important;
+}
+
+body.theme-light .fmap-popup-card strong,
+body.theme-light .fmap-popup-name,
+body.theme-light .fmap-popup-friend-name {
+  color: #0f172a !important;
+}
+
+body.theme-light .fmap-popup-sub {
+  color: #64748b !important;
+}
+
+body.theme-light .fmap-popup-venue {
+  color: #1e293b !important;
+  font-weight: 700;
+}
+
+body.theme-light .fmap-popup-vibe {
+  color: #475569 !important;
+}
+
+body.theme-light .fmap-popup-beer {
+  color: #16a34a !important;
+  font-weight: 700;
+}
+
+/* Dark mode default for popup card */
+.fmap-popup-card {
+  font-family: inherit;
+  min-width: 170px;
+  padding: 12px 14px 10px 14px;
+  box-sizing: border-box;
+  color: #f8fafc;
+}
+.fmap-popup-name {
+  font-size: 13px;
+  display: block;
+  margin: 3px 0;
+  color: #fff;
+}
+.fmap-popup-friend-name {
+  color: #ff5722;
+  font-size: 14px;
+}
+.fmap-popup-sub {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+.fmap-popup-venue {
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+}
+.fmap-popup-vibe {
+  font-size: 11px;
+  color: #94a3b8;
+  line-height: 1.35;
+}
+.fmap-popup-badge {
+  font-size: 11px;
+  font-weight: 800;
+  color: #ea580c;
+  text-transform: uppercase;
+}
+.fmap-popup-count {
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #ef4444;
+}
+.fmap-popup-beer {
+  font-size: 11px;
+  color: #4ade80;
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+/* 6. Tab 3 - Live Feed */
+body.theme-light .feed-header-bar h3 {
+  color: #0f172a !important;
+}
+
+body.theme-light .beer-bereal-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05) !important;
+}
+
+body.theme-light .beer-bereal-card:hover {
+  border-color: #f97316 !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08) !important;
+}
+
+body.theme-light .bereal-img-box {
+  background: #f1f5f9 !important;
+}
+
+body.theme-light .bereal-pip-avatar {
+  background: #ffffff !important;
+  border-color: #ea580c !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+}
+
+body.theme-light .bereal-venue-title {
+  color: #0f172a !important;
+}
+
+body.theme-light .bereal-venue-title:hover {
+  color: #ea580c !important;
+}
+
+body.theme-light .bereal-beer-sub {
+  color: #64748b !important;
+}
+
+body.theme-light .btn-cheers {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #1e293b !important;
+}
+
+body.theme-light .btn-cheers:hover {
+  background: #fef3c7 !important;
+  border-color: #f59e0b !important;
+  color: #b45309 !important;
+}
+
+body.theme-light .btn-cheers.cheered {
+  background: linear-gradient(135deg, #f59e0b, #ea580c) !important;
+  border-color: transparent !important;
+  color: #ffffff !important;
+}
+
+body.theme-light .bereal-time {
+  color: #94a3b8 !important;
+}
+
+body.theme-light .empty-state-hint,
+body.theme-light .error-state-hint,
+body.theme-light .loading-state-hint {
+  color: #64748b !important;
+}
+
+/* 7. Tab 4 - Aktywność & Zaproś Ekipę */
+body.theme-light .gold-referral-card {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%) !important;
+  border: 1.5px solid #fcd34d !important;
+  box-shadow: 0 3px 12px rgba(245, 158, 11, 0.08) !important;
+}
+
+body.theme-light .gold-referral-card h4 {
+  color: #78350f !important;
+}
+
+body.theme-light .gold-referral-card p {
+  color: #92400e !important;
+}
+
+body.theme-light .gold-ref-badge {
+  color: #b45309 !important;
+}
+
+body.theme-light .gold-ref-action-row input {
+  background: #ffffff !important;
+  border: 1px solid #fcd34d !important;
+  color: #78350f !important;
+}
+
+/* 8. Empty States & Notifications */
+body.theme-light .empty-state-card {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
 }
 
 body.theme-light .empty-state-card .empty-title {
@@ -13195,10 +13541,7 @@ body.theme-light .empty-state-card .empty-sub {
   color: #64748b !important;
 }
 
-body.theme-light .nav-badge-dot {
-  border-color: #ffffff !important;
-}
-
+body.theme-light .nav-badge-dot,
 body.theme-light .badge-dot {
   border-color: #ffffff !important;
 }
@@ -13255,7 +13598,23 @@ body.theme-light .feed-time {
   color: #64748b !important;
 }
 
-body.theme-light .empty-state-hint {
+/* 9. QR Modal */
+body.theme-light .qr-modal-card {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12) !important;
+}
+
+body.theme-light .qr-modal-card h3 {
+  color: #0f172a !important;
+}
+
+body.theme-light .qr-modal-card p {
+  color: #64748b !important;
+}
+
+body.theme-light .qr-close-btn {
   color: #64748b !important;
 }
 

@@ -234,10 +234,14 @@
   }
 
   function updateMapTilesForTheme(isLight) {
-    if (!mapTileLayer) return;
     const cartoKey = (typeof MAP_CONFIG !== "undefined" && MAP_CONFIG.cartoApiKey) ? `?key=${MAP_CONFIG.cartoApiKey}` : "";
     const variant = isLight ? "light_all" : "dark_all";
-    mapTileLayer.setUrl(`https://{s}.basemaps.cartocdn.com/${variant}/{z}/{x}/{y}{r}.png${cartoKey}`);
+    if (mapTileLayer) {
+      mapTileLayer.setUrl(`https://{s}.basemaps.cartocdn.com/${variant}/{z}/{x}/{y}{r}.png${cartoKey}`);
+    }
+    if (typeof window.__updateFriendsMapTheme === "function") {
+      window.__updateFriendsMapTheme(isLight);
+    }
   }
 
   function applyTheme(themePref) {
@@ -7526,13 +7530,13 @@
 
     if (btnCopyInviteLink) {
       btnCopyInviteLink.addEventListener("click", () => {
-        copyTextToClipboard(getInviteUrl(), "Zaproś znajomych do ekipy i zdobywajcie Kapsle!");
+        copyTextToClipboard(getInviteUrl(), "Zaproś znajomych do ekipy na piwo!");
       });
     }
 
     if (btnCopyRefLink) {
       btnCopyRefLink.addEventListener("click", () => {
-        copyTextToClipboard(getInviteUrl(), "Za każdego znajomego zyskasz +50 Kapsli!");
+        copyTextToClipboard(getInviteUrl(), "Link skopiowany! Wyślij go ekipie 🍻");
       });
     }
 
@@ -7781,9 +7785,23 @@
     // -------------------------------------------------------------------------
     // Tab 2: 24h Live Friends Map ("Puls Warszawy")
     // -------------------------------------------------------------------------
+    let friendsMapTileLayer = null;
+
+    window.__updateFriendsMapTheme = function(isLight) {
+      if (friendsMapTileLayer) {
+        const cartoKey = (typeof MAP_CONFIG !== "undefined" && MAP_CONFIG.cartoApiKey) ? `?key=${MAP_CONFIG.cartoApiKey}` : "";
+        const variant = isLight ? "rastertiles/voyager" : "dark_all";
+        friendsMapTileLayer.setUrl(`https://{s}.basemaps.cartocdn.com/${variant}/{z}/{x}/{y}{r}.png${cartoKey}`);
+      }
+    };
+
     async function initFriendsMap() {
       const container = document.getElementById("friends-map-container");
       if (!container || typeof L === "undefined") return;
+
+      const cartoKey = (typeof MAP_CONFIG !== "undefined" && MAP_CONFIG.cartoApiKey) ? `?key=${MAP_CONFIG.cartoApiKey}` : "";
+      const isLight = document.body.classList.contains("theme-light");
+      const mapVariant = isLight ? "rastertiles/voyager" : "dark_all";
 
       if (!friendsMapInstance) {
         friendsMapInstance = L.map("friends-map-container", {
@@ -7797,12 +7815,15 @@
           keyboard: false
         }).setView([52.232, 21.018], 13);
 
-        L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
+        friendsMapTileLayer = L.tileLayer(`https://{s}.basemaps.cartocdn.com/${mapVariant}/{z}/{x}/{y}{r}.png${cartoKey}`, {
           maxZoom: 19
         }).addTo(friendsMapInstance);
 
         friendsMarkersLayer = L.layerGroup().addTo(friendsMapInstance);
       } else {
+        if (friendsMapTileLayer) {
+          friendsMapTileLayer.setUrl(`https://{s}.basemaps.cartocdn.com/${mapVariant}/{z}/{x}/{y}{r}.png${cartoKey}`);
+        }
         if (friendsMapInstance.dragging) friendsMapInstance.dragging.disable();
         if (friendsMapInstance.touchZoom) friendsMapInstance.touchZoom.disable();
       }
@@ -7844,11 +7865,11 @@
 
           const timeAgo = formatTimeAgo(f.timestamp);
           const popupContent = `
-            <div style="font-family:inherit;min-width:170px;padding:14px 16px 12px 16px;box-sizing:border-box;">
-              <strong style="color:#ff5722;font-size:14px;">${escapeHtml(f.display_name)}</strong>
-              <div style="font-size:11px;color:#94a3b8;margin-top:2px;">@${escapeHtml(f.username)} • ${timeAgo}</div>
-              <div style="margin-top:6px;font-size:12px;font-weight:700;color:#fff;">📍 ${escapeHtml(f.venue_name || "Lokal")}</div>
-              ${f.beer_name ? `<div style="font-size:11px;color:#4ade80;font-weight:700;margin-top:2px;">🍺 ${escapeHtml(f.beer_name)} (${f.beer_price || 12} zł)</div>` : ""}
+            <div class="fmap-popup-card">
+              <strong class="fmap-popup-friend-name">${escapeHtml(f.display_name)}</strong>
+              <div class="fmap-popup-sub">@${escapeHtml(f.username)} • ${timeAgo}</div>
+              <div class="fmap-popup-venue">📍 ${escapeHtml(f.venue_name || "Lokal")}</div>
+              ${f.beer_name ? `<div class="fmap-popup-beer">🍺 ${escapeHtml(f.beer_name)} (${f.beer_price || 12} zł)</div>` : ""}
             </div>
           `;
 
@@ -7870,11 +7891,11 @@
           });
 
           const popupContent = `
-            <div style="font-family:inherit;min-width:180px;padding:14px 16px 12px 16px;box-sizing:border-box;">
-              <div style="font-size:11px;font-weight:800;color:#ea580c;text-transform:uppercase;">🔥 GORĄCY REJON</div>
-              <strong style="font-size:13px;display:block;margin:3px 0;color:#fff;">${escapeHtml(h.name)}</strong>
-              <div style="font-size:11px;color:#94a3b8;line-height:1.35;">${escapeHtml(h.vibe)}</div>
-              <div style="margin-top:6px;font-size:11px;font-weight:700;color:#ef4444;">~${h.count} piwoszy w ciągu 24h</div>
+            <div class="fmap-popup-card">
+              <div class="fmap-popup-badge">🔥 GORĄCY REJON</div>
+              <strong class="fmap-popup-name">${escapeHtml(h.name)}</strong>
+              <div class="fmap-popup-vibe">${escapeHtml(h.vibe)}</div>
+              <div class="fmap-popup-count">~${h.count} piwoszy w ciągu 24h</div>
             </div>
           `;
 
@@ -7918,7 +7939,7 @@
     if (btnCheckinDirect) {
       btnCheckinDirect.addEventListener("click", () => {
         if (!currentUser) {
-          showAppToast("Zaloguj się!", "Zaloguj się, aby zeldować się w lokalu i zdobyć Kapsle 🍻", "🔒");
+          showAppToast("Zaloguj się!", "Zaloguj się, aby zameldować się w lokalu 🍻", "🔒");
           const authModal = document.getElementById("auth-modal");
           if (authModal) authModal.style.display = "flex";
           return;
@@ -7959,22 +7980,22 @@
                     }
                   })
                 }).then(() => {
-                  showAppToast("Zameldowno!", `Jesteś w: ${nearest.name}. Zgarniasz +10 Kapsli! 🍻`, "📍");
+                  showAppToast("Zameldowano!", `Jesteś w: ${nearest.name}! 🍻`, "📍");
                   initFriendsMap();
                 });
               } else {
-                showAppToast("Wybierz lokal na mapie", "Kliknij dowolny lokal na mapie i wciśnij „Odwiedź”, aby się zeldować.", "📍");
+                showAppToast("Wybierz lokal na mapie", "Kliknij dowolny lokal na mapie i wciśnij „Odwiedź”, aby się zameldować.", "📍");
                 window.__closeCommunity();
               }
             },
             () => {
-              showAppToast("Wybierz lokal na mapie", "Kliknij dowolny lokal na mapie i wciśnij „Odwiedź”, aby się zeldować.", "📍");
+              showAppToast("Wybierz lokal na mapie", "Kliknij dowolny lokal na mapie i wciśnij „Odwiedź”, aby się zameldować.", "📍");
               window.__closeCommunity();
             },
             { timeout: 6000 }
           );
         } else {
-          showAppToast("Wybierz lokal na mapie", "Kliknij dowolny lokal na mapie i wciśnij „Odwiedź”, aby się zeldować.", "📍");
+          showAppToast("Wybierz lokal na mapie", "Kliknij dowolny lokal na mapie i wciśnij „Odwiedź”, aby się zameldować.", "📍");
           window.__closeCommunity();
         }
       });
@@ -8016,7 +8037,7 @@
             <div class="empty-state-card" style="grid-column: 1 / -1;">
               <div class="empty-icon">📸</div>
               <div class="empty-title">Pusto z ostatnich 24h</div>
-              <p class="empty-sub">Pijesz coś na mieście? Cyknij fotę kufla i zgarnij +15 Kapsli!</p>
+              <p class="empty-sub">Pijesz coś na mieście? Cyknij fotę kufla i dodaj do Live Feedu!</p>
             </div>
           `;
           return;
@@ -8192,7 +8213,7 @@
     if (btnAddPhoto && feedFileInput) {
       btnAddPhoto.addEventListener("click", () => {
         if (!currentUser) {
-          showAppToast("Zaloguj się!", "Musisz być zalogowany, aby dodać fotkę i otrzymać +15 Kapsli 📸", "🔒");
+          showAppToast("Zaloguj się!", "Musisz być zalogowany, aby dodać fotkę z baru 📸", "🔒");
           const authModal = document.getElementById("auth-modal");
           if (authModal) authModal.style.display = "flex";
           return;
@@ -8271,7 +8292,7 @@
                 })
               });
 
-              showAppToast("Fotka opublikowana!", "Dodano do Live Feedu! Zgarniasz +15 Kapsli 👑", "🎉");
+              showAppToast("Fotka opublikowana!", "Dodano do Live Feedu! Twoje piwo jest na liście 🍻", "🎉");
               loadLiveBarFeed();
             };
             img.src = readerEvent.target.result;
