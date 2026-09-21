@@ -14622,54 +14622,440 @@ body.theme-light .club-card-hint {
   }
 }
 
-/* Light Theme Overrides for SOS */
+/* Light Theme Overrides for SOS (Piwny Anioł Stróż / Bezpieczny Powrót) */
+body.theme-light #sos-modal.modal-backdrop {
+  background: rgba(15, 23, 42, 0.6) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
 body.theme-light .sos-modal-card {
-  background: linear-gradient(180deg, rgba(239, 68, 68, 0.08) 0%, #ffffff 18%) !important;
-  border-color: rgba(239, 68, 68, 0.4) !important;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18), 0 0 30px rgba(239, 68, 68, 0.15) !important;
+  background: linear-gradient(180deg, #fef2f2 0%, #ffffff 85px) !important;
+  border: 1.5px solid #f87171 !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.16), 0 0 30px rgba(239, 68, 68, 0.12) !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .sos-modal-head {
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+body.theme-light .sos-modal-head h2,
+body.theme-light .sos-modal-card h2,
+body.theme-light .sos-modal-head-title h2 {
+  color: #0f172a !important;
+  font-weight: 800 !important;
+}
+
+body.theme-light .sos-modal-head .modal-head-sub,
+body.theme-light .sos-modal-card .modal-head-sub {
+  color: #475569 !important;
+}
+
+body.theme-light .sos-badge-icon {
+  background: #fee2e2 !important;
+  border: 1px solid #fca5a5 !important;
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.15) !important;
+}
+
+body.theme-light #btn-close-sos-modal,
+body.theme-light .sos-modal-card .modal-close {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+body.theme-light #btn-close-sos-modal:hover,
+body.theme-light .sos-modal-card .modal-close:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
 }
 
 body.theme-light .sos-location-card {
-  background: #f8fafc;
-  border-color: #e2e8f0;
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+body.theme-light .sos-location-header {
+  color: #64748b !important;
+}
+
+body.theme-light .sos-location-title {
+  color: #475569 !important;
+  font-weight: 700 !important;
 }
 
 body.theme-light .sos-venue-detected {
-  color: #0f172a;
+  color: #0f172a !important;
+  font-weight: 800 !important;
+}
+
+body.theme-light .sos-venue-coords {
+  color: #059669 !important;
+  font-weight: 700 !important;
 }
 
 body.theme-light .sos-action-block {
-  background: #f8fafc;
-  border-color: #e2e8f0;
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
 }
 
 body.theme-light .sos-block-label {
-  color: #0f172a;
+  color: #0f172a !important;
+  font-weight: 800 !important;
+}
+
+body.theme-light .sos-step-tag {
+  background: #fee2e2 !important;
+  color: #b91c1c !important;
+  border: 1px solid #fca5a5 !important;
+  font-weight: 900 !important;
+}
+
+body.theme-light .btn-sos-main {
+  background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%) !important;
+  border: 1.5px solid rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 6px 20px rgba(220, 38, 38, 0.35) !important;
+  color: #ffffff !important;
+}
+
+body.theme-light .btn-sos-main:hover {
+  box-shadow: 0 8px 24px rgba(220, 38, 38, 0.5) !important;
+}
+
+body.theme-light .btn-sos-title {
+  color: #ffffff !important;
+  font-weight: 800 !important;
+}
+
+body.theme-light .btn-sos-sub {
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
+body.theme-light .sos-alert-status {
+  background: #ecfdf5 !important;
+  border: 1px solid #a7f3d0 !important;
+  color: #065f46 !important;
+  font-weight: 700 !important;
+}
+
+body.theme-light .sos-share-btn {
+  border-width: 1.5px !important;
+}
+
+body.theme-light .sos-btn-sms {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+
+body.theme-light .sos-btn-sms:hover {
+  background: #dbeafe !important;
+}
+
+body.theme-light .sos-btn-wa {
+  background: #f0fdf4 !important;
+  border-color: #bbf7d0 !important;
+  color: #15803d !important;
+}
+
+body.theme-light .sos-btn-wa:hover {
+  background: #dcfce7 !important;
+}
+
+body.theme-light .sos-btn-copy {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+body.theme-light .sos-btn-copy:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+body.theme-light #btn-sos-copy-text,
+body.theme-light .sos-share-btn span:not(.sos-share-icon) {
+  color: inherit !important;
+  font-weight: 700 !important;
 }
 
 body.theme-light .sos-transport-btn {
-  background: #ffffff;
-  border-color: #e2e8f0;
-  color: #0f172a;
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .transport-title {
+  color: #0f172a !important;
+  font-weight: 800 !important;
 }
 
 body.theme-light .transport-sub {
-  color: #64748b;
+  color: #64748b !important;
+  font-weight: 600 !important;
+}
+
+body.theme-light .bolt-btn:hover {
+  background: #f0fdf4 !important;
+  border-color: #86efac !important;
+}
+
+body.theme-light .uber-btn:hover {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+}
+
+body.theme-light .maps-btn:hover {
+  background: #eff6ff !important;
+  border-color: #93c5fd !important;
 }
 
 body.theme-light .ice-saved-card {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
 }
 
 body.theme-light .ice-name {
-  color: #0f172a;
+  color: #0f172a !important;
+  font-weight: 800 !important;
+}
+
+body.theme-light .ice-phone {
+  color: #475569 !important;
+  font-weight: 700 !important;
+}
+
+body.theme-light .ice-call-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+body.theme-light .ice-edit-btn {
+  color: #64748b !important;
+}
+
+body.theme-light .ice-edit-btn:hover {
+  color: #0f172a !important;
 }
 
 body.theme-light .ice-input {
-  background: #ffffff;
-  border-color: #cbd5e1;
-  color: #0f172a;
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+  font-weight: 600 !important;
+}
+
+body.theme-light .ice-input::placeholder {
+  color: #94a3b8 !important;
+}
+
+body.theme-light .ice-input:focus {
+  border-color: #ef4444 !important;
+}
+
+body.theme-light .ice-save-btn {
+  background: #fee2e2 !important;
+  border: 1px solid #fca5a5 !important;
+  color: #991b1b !important;
+  font-weight: 800 !important;
+}
+
+body.theme-light .ice-save-btn:hover {
+  background: #fecaca !important;
+}
+
+/* --- Additional Light Theme Fixes (Roulette, Compass, Age Gate, Modals) --- */
+body.theme-light .roulette-reel-idle .reel-idle-title {
+  color: #0f172a !important;
+}
+
+body.theme-light .roulette-reel-idle .reel-idle-desc {
+  color: #475569 !important;
+}
+
+body.theme-light .roulette-tag-chip {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+body.theme-light .roulette-shake-hint {
+  color: #b45309 !important;
+  background: #fffbeb !important;
+  border: 1px solid #fde68a !important;
+}
+
+body.theme-light .roulette-shake-hint .shake-phone-icon {
+  color: #b45309 !important;
+}
+
+body.theme-light .roulette-result-alert {
+  color: #92400e !important;
+  background: #fef3c7 !important;
+  border: 1px solid #fcd34d !important;
+}
+
+body.theme-light .roulette-result-badge {
+  color: #be123c !important;
+  background: #ffe4e6 !important;
+  border: 1px solid #fecdd3 !important;
+}
+
+body.theme-light .roulette-item-meta {
+  color: #c2410c !important;
+}
+
+body.theme-light .age-gate-card {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .age-gate-title {
+  color: #0f172a !important;
+}
+
+body.theme-light .age-gate-desc {
+  color: #334155 !important;
+}
+
+body.theme-light .age-gate-law-note {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #475569 !important;
+}
+
+body.theme-light .age-gate-question {
+  color: #b45309 !important;
+  font-weight: 800 !important;
+}
+
+body.theme-light .age-gate-terms-note {
+  color: #64748b !important;
+}
+
+body.theme-light .btn-text-legal {
+  color: #ea580c !important;
+}
+
+body.theme-light .btn-age-deny {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #475569 !important;
+}
+
+body.theme-light .btn-age-deny:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .age-gate-footer {
+  color: #64748b !important;
+}
+
+body.theme-light .compass-modal-backdrop {
+  background: rgba(15, 23, 42, 0.6) !important;
+}
+
+body.theme-light .compass-modal-card {
+  background: #ffffff !important;
+  border: 1.5px solid #fed7aa !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.15), 0 0 35px rgba(249, 115, 22, 0.12) !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .compass-title-wrap h2 {
+  color: #0f172a !important;
+}
+
+body.theme-light .compass-sub-text {
+  color: #475569 !important;
+}
+
+body.theme-light .compass-pill {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #475569 !important;
+}
+
+body.theme-light .compass-pill:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .compass-pill.active {
+  background: #ea580c !important;
+  border-color: #ea580c !important;
+  color: #ffffff !important;
+}
+
+body.theme-light .compass-radar-circle {
+  background: radial-gradient(circle, #f8fafc 0%, #f1f5f9 100%) !important;
+  border: 2px solid #fdba74 !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), inset 0 0 20px rgba(249, 115, 22, 0.08) !important;
+}
+
+body.theme-light .compass-cardinal {
+  color: #94a3b8 !important;
+}
+
+body.theme-light .compass-rings .ring {
+  border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+body.theme-light .hud-box {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+body.theme-light .hud-label {
+  color: #64748b !important;
+}
+
+body.theme-light .hud-val {
+  color: #0f172a !important;
+}
+
+body.theme-light .hud-val.highlight {
+  color: #059669 !important;
+}
+
+body.theme-light .compass-venue-panel {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+body.theme-light .compass-panel-nav {
+  border-bottom-color: #e2e8f0 !important;
+}
+
+body.theme-light .btn-compass-nav {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+body.theme-light .btn-compass-nav:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .compass-venue-name {
+  color: #0f172a !important;
+}
+
+body.theme-light .compass-venue-address {
+  color: #64748b !important;
+}
+
+body.theme-light .btn-pwa-close {
+  color: #64748b !important;
+}
+
+body.theme-light .btn-pwa-close:hover {
+  color: #0f172a !important;
+  background: #e2e8f0 !important;
 }
 
 /* ==========================================================================
