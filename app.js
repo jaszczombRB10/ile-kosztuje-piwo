@@ -5141,6 +5141,87 @@
         if (iosModal) {
           const drawer = document.getElementById("ranking-drawer");
           if (drawer) drawer.classList.remove("open");
+
+          const isAndroid = /android/i.test(navigator.userAgent);
+          const modalTitle = document.querySelector("#pwa-ios-modal .modal-head h3");
+          const stepsContainer = document.querySelector(".pwa-ios-steps");
+
+          const pointerHint = document.querySelector(".pwa-ios-pointer-hint");
+
+          if (isAndroid && stepsContainer) {
+            if (modalTitle) modalTitle.textContent = "📲 Jak zainstalować na Androidzie";
+            if (pointerHint) {
+              pointerHint.innerHTML = `
+                <div class="pwa-ios-arrow">↗</div>
+                <span>Ikona menu <strong>trzech kropek (⋮)</strong> znajduje się w prawym górnym rogu Twojej przeglądarki</span>
+              `;
+            }
+            stepsContainer.innerHTML = `
+              <div class="pwa-step-item">
+                <div class="pwa-step-badge">1</div>
+                <div class="pwa-step-desc">
+                  Stuknij ikonę menu <strong>trzech pionowych kropek (⋮)</strong> w prawym górnym rogu przeglądarki Chrome, Firefox lub Edge.
+                </div>
+              </div>
+              <div class="pwa-step-item">
+                <div class="pwa-step-badge">2</div>
+                <div class="pwa-step-desc">
+                  Wybierz z listy opcję:
+                  <div class="pwa-safari-add-pill" style="margin-top:6px;">
+                    <span class="pwa-plus-icon">📲</span>
+                    <strong>Zainstaluj aplikację</strong> lub <strong>Dodaj do ekranu głównego</strong>
+                  </div>
+                </div>
+              </div>
+              <div class="pwa-step-item">
+                <div class="pwa-step-badge">3</div>
+                <div class="pwa-step-desc">
+                  Kliknij <strong>Zainstaluj</strong>. Ikona <strong>poilepiwko</strong> pojawi się na Twoim pulpicie i uruchomi się na pełnym ekranie bez pasków przeglądarki!
+                </div>
+              </div>
+            `;
+          } else if (stepsContainer && !isAndroid) {
+            if (modalTitle) modalTitle.textContent = "📲 Jak zainstalować na iPhone";
+            if (pointerHint) {
+              pointerHint.innerHTML = `
+                <div class="pwa-ios-arrow">↓</div>
+                <span>Przycisk <strong>Udostępnij</strong> (kwadrat ze strzałką) znajduje się na dolnym pasku Twojego iPhone'a</span>
+              `;
+            }
+            stepsContainer.innerHTML = `
+              <div class="pwa-step-item">
+                <div class="pwa-step-badge">1</div>
+                <div class="pwa-step-desc">
+                  Na dolnym pasku przeglądarki <strong>Safari</strong> stuknij ikonę <strong>Udostępnij</strong>:
+                  <div class="pwa-safari-share-pill">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                      <polyline points="16 6 12 2 8 6"></polyline>
+                      <line x1="12" y1="2" x2="12" y2="15"></line>
+                    </svg>
+                    <span>Udostępnij (Kwadrat ze strzałką w górę)</span>
+                  </div>
+                </div>
+              </div>
+              <div class="pwa-step-item">
+                <div class="pwa-step-badge">2</div>
+                <div class="pwa-step-desc">
+                  Przewiń menu w dół i wybierz opcję:
+                  <div class="pwa-safari-add-pill">
+                    <span class="pwa-plus-icon">➕</span>
+                    <strong>Do ekranu początkowego (Add to Home Screen)</strong>
+                  </div>
+                </div>
+              </div>
+              <div class="pwa-step-item">
+                <div class="pwa-step-badge">3</div>
+                <div class="pwa-step-desc">
+                  Stuknij <strong>Dodaj</strong> w prawym górnym rogu. Aplikacja <strong>poilepiwko</strong> pojawi się na pulpicie i uruchamia się na pełnym ekranie bez pasków Safari!
+                </div>
+              </div>
+            `;
+          }
+
           iosModal.style.display = "flex";
           iosModal.classList.add("active");
         }
