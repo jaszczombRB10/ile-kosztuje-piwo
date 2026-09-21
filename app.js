@@ -5036,7 +5036,7 @@
           } catch (e) {}
           closeLegal();
           if (typeof showAppToast === "function") {
-            showAppToast("Regulamin zaakceptowany", "Dziękujemy za zapoznanie się z zasadami społeczności!", "📜");
+            showAppToast("Zasady zatwierdzone", "Dobrego piwkowania w Warszawie! 🍻", "📜");
           }
         });
       }
@@ -5734,7 +5734,7 @@
         avatar_icon: meta.avatar_icon || "🍺",
         avatar_photo: savedPhoto,
         user_number: "#000001",
-        bio: "Warszawski poszukiwacz dobrego i taniego piwa 🍻",
+        bio: "Koneser lanego z kija i dobrych ogródków.",
         vibe_tags: "Kraft, Ogródki, Pub Quiz",
         visited_venues: visitedVenues,
         favorite_venues: favoriteVenues
@@ -6221,7 +6221,7 @@
           }
 
           closeModalWindow();
-          showAppToast("Zalogowano pomyślnie!", "Witaj z powrotem w poilepiwko!", "🍻");
+          showAppToast("Siema! 🍻", "Zalogowano pomyślnie.", "🍻");
         } catch (err) {
           if (loginErrorMsg) {
             loginErrorMsg.textContent = err.message || "Błąd logowania.";
@@ -6324,7 +6324,7 @@
           }
 
           closeModalWindow();
-          showAppToast(`Witaj @${username}! 🎉`, "Twoje konto piwosza jest już aktywne!", selectedAvatar);
+          showAppToast(`Siemanko @${username}! 🍻`, "Konto gotowe, możesz ruszać w miasto.", selectedAvatar);
         } catch (err) {
           if (regErrorMsg) {
             regErrorMsg.textContent = err.message || "Błąd rejestracji.";
@@ -6589,7 +6589,7 @@
 
           updateAuthUI();
           if (typeof showAppToast === "function") {
-            showAppToast(`Witaj, @${valUser}! 🍻`, "Twój profil piwosza został pomyślnie skonfigurowany.", "🎉");
+            showAppToast(`Siemanko, @${valUser}! 🍻`, "Profil gotowy, ruszaj w miasto.", "🍻");
           }
         } catch (err) {
           if (errorMsg) {
@@ -7174,7 +7174,7 @@
         knownNotificationIds.clear();
         updateAuthUI();
         if (modal) modal.style.display = "none";
-        showAppToast("Wylogowano pomyślnie.", "Do zobaczenia przy barze!", "👋");
+        showAppToast("Wylogowano.", "Do zobaczenia na mieście!", "👋");
       });
     }
 
@@ -7924,8 +7924,8 @@
           feedGrid.innerHTML = `
             <div class="empty-state-card" style="grid-column: 1 / -1;">
               <div class="empty-icon">📸</div>
-              <div class="empty-title">Brak fotek z ostatnich 24h</div>
-              <p class="empty-sub">Bądź pierwszy! Kliknij „Dodaj fotkę”, uwiecznij kufel i zgarnij +15 Kapsli!</p>
+              <div class="empty-title">Pusto z ostatnich 24h</div>
+              <p class="empty-sub">Pijesz coś na mieście? Cyknij fotę kufla i zgarnij +15 Kapsli!</p>
             </div>
           `;
           return;

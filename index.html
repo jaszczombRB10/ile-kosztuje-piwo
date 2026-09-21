@@ -216,7 +216,7 @@
           <circle cx="11" cy="11" r="8"></circle>
           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
-        <input type="text" id="mobile-search-input" placeholder="Szukaj baru, ulicy, piwa (np. Pawilony, Namysłów)..." autocomplete="off" />
+        <input type="text" id="mobile-search-input" placeholder="Gdzie idziemy? (np. Pawilony, Chmielna, Perła, Guinness)..." autocomplete="off" />
         <button type="button" id="btn-close-mobile-search" class="btn-close-search">✕</button>
       </div>
       <div class="mobile-search-quick-districts" id="mobile-search-districts">
@@ -252,7 +252,7 @@
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
-            <input type="text" id="search-input" class="search-input" placeholder="Szukaj baru, ulicy lub piwa (np. Pawilony, Namysłów)..." autocomplete="off" />
+            <input type="text" id="search-input" class="search-input" placeholder="Gdzie idziemy? (np. Pawilony, Chmielna, Perła, Guinness)..." autocomplete="off" />
             <button id="search-clear-btn" style="display:none;position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:#9ca3af;cursor:pointer;font-size:16px;line-height:1;" title="Wyczyść szukanie">✕</button>
           </div>
           <div id="results-count" style="font-size:0.75rem;color:#9ca3af;white-space:nowrap;font-weight:600;"></div>
@@ -422,8 +422,8 @@
         <div class="modal-head-title">
           <div class="modal-icon-badge">🎛️</div>
           <div>
-            <h2>Filtry lokali i cen</h2>
-            <p class="modal-head-sub">Wybierz budżet, godziny i klimat piwka</p>
+            <h2>Filtry</h2>
+            <p class="modal-head-sub">Ustaw cenę, promki studenckie lub kraft</p>
           </div>
         </div>
         <button type="button" class="modal-close" id="btn-close-filter">✕</button>
@@ -556,7 +556,7 @@
       <div class="filter-modal-footer">
         <button type="button" class="btn-filter-reset" id="btn-filter-reset">Wyczyść</button>
         <button type="button" class="btn-filter-apply" id="btn-filter-apply">
-          Pokaż wyniki (<span id="filter-matching-count">0</span> barów)
+          Pokaż (<span id="filter-matching-count">0</span> miejsc)
         </button>
       </div>
     </div>
@@ -673,8 +673,8 @@
     <div class="modal-card modal-card-wide pubcrawl-modal-card">
       <div class="modal-head">
         <div>
-          <h3>🍻 Generator Pub Crawl</h3>
-          <p class="modal-head-sub">Wybierz rejon i klimat, a <strong>poilepiwko</strong> ułoży optymalny Pub Crawl od baru do baru!</p>
+          <h3>🍻 Trasa Pub Crawl</h3>
+          <p class="modal-head-sub">Zaznacz rejon i liczbę barów. Ułożymy trasę z najkrótszym spacerem między kuflami.</p>
         </div>
         <button id="btn-close-pubcrawl" class="btn-close-drawer">✕</button>
       </div>
@@ -707,7 +707,7 @@
 
           <!-- Stops Count -->
           <div class="crawl-field">
-            <label class="crawl-label">🚶 Ile przystanków (barów)?</label>
+            <label class="crawl-label">🚶 Liczba barów</label>
             <div class="crawl-pills-row" id="crawl-stops-pills">
               <button type="button" class="crawl-pill-btn" data-stops="2">2 bary <span>(Szybki bifor)</span></button>
               <button type="button" class="crawl-pill-btn active" data-stops="3">3 bary <span>(Klasyczny wieczór)</span></button>
@@ -729,7 +729,7 @@
 
         <div class="crawl-generate-wrap">
           <button type="button" id="btn-generate-crawl" class="btn-generate-crawl">
-            <span>🚀 Wyznacz Pub Crawl</span>
+            <span>🍺 Ułóż trasę na wieczór</span>
           </button>
         </div>
 
@@ -1306,7 +1306,7 @@
       <div class="modal-head">
         <div>
           <h3>⚡ Happy Hours & Kalendarz Promocji</h3>
-          <p class="modal-head-sub">Gdzie w Warszawie napijesz się taniej w tej chwili lub w dany dzień tygodnia!</p>
+          <p class="modal-head-sub">Gdzie w Warszawie trafisz na promkę w tej chwili lub w dany dzień tygodnia.</p>
         </div>
         <button id="btn-close-happyhour" class="btn-close-drawer">✕</button>
       </div>
@@ -1352,8 +1352,8 @@
     <div class="modal-card modal-card-wide passport-modal-card">
       <div class="modal-head">
         <div>
-          <h3>🎖️ Piwny Paszport Warszawy</h3>
-          <p class="modal-head-sub">Zbieraj pieczątki z warszawskich lokali, odblokowuj odznaki i odkrywaj miasto!</p>
+          <h3>🎖️ Paszport Piwosza</h3>
+          <p class="modal-head-sub">Odwiedzaj bary, wbijaj pieczątki i sprawdzaj, ile Warszawy już wypiłeś.</p>
         </div>
         <button id="btn-close-passport" class="btn-close-drawer">✕</button>
       </div>
@@ -1365,7 +1365,7 @@
             <div class="passport-avatar" id="passport-rank-icon">🎓</div>
             <div class="passport-level-info">
               <div class="passport-rank-title" id="passport-rank-title">Nowicjusz w Warszawie</div>
-              <div class="passport-rank-sub" id="passport-rank-sub">Odwiedzaj bary i zaznaczaj „Byłem tu!”, aby awansować!</div>
+              <div class="passport-rank-sub" id="passport-rank-sub">Wbijaj pieczątki w barach i odblokowuj kolejne rangi.</div>
             </div>
           </div>
           <div class="passport-progress-wrap">
@@ -1433,8 +1433,8 @@
         <div class="modal-head-title">
           <div class="modal-icon-badge">🍺</div>
           <div>
-            <h2 id="auth-modal-title">Konto Poilepiwko</h2>
-            <p class="modal-head-sub" id="auth-modal-sub">Dołącz do społeczności warszawskich piwoszy!</p>
+            <h2 id="auth-modal-title">Twoje Konto</h2>
+            <p class="modal-head-sub" id="auth-modal-sub">Zaloguj się, żeby wbijać pinezki, wrzucać foty i zbierać kapsle.</p>
           </div>
         </div>
         <button type="button" class="modal-close" id="btn-close-auth">✕</button>
@@ -1478,7 +1478,7 @@
         </div>
         <div class="auth-error-msg" id="login-error-msg" style="display:none;"></div>
         <button type="submit" class="btn-primary btn-auth-submit" id="btn-submit-login">
-          <span>🚀 Zaloguj się</span>
+          <span>Zaloguj się</span>
         </button>
         <div class="auth-terms-note">
           Logując się, potwierdzasz akceptację <button type="button" class="btn-text-legal btn-open-legal-terms">Regulaminu serwisu</button>.
@@ -1529,7 +1529,7 @@
         </div>
         <div class="auth-error-msg" id="reg-error-msg" style="display:none;"></div>
         <button type="submit" class="btn-primary btn-auth-submit" id="btn-submit-register">
-          <span>✨ Utwórz konto</span>
+          <span>Załóż konto</span>
         </button>
       </form>
 
@@ -1560,7 +1560,7 @@
           <div class="modal-icon-badge">🍻</div>
           <div>
             <h2>Witaj w poilepiwko!</h2>
-            <p class="modal-head-sub">Wybierz swój unikalny nick i awatar piwosza</p>
+            <p class="modal-head-sub">Podaj nick i wybierz ikonkę na start</p>
           </div>
         </div>
       </div>
@@ -2564,7 +2564,7 @@
           <div class="modal-icon-badge modal-icon-roulette">🎲</div>
           <div>
             <h2>Piwna Ruletka</h2>
-            <p class="modal-head-sub">Nie wiesz gdzie iść? Zdaj się na los warszawskiej nocy!</p>
+            <p class="modal-head-sub">Brak pomysłu na wieczór? Zakręć kołem i idźcie tam, gdzie wskaże los.</p>
           </div>
         </div>
         <button type="button" class="modal-close" id="btn-close-roulette" aria-label="Zamknij Ruletkę">✕</button>
@@ -2641,7 +2641,7 @@
         <div class="roulette-spin-container">
           <button type="button" class="btn-spin-roulette" id="btn-spin-roulette">
             <span class="spin-dice">🎲</span>
-            <span id="spin-roulette-text">ZAKRĘĆ RULETKĄ!</span>
+            <span id="spin-roulette-text">LOSUJ BAR!</span>
           </button>
           <div class="roulette-shake-hint" id="roulette-shake-hint" title="Potrząśnij telefonem jak w Shakeomacie, aby wylosować bar!">
             <span class="shake-phone-icon">📱</span>
@@ -2741,8 +2741,8 @@
         <div class="modal-head-title">
           <div class="modal-icon-badge sos-badge-icon">🛡️</div>
           <div>
-            <h2>Piwny Anioł Stróż</h2>
-            <p class="modal-head-sub">Bezpieczny powrót i szybka pomoc w nocy</p>
+            <h2>Bezpieczny Powrót</h2>
+            <p class="modal-head-sub">Wracasz w nocy? Jeden klik i ekipa wie gdzie jesteś, albo zamawiasz taryfę.</p>
           </div>
         </div>
         <button type="button" class="modal-close" id="btn-close-sos-modal">✕</button>
@@ -2842,7 +2842,7 @@
           <div class="modal-icon-badge">🚩</div>
           <div>
             <h2 id="ugc-report-modal-title">Zgłoś treść</h2>
-            <p class="modal-head-sub" id="ugc-report-modal-sub">Dbamy o bezpieczną społeczność i rzetelne ceny</p>
+            <p class="modal-head-sub" id="ugc-report-modal-sub">Zgłoś ściemę cenową, trolla lub nieodpowiednie zdjęcie</p>
           </div>
         </div>
         <button type="button" class="modal-close" id="btn-close-ugc-report" aria-label="Zamknij">✕</button>
