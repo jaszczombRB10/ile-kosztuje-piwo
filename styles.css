@@ -4269,6 +4269,88 @@ header,
   line-height: 1.35;
 }
 
+/* Pub Crawl City Badge */
+.crawl-city-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(249, 115, 22, 0.16);
+  border: 1px solid rgba(249, 115, 22, 0.35);
+  color: #fb923c;
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 9999px;
+  letter-spacing: 0.02em;
+}
+
+/* Pub Crawl City Notice Banner */
+.crawl-city-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #fde68a;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  margin-bottom: 12px;
+}
+
+/* Pub Crawl Empty / Crowdsourcing Card */
+.crawl-empty-card {
+  text-align: center;
+  padding: 28px 18px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed rgba(249, 115, 22, 0.35);
+  border-radius: 16px;
+  margin-top: 10px;
+}
+
+.crawl-empty-icon {
+  font-size: 2.8rem;
+  margin-bottom: 10px;
+  line-height: 1;
+}
+
+.crawl-empty-card h4 {
+  font-size: 1.12rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 6px 0;
+}
+
+.crawl-empty-card p {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  max-width: 440px;
+  margin: 0 auto 16px auto;
+  line-height: 1.45;
+}
+
+.btn-crawl-add-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 11px 22px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(234, 88, 12, 0.35);
+  transition: all 0.2s ease;
+}
+
+.btn-crawl-add-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(234, 88, 12, 0.45);
+}
+
 /* Form Grid */
 .crawl-form-grid {
   display: flex;
@@ -14054,6 +14136,31 @@ body.theme-light .pubcrawl-modal-card {
 
 body.theme-light .pubcrawl-modal-card h3 {
   color: #0f172a !important;
+}
+
+body.theme-light .crawl-city-badge {
+  background: #fff7ed !important;
+  border-color: #fdba74 !important;
+  color: #ea580c !important;
+}
+
+body.theme-light .crawl-city-notice {
+  background: #fef3c7 !important;
+  border-color: #fcd34d !important;
+  color: #92400e !important;
+}
+
+body.theme-light .crawl-empty-card {
+  background: #f8fafc !important;
+  border-color: #fdba74 !important;
+}
+
+body.theme-light .crawl-empty-card h4 {
+  color: #0f172a !important;
+}
+
+body.theme-light .crawl-empty-card p {
+  color: #64748b !important;
 }
 
 body.theme-light .crawl-label {

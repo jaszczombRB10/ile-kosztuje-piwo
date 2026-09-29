@@ -2107,97 +2107,152 @@
   // ==========================================================================
 
   function getCrawlCandidatePool(startVal, userLoc, validVenues) {
-    let startCoords = WARSAW_CENTER;
+    const curCity = (typeof getCurrentCity === "function" ? getCurrentCity() : null) || (CITIES && CITIES[0]);
+    let startCoords = (curCity && curCity.center) ? curCity.center : WARSAW_CENTER;
     let pool = [];
 
-    if (startVal === "bulwary") {
-      startCoords = (CRAWL_HOTSPOTS.bulwary && CRAWL_HOTSPOTS.bulwary.coords) || [52.2385, 21.0295];
-      pool = validVenues.filter(v => {
-        // Hard exclusion: Pawilony, Praga / Right Bank, west of escarpment
-        if (v.district === "Pawilony") return false;
-        if (v.district && v.district.startsWith("Praga")) return false;
-        if (v.longitude < 21.025) return false;
-        if (v.district === "Bulwary") return true;
-        // Powiśle / Waterfront strip
-        if (v.longitude >= 21.026 && v.latitude >= 52.225 && v.latitude <= 52.248) {
-          return calculateDistanceKm(startCoords[0], startCoords[1], v.latitude, v.longitude) <= 0.95;
-        }
-        return false;
-      });
-    } else if (startVal === "pawilony") {
-      startCoords = (CRAWL_HOTSPOTS.pawilony && CRAWL_HOTSPOTS.pawilony.coords) || [52.2323, 21.0206];
-      pool = validVenues.filter(v => {
-        if (v.district === "Bulwary") return false;
-        if (v.district === "Pawilony") return true;
-        return calculateDistanceKm(startCoords[0], startCoords[1], v.latitude, v.longitude) <= 0.35;
-      });
-    } else if (startVal === "nowogrodzka") {
-      startCoords = (CRAWL_HOTSPOTS.nowogrodzka && CRAWL_HOTSPOTS.nowogrodzka.coords) || [52.2289, 21.0118];
-      pool = validVenues.filter(v => {
-        if (v.district === "Pawilony" || v.district === "Bulwary") return false;
-        return calculateDistanceKm(startCoords[0], startCoords[1], v.latitude, v.longitude) <= 0.65;
-      });
-    } else if (startVal === "zbawiciela") {
-      startCoords = (CRAWL_HOTSPOTS.zbawiciela && CRAWL_HOTSPOTS.zbawiciela.coords) || [52.2199, 21.0185];
-      pool = validVenues.filter(v => {
-        if (v.district === "Pawilony" || v.district === "Bulwary") return false;
-        return calculateDistanceKm(startCoords[0], startCoords[1], v.latitude, v.longitude) <= 0.60;
-      });
-    } else if (startVal === "praga") {
-      startCoords = (CRAWL_HOTSPOTS.praga && CRAWL_HOTSPOTS.praga.coords) || [52.2530, 21.0390];
-      pool = validVenues.filter(v => {
-        // Strict right bank
-        if (v.longitude < 21.025) return false;
-        if (v.district === "Pawilony" || v.district === "Bulwary" || v.district === "Śródmieście") return false;
-        if (v.district === "Praga Północ") return true;
-        return calculateDistanceKm(startCoords[0], startCoords[1], v.latitude, v.longitude) <= 1.1;
-      });
-    } else if (startVal === "wola") {
-      startCoords = (CRAWL_HOTSPOTS.wola && CRAWL_HOTSPOTS.wola.coords) || [52.2355, 20.9880];
-      pool = validVenues.filter(v => {
-        if (v.district === "Pawilony" || v.district === "Bulwary") return false;
-        return calculateDistanceKm(startCoords[0], startCoords[1], v.latitude, v.longitude) <= 0.85;
-      });
-    } else if (startVal === "gps") {
+    const isWarsaw = !curCity || curCity.id === "warszawa";
+
+    // 1. GPS starting location
+    if (startVal === "gps") {
       if (userLoc) {
-        const distFromWarsaw = calculateDistanceKm(userLoc[0], userLoc[1], WARSAW_CENTER[0], WARSAW_CENTER[1]);
-        if (distFromWarsaw < 60) {
+        const distFromCity = calculateDistanceKm(userLoc[0], userLoc[1], startCoords[0], startCoords[1]);
+        if (distFromCity <= 45) {
           startCoords = userLoc;
         }
       }
       pool = validVenues.filter(v => calculateDistanceKm(startCoords[0], startCoords[1], v.latitude, v.longitude) <= 1.0);
       if (pool.length < 4) {
-        pool = validVenues.filter(v => calculateDistanceKm(startCoords[0], startCoords[1], v.latitude, v.longitude) <= 1.8);
+        pool = validVenues.filter(v => calculateDistanceKm(startCoords[0], startCoords[1], v.latitude, v.longitude) <= 2.0);
       }
       if (pool.length < 4) {
-        pool = validVenues.filter(v => calculateDistanceKm(startCoords[0], startCoords[1], v.latitude, v.longitude) <= 3.0);
+        pool = validVenues.filter(v => calculateDistanceKm(startCoords[0], startCoords[1], v.latitude, v.longitude) <= 3.5);
       }
-    } else if (startVal.toLowerCase() === "śródmieście") {
+      if (pool.length < 4) {
+        pool = validVenues;
+      }
+      return { startCoords, pool };
+    }
+
+    // 2. Warsaw-specific legacy hotspots fine-tuning
+    if (isWarsaw && CRAWL_HOTSPOTS[startVal]) {
+      if (startVal === "bulwary") {
+        startCoords = (CRAWL_HOTSPOTS.bulwary && CRAWL_HOTSPOTS.bulwary.coords) || [52.2385, 21.0295];
+        pool = validVenues.filter(v => {
+          if (v.district === "Pawilony") return false;
+          if (v.district && v.district.startsWith("Praga")) return false;
+          if (v.longitude < 21.025) return false;
+          if (v.district === "Bulwary") return true;
+          if (v.longitude >= 21.026 && v.latitude >= 52.225 && v.latitude <= 52.248) {
+            return calculateDistanceKm(startCoords[0], startCoords[1], v.latitude, v.longitude) <= 0.95;
+          }
+          return false;
+        });
+      } else if (startVal === "pawilony") {
+        startCoords = (CRAWL_HOTSPOTS.pawilony && CRAWL_HOTSPOTS.pawilony.coords) || [52.2323, 21.0206];
+        pool = validVenues.filter(v => {
+          if (v.district === "Bulwary") return false;
+          if (v.district === "Pawilony") return true;
+          return calculateDistanceKm(startCoords[0], startCoords[1], v.latitude, v.longitude) <= 0.35;
+        });
+      } else if (startVal === "nowogrodzka") {
+        startCoords = (CRAWL_HOTSPOTS.nowogrodzka && CRAWL_HOTSPOTS.nowogrodzka.coords) || [52.2289, 21.0118];
+        pool = validVenues.filter(v => {
+          if (v.district === "Pawilony" || v.district === "Bulwary") return false;
+          return calculateDistanceKm(startCoords[0], startCoords[1], v.latitude, v.longitude) <= 0.65;
+        });
+      } else if (startVal === "zbawiciela") {
+        startCoords = (CRAWL_HOTSPOTS.zbawiciela && CRAWL_HOTSPOTS.zbawiciela.coords) || [52.2199, 21.0185];
+        pool = validVenues.filter(v => {
+          if (v.district === "Pawilony" || v.district === "Bulwary") return false;
+          return calculateDistanceKm(startCoords[0], startCoords[1], v.latitude, v.longitude) <= 0.60;
+        });
+      } else if (startVal === "praga") {
+        startCoords = (CRAWL_HOTSPOTS.praga && CRAWL_HOTSPOTS.praga.coords) || [52.2530, 21.0390];
+        pool = validVenues.filter(v => {
+          if (v.longitude < 21.025) return false;
+          if (v.district === "Pawilony" || v.district === "Bulwary" || v.district === "Śródmieście") return false;
+          if (v.district === "Praga Północ") return true;
+          return calculateDistanceKm(startCoords[0], startCoords[1], v.latitude, v.longitude) <= 1.1;
+        });
+      } else if (startVal === "wola") {
+        startCoords = (CRAWL_HOTSPOTS.wola && CRAWL_HOTSPOTS.wola.coords) || [52.2355, 20.9880];
+        pool = validVenues.filter(v => {
+          if (v.district === "Pawilony" || v.district === "Bulwary") return false;
+          return calculateDistanceKm(startCoords[0], startCoords[1], v.latitude, v.longitude) <= 0.85;
+        });
+      }
+      return { startCoords, pool };
+    }
+
+    if (isWarsaw && startVal.toLowerCase() === "śródmieście") {
       startCoords = (DISTRICT_CENTERS["Śródmieście"] && DISTRICT_CENTERS["Śródmieście"].coords) || WARSAW_CENTER;
-      // Śródmieście is large, so prefer venues within 1.2km of central hub
       pool = validVenues.filter(v => v.district && v.district.toLowerCase() === "śródmieście" && calculateDistanceKm(startCoords[0], startCoords[1], v.latitude, v.longitude) <= 1.2);
       if (pool.length < 4) {
         pool = validVenues.filter(v => v.district && v.district.toLowerCase() === "śródmieście");
       }
-    } else if (DISTRICT_CENTERS[startVal]) {
-      startCoords = DISTRICT_CENTERS[startVal].coords;
-      pool = validVenues.filter(v => v.district && v.district.toLowerCase() === startVal.toLowerCase());
-      if (pool.length < 4) {
-        pool = validVenues.filter(v => calculateDistanceKm(startCoords[0], startCoords[1], v.latitude, v.longitude) <= 1.8);
-      }
+      return { startCoords, pool };
+    }
+
+    // 3. Dynamic hotspot & district resolution for any city
+    const lowStart = String(startVal).toLowerCase();
+
+    // Check curCity.hotspots
+    const foundHotspot = curCity && curCity.hotspots && curCity.hotspots.find(h => 
+      (h.val && h.val.toLowerCase() === lowStart) || 
+      (h.name && h.name.toLowerCase() === lowStart)
+    );
+    if (foundHotspot && foundHotspot.coords) {
+      startCoords = foundHotspot.coords;
     } else {
-      pool = validVenues.filter(v => v.district && v.district.toLowerCase() === startVal.toLowerCase());
-      if (pool.length < 4) {
-        pool = validVenues.filter(v => calculateDistanceKm(startCoords[0], startCoords[1], v.latitude, v.longitude) <= 2.0);
+      // Check curCity.districts
+      const foundDist = curCity && curCity.districts && curCity.districts.find(d => 
+        d.name && d.name.toLowerCase() === lowStart
+      );
+      if (foundDist && foundDist.coords) {
+        startCoords = foundDist.coords;
+      } else if (DISTRICT_CENTERS && DISTRICT_CENTERS[startVal]) {
+        startCoords = DISTRICT_CENTERS[startVal].coords;
       }
+    }
+
+    pool = validVenues.filter(v => v.district && v.district.toLowerCase() === lowStart);
+    if (pool.length < 3) {
+      pool = validVenues.filter(v => calculateDistanceKm(startCoords[0], startCoords[1], v.latitude, v.longitude) <= 1.2);
+    }
+    if (pool.length < 3) {
+      pool = validVenues.filter(v => calculateDistanceKm(startCoords[0], startCoords[1], v.latitude, v.longitude) <= 2.5);
+    }
+    if (pool.length < 3) {
+      pool = validVenues.filter(v => calculateDistanceKm(startCoords[0], startCoords[1], v.latitude, v.longitude) <= 5.0);
+    }
+    if (pool.length === 0) {
+      pool = [...validVenues];
     }
 
     return { startCoords, pool };
   }
 
   function generatePubCrawlRoute(startVal, stopsCount, vibe) {
-    const validVenues = allVenues.filter(v => v.latitude && v.longitude && typeof v.beer_price_pln === "number" && v.beer_price_pln > 0);
-    if (!validVenues || validVenues.length === 0) return null;
+    const curCity = (typeof getCurrentCity === "function" ? getCurrentCity() : null) || (CITIES && CITIES[0]);
+    const cityCenter = (curCity && curCity.center) ? curCity.center : WARSAW_CENTER;
+
+    const validVenues = allVenues.filter(v => 
+      v.latitude && v.longitude && 
+      typeof v.beer_price_pln === "number" && 
+      v.beer_price_pln > 0 &&
+      calculateDistanceKm(cityCenter[0], cityCenter[1], v.latitude, v.longitude) <= 45
+    );
+
+    if (!validVenues || validVenues.length < 2) {
+      return {
+        emptyCity: true,
+        cityName: curCity ? curCity.name : "miasto",
+        cityIcon: curCity ? curCity.icon : "🏙️",
+        venueCount: validVenues ? validVenues.length : 0,
+        stops: []
+      };
+    }
 
     const { startCoords, pool } = getCrawlCandidatePool(startVal, userLocation, validVenues);
     if (!pool || pool.length === 0) return null;
@@ -2357,6 +2412,8 @@
   function renderPubCrawlResult(route) {
     activeCrawlRoute = route;
     const resultBox = document.getElementById("crawl-result-container");
+    const emptyView = document.getElementById("crawl-empty-state-view");
+    const routeView = document.getElementById("crawl-route-view");
     const statDist = document.getElementById("crawl-stat-dist");
     const statCost = document.getElementById("crawl-stat-cost");
     const statAvg = document.getElementById("crawl-stat-avg");
@@ -2364,6 +2421,9 @@
     const gmapsLink = document.getElementById("btn-crawl-gmaps-link");
 
     if (!resultBox || !timelineList) return;
+
+    if (emptyView) emptyView.style.display = "none";
+    if (routeView) routeView.style.display = "block";
 
     const distText = route.totalDistance >= 1000
       ? (route.totalDistance / 1000).toFixed(1) + " km"
@@ -2417,7 +2477,48 @@
 
     timelineList.innerHTML = html;
     resultBox.style.display = "block";
+    setTimeout(() => {
+      try { resultBox.scrollIntoView({ behavior: "smooth", block: "nearest" }); } catch (e) {}
+    }, 60);
   }
+
+  function renderEmptyPubCrawlCity(cityName, cityIcon = "🏰") {
+    const resultBox = document.getElementById("crawl-result-container");
+    const emptyView = document.getElementById("crawl-empty-state-view");
+    const routeView = document.getElementById("crawl-route-view");
+    const emptyIcon = document.getElementById("crawl-empty-icon");
+    const emptyTitle = document.getElementById("crawl-empty-title");
+    const emptyDesc = document.getElementById("crawl-empty-desc");
+    const emptyBtnLabel = document.getElementById("crawl-empty-btn-label");
+    const emptyBtn = document.getElementById("btn-crawl-empty-add");
+
+    if (!resultBox) return;
+
+    if (emptyIcon) emptyIcon.textContent = `${cityIcon}🍺`;
+    if (emptyTitle) emptyTitle.textContent = `Baza tras w mieście ${cityName} wkrótce!`;
+    if (emptyDesc) emptyDesc.textContent = `Nie mamy jeszcze wystarczającej liczby zweryfikowanych barów z cenami piwa w mieście ${cityName}, aby ułożyć trasę Pub Crawlu.`;
+    if (emptyBtnLabel) emptyBtnLabel.textContent = `➕ Dodaj pierwszy bar w ${cityName}`;
+
+    if (emptyBtn && !emptyBtn.__hasAddListener) {
+      emptyBtn.__hasAddListener = true;
+      emptyBtn.addEventListener("click", () => {
+        if (window.__closePubCrawl) window.__closePubCrawl();
+        if (window.__openAddModal) window.__openAddModal();
+      });
+    }
+
+    if (emptyView) emptyView.style.display = "block";
+    if (routeView) routeView.style.display = "none";
+    resultBox.style.display = "block";
+    setTimeout(() => {
+      try { resultBox.scrollIntoView({ behavior: "smooth", block: "nearest" }); } catch (e) {}
+    }, 60);
+
+    if (window.__showToast) {
+      window.__showToast(`Pub Crawl w mieście ${cityName} wkrótce! Dodaj pierwszy lokal!`, "info");
+    }
+  }
+  window.__renderEmptyPubCrawlCity = renderEmptyPubCrawlCity;
 
   let activeCrawlStep = 0;
   let crawlMarkerInstances = [];
@@ -2678,19 +2779,25 @@
 
   function shareCrawlRoute(route) {
     if (!route || !route.stops.length) return;
+    const curCity = (typeof getCurrentCity === "function" ? getCurrentCity() : null) || (CITIES && CITIES[0]);
+    const cityName = curCity ? curCity.name : "Warszawa";
     const stopsText = route.stops.map((s, i) => `${i + 1}. ${s.venue.name} (${s.venue.beer_price_pln.toFixed(2)} zł)`).join("\n");
     const distText = route.totalDistance >= 1000 ? (route.totalDistance / 1000).toFixed(1) + " km" : Math.round(route.totalDistance) + " m";
     const gmaps = buildGoogleMapsDirectionsUrl(route.stops.map(s => s.venue));
-    const text = `🍻 Pub Crawl poilepiwko:\n${stopsText}\n🚶 Spacer: ~${distText} | Koszt piwek: ${route.totalCost.toFixed(2)} zł\n🧭 Nawigacja piesza: ${gmaps}\nSprawdź w poilepiwko!`;
+    const text = `🍻 Pub Crawl – ${cityName} (poilepiwko):\n${stopsText}\n🚶 Spacer: ~${distText} | Koszt piwek: ${route.totalCost.toFixed(2)} zł\n🧭 Nawigacja piesza: ${gmaps}\nSprawdź w poilepiwko!`;
 
     if (navigator.share) {
       navigator.share({
-        title: "Pub Crawl - poilepiwko",
+        title: `Pub Crawl – ${cityName} | poilepiwko`,
         text: text
       }).catch(() => {});
     } else if (navigator.clipboard) {
       navigator.clipboard.writeText(text).then(() => {
-        alert("📋 Pub Crawl skopiowany do schowka! Możesz wysłać go znajomym.");
+        if (window.__showToast) {
+          window.__showToast("📋 Trasa Pub Crawl skopiowana do schowka! Możesz wysłać ją znajomym.", "success");
+        } else {
+          alert("📋 Pub Crawl skopiowany do schowka! Możesz wysłać go znajomym.");
+        }
       }).catch(() => {
         prompt("Skopiuj Pub Crawl:", text);
       });
@@ -5143,6 +5250,52 @@
         reportDistSelect.innerHTML = repHtml;
       }
 
+      // 6. Pub Crawl Start Select #crawl-start-select
+      const crawlStartSelect = document.getElementById("crawl-start-select");
+      if (crawlStartSelect) {
+        let crawlHtml = `<option value="gps">🎯 Moja lokalizacja GPS (lub Centrum ${escapeHtml(cityObj.name)})</option>`;
+
+        if (cityObj.id === "warszawa") {
+          crawlHtml += `
+            <optgroup label="🔥 Imprezowe Zagłębia">
+              <option value="pawilony" selected>🔥 Pawilony Nowy Świat (Klasyk)</option>
+              <option value="nowogrodzka">💎 Nowogrodzka & Poznańska (Krafty)</option>
+              <option value="bulwary">🌊 Bulwary Wiślane</option>
+              <option value="zbawiciela">🌆 Plac Zbawiciela</option>
+              <option value="praga">🎨 Praga (Ząbkowska / Okrzei)</option>
+              <option value="wola">🏙️ Wola (Chłodna / Grzybowska)</option>
+            </optgroup>
+          `;
+        } else if (cityObj.hotspots && cityObj.hotspots.length > 0) {
+          crawlHtml += `<optgroup label="🔥 Imprezowe Zagłębia">`;
+          cityObj.hotspots.forEach(h => {
+            crawlHtml += `<option value="${escapeHtml(h.val || h.name)}">${escapeHtml(h.icon || '🔥')} ${escapeHtml(h.name)}</option>`;
+          });
+          crawlHtml += `</optgroup>`;
+        }
+
+        if (cityObj.districts && cityObj.districts.length > 0) {
+          crawlHtml += `<optgroup label="🏙️ Dzielnice i Rejony">`;
+          cityObj.districts.forEach(d => {
+            crawlHtml += `<option value="${escapeHtml(d.name)}">${escapeHtml(d.name)}</option>`;
+          });
+          crawlHtml += `</optgroup>`;
+        }
+
+        crawlStartSelect.innerHTML = crawlHtml;
+        if (cityObj.id === "warszawa") {
+          crawlStartSelect.value = "pawilony";
+        } else if (cityObj.hotspots && cityObj.hotspots.length > 0) {
+          crawlStartSelect.value = cityObj.hotspots[0].val || cityObj.hotspots[0].name;
+        } else {
+          crawlStartSelect.value = "gps";
+        }
+      }
+
+      if (window.__updatePubCrawlCityUI) {
+        window.__updatePubCrawlCityUI(cityObj);
+      }
+
       currentDistrict = "all";
       if (typeof updateDistrictCounts === "function") {
         updateDistrictCounts();
@@ -5220,6 +5373,12 @@
           quizCatCitySub.textContent = `Kultowe lokale i klimat – ${cur.name}`;
         }
 
+        // Clear active crawl from map if user was running a crawl in another city
+        if (typeof clearCrawlFromMap === "function") {
+          clearCrawlFromMap();
+        }
+        activeCrawlRoute = null;
+
         // Dynamically update district select, filter modal chips, and mobile search sheet
         updateDistrictsForCity(cur);
 
@@ -5228,6 +5387,9 @@
         }
         if (window.__updateQuizCityUI) {
           window.__updateQuizCityUI();
+        }
+        if (window.__updatePubCrawlCityUI) {
+          window.__updatePubCrawlCityUI(cur);
         }
       }
 
@@ -6051,6 +6213,63 @@
       const btnActiveDetails = document.getElementById("btn-crawl-active-details");
       const btnActiveClear = document.getElementById("btn-crawl-clear");
 
+      function updatePubCrawlCityUI(cityObj) {
+        if (!cityObj) return;
+        const curCity = cityObj;
+
+        // 1. Update Badge & Subtitle
+        const badge = document.getElementById("crawl-city-badge");
+        if (badge) {
+          badge.textContent = `${curCity.name} ${curCity.icon || ''}`.trim();
+        }
+        const sub = document.getElementById("crawl-modal-sub");
+        if (sub) {
+          sub.textContent = `Zaznacz rejon w mieście ${curCity.name} i liczbę barów. Ułożymy trasę z najkrótszym spacerem między kuflami.`;
+        }
+
+        // 2. Count venues in this city
+        const cityVenues = allVenues.filter(v => 
+          v.latitude && v.longitude && 
+          typeof v.beer_price_pln === "number" && 
+          v.beer_price_pln > 0 &&
+          calculateDistanceKm(curCity.center[0], curCity.center[1], v.latitude, v.longitude) <= 45
+        );
+
+        // 3. Update or toggle notice banner
+        const notice = document.getElementById("crawl-city-notice");
+        const btnGen = document.getElementById("btn-generate-crawl");
+        const resultContainer = document.getElementById("crawl-result-container");
+
+        // Hide previous route result when changing city
+        if (resultContainer) resultContainer.style.display = "none";
+
+        if (cityVenues.length < 2) {
+          if (notice) {
+            notice.innerHTML = `<span>🚀</span> <div>Trasy Pub Crawl w mieście <strong>${escapeHtml(curCity.name)}</strong> wkrótce! Baza lokali jest w trakcie tworzenia. <a href="#" id="link-crawl-notice-add" style="color: inherit; text-decoration: underline; font-weight: 700;">Dodaj lokal</a></div>`;
+            notice.style.display = "flex";
+            const linkAdd = document.getElementById("link-crawl-notice-add");
+            if (linkAdd) {
+              linkAdd.addEventListener("click", (e) => {
+                e.preventDefault();
+                closeModalWindow();
+                if (window.__openAddModal) window.__openAddModal();
+              });
+            }
+          }
+          if (btnGen) {
+            btnGen.innerHTML = `<span>🍺 Ułóż trasę w ${escapeHtml(curCity.name)} (Wkrótce)</span>`;
+          }
+        } else {
+          if (notice) {
+            notice.style.display = "none";
+          }
+          if (btnGen) {
+            btnGen.innerHTML = `<span>🍺 Ułóż trasę na wieczór</span>`;
+          }
+        }
+      }
+      window.__updatePubCrawlCityUI = updatePubCrawlCityUI;
+
       function openModal() {
         if (!crawlModal) return;
         const drawer = document.getElementById("ranking-drawer");
@@ -6058,6 +6277,8 @@
         const baroModal = document.getElementById("barometer-modal");
         if (baroModal) baroModal.classList.remove("active");
         closeModal();
+        const curCity = (typeof getCurrentCity === "function" ? getCurrentCity() : null) || (CITIES && CITIES[0]);
+        if (curCity) updatePubCrawlCityUI(curCity);
         crawlModal.classList.add("active");
       }
 
@@ -6097,10 +6318,19 @@
 
       // Generate Route
       function triggerGenerate() {
-        const startVal = startSelect ? startSelect.value : "pawilony";
+        const curCity = (typeof getCurrentCity === "function" ? getCurrentCity() : null) || (CITIES && CITIES[0]);
+        const startVal = startSelect ? startSelect.value : (curCity && curCity.id === "warszawa" ? "pawilony" : "gps");
         const route = generatePubCrawlRoute(startVal, currentCrawlStopsCount, currentCrawlVibe);
         if (!route || !route.stops || route.stops.length === 0) {
-          alert("Nie udało się znaleźć odpowiednich barów dla wybranego rejonu. Wybierz inną lokalizację lub klimat.");
+          if (route && route.emptyCity) {
+            renderEmptyPubCrawlCity(route.cityName, route.cityIcon);
+            return;
+          }
+          if (window.__showToast) {
+            window.__showToast("Nie udało się znaleźć odpowiednich barów dla wybranego rejonu. Wybierz inną lokalizację lub klimat.", "info");
+          } else {
+            alert("Nie udało się znaleźć odpowiednich barów dla wybranego rejonu. Wybierz inną lokalizację lub klimat.");
+          }
           return;
         }
         renderPubCrawlResult(route);

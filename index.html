@@ -701,13 +701,19 @@
     <div class="modal-card modal-card-wide pubcrawl-modal-card">
       <div class="modal-head">
         <div>
-          <h3>🍻 Trasa Pub Crawl</h3>
-          <p class="modal-head-sub">Zaznacz rejon i liczbę barów. Ułożymy trasę z najkrótszym spacerem między kuflami.</p>
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <h3>🍻 Trasa Pub Crawl</h3>
+            <span class="crawl-city-badge" id="crawl-city-badge">Warszawa</span>
+          </div>
+          <p class="modal-head-sub" id="crawl-modal-sub">Zaznacz rejon i liczbę barów. Ułożymy trasę z najkrótszym spacerem między kuflami.</p>
         </div>
         <button id="btn-close-pubcrawl" class="btn-close-drawer">✕</button>
       </div>
 
       <div class="pubcrawl-modal-body">
+        <!-- City Notice (when city has few/no venues) -->
+        <div id="crawl-city-notice" class="crawl-city-notice" style="display: none;"></div>
+
         <!-- Generator Controls Form -->
         <div class="crawl-form-grid">
           <!-- Start Location -->
@@ -763,40 +769,53 @@
 
         <!-- Result Container (Appears after clicking generate) -->
         <div id="crawl-result-container" class="crawl-result-box" style="display: none;">
-          <div class="crawl-summary-bar">
-            <div class="crawl-stat-item">
-              <span class="crawl-stat-label">🚶 Spacer łącznie</span>
-              <span class="crawl-stat-val" id="crawl-stat-dist">-- m</span>
-            </div>
-            <div class="crawl-stat-item">
-              <span class="crawl-stat-label">💰 Koszt piwek</span>
-              <span class="crawl-stat-val highlight" id="crawl-stat-cost">-- zł</span>
-            </div>
-            <div class="crawl-stat-item">
-              <span class="crawl-stat-label">🍻 Średnia cena</span>
-              <span class="crawl-stat-val" id="crawl-stat-avg">-- zł / piwo</span>
-            </div>
+          <!-- Empty Crowdsourcing View -->
+          <div id="crawl-empty-state-view" class="crawl-empty-card" style="display: none;">
+            <div class="crawl-empty-icon" id="crawl-empty-icon">🏰🍺</div>
+            <h4 id="crawl-empty-title">Baza tras wkrótce!</h4>
+            <p id="crawl-empty-desc">Nie mamy jeszcze wystarczającej liczby zweryfikowanych barów z cenami piwa w tym mieście, aby automatycznie zaplanować trasę spaceru.</p>
+            <button type="button" class="btn-crawl-add-cta" id="btn-crawl-empty-add">
+              <span id="crawl-empty-btn-label">➕ Dodaj pierwszy bar</span>
+            </button>
           </div>
 
-          <!-- Timeline Stops List -->
-          <div class="crawl-timeline" id="crawl-timeline-list">
-            <!-- Populated via JS -->
-          </div>
+          <!-- Active Route View -->
+          <div id="crawl-route-view">
+            <div class="crawl-summary-bar">
+              <div class="crawl-stat-item">
+                <span class="crawl-stat-label">🚶 Spacer łącznie</span>
+                <span class="crawl-stat-val" id="crawl-stat-dist">-- m</span>
+              </div>
+              <div class="crawl-stat-item">
+                <span class="crawl-stat-label">💰 Koszt piwek</span>
+                <span class="crawl-stat-val highlight" id="crawl-stat-cost">-- zł</span>
+              </div>
+              <div class="crawl-stat-item">
+                <span class="crawl-stat-label">🍻 Średnia cena</span>
+                <span class="crawl-stat-val" id="crawl-stat-avg">-- zł / piwo</span>
+              </div>
+            </div>
 
-          <!-- Bottom Route Actions -->
-          <div class="crawl-actions-footer">
-            <button type="button" id="btn-show-crawl-on-map" class="btn-crawl-primary">
-              🗺️ Pokaż na mapie
-            </button>
-            <a href="#" id="btn-crawl-gmaps-link" target="_blank" rel="noopener" class="btn-crawl-secondary">
-              🧭 Otwórz w Google Maps
-            </a>
-            <button type="button" id="btn-share-crawl" class="btn-crawl-secondary">
-              📤 Wyślij ekipie
-            </button>
-            <button type="button" id="btn-reroll-crawl" class="btn-crawl-ghost" title="Wylosuj inny wariant Pub Crawlu">
-              🔄 Inny Pub Crawl
-            </button>
+            <!-- Timeline Stops List -->
+            <div class="crawl-timeline" id="crawl-timeline-list">
+              <!-- Populated via JS -->
+            </div>
+
+            <!-- Bottom Route Actions -->
+            <div class="crawl-actions-footer">
+              <button type="button" id="btn-show-crawl-on-map" class="btn-crawl-primary">
+                🗺️ Pokaż na mapie
+              </button>
+              <a href="#" id="btn-crawl-gmaps-link" target="_blank" rel="noopener" class="btn-crawl-secondary">
+                🧭 Otwórz w Google Maps
+              </a>
+              <button type="button" id="btn-share-crawl" class="btn-crawl-secondary">
+                📤 Wyślij ekipie
+              </button>
+              <button type="button" id="btn-reroll-crawl" class="btn-crawl-ghost" title="Wylosuj inny wariant Pub Crawlu">
+                🔄 Inny Pub Crawl
+              </button>
+            </div>
           </div>
         </div>
       </div>
