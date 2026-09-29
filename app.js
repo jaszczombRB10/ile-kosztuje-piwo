@@ -4681,6 +4681,140 @@
       });
     }
 
+    // =========================================================================
+    // CITIES & CITY SWITCHER (Jakdojade Style - Expansion Ready)
+    // =========================================================================
+    const CITIES = [
+      { id: "warszawa", name: "Warszawa", icon: "🏙️", center: [52.2319, 21.0067], zoom: 13, active: true, count: 349, badge: "349 barów 🟢", desc: "Pełna baza lokali" },
+      { id: "krakow", name: "Kraków", icon: "🏰", center: [50.0614, 19.9383], zoom: 14, active: false, count: 0, badge: "Wkrótce 🚀", desc: "Rynek, Kazimierz, Podgórze" },
+      { id: "wroclaw", name: "Wrocław", icon: "🌉", center: [51.1079, 17.0385], zoom: 14, active: false, count: 0, badge: "Wkrótce 🚀", desc: "Rynek, Nadodrze, Wyspa Słodowa" },
+      { id: "poznan", name: "Poznań", icon: "🐐", center: [52.4064, 16.9252], zoom: 14, active: false, count: 0, badge: "Wkrótce 🚀", desc: "Stary Rynek, Jeżyce, Wilda" },
+      { id: "trojmiasto", name: "Trójmiasto", icon: "⚓", center: [54.3520, 18.6466], zoom: 13, active: false, count: 0, badge: "Wkrótce 🚀", desc: "Gdańsk, Sopot, Gdynia" },
+      { id: "lodz", name: "Łódź", icon: "🏭", center: [51.7687, 19.4560], zoom: 14, active: false, count: 0, badge: "Wkrótce 🚀", desc: "Piotrkowska, OFF Piotrkowska" },
+      { id: "katowice", name: "Katowice / Śląsk", icon: "⛏️", center: [50.2649, 19.0238], zoom: 14, active: false, count: 0, badge: "Wkrótce 🚀", desc: "Mariacka, Centrum" },
+      { id: "lublin", name: "Lublin", icon: "🏰", center: [51.2465, 22.5684], zoom: 14, active: false, count: 0, badge: "Wkrótce 🚀", desc: "Stare Miasto, Centrum" },
+      { id: "szczecin", name: "Szczecin", icon: "🌊", center: [53.4285, 14.5528], zoom: 14, active: false, count: 0, badge: "Wkrótce 🚀", desc: "Bulwary, Jasne Błonia" },
+      { id: "bydgoszcz_torun", name: "Toruń & Bydgoszcz", icon: "🐉", center: [53.0138, 18.5984], zoom: 14, active: false, count: 0, badge: "Wkrótce 🚀", desc: "Starówka Toruńska, Wyspa Młyńska" },
+      { id: "bialystok", name: "Białystok", icon: "🌳", center: [53.1325, 23.1688], zoom: 14, active: false, count: 0, badge: "Wkrótce 🚀", desc: "Lipowa, Rynek Kościuszki" }
+    ];
+
+    let currentCityId = localStorage.getItem("poilepiwko_city") || "warszawa";
+
+    function initCitySwitcher() {
+      const modal = document.getElementById("city-switcher-modal");
+      const btnClose = document.getElementById("btn-close-city-switcher");
+      const btnDesktop = document.getElementById("btn-city-desktop");
+      const btnMobile = document.getElementById("btn-top-brand");
+      const btnSearchMobile = document.getElementById("btn-city-switch-mobile");
+      const cityList = document.getElementById("city-list");
+      const searchInput = document.getElementById("city-search-input");
+      const desktopLabel = document.getElementById("desktop-city-label");
+      const mobileLabel = document.getElementById("mobile-city-label");
+      const searchSheetLabel = document.getElementById("search-sheet-city-label");
+
+      function getCity(id) {
+        return CITIES.find(c => c.id === id) || CITIES[0];
+      }
+
+      function updateCityUI() {
+        const cur = getCity(currentCityId);
+        if (desktopLabel) desktopLabel.textContent = cur.name;
+        if (mobileLabel) mobileLabel.textContent = cur.name;
+        if (searchSheetLabel) searchSheetLabel.textContent = cur.name;
+      }
+
+      function renderList(query = "") {
+        if (!cityList) return;
+        const q = query.trim().toLowerCase();
+        const filtered = CITIES.filter(c => c.name.toLowerCase().includes(q) || (c.desc && c.desc.toLowerCase().includes(q)));
+        
+        if (filtered.length === 0) {
+          cityList.innerHTML = `<div style="text-align:center;padding:24px 12px;color:#94a3b8;font-size:14px;">Nie znaleziono miasta "${escapeHtml(query)}". Wkrótce dodamy więcej! 🌍</div>`;
+          return;
+        }
+
+        cityList.innerHTML = filtered.map(c => {
+          const isCur = c.id === currentCityId;
+          return `
+            <div class="city-item ${isCur ? 'active' : ''}" data-city-id="${escapeHtml(c.id)}">
+              <div class="city-item-left">
+                <span class="city-item-icon">${c.icon}</span>
+                <div class="city-item-info">
+                  <span class="city-item-name">${escapeHtml(c.name)} ${isCur ? '✓' : ''}</span>
+                  <span class="city-item-sub">${escapeHtml(c.desc || '')}</span>
+                </div>
+              </div>
+              <span class="city-item-badge ${c.active ? 'badge-active' : ''}">${escapeHtml(c.badge)}</span>
+            </div>
+          `;
+        }).join("");
+
+        cityList.querySelectorAll(".city-item").forEach(item => {
+          item.addEventListener("click", () => {
+            const cid = item.getAttribute("data-city-id");
+            selectCity(cid);
+          });
+        });
+      }
+
+      function selectCity(cid) {
+        const target = getCity(cid);
+        currentCityId = target.id;
+        try {
+          localStorage.setItem("poilepiwko_city", target.id);
+        } catch (e) {}
+
+        updateCityUI();
+        closeModal();
+
+        if (map && target.center) {
+          map.flyTo(target.center, target.zoom, { duration: 1.2 });
+        }
+
+        if (!target.active) {
+          showAppToast(`📍 ${target.name} – wkrótce!`, `Pijesz tu piwko? Kliknij "+ NOWY" na dole i dodaj pierwszy bar w swoim mieście! 🍻`, "🚀", 5500);
+        } else {
+          showAppToast(`📍 ${target.name}`, `Wyświetlam lokale i ceny z nalewaka. 🍻`, "🍺", 3000);
+        }
+      }
+
+      function openModal() {
+        if (!modal) return;
+        if (searchInput) searchInput.value = "";
+        renderList();
+        modal.style.display = "flex";
+        modal.classList.add("active");
+        if (searchInput) setTimeout(() => searchInput.focus(), 100);
+      }
+
+      function closeModal() {
+        if (!modal) return;
+        modal.classList.remove("active");
+        modal.style.display = "none";
+      }
+
+      window.__openCitySwitcher = openModal;
+      window.__closeCitySwitcher = closeModal;
+
+      if (btnDesktop) btnDesktop.addEventListener("click", openModal);
+      if (btnMobile) btnMobile.addEventListener("click", openModal);
+      if (btnSearchMobile) btnSearchMobile.addEventListener("click", openModal);
+      if (btnClose) btnClose.addEventListener("click", closeModal);
+      if (modal) {
+        modal.addEventListener("click", (e) => {
+          if (e.target === modal) closeModal();
+        });
+      }
+      if (searchInput) {
+        searchInput.addEventListener("input", () => {
+          renderList(searchInput.value);
+        });
+      }
+
+      updateCityUI();
+    }
+    initCitySwitcher();
+
     // Mobile Top Floating Controls & Search Sheet (Ultra-Clean Full-Bleed Map Experience)
     function initMobileControls() {
       // 1. Top Filter Modal Button
@@ -4692,15 +4826,12 @@
         });
       }
 
-      // 2. Top Brand Logo Pill (Center on Warsaw & show all)
+      // 2. Top Brand Logo Pill (Click opens City Switcher)
       const btnTopBrand = document.getElementById("btn-top-brand");
       if (btnTopBrand) {
         btnTopBrand.addEventListener("click", () => {
-          if (map) {
-            map.flyTo(WARSAW_CENTER, 12.5, { duration: 1.2 });
-          }
-          if (typeof showAppToast === "function") {
-            showAppToast("poilepiwko.pl", "Wyświetlam całą Warszawę 🍺", "🍺");
+          if (typeof window.__openCitySwitcher === "function") {
+            window.__openCitySwitcher();
           }
         });
       }
@@ -4966,17 +5097,51 @@
     });
 
     // Age Gate Verification (18+ Polish Law Requirement)
+    function isAtLeast18YearsOld(dateStr) {
+      if (!dateStr) return false;
+      const parts = dateStr.split("-");
+      if (parts.length !== 3) return false;
+      const y = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10) - 1;
+      const d = parseInt(parts[2], 10);
+      const birth = new Date(y, m, d);
+      if (isNaN(birth.getTime())) return false;
+      const today = new Date();
+      let age = today.getFullYear() - birth.getFullYear();
+      const monthDiff = today.getMonth() - birth.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+        age--;
+      }
+      return age >= 18;
+    }
+    window.__isAtLeast18YearsOld = isAtLeast18YearsOld;
+
+    // Age Gate Verification (18+ Polish Law Requirement)
     function initAgeGate() {
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
       const isVerified = localStorage.getItem("age_verified_18") === "true";
+      const hasUser = !!currentUser;
       const ageModal = document.getElementById("age-gate-modal");
       const btnAgeYes = document.getElementById("btn-age-yes");
       const btnAgeNo = document.getElementById("btn-age-no");
       const ageDeniedMsg = document.getElementById("age-denied-message");
       const ageActions = document.querySelector(".age-gate-actions");
 
-      if (!isVerified && ageModal) {
+      // In app/PWA mode or if already verified or logged in, do not disturb with age gate modal
+      if (!isStandalone && !isVerified && !hasUser && ageModal) {
         ageModal.classList.add("active");
+      } else if (ageModal) {
+        ageModal.classList.remove("active");
       }
+
+      // Dynamically set max birthdate to 18 years ago today
+      const d = new Date();
+      d.setFullYear(d.getFullYear() - 18);
+      const maxDateStr = d.toISOString().split("T")[0];
+      const regBirth = document.getElementById("reg-birthdate");
+      const onbBirth = document.getElementById("onboarding-birthdate");
+      if (regBirth) regBirth.max = maxDateStr;
+      if (onbBirth) onbBirth.max = maxDateStr;
 
       if (btnAgeYes && ageModal) {
         btnAgeYes.addEventListener("click", () => {
@@ -6341,6 +6506,26 @@
         const email = emailInput ? emailInput.value.trim() : "";
         const password = passInput ? passInput.value : "";
         const termsAgree = document.getElementById("reg-terms-agree");
+        const birthInput = document.getElementById("reg-birthdate");
+        const birthVal = birthInput ? birthInput.value : "";
+
+        if (!birthVal) {
+          if (regErrorMsg) {
+            regErrorMsg.textContent = "Podaj swoją datę urodzenia (wymóg ukończenia 18 lat).";
+            regErrorMsg.style.display = "block";
+          }
+          if (birthInput) birthInput.focus();
+          return;
+        }
+
+        if (typeof isAtLeast18YearsOld === "function" && !isAtLeast18YearsOld(birthVal)) {
+          if (regErrorMsg) {
+            regErrorMsg.textContent = "Musisz mieć ukończone 18 lat, aby założyć konto w poilepiwko.";
+            regErrorMsg.style.display = "block";
+          }
+          if (birthInput) birthInput.focus();
+          return;
+        }
 
         if (termsAgree && !termsAgree.checked) {
           if (regErrorMsg) {
@@ -6391,6 +6576,7 @@
                 email,
                 password,
                 avatarIcon: selectedAvatar,
+                birthDate: birthVal,
                 visitedVenues,
                 favoriteVenues
               }
@@ -6401,6 +6587,11 @@
           if (!res.ok || !data.success) {
             throw new Error(data.error || "Błąd podczas rejestracji.");
           }
+
+          try {
+            localStorage.setItem("age_verified_18", "true");
+            localStorage.setItem("poilepiwko_terms_accepted", "true");
+          } catch (e) {}
 
           // Auto sign-in now that user is auto-confirmed
           if (supabaseClient && supabaseClient.auth) {
@@ -6614,6 +6805,27 @@
           }
         }
 
+        const birthInput = document.getElementById("onboarding-birthdate");
+        const birthVal = birthInput ? birthInput.value : "";
+
+        if (!birthVal) {
+          if (errorMsg) {
+            errorMsg.textContent = "Podaj swoją datę urodzenia (wymóg ukończenia 18 lat).";
+            errorMsg.style.display = "block";
+          }
+          if (birthInput) birthInput.focus();
+          return;
+        }
+
+        if (typeof isAtLeast18YearsOld === "function" && !isAtLeast18YearsOld(birthVal)) {
+          if (errorMsg) {
+            errorMsg.textContent = "Musisz mieć ukończone 18 lat, aby korzystać z serwisu.";
+            errorMsg.style.display = "block";
+          }
+          if (birthInput) birthInput.focus();
+          return;
+        }
+
         const termsAgree = document.getElementById("onboarding-terms-agree");
         if (termsAgree && !termsAgree.checked) {
           if (errorMsg) {
@@ -6640,7 +6852,8 @@
                 userId: currentUser.id,
                 username: valUser,
                 displayName: valName,
-                avatarIcon: selectedAvatar
+                avatarIcon: selectedAvatar,
+                birthDate: birthVal
               }
             })
           });
@@ -6649,6 +6862,11 @@
           if (!res.ok || !data.success) {
             throw new Error(data.error || "Nie udało się zapisać nicku.");
           }
+
+          try {
+            localStorage.setItem("age_verified_18", "true");
+            localStorage.setItem("poilepiwko_terms_accepted", "true");
+          } catch (e) {}
 
           // 2. Update local profile
           if (currentProfile) {

@@ -1,4 +1,4 @@
-const CACHE_NAME = "poilepiwko-v121";
+const CACHE_NAME = "poilepiwko-v122";
 
 const STATIC_ASSETS = [
   "./",
@@ -18,7 +18,8 @@ const STATIC_ASSETS = [
   "./icons/icon.svg",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
-  "./icons/syrenka-hero.png"
+  "./icons/syrenka-hero.png",
+  "./icons/og-preview.png"
 ];
 
 // Install Event: Cache Core Shell and activate immediately

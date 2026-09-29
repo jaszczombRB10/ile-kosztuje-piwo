@@ -3,9 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>poilepiwko - Gdzie na piwo w Warszawie? Mapa Cen & Pub Crawl</title>
-  <meta name="description" content="poilepiwko: sprawdź na żywo aktualne ceny piwa z nalewaka w Warszawie, happy hours, krafty i wyznacz optymalny Pub Crawl!">
+  <title>poilepiwko - Gdzie na piwo? Nocna Mapa Barów, Kompas & Pub Crawl</title>
+  <meta name="description" content="poilepiwko: sprawdź na żywo aktualne ceny piwa z nalewaka, happy hours, krafty i wyznacz optymalny Pub Crawl w Twoim mieście!">
   <meta name="theme-color" content="#0d1615">
+
+  <!-- Open Graph & Social Sharing Meta Tags -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://www.poilepiwko.pl/">
+  <meta property="og:title" content="poilepiwko - Gdzie na piwo? Nocna Mapa Barów, Kompas & Pub Crawl">
+  <meta property="og:description" content="Sprawdź na żywo aktualne ceny piwa z nalewaka, skorzystaj z Piwnego Kompasu GPS, Pub Crawlu i ruletki barowej!">
+  <meta property="og:image" content="https://www.poilepiwko.pl/icons/og-preview.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="poilepiwko - Nocna mapa barów i cen piwa">
+  <meta property="og:locale" content="pl_PL">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://www.poilepiwko.pl/">
+  <meta name="twitter:title" content="poilepiwko - Gdzie na piwo?">
+  <meta name="twitter:description" content="Nocna mapa barów, radar piwny GPS, ruletka i ceny z kranu.">
+  <meta name="twitter:image" content="https://www.poilepiwko.pl/icons/og-preview.png">
   
   <!-- PWA & Mobile Web App Meta Tags -->
   <link rel="manifest" href="manifest.json">
@@ -48,20 +66,29 @@
   <!-- App Header -->
   <header>
     <div class="header-top">
-      <a href="#" class="logo-wrap">
-        <span class="logo-icon">🍺</span>
-        <div class="logo-title">
-          <span class="logo-main">poile</span><span class="glow">piwko</span>
-        </div>
-      </a>
+      <div class="header-branding-group">
+        <a href="#" class="logo-wrap">
+          <span class="logo-icon">🍺</span>
+          <div class="logo-title">
+            <span class="logo-main">poile</span><span class="glow">piwko</span>
+          </div>
+        </a>
+
+        <!-- City Switcher Button (Desktop Header - Jakdojade Style) -->
+        <button type="button" class="city-selector-btn" id="btn-city-desktop" title="Zmień miasto (jak w Jakdojade)">
+          <span class="city-pill-icon">📍</span>
+          <span class="city-pill-label" id="desktop-city-label">Warszawa</span>
+          <span class="city-pill-caret">▾</span>
+        </button>
+      </div>
 
       <!-- Center Live Time Badge (Vad Kostar Ölen style) & 18+ Badge -->
       <div class="header-center">
-        <div class="live-clock-badge" id="live-clock-badge" title="Aktualny czas w Warszawie · szare ikony ✕ oznaczają bary zamknięte teraz">
+        <div class="live-clock-badge" id="live-clock-badge" title="Aktualny czas · szare ikony ✕ oznaczają bary zamknięte teraz">
           <span class="clock-icon">🕒</span>
           <span id="live-clock-time">--:--</span>
         </div>
-        <button type="button" class="badge-passport" id="btn-open-passport" title="Twój Piwny Paszport Warszawy (Odwiedzone lokale i odznaki)">
+        <button type="button" class="badge-passport" id="btn-open-passport" title="Twój Piwny Paszport (Odwiedzone lokale i odznaki)">
           <span class="passport-icon">🎖️</span>
           <span id="passport-header-count">0/349</span>
         </button>
@@ -76,7 +103,7 @@
       
       <!-- Desktop Header Actions -->
       <div class="header-actions">
-        <button type="button" id="btn-ranking-toggle" class="btn-secondary" title="Ranking najtańszego piwa w Warszawie">
+        <button type="button" id="btn-ranking-toggle" class="btn-secondary" title="Ranking najtańszego piwa">
           <span>🏆</span>
           <span class="btn-text">Ranking</span>
         </button>
@@ -196,9 +223,9 @@
         <span class="fab-badge-dot" id="top-filter-dot" style="display:none;"></span>
       </button>
 
-      <button type="button" class="fab-brand-pill" id="btn-top-brand" title="poilepiwko.pl – Pokaż całą Warszawę">
-        <span class="brand-pill-icon">🍺</span>
-        <span class="brand-pill-text">poilepiwko<span class="brand-pill-tld">.pl</span></span>
+      <button type="button" class="fab-brand-pill" id="btn-top-brand" title="Zmień miasto lub zresetuj widok">
+        <span class="brand-pill-icon">📍</span>
+        <span class="brand-pill-text"><span id="mobile-city-label">Warszawa</span> <span class="brand-pill-caret">▾</span></span>
       </button>
 
       <button type="button" class="fab-top-btn" id="btn-top-search" title="Szukaj lokalu lub piwa">
@@ -220,6 +247,7 @@
         <button type="button" id="btn-close-mobile-search" class="btn-close-search">✕</button>
       </div>
       <div class="mobile-search-quick-districts" id="mobile-search-districts">
+        <span class="m-dist-chip chip-city-switch" id="btn-city-switch-mobile">📍 Miasto: <span id="search-sheet-city-label">Warszawa</span> ▾</span>
         <span class="m-dist-chip active" data-dist="all">Wszystkie</span>
         <span class="m-dist-chip" data-dist="Pawilony">🔥 Pawilony</span>
         <span class="m-dist-chip" data-dist="Bulwary">🌊 Bulwary</span>
@@ -261,13 +289,13 @@
         <div class="district-row">
           <div class="district-select-wrap">
             <span class="district-icon">📍</span>
-            <select id="district-select" class="district-select" aria-label="Wybierz dzielnicę Warszawy">
-              <option value="all">🏙️ Cała Warszawa (Wszystkie dzielnice)</option>
+            <select id="district-select" class="district-select" aria-label="Wybierz dzielnicę lub rejon">
+              <option value="all">🏙️ Całe miasto (Wszystkie dzielnice)</option>
               <optgroup label="🔥 Zagłębia Imprezowe">
                 <option value="Pawilony">🔥 Pawilony Nowy Świat</option>
                 <option value="Bulwary">🌊 Bulwary Wiślane</option>
               </optgroup>
-              <optgroup label="🏙️ 18 Dzielnic Warszawy">
+              <optgroup label="🏙️ Dzielnice i Rejony">
                 <option value="Śródmieście">Śródmieście</option>
                 <option value="Mokotów">Mokotów</option>
                 <option value="Wola">Wola</option>
@@ -539,7 +567,7 @@
             <span>📍 Dzielnica / Zagłębie</span>
           </label>
           <div class="filter-district-chips" id="filter-district-chips">
-            <button type="button" class="filter-dist-chip active" data-dist="all">🏙️ Cała Warszawa</button>
+            <button type="button" class="filter-dist-chip active" data-dist="all">🏙️ Całe miasto</button>
             <button type="button" class="filter-dist-chip" data-dist="Pawilony">🔥 Pawilony</button>
             <button type="button" class="filter-dist-chip" data-dist="Bulwary">🌊 Bulwary</button>
             <button type="button" class="filter-dist-chip" data-dist="Śródmieście">Śródmieście</button>
@@ -722,7 +750,7 @@
               <button type="button" class="crawl-pill-btn active" data-vibe="cheap">💰 Najtaniej <span>(Max oszczędności)</span></button>
               <button type="button" class="crawl-pill-btn" data-vibe="craft">💎 Kraft & Multitap <span>(Dobre piwo)</span></button>
               <button type="button" class="crawl-pill-btn" data-vibe="party">⚡ Party & Happy Hour <span>(Luz & shoty)</span></button>
-              <button type="button" class="crawl-pill-btn" data-vibe="mix">🎲 Mix Warszawski <span>(Różnorodność)</span></button>
+              <button type="button" class="crawl-pill-btn" data-vibe="mix">🎲 Mix Miejski <span>(Różnorodność)</span></button>
             </div>
           </div>
         </div>
@@ -775,11 +803,11 @@
     </div>
   </div>
 
-  <!-- Warsaw Beer Price Barometer Modal -->
+  <!-- Beer Price Barometer Modal -->
   <div class="modal-backdrop" id="barometer-modal">
     <div class="modal-card modal-card-wide">
       <div class="modal-head">
-        <h3>📊 Barometr Cenowy Warszawy</h3>
+        <h3>📊 Barometr Cenowy Barów</h3>
         <button id="btn-close-barometer" class="btn-close-drawer">✕</button>
       </div>
 
@@ -787,7 +815,7 @@
         <!-- Top Metrics Cards -->
         <div class="baro-kpis">
           <div class="baro-card">
-            <div class="baro-label">Średnia w Warszawie</div>
+            <div class="baro-label">Średnia w mieście</div>
             <div class="baro-val" id="baro-avg-price">-- zł</div>
             <div class="baro-sub">lane jasne (0.5L)</div>
           </div>
@@ -1038,13 +1066,41 @@
     </button>
   </nav>
 
+  <!-- City Switcher Modal (Jakdojade Style) -->
+  <div class="modal-backdrop" id="city-switcher-modal" style="display:none;">
+    <div class="modal-card city-switcher-card">
+      <div class="modal-head">
+        <div class="modal-head-title">
+          <div class="modal-icon-badge">📍</div>
+          <div>
+            <h2>Wybierz miasto</h2>
+            <p class="modal-head-sub">Przeglądaj puby, ceny i trasy w Twoim mieście</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close" id="btn-close-city-switcher" aria-label="Zamknij okno">✕</button>
+      </div>
+
+      <div class="city-search-box">
+        <input type="text" id="city-search-input" class="city-search-input" placeholder="🔍 Szukaj miasta (np. Kraków, Wrocław)..." autocomplete="off" />
+      </div>
+
+      <div class="city-list" id="city-list">
+        <!-- Rendered dynamically in app.js from CITIES -->
+      </div>
+
+      <div class="city-modal-footer">
+        <p class="city-footer-note">Nie ma jeszcze Twojego miasta? Wybierz je i dodaj pierwszy bar jako pionier! 🍻</p>
+      </div>
+    </div>
+  </div>
+
   <!-- Age Gate Verification Modal (18+ Wymóg Prawa Polskiego) -->
   <div class="modal-backdrop age-gate-backdrop" id="age-gate-modal">
     <div class="modal-card age-gate-card">
       <div class="age-gate-icon">🔞</div>
       <h2 class="age-gate-title">Weryfikacja wieku (18+)</h2>
       <p class="age-gate-desc">
-        Serwis <strong>„poilepiwko”</strong> zawiera informacje o ofercie i cenach napojów alkoholowych w warszawskich lokalach gastronomicznych.
+        Serwis <strong>„poilepiwko”</strong> zawiera informacje o ofercie i cenach napojów alkoholowych w lokalach gastronomicznych w Polsce.
       </p>
       <div class="age-gate-law-note">
         Zgodnie z art. 13<sup>1</sup> ustawy z dnia 26 października 1982 r. o wychowaniu w trzeźwości i przeciwdziałaniu alkoholizmowi treści te są przeznaczone wyłącznie dla osób pełnoletnich.
@@ -1306,7 +1362,7 @@
       <div class="modal-head">
         <div>
           <h3>⚡ Happy Hours & Kalendarz Promocji</h3>
-          <p class="modal-head-sub">Gdzie w Warszawie trafisz na promkę w tej chwili lub w dany dzień tygodnia.</p>
+          <p class="modal-head-sub">Gdzie w Twoim mieście trafisz na promkę w tej chwili lub w dany dzień tygodnia.</p>
         </div>
         <button id="btn-close-happyhour" class="btn-close-drawer">✕</button>
       </div>
@@ -1320,7 +1376,7 @@
         <!-- Tab 1: Active Now Content -->
         <div id="hh-tab-content-now" class="hh-tab-content">
           <div class="hh-now-banner">
-            <div class="hh-live-indicator"><span class="pulse-dot"></span> NA ŻYWO W WARSZAWIE</div>
+            <div class="hh-live-indicator"><span class="pulse-dot"></span> NA ŻYWO W TWOIM MIEŚCIE</div>
             <div class="hh-now-sub" id="hh-now-clock-text">Sprawdzanie ofert...</div>
           </div>
           <div class="hh-cards-list" id="hh-now-list">
@@ -1347,13 +1403,13 @@
     </div>
   </div>
 
-  <!-- Piwny Paszport Warszawy Modal -->
+  <!-- Piwny Paszport Modal -->
   <div class="modal-backdrop" id="passport-modal">
     <div class="modal-card modal-card-wide passport-modal-card">
       <div class="modal-head">
         <div>
           <h3>🎖️ Paszport Piwosza</h3>
-          <p class="modal-head-sub">Odwiedzaj bary, wbijaj pieczątki i sprawdzaj, ile Warszawy już wypiłeś.</p>
+          <p class="modal-head-sub">Odwiedzaj bary, wbijaj pieczątki i zdobywaj odznaki.</p>
         </div>
         <button id="btn-close-passport" class="btn-close-drawer">✕</button>
       </div>
@@ -1364,7 +1420,7 @@
           <div class="passport-avatar-wrap">
             <div class="passport-avatar" id="passport-rank-icon">🎓</div>
             <div class="passport-level-info">
-              <div class="passport-rank-title" id="passport-rank-title">Nowicjusz w Warszawie</div>
+              <div class="passport-rank-title" id="passport-rank-title">Nowicjusz na Mieście</div>
               <div class="passport-rank-sub" id="passport-rank-sub">Wbijaj pieczątki w barach i odblokowuj kolejne rangi.</div>
             </div>
           </div>
@@ -1384,7 +1440,7 @@
           </div>
           <div class="passport-stat-box">
             <span class="passport-stat-num highlight" id="stat-visited-percent">0.0%</span>
-            <span class="passport-stat-label">% Warszawy</span>
+            <span class="passport-stat-label">% Odkrytych</span>
           </div>
           <div class="passport-stat-box">
             <span class="passport-stat-num" id="stat-visited-districts">0 / 18</span>
@@ -1521,6 +1577,11 @@
           <label for="reg-password" class="form-label">Hasło (min. 6 znaków)</label>
           <input type="password" id="reg-password" class="form-input" required placeholder="••••••••" autocomplete="new-password" minlength="6" />
         </div>
+        <div class="form-group">
+          <label for="reg-birthdate" class="form-label">Data urodzenia (wymóg 18+)</label>
+          <input type="date" id="reg-birthdate" class="form-input" required max="2008-12-31" />
+          <div class="input-hint" id="reg-birthdate-hint">Dostęp do serwisu dozwolony wyłącznie dla osób pełnoletnich.</div>
+        </div>
         <div class="form-group terms-checkbox-group">
           <label class="terms-checkbox-label">
             <input type="checkbox" id="reg-terms-agree" required checked />
@@ -1595,6 +1656,12 @@
           </div>
         </div>
 
+        <div class="form-group">
+          <label for="onboarding-birthdate" class="form-label">Data urodzenia (wymóg 18+)</label>
+          <input type="date" id="onboarding-birthdate" class="form-input" required max="2008-12-31" />
+          <div class="input-hint" id="onboarding-birthdate-hint">Dostęp do serwisu dozwolony wyłącznie dla osób pełnoletnich.</div>
+        </div>
+
         <div class="form-group terms-checkbox-group">
           <label class="terms-checkbox-label">
             <input type="checkbox" id="onboarding-terms-agree" required checked />
@@ -1649,7 +1716,7 @@
               <span class="profile-rank-tag" id="prof-rank-title">Początkujący Piwosz</span>
             </div>
 
-            <p class="goin-bio-text" id="prof-bio-display">Warszawski poszukiwacz dobrego i taniego piwa 🍻</p>
+            <p class="goin-bio-text" id="prof-bio-display">Poszukiwacz dobrego i taniego piwa 🍻</p>
 
             <!-- Tags List with clean icons (Goin' style) -->
             <div class="goin-tags-list">
@@ -1659,7 +1726,7 @@
               </div>
               <div class="goin-tag-item" id="prof-tag-dist-wrap">
                 <span class="goin-tag-icon">📍</span>
-                <span class="goin-tag-val" id="prof-val-district">Cała Warszawa</span>
+                <span class="goin-tag-val" id="prof-val-district">Wszystkie dzielnice</span>
               </div>
               <div class="goin-tag-item" id="prof-tag-vibe-wrap">
                 <span class="goin-tag-icon">❤️</span>

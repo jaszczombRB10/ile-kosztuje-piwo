@@ -103,7 +103,9 @@ module.exports = async (req, res) => {
             username: cleanUser,
             username_custom: true,
             display_name: displayName || cleanUser,
-            avatar_icon: avatarIcon || "🍺"
+            avatar_icon: avatarIcon || "🍺",
+            birth_date: payload.birthDate || null,
+            age_verified: true
           }
         })
       });
@@ -126,7 +128,7 @@ module.exports = async (req, res) => {
             username: cleanUser,
             display_name: displayName || cleanUser,
             avatar_icon: avatarIcon || "🍺",
-            bio: "Warszawski poszukiwacz dobrego i taniego piwa 🍻",
+            bio: "Poszukiwacz dobrego i taniego piwa 🍻",
             visited_venues: payload.visitedVenues || [],
             favorite_venues: payload.favoriteVenues || []
           })
@@ -1128,6 +1130,10 @@ module.exports = async (req, res) => {
         }
         if (avatarPhoto !== undefined) {
           newMeta.avatar_photo = avatarPhoto;
+        }
+        if (birthDate !== undefined) {
+          newMeta.birth_date = birthDate;
+          newMeta.age_verified = true;
         }
 
         await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(userId)}`, {
