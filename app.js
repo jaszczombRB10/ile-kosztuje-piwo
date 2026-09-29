@@ -5319,16 +5319,6 @@
         btnCloseMobileSearch.addEventListener("click", closeMobileSearchSheet);
       }
 
-      // District filter chips inside search sheet
-      mobileDistChips.forEach(chip => {
-        chip.addEventListener("click", () => {
-          mobileDistChips.forEach(c => c.classList.remove("active"));
-          chip.classList.add("active");
-          mobileSelectedDistrict = chip.getAttribute("data-dist") || "all";
-          renderMobileSearchResults();
-        });
-      });
-
       function renderMobileSearchResults() {
         if (!mobileSearchResults) return;
         const q = (mobileSearchInput ? mobileSearchInput.value : "").trim().toLowerCase();
