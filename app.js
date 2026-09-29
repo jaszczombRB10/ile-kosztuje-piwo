@@ -1319,7 +1319,14 @@
 
   // Filter Logic
   function getFilteredVenues() {
+    const curCity = getCurrentCity();
     return allVenues.filter(venue => {
+      // City boundary filter (within 45 km of active city center)
+      if (curCity && curCity.center && typeof venue.latitude === "number" && typeof venue.longitude === "number") {
+        const distFromCity = calculateDistanceKm(curCity.center[0], curCity.center[1], venue.latitude, venue.longitude);
+        if (distFromCity > 45) return false;
+      }
+
       // District filter
       if (currentDistrict !== "all") {
         const vDist = (venue.district || "").toLowerCase();
@@ -1886,7 +1893,25 @@
     }
 
     if (sorted.length === 0) {
-      listEl.innerHTML = '<div class="ranking-empty-desc" style="text-align:center;padding:24px;">Brak lokali spełniających kryteria.</div>';
+      const curCity = getCurrentCity();
+      listEl.innerHTML = `
+        <div class="ranking-empty-card" style="text-align:center;padding:32px 16px;display:flex;flex-direction:column;align-items:center;gap:12px;">
+          <div style="font-size:42px;">${curCity.icon || "🍻"}</div>
+          <div class="ranking-empty-title" style="font-weight:700;font-size:1.05rem;">Baza barów w mieście ${escapeHtml(curCity.name)} wkrótce!</div>
+          <div class="ranking-empty-desc" style="font-size:0.78rem;line-height:1.45;max-width:280px;color:var(--text-muted);">
+            Nie mamy jeszcze zweryfikowanych cen piwa z kija w tym mieście. Znasz fajny lokal? Bądź pionierem i dodaj bar!
+          </div>
+          <button type="button" class="btn-primary" id="btn-add-first-bar-ranking" style="margin-top:6px;font-size:0.82rem;padding:9px 18px;border-radius:999px;">
+            ➕ Dodaj pierwszy bar w: ${escapeHtml(curCity.name)}
+          </button>
+        </div>
+      `;
+      const btnAdd = document.getElementById("btn-add-first-bar-ranking");
+      if (btnAdd) {
+        btnAdd.addEventListener("click", () => {
+          if (window.__openAddModal) window.__openAddModal();
+        });
+      }
       return;
     }
 
@@ -5080,6 +5105,44 @@
         });
       }
 
+      // 4. Roulette Modal #roulette-district-chips
+      const rouletteDistWrap = document.getElementById("roulette-district-chips");
+      if (rouletteDistWrap) {
+        let rHtml = `<button type="button" class="roulette-chip active" data-district="all">Wszystkie</button>`;
+        if (cityObj.hotspots) {
+          cityObj.hotspots.forEach(h => {
+            rHtml += `<button type="button" class="roulette-chip" data-district="${escapeHtml(h.val || h.name)}">${escapeHtml(h.icon || '🔥')} ${escapeHtml(h.name)}</button>`;
+          });
+        }
+        if (cityObj.districts) {
+          cityObj.districts.forEach(d => {
+            rHtml += `<button type="button" class="roulette-chip" data-district="${escapeHtml(d.name)}">${escapeHtml(d.name)}</button>`;
+          });
+        }
+        rouletteDistWrap.innerHTML = rHtml;
+      }
+
+      // 5. Add / Report Venue Modal #report-district
+      const reportDistSelect = document.getElementById("report-district");
+      if (reportDistSelect) {
+        let repHtml = "";
+        if (cityObj.hotspots && cityObj.hotspots.length > 0) {
+          repHtml += `<optgroup label="🔥 Zagłębia Imprezowe">`;
+          cityObj.hotspots.forEach(h => {
+            repHtml += `<option value="${escapeHtml(h.val || h.name)}">${escapeHtml(h.icon || '🔥')} ${escapeHtml(h.name)}</option>`;
+          });
+          repHtml += `</optgroup>`;
+        }
+        if (cityObj.districts && cityObj.districts.length > 0) {
+          repHtml += `<optgroup label="🏙️ Dzielnice i Rejony">`;
+          cityObj.districts.forEach(d => {
+            repHtml += `<option value="${escapeHtml(d.name)}">${escapeHtml(d.name)}</option>`;
+          });
+          repHtml += `</optgroup>`;
+        }
+        reportDistSelect.innerHTML = repHtml;
+      }
+
       currentDistrict = "all";
       if (typeof updateDistrictCounts === "function") {
         updateDistrictCounts();
@@ -5143,8 +5206,29 @@
           compassTargetDist.textContent = cur.name;
         }
 
+        // Pub Quiz category label update
+        const quizCatCityTitle = document.getElementById("quiz-cat-city-title");
+        const quizCatCityIco = document.getElementById("quiz-cat-city-ico");
+        const quizCatCitySub = document.getElementById("quiz-cat-city-sub");
+        if (quizCatCityTitle) {
+          quizCatCityTitle.textContent = `Nocne Życie & ${cur.name}`;
+        }
+        if (quizCatCityIco) {
+          quizCatCityIco.textContent = cur.icon || "🏙️";
+        }
+        if (quizCatCitySub) {
+          quizCatCitySub.textContent = `Kultowe lokale i klimat – ${cur.name}`;
+        }
+
         // Dynamically update district select, filter modal chips, and mobile search sheet
         updateDistrictsForCity(cur);
+
+        if (window.__resetRouletteCity) {
+          window.__resetRouletteCity(cur);
+        }
+        if (window.__updateQuizCityUI) {
+          window.__updateQuizCityUI();
+        }
       }
 
       function renderList(query = "") {
@@ -10319,7 +10403,7 @@
       }
       modal.classList.add("active");
       modal.style.display = "flex";
-      updateVibeChipsAvailability();
+      updateRouletteUIState();
       if (window.__clearBottomNavActive) window.__clearBottomNavActive();
     }
 
@@ -10352,12 +10436,22 @@
       });
     }
 
+    function getCityPool() {
+      const curCity = getCurrentCity();
+      if (!curCity || !curCity.center) return allVenues;
+      return allVenues.filter(v => {
+        if (typeof v.latitude !== "number" || typeof v.longitude !== "number") return false;
+        return calculateDistanceKm(curCity.center[0], curCity.center[1], v.latitude, v.longitude) <= 45;
+      });
+    }
+
     function getDistrictPool(district) {
-      if (!district || district === "all") return allVenues;
+      const cityPool = getCityPool();
+      if (!district || district === "all") return cityPool;
       const target = district.toLowerCase().trim();
       const targetNorm = target.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-      const pool = allVenues.filter(v => {
+      const pool = cityPool.filter(v => {
         const vDist = (v.district || "").toLowerCase();
         const vDistNorm = vDist.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
         const vName = (v.name || "").toLowerCase();
@@ -10372,11 +10466,17 @@
         if (target === "praga") {
           return vDist.includes("praga");
         }
+        if (target === "kazimierz") {
+          return vDist.includes("kazimierz") || vAddr.includes("kazimierz") || vName.includes("kazimierz");
+        }
+        if (target === "stare miasto" || target === "rynek") {
+          return vDist.includes("stare miasto") || vDist.includes("rynek") || vAddr.includes("rynek");
+        }
 
-        return vDistNorm.includes(targetNorm) || vDist.includes(target);
+        return vDistNorm.includes(targetNorm) || vDist.includes(target) || vAddr.includes(target);
       });
 
-      return pool.length > 0 ? pool : allVenues;
+      return pool.length > 0 ? pool : (cityPool.length > 0 ? cityPool : []);
     }
 
     function updateVibeChipsAvailability() {
@@ -10394,16 +10494,18 @@
       }
     }
 
-    // Filter Chips: District
-    const distChips = document.querySelectorAll("#roulette-district-chips .roulette-chip");
-    distChips.forEach(chip => {
-      chip.addEventListener("click", () => {
-        distChips.forEach(c => c.classList.remove("active"));
+    // Filter Chips: District (Event Delegation for dynamically rendered chips)
+    const rouletteDistWrap = document.getElementById("roulette-district-chips");
+    if (rouletteDistWrap) {
+      rouletteDistWrap.addEventListener("click", (e) => {
+        const chip = e.target.closest(".roulette-chip");
+        if (!chip) return;
+        rouletteDistWrap.querySelectorAll(".roulette-chip").forEach(c => c.classList.remove("active"));
         chip.classList.add("active");
         currentDistrictFilter = chip.getAttribute("data-district") || "all";
-        updateVibeChipsAvailability();
+        updateRouletteUIState();
       });
-    });
+    }
 
     // Filter Chips: Vibe
     const vibeChips = document.querySelectorAll("#roulette-vibe-chips .roulette-chip");
@@ -10412,6 +10514,7 @@
         vibeChips.forEach(c => c.classList.remove("active"));
         chip.classList.add("active");
         currentVibeFilter = chip.getAttribute("data-vibe") || "all";
+        updateRouletteUIState();
       });
     });
 
@@ -10420,6 +10523,9 @@
     function getCandidates() {
       lastSpinRelaxed = false;
       const districtPool = getDistrictPool(currentDistrictFilter);
+      if (!districtPool || districtPool.length === 0) {
+        return [];
+      }
 
       // 2. If vibe is "all", return the district pool directly
       if (currentVibeFilter === "all") {
@@ -10464,15 +10570,76 @@
       return districtPool;
     }
 
+    function updateRouletteUIState() {
+      const curCity = getCurrentCity();
+      const candidates = getCandidates();
+
+      if (candidates.length === 0) {
+        if (btnSpin) btnSpin.disabled = true;
+        if (spinText) spinText.textContent = "BRAK BARÓW W TYM MIEŚCIE";
+        if (reel) {
+          reel.style.transform = "translateY(0)";
+          reel.innerHTML = `
+            <div class="roulette-reel-card roulette-reel-idle reel-idle-empty">
+              <div class="reel-idle-icon">${curCity.icon || "📍"}</div>
+              <div class="reel-idle-title">Baza barów w mieście ${escapeHtml(curCity.name)} wkrótce!</div>
+              <div class="reel-idle-desc">Nie mamy jeszcze zarejestrowanych barów w tym mieście. Pijesz tu piwko? Dodaj pierwszy lokal!</div>
+              <button type="button" class="btn-primary" id="btn-roulette-add-empty" style="margin-top:12px;font-size:0.8rem;padding:8px 16px;border-radius:999px;">
+                ➕ Dodaj bar w: ${escapeHtml(curCity.name)}
+              </button>
+            </div>
+          `;
+          const btnAddEmpty = document.getElementById("btn-roulette-add-empty");
+          if (btnAddEmpty) {
+            btnAddEmpty.addEventListener("click", () => {
+              closeModal();
+              if (window.__openAddModal) window.__openAddModal();
+            });
+          }
+        }
+      } else {
+        if (btnSpin && !isSpinning) btnSpin.disabled = false;
+        if (spinText && !isSpinning) spinText.textContent = "🎲 ZAKRĘĆ RULETKĄ!";
+        if (reel && (reel.querySelector(".reel-idle-empty") || !reel.querySelector(".roulette-reel-card"))) {
+          reel.style.transform = "translateY(0)";
+          reel.innerHTML = `
+            <div class="roulette-reel-card roulette-reel-idle">
+              <div class="reel-idle-icon">🎰</div>
+              <div class="reel-idle-title">Kliknij „ZAKRĘĆ RULETKĄ”</div>
+              <div class="reel-idle-desc">Wylosujemy dla Ciebie i ekipy idealny lokal!</div>
+            </div>
+          `;
+        }
+      }
+      updateVibeChipsAvailability();
+    }
+
+    window.__updateRouletteUIState = updateRouletteUIState;
+    window.__resetRouletteCity = function(cityObj) {
+      currentDistrictFilter = "all";
+      const rWrap = document.getElementById("roulette-district-chips");
+      if (rWrap) {
+        rWrap.querySelectorAll(".roulette-chip").forEach((c, idx) => {
+          if (idx === 0) c.classList.add("active");
+          else c.classList.remove("active");
+        });
+      }
+      updateRouletteUIState();
+    };
+
     // Spin function
     function spinRoulette() {
       if (isSpinning || !reel) return;
+      const candidates = getCandidates();
+      if (!candidates || candidates.length === 0) {
+        showAppToast("Brak barów", `Nie znaleziono barów w mieście ${getCurrentCity().name}. Dodaj pierwszy bar! 🍻`, "📍", 4000);
+        return;
+      }
       isSpinning = true;
       if (btnSpin) btnSpin.disabled = true;
       if (spinText) spinText.textContent = "LOSOWANIE...";
       if (resultCard) resultCard.style.display = "none";
 
-      const candidates = getCandidates();
       const winner = candidates[Math.floor(Math.random() * candidates.length)];
       currentWinner = winner;
 
@@ -10927,6 +11094,7 @@
       {
         id: 9,
         cat: "warsaw",
+        city: "warszawa",
         catName: "Nocne Życie & Bary 🏙️",
         q: "Gdzie w Warszawie znajduje się słynne zagłębie barowe zwane 'Pawilonami'?",
         options: [
@@ -10941,6 +11109,7 @@
       {
         id: 10,
         cat: "warsaw",
+        city: "warszawa",
         catName: "Nocne Życie & Bary 🏙️",
         q: "Który warszawski most słynie z letnich spotkań przy piwku na betonowych schodkach nad Wisłą?",
         options: [
@@ -10955,6 +11124,7 @@
       {
         id: 11,
         cat: "warsaw",
+        city: "warszawa",
         catName: "Nocne Życie & Bary 🏙️",
         q: "W której dzielnicy Warszawy znajdują się historyczne dawne Browary Haberbusch i Schiele?",
         options: [
@@ -10969,6 +11139,7 @@
       {
         id: 12,
         cat: "warsaw",
+        city: "warszawa",
         catName: "Nocne Życie & Bary 🏙️",
         q: "Która ulica w Śródmieściu Południowym jest uznawana za nieoficjalną 'stolicę warszawskiego kraftu'?",
         options: [
@@ -10983,6 +11154,7 @@
       {
         id: 13,
         cat: "warsaw",
+        city: "warszawa",
         catName: "Nocne Życie & Bary 🏙️",
         q: "Jaki kultowy praski lokal przy ul. Ząbkowskiej słynie z wystroju vintage, starych maszyn do szycia i klimatu retro?",
         options: [
@@ -10997,6 +11169,7 @@
       {
         id: 14,
         cat: "warsaw",
+        city: "warszawa",
         catName: "Nocne Życie & Bary 🏙️",
         q: "Jak w gwarze warszawskiej nazywano tradycyjny zestaw biesiadny: dwa kieliszki i zimne nóżki?",
         options: [
@@ -11011,6 +11184,7 @@
       {
         id: 15,
         cat: "warsaw",
+        city: "warszawa",
         catName: "Nocne Życie & Bary 🏙️",
         q: "W którym roku otwarto zrewitalizowaną Halę Koszyki z restauracjami i barami?",
         options: [
@@ -11025,6 +11199,7 @@
       {
         id: 16,
         cat: "warsaw",
+        city: "warszawa",
         catName: "Nocne Życie & Bary 🏙️",
         q: "Jak nazywa się plac w Warszawie, zwany pieszczotliwie 'Placem Hipstera' z licznymi ogródkami barowymi?",
         options: [
@@ -11221,6 +11396,7 @@
       {
         id: 30,
         cat: "warsaw",
+        city: "warszawa",
         catName: "Nocne Życie & Bary 🏙️",
         q: "Który kultowy klubo-pub w Parku Pole Mokotowskie słynie z ogromnego grilla i ogródka?",
         options: [
@@ -11235,6 +11411,7 @@
       {
         id: 31,
         cat: "warsaw",
+        city: "warszawa",
         catName: "Nocne Życie & Bary 🏙️",
         q: "W którym gmachu w Warszawie mieścił się słynny multitap 'Cuda na Kiju'?",
         options: [
@@ -11249,6 +11426,7 @@
       {
         id: 32,
         cat: "warsaw",
+        city: "warszawa",
         catName: "Nocne Życie & Bary 🏙️",
         q: "Gdzie w Warszawie w dawnej wytwórni wódek powstało centrum kulturalno-gastronomiczne z barami?",
         options: [
@@ -11263,6 +11441,7 @@
       {
         id: 33,
         cat: "warsaw",
+        city: "warszawa",
         catName: "Nocne Życie & Bary 🏙️",
         q: "Który warszawski festiwal piwny odbywa się na stadionie Legii Warszawa przy ul. Łazienkowskiej?",
         options: [
@@ -11277,6 +11456,7 @@
       {
         id: 34,
         cat: "warsaw",
+        city: "warszawa",
         catName: "Nocne Życie & Bary 🏙️",
         q: "W której dzielnicy Warszawy znajduje się historyczny Fort Bema z popularnymi lokalami i ogródkami?",
         options: [
@@ -11291,6 +11471,7 @@
       {
         id: 35,
         cat: "warsaw",
+        city: "warszawa",
         catName: "Nocne Życie & Bary 🏙️",
         q: "Co warszawiacy mają na myśli, mówiąc w letni piątkowy wieczór 'idziemy na Schodki'?",
         options: [
@@ -11371,6 +11552,364 @@
         ],
         correct: 0,
         fact: "Samo piwo nie zawiera tłuszczu, ale chmiel pobudza wydzielanie kwasów żołądkowych, wywołując wilczy apetyt na pizzę, orzeszki czy frytki!"
+      },
+      // --- KRAKÓW (41-48) ---
+      {
+        id: 41,
+        cat: "warsaw",
+        city: "krakow",
+        catName: "Nocne Życie & Kraków 🏰",
+        q: "W której historycznej dzielnicy Krakowa bije serce nocnego życia wokół Placu Nowego i Okrąglaka?",
+        options: [
+          "Kazimierz",
+          "Nowa Huta",
+          "Podgórze",
+          "Krowodrza"
+        ],
+        correct: 0,
+        fact: "Krakowski Kazimierz, niegdyś odrębne miasto żydowskie, to dziś europejska stolica klimatycznych knajpek, barów przy świecach i zapiekanek!"
+      },
+      {
+        id: 42,
+        cat: "warsaw",
+        city: "krakow",
+        catName: "Nocne Życie & Kraków 🏰",
+        q: "Jaki kultowy krakowski lokal przy Placu Nowym słynie ze stolików zrobionych ze starych maszyn do szycia i klimatu bohemy?",
+        options: [
+          "Singer",
+          "Alchemia",
+          "Mleczarnia",
+          "Eszeweria"
+        ],
+        correct: 0,
+        fact: "W barze Singer przy ul. Estery niemal każdy stolik to zabytkowa maszyna do szycia Singer – w weekendowe noce goście tańczą na stołach do rana!"
+      },
+      {
+        id: 43,
+        cat: "warsaw",
+        city: "krakow",
+        catName: "Nocne Życie & Kraków 🏰",
+        q: "Który lokal na krakowskim Kazimierzu jest uważany za legendarny symbol odrodzenia tej dzielnicy, słynący z przejścia przez szafę?",
+        options: [
+          "Alchemia",
+          "Pijalnia Wódki i Piwa",
+          "Piękny Pies",
+          "Klub Re"
+        ],
+        correct: 0,
+        fact: "Alchemia przy Placu Nowym działa od 1999 roku i jest sercem krakowskiego Kazimierza – to tu w piwnicach odbywają się kultowe koncerty i jam sessions!"
+      },
+      {
+        id: 44,
+        cat: "warsaw",
+        city: "krakow",
+        catName: "Nocne Życie & Kraków 🏰",
+        q: "Co jest tradycyjną nocną przekąską krakowian po imprezie z 'Okrąglaka' na Placu Nowym?",
+        options: [
+          "Gorąca zapiekanka z pieczarkami i serem",
+          "Krakowski obwarzanek z solą",
+          "Maczanka po krakowsku",
+          "Kiełbaska z Nyski pod Halą Targową"
+        ],
+        correct: 0,
+        fact: "Okrąglak w sercu Kazimierza to epicentrum krakowskich zapiekanek, gdzie do późnych godzin nocnych ustawiają się kolejki głodnych biesiadników!"
+      },
+      {
+        id: 45,
+        cat: "warsaw",
+        city: "krakow",
+        catName: "Nocne Życie & Kraków 🏰",
+        q: "Gdzie w Krakowie od lat nocami staje legendarna niebieska Nyska serwująca pieczone kiełbaski z bułką?",
+        options: [
+          "Pod Halą Targową przy ul. Grzegórzeckiej",
+          "Przy Dworcu Głównym",
+          "Na Błoniach Krakowskich",
+          "Przed Wawelem"
+        ],
+        correct: 0,
+        fact: "Niebieska Nyska pod Halą Targową działa od 1991 roku i jest jedną z najsłynniejszych nocnych instytucji kulinarnych w całej Polsce!"
+      },
+      {
+        id: 46,
+        cat: "warsaw",
+        city: "krakow",
+        catName: "Nocne Życie & Kraków 🏰",
+        q: "Jaki zabytkowy browar z 1840 roku zrewitalizowano w centrum Krakowa niedaleko Dworca Głównego?",
+        options: [
+          "Browar Lubicz",
+          "Browar Czeczotka",
+          "Browar Kazimierz",
+          "Browar Wawel"
+        ],
+        correct: 0,
+        fact: "Browar Lubicz (dawniej Browar Goetzów) wznowił warzenie piwa na miejscu w historycznych, ceglanych piwnicach w samym centrum Krakowa!"
+      },
+      {
+        id: 47,
+        cat: "warsaw",
+        city: "krakow",
+        catName: "Nocne Życie & Kraków 🏰",
+        q: "Który legendarny klub studencki przy Rynku Głównym w Krakowie uznawany jest za najstarszy klub studencki w Polsce?",
+        options: [
+          "Klub Pod Jaszczurami",
+          "Rotunda",
+          "Klub Zaścianek",
+          "Klub Kwadrat"
+        ],
+        correct: 0,
+        fact: "Pod Jaszczurami założono w 1960 roku w gotyckiej kamienicy przy Rynku – to matecznik krakowskiego jazzu, kabaretu i studenckiego życia!"
+      },
+      {
+        id: 48,
+        cat: "warsaw",
+        city: "krakow",
+        catName: "Nocne Życie & Kraków 🏰",
+        q: "Jakie wielkie postindustrialne zagłębie barowe mieściło się w dawnej fabryce tytoniu przy ul. Dolnych Młynów w Krakowie?",
+        options: [
+          "Tytano (Dolne Młyny)",
+          "Zabłocie Kraft",
+          "Fabryka Schindlera",
+          "Wesoła Spot"
+        ],
+        correct: 0,
+        fact: "Kompleks Dolne Młyny w latach 2016-2020 był najmodniejszym zagłębiem gastronomiczno-imprezowym Krakowa z dziesiątkami ogródków i barów!"
+      },
+      // --- WROCŁAW (49-54) ---
+      {
+        id: 49,
+        cat: "warsaw",
+        city: "wroclaw",
+        catName: "Nocne Życie & Wrocław 🌉",
+        q: "Która wyspa na Odrze we Wrocławiu jest najsłynniejszym plenerowym miejscem legalnego spotkania przy piwku studentów?",
+        options: [
+          "Wyspa Słodowa",
+          "Wyspa Piasek",
+          "Wyspa Daliowa",
+          "Kępa Mieszczańska"
+        ],
+        correct: 0,
+        fact: "Wyspa Słodowa to unikalne miejsce w Polsce, gdzie miejska uchwała dopuszcza legalne spożywanie alkoholu w plenerze w sercu Wrocławia!"
+      },
+      {
+        id: 50,
+        cat: "warsaw",
+        city: "wroclaw",
+        catName: "Nocne Życie & Wrocław 🌉",
+        q: "W podziemiach którego zabytku na wrocławskim Rynku działa kultowy browar restauracyjny Spiż?",
+        options: [
+          "Stary Ratusz",
+          "Nowy Ratusz",
+          "Kamienica Jaś i Małgosia",
+          "Sukiennice"
+        ],
+        correct: 0,
+        fact: "Minibrowar Spiż działa w piwnicach Starego Ratusza od 1992 roku – do piwa tradycyjnie podaje się tam świeży chleb ze smalcem i ogórkiem!"
+      },
+      {
+        id: 51,
+        cat: "warsaw",
+        city: "wroclaw",
+        catName: "Nocne Życie & Wrocław 🌉",
+        q: "Jak nazywa się popularne wrocławskie zagłębie barów zlokalizowane w niszach pod nasypem kolejowym?",
+        options: [
+          "Nasyp przy ul. Bogusławskiego",
+          "Bulwar Dunikowskiego",
+          "Dzielnica Czterech Wyznań",
+          "Podwale"
+        ],
+        correct: 0,
+        fact: "Klimatyczne puby pod nasypem kolejowym przy Bogusławskiego oferują rzemieślnicze piwa, czeskie specjały i pizzę w cieniu przejeżdżających pociągów!"
+      },
+      {
+        id: 52,
+        cat: "warsaw",
+        city: "wroclaw",
+        catName: "Nocne Życie & Wrocław 🌉",
+        q: "Który wrocławski browar rzemieślniczy zasłynął serią piw 'Salamander' i mostem w swoim logo?",
+        options: [
+          "Browar Stu Mostów",
+          "Browar Profesja",
+          "Browar Złoty Pies",
+          "Browar Prost"
+        ],
+        correct: 0,
+        fact: "Browar Stu Mostów to duma wrocławskiego kraftu, nawiązująca nazwą do ponad 100 mostów i kładek zdobiących Wrocław!"
+      },
+      {
+        id: 53,
+        cat: "warsaw",
+        city: "wroclaw",
+        catName: "Nocne Życie & Wrocław 🌉",
+        q: "W którym roku wybuchła słynna średniowieczna 'Wojna piwna' we Wrocławiu o monopol na szynkowanie piwa ze Świdnicy?",
+        options: [
+          "1380-1382",
+          "1492",
+          "1241",
+          "1569"
+        ],
+        correct: 0,
+        fact: "Konflikt między Radą Miejską a kanonikami z Ostrowa Tumskiego o prawo sprzedaży piwa doprowadził do interdyktu papieskiego i oblężenia!"
+      },
+      {
+        id: 54,
+        cat: "warsaw",
+        city: "wroclaw",
+        catName: "Nocne Życie & Wrocław 🌉",
+        q: "Gdzie we Wrocławiu skupione są bary i kluby w tzw. Dzielnicy Wzajemnego Szacunku (Czterech Świątyń)?",
+        options: [
+          "Między ul. Kazimierza Wielkiego, św. Antoniego i Pawła Włodkowica",
+          "Na Nadodrzu",
+          "Na Ołbinie",
+          "Wokół Placu Grunwaldzkiego"
+        ],
+        correct: 0,
+        fact: "Okolice ul. Włodkowica i św. Antoniego to jedno z najbardziej urokliwych miejsc spotkań z ogródkami ukrytymi w zabytkowych podwórkach!"
+      },
+      // --- POZNAŃ (55-58) ---
+      {
+        id: 55,
+        cat: "warsaw",
+        city: "poznan",
+        catName: "Nocne Życie & Poznań 🐐",
+        q: "Która secesyjna dzielnica Poznania stała się w ostatnich latach zagłębiem rzemieślniczych knajp, kawiarni i kraftu?",
+        options: [
+          "Jeżyce",
+          "Wilda",
+          "Łazarz",
+          "Rataje"
+        ],
+        correct: 0,
+        fact: "Jeżyce przeżyły niesamowitą rewitalizację – zabytkowe kamienice kryją dziś najlepsze multitapy, piekarnie i lokale gastronomiczne w mieście!"
+      },
+      {
+        id: 56,
+        cat: "warsaw",
+        city: "poznan",
+        catName: "Nocne Życie & Poznań 🐐",
+        q: "Który kultowy multitap przy ul. Wronieckiej w Poznaniu jest uznawany za pioniera rewolucji piwnej w stolicy Wielkopolski?",
+        options: [
+          "Ministerstwo Browaru",
+          "Chmielnik",
+          "Piwna Stopa",
+          "Ułan Browar"
+        ],
+        correct: 0,
+        fact: "Ministerstwo Browaru przy Wronieckiej oraz ich sklep z piwem kształtowały gusta poznańskich beer geeków od początku rewolucji rzemieślniczej!"
+      },
+      {
+        id: 57,
+        cat: "warsaw",
+        city: "poznan",
+        catName: "Nocne Życie & Poznań 🐐",
+        q: "Co dzieje się codziennie o 12:00 na Starym Rynku w Poznaniu, gromadząc tłumy z okolicznych ogródków piwnych?",
+        options: [
+          "Trykają się dwa blaszane koziołki na wieży Ratusza",
+          "Wystrzał armatni z Cytadeli",
+          "Parada orkiestry miejskiej",
+          "Darmowy toast cydrem"
+        ],
+        correct: 0,
+        fact: "Koziołki Pyrek i Tyrek trykają się na wieży od 1551 roku – to symbol Poznania i stały punkt spotkań na Rynku!"
+      },
+      {
+        id: 58,
+        cat: "warsaw",
+        city: "poznan",
+        catName: "Nocne Życie & Poznań 🐐",
+        q: "Jakie tradycyjne wielkopolskie danie barowe z ziemniaków i twarogu często zamawia się do piwka?",
+        options: [
+          "Pyry z gzikiem",
+          "Kaczka po poznańsku",
+          "Szare kluchy",
+          "Plindze"
+        ],
+        correct: 0,
+        fact: "Pyry z gzikiem (ugotowane w mundurkach ziemniaki ze swojskim twarogiem ze szczypiorkiem i śmietaną) to wielkopolski król pubowych przekąsek!"
+      },
+      // --- GENERAL POLISH BREWING & CRAFT (59-64) ---
+      {
+        id: 59,
+        cat: "beer",
+        catName: "Style & Kraft 🍺",
+        q: "Które piwo z 2011 roku uwarzone przez Browar Pinta uznaje się za oficjalny początek polskiej rewolucji kraftowej?",
+        options: [
+          "Atak Chmielu (American IPA)",
+          "Rowing Jack",
+          "Koniec Świata",
+          "Czarna Dziura"
+        ],
+        correct: 0,
+        fact: "Pinta 'Atak Chmielu' zadebiutowała 7 maja 2011 roku na Festiwalu Dobrego Piwa we Wrocławiu, wywołując eksplozję zainteresowania piwami rzemieślniczymi w Polsce!"
+      },
+      {
+        id: 60,
+        cat: "beer",
+        catName: "Style & Kraft 🍺",
+        q: "Jak nazywa się słynna polska odmiana chmielu szlachetnego o subtelnym, ziołowo-korzennym aromacie?",
+        options: [
+          "Chmiel Lubelski",
+          "Citra",
+          "Mosaic",
+          "Simcoe"
+        ],
+        correct: 0,
+        fact: "Chmiel Lubelski to polski chmiel żaroodporny i aromatyczny, uprawiany na Lubelszczyźnie od wieków i ceniony przez browary na całym świecie!"
+      },
+      {
+        id: 61,
+        cat: "beer",
+        catName: "Style & Kraft 🍺",
+        q: "W jaki dzień roku w Polsce i na świecie obchodzony jest 'Baltic Porter Day' (Dzień Porteru Bałtyckiego)?",
+        options: [
+          "Trzecia sobota stycznia",
+          "Pierwszy piątek sierpnia",
+          "Ostatnia sobota października",
+          "1 maja"
+        ],
+        correct: 0,
+        fact: "Święto zainicjowane przez polskiego blogera Marcina Chmielarza w 2016 roku zyskało wymiar globalny – co roku w styczniu cały świat wznosi toast Porterem Bałtyckim!"
+      },
+      {
+        id: 62,
+        cat: "culture",
+        catName: "Kultura Barowa & Ciekawostki 💡",
+        q: "Jak nazywają się najstarsze w Polsce ogólnopolskie dożynki chmielarskie i święto piwa odbywające się od 1971 roku?",
+        options: [
+          "Chmielaki Krasnostawskie",
+          "Wrocławski Festiwal Piwa",
+          "Birofilia Żywiec",
+          "Festiwal Piwa w Lublinie"
+        ],
+        correct: 0,
+        fact: "Chmielaki w Krasnymstawie to najstarszy i największy plenerowy festiwal chmielarsko-piwny w Polsce o ponad 50-letniej tradycji!"
+      },
+      {
+        id: 63,
+        cat: "culture",
+        catName: "Kultura Barowa & Ciekawostki 💡",
+        q: "Co oznacza barowe określenie 'krawat' na butelce piwa?",
+        options: [
+          "Dodatkowa mała etykietka na szyjce butelki",
+          "Kropla piwa spływająca po szkle",
+          "Otwarcie kapsla ząbkami",
+          "Opaska papierowa na kuflu"
+        ],
+        correct: 0,
+        fact: "Krawat to w żargonie browarniczym i barowym papierowa etykieta okalająca szyjkę butelki, często zawierająca informacje o roczniku lub stylu!"
+      },
+      {
+        id: 64,
+        cat: "beer",
+        catName: "Style & Kraft 🍺",
+        q: "Kto według słynnej anegdoty na łożu boleści wołał o piwo z Warki, a świadkowie myśleli, że modli się do świętej Pivy z Warki?",
+        options: [
+          "Nuncjusz papieski Ippolito Aldobrandini (późniejszy papież Klemens VIII)",
+          "Król Jan III Sobieski",
+          "Król Stefan Batory",
+          "Książę Janusz I Starszy"
+        ],
+        correct: 0,
+        fact: "Nuncjusz cierpiał na bolesny wrzód gardła i jęczał 'Piva di Warka!', a obecni zaczęli powtarzać modlitwę 'Sancta Piva ora pro nobis', co tak go rozbawiło, że wrzód pękł i wyzdrowiał!"
       }
     ];
 
@@ -11618,11 +12157,19 @@
     });
 
     function startRound() {
-      let pool = PUB_QUIZ_QUESTIONS;
+      const curCity = getCurrentCity();
+      // Filter out questions belonging to other cities
+      const cityQuestions = PUB_QUIZ_QUESTIONS.filter(q => !q.city || q.city === curCity.id);
+
+      let pool = cityQuestions;
       if (selectedCategory !== "all") {
-        pool = PUB_QUIZ_QUESTIONS.filter(q => q.cat === selectedCategory);
+        if (selectedCategory === "warsaw" || selectedCategory === "city") {
+          pool = cityQuestions.filter(q => q.cat === "warsaw" || q.cat === "city" || (q.city && q.city === curCity.id));
+        } else {
+          pool = cityQuestions.filter(q => q.cat === selectedCategory);
+        }
         if (pool.length < selectedQuestionsCount) {
-          const others = PUB_QUIZ_QUESTIONS.filter(q => q.cat !== selectedCategory);
+          const others = cityQuestions.filter(q => !pool.some(p => p.id === q.id));
           pool = [...pool, ...others];
         }
       }
@@ -11668,11 +12215,20 @@
         return;
       }
 
+      const curCity = getCurrentCity();
       const totalCount = activeQuestions.length;
       const qNum = currentQuestionIdx + 1;
       if (stepTag) stepTag.textContent = `Pytanie ${qNum} z ${totalCount}`;
       if (progressFill) progressFill.style.width = `${(qNum / totalCount) * 100}%`;
-      if (qCategory) qCategory.textContent = q.catName;
+      if (qCategory) {
+        if (q.city && q.city === curCity.id) {
+          qCategory.textContent = `Nocne Życie & ${curCity.name} ${curCity.icon || "🏙️"}`;
+        } else if (q.cat === "warsaw") {
+          qCategory.textContent = `Nocne Życie & ${curCity.name} ${curCity.icon || "🏙️"}`;
+        } else {
+          qCategory.textContent = q.catName || "Piwna Wiedza";
+        }
+      }
       if (qTitle) qTitle.textContent = q.q;
 
       if (feedbackBanner) feedbackBanner.style.display = "none";
@@ -11847,13 +12403,24 @@
       });
     }
 
-    updateSettingsDisplay();
+    function updateQuizCityUI() {
+      const cur = getCurrentCity();
+      const catTitle = document.getElementById("quiz-cat-city-title");
+      const catIco = document.getElementById("quiz-cat-city-ico");
+      const catSub = document.getElementById("quiz-cat-city-sub");
+      if (catTitle) catTitle.textContent = `Nocne Życie & ${cur.name}`;
+      if (catIco) catIco.textContent = cur.icon || "🏙️";
+      if (catSub) catSub.textContent = `Kultowe lokale i klimat – ${cur.name}`;
+    }
+    window.__updateQuizCityUI = updateQuizCityUI;
+    updateQuizCityUI();
 
     window.__openPubQuiz = function () {
       if (modal) {
         modal.classList.add("active");
         modal.style.display = "flex";
       }
+      updateQuizCityUI();
       switchQuizTab("game");
       if (screenResults) screenResults.style.display = "none";
       if (screenPlay) screenPlay.style.display = "none";
