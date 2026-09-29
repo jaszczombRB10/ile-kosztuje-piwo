@@ -6,10 +6,277 @@
   "use strict";
 
   // Configuration
-  const WARSAW_CENTER = [52.2319, 21.0185]; // Centered on Śródmieście / Nowy Świat
   const DEFAULT_ZOOM = 13;
 
-  const DISTRICT_CENTERS = {
+  const CITIES = [
+    {
+      id: "warszawa",
+      name: "Warszawa",
+      icon: "🏙️",
+      center: [52.2319, 21.0185],
+      zoom: 13,
+      active: true,
+      count: 349,
+      badge: "349 barów 🟢",
+      desc: "Pełna baza lokali",
+      hotspots: [
+        { name: "Pawilony Nowy Świat", val: "Pawilony", icon: "🔥", coords: [52.2323, 21.0206], zoom: 17 },
+        { name: "Bulwary Wiślane", val: "Bulwary", icon: "🌊", coords: [52.2380, 21.0350], zoom: 15 }
+      ],
+      districts: [
+        { name: "Śródmieście", coords: [52.2300, 21.0150], zoom: 14 },
+        { name: "Mokotów", coords: [52.1900, 21.0250], zoom: 13 },
+        { name: "Wola", coords: [52.2380, 20.9650], zoom: 14 },
+        { name: "Ochota", coords: [52.2150, 20.9750], zoom: 14 },
+        { name: "Żoliborz", coords: [52.2680, 20.9850], zoom: 14 },
+        { name: "Praga Północ", coords: [52.2580, 21.0350], zoom: 14 },
+        { name: "Praga Południe", coords: [52.2350, 21.0750], zoom: 14 },
+        { name: "Bielany", coords: [52.2850, 20.9350], zoom: 13 },
+        { name: "Bemowo", coords: [52.2450, 20.9150], zoom: 13 },
+        { name: "Ursynów", coords: [52.1450, 21.0450], zoom: 13 },
+        { name: "Targówek", coords: [52.2850, 21.0550], zoom: 13 },
+        { name: "Białołęka", coords: [52.3250, 21.0150], zoom: 13 },
+        { name: "Wawer", coords: [52.1850, 21.1650], zoom: 13 },
+        { name: "Wilanów", coords: [52.1550, 21.0950], zoom: 13 },
+        { name: "Ursus", coords: [52.1950, 20.8850], zoom: 14 },
+        { name: "Włochy", coords: [52.1950, 20.9300], zoom: 13 },
+        { name: "Rembertów", coords: [52.2580, 21.1650], zoom: 13 },
+        { name: "Wesoła", coords: [52.2450, 21.2300], zoom: 13 }
+      ]
+    },
+    {
+      id: "krakow",
+      name: "Kraków",
+      icon: "🏰",
+      center: [50.0614, 19.9383],
+      zoom: 14,
+      active: false,
+      count: 0,
+      badge: "Wkrótce 🚀",
+      desc: "Rynek, Kazimierz, Dolne Młyny",
+      hotspots: [
+        { name: "Kazimierz", val: "Kazimierz", icon: "🔥", coords: [50.0515, 19.9452], zoom: 16 },
+        { name: "Rynek Główny", val: "Stare Miasto", icon: "🏰", coords: [50.0614, 19.9383], zoom: 16 }
+      ],
+      districts: [
+        { name: "Stare Miasto", coords: [50.0614, 19.9383], zoom: 15 },
+        { name: "Kazimierz", coords: [50.0515, 19.9452], zoom: 16 },
+        { name: "Podgórze", coords: [50.0436, 19.9540], zoom: 15 },
+        { name: "Krowodrza", coords: [50.0760, 19.9190], zoom: 14 },
+        { name: "Nowa Huta", coords: [50.0710, 20.0380], zoom: 14 },
+        { name: "Dębniki", coords: [50.0480, 19.9230], zoom: 14 },
+        { name: "Grzegórzki", coords: [50.0590, 19.9670], zoom: 14 },
+        { name: "Zabłocie", coords: [50.0480, 19.9620], zoom: 15 }
+      ]
+    },
+    {
+      id: "wroclaw",
+      name: "Wrocław",
+      icon: "🌉",
+      center: [51.1079, 17.0385],
+      zoom: 14,
+      active: false,
+      count: 0,
+      badge: "Wkrótce 🚀",
+      desc: "Rynek, Nadodrze, Wyspa Słodowa",
+      hotspots: [
+        { name: "Wyspa Słodowa", val: "Wyspa Słodowa", icon: "🌊", coords: [51.1165, 17.0360], zoom: 16 },
+        { name: "Rynek i Solny", val: "Stare Miasto", icon: "🔥", coords: [51.1079, 17.0385], zoom: 16 }
+      ],
+      districts: [
+        { name: "Stare Miasto", coords: [51.1079, 17.0385], zoom: 15 },
+        { name: "Nadodrze", coords: [51.1210, 17.0330], zoom: 15 },
+        { name: "Śródmieście", coords: [51.1150, 17.0550], zoom: 14 },
+        { name: "Krzyki", coords: [51.0850, 17.0200], zoom: 13 },
+        { name: "Fabryczna", coords: [51.1100, 16.9600], zoom: 13 },
+        { name: "Psie Pole", coords: [51.1450, 17.0900], zoom: 13 }
+      ]
+    },
+    {
+      id: "poznan",
+      name: "Poznań",
+      icon: "🐐",
+      center: [52.4064, 16.9252],
+      zoom: 14,
+      active: false,
+      count: 0,
+      badge: "Wkrótce 🚀",
+      desc: "Stary Rynek, Jeżyce, Wilda",
+      hotspots: [
+        { name: "Stary Rynek", val: "Stare Miasto", icon: "🔥", coords: [52.4082, 16.9345], zoom: 16 },
+        { name: "Jeżyce", val: "Jeżyce", icon: "🌿", coords: [52.4130, 16.9070], zoom: 15 }
+      ],
+      districts: [
+        { name: "Stare Miasto", coords: [52.4082, 16.9345], zoom: 15 },
+        { name: "Jeżyce", coords: [52.4130, 16.9070], zoom: 15 },
+        { name: "Wilda", coords: [52.3920, 16.9200], zoom: 14 },
+        { name: "Łazarz", coords: [52.3950, 16.8980], zoom: 14 },
+        { name: "Grunwald", coords: [52.3900, 16.8650], zoom: 13 },
+        { name: "Rataje", coords: [52.3900, 16.9550], zoom: 13 }
+      ]
+    },
+    {
+      id: "trojmiasto",
+      name: "Trójmiasto",
+      icon: "⚓",
+      center: [54.3520, 18.6466],
+      zoom: 13,
+      active: false,
+      count: 0,
+      badge: "Wkrótce 🚀",
+      desc: "Gdańsk, Sopot, Gdynia",
+      hotspots: [
+        { name: "Monciak Sopot", val: "Sopot", icon: "🔥", coords: [54.4440, 18.5630], zoom: 16 },
+        { name: "Długi Targ", val: "Gdańsk", icon: "⚓", coords: [54.3485, 18.6530], zoom: 16 }
+      ],
+      districts: [
+        { name: "Gdańsk Główne Miasto", coords: [54.3485, 18.6530], zoom: 15 },
+        { name: "Gdańsk Wrzeszcz", coords: [54.3790, 18.6050], zoom: 14 },
+        { name: "Gdańsk Oliwa", coords: [54.4090, 18.5600], zoom: 14 },
+        { name: "Sopot", coords: [54.4440, 18.5630], zoom: 15 },
+        { name: "Gdynia Śródmieście", coords: [54.5190, 18.5390], zoom: 14 }
+      ]
+    },
+    {
+      id: "lodz",
+      name: "Łódź",
+      icon: "🏭",
+      center: [51.7687, 19.4560],
+      zoom: 14,
+      active: false,
+      count: 0,
+      badge: "Wkrótce 🚀",
+      desc: "Piotrkowska, OFF Piotrkowska",
+      hotspots: [
+        { name: "OFF Piotrkowska", val: "OFF Piotrkowska", icon: "🔥", coords: [51.7610, 19.4590], zoom: 16 }
+      ],
+      districts: [
+        { name: "Śródmieście", coords: [51.7687, 19.4560], zoom: 14 },
+        { name: "Bałuty", coords: [51.7950, 19.4450], zoom: 13 },
+        { name: "Widzew", coords: [51.7650, 19.5100], zoom: 13 },
+        { name: "Polesie", coords: [51.7550, 19.4100], zoom: 13 }
+      ]
+    },
+    {
+      id: "katowice",
+      name: "Katowice / Śląsk",
+      icon: "⛏️",
+      center: [50.2649, 19.0238],
+      zoom: 14,
+      active: false,
+      count: 0,
+      badge: "Wkrótce 🚀",
+      desc: "Mariacka, Centrum",
+      hotspots: [
+        { name: "Ulica Mariacka", val: "Mariacka", icon: "🔥", coords: [50.2575, 19.0260], zoom: 16 }
+      ],
+      districts: [
+        { name: "Śródmieście", coords: [50.2590, 19.0210], zoom: 15 },
+        { name: "Koszutka", coords: [50.2700, 19.0220], zoom: 14 },
+        { name: "Nikiszowiec", coords: [50.2420, 19.0800], zoom: 15 },
+        { name: "Ligota", coords: [50.2280, 18.9800], zoom: 14 }
+      ]
+    },
+    {
+      id: "lublin",
+      name: "Lublin",
+      icon: "🏰",
+      center: [51.2465, 22.5684],
+      zoom: 14,
+      active: false,
+      count: 0,
+      badge: "Wkrótce 🚀",
+      desc: "Stare Miasto, Centrum",
+      hotspots: [
+        { name: "Stare Miasto", val: "Stare Miasto", icon: "🏰", coords: [51.2480, 22.5690], zoom: 16 }
+      ],
+      districts: [
+        { name: "Stare Miasto", coords: [51.2480, 22.5690], zoom: 15 },
+        { name: "Śródmieście", coords: [51.2470, 22.5550], zoom: 14 },
+        { name: "Wieniawa", coords: [51.2520, 22.5350], zoom: 14 }
+      ]
+    },
+    {
+      id: "szczecin",
+      name: "Szczecin",
+      icon: "🌊",
+      center: [53.4285, 14.5528],
+      zoom: 14,
+      active: false,
+      count: 0,
+      badge: "Wkrótce 🚀",
+      desc: "Bulwary, Jasne Błonia",
+      hotspots: [
+        { name: "Bulwary Piastowskie", val: "Bulwary", icon: "🌊", coords: [53.4245, 14.5650], zoom: 16 }
+      ],
+      districts: [
+        { name: "Śródmieście", coords: [53.4285, 14.5528], zoom: 14 },
+        { name: "Stare Miasto", coords: [53.4250, 14.5600], zoom: 15 },
+        { name: "Pogodno", coords: [53.4450, 14.5100], zoom: 14 }
+      ]
+    },
+    {
+      id: "bydgoszcz_torun",
+      name: "Toruń & Bydgoszcz",
+      icon: "🐉",
+      center: [53.0138, 18.5984],
+      zoom: 14,
+      active: false,
+      count: 0,
+      badge: "Wkrótce 🚀",
+      desc: "Starówka Toruńska, Wyspa Młyńska",
+      districts: [
+        { name: "Starówka Toruń", coords: [53.0105, 18.6050], zoom: 15 },
+        { name: "Bydgoszcz Centrum", coords: [53.1235, 18.0084], zoom: 14 }
+      ]
+    },
+    {
+      id: "bialystok",
+      name: "Białystok",
+      icon: "🌳",
+      center: [53.1325, 23.1688],
+      zoom: 14,
+      active: false,
+      count: 0,
+      badge: "Wkrótce 🚀",
+      desc: "Lipowa, Rynek Kościuszki",
+      districts: [
+        { name: "Centrum", coords: [53.1325, 23.1688], zoom: 15 },
+        { name: "Bojary", coords: [53.1370, 23.1780], zoom: 14 }
+      ]
+    }
+  ];
+
+  function getCurrentCity() {
+    let savedId = "warszawa";
+    try {
+      savedId = localStorage.getItem("poilepiwko_city") || "warszawa";
+    } catch (e) {}
+    return CITIES.find(c => c.id === savedId) || CITIES[0];
+  }
+
+  const WARSAW_CENTER = [52.2319, 21.0185]; // Default center
+
+  function getDistrictTarget(districtName) {
+    const cur = getCurrentCity();
+    if (!districtName || districtName === "all") {
+      return { coords: cur.center, zoom: cur.zoom };
+    }
+    if (cur.hotspots) {
+      const hs = cur.hotspots.find(h => h.val === districtName || h.name === districtName);
+      if (hs && hs.coords) return { coords: hs.coords, zoom: hs.zoom || 16 };
+    }
+    if (cur.districts) {
+      const d = cur.districts.find(item => item.name === districtName);
+      if (d && d.coords) return { coords: d.coords, zoom: d.zoom || 14 };
+    }
+    if (RAW_WARSAW_DISTRICT_CENTERS[districtName]) {
+      return RAW_WARSAW_DISTRICT_CENTERS[districtName];
+    }
+    return { coords: cur.center, zoom: cur.zoom };
+  }
+
+  const RAW_WARSAW_DISTRICT_CENTERS = {
     "all": { coords: [52.2319, 21.0067], zoom: 12 },
     "Pawilony": { coords: [52.2323, 21.0206], zoom: 17 },
     "Bulwary": { coords: [52.2380, 21.0350], zoom: 15 },
@@ -32,6 +299,17 @@
     "Rembertów": { coords: [52.2580, 21.1650], zoom: 13 },
     "Wesoła": { coords: [52.2450, 21.2300], zoom: 13 }
   };
+
+  const DISTRICT_CENTERS = new Proxy(RAW_WARSAW_DISTRICT_CENTERS, {
+    get(target, prop) {
+      if (typeof prop !== "string") return target[prop];
+      if (prop === "all") {
+        const cur = getCurrentCity();
+        return { coords: cur.center, zoom: cur.zoom };
+      }
+      return getDistrictTarget(prop);
+    }
+  });
 
   const CRAWL_HOTSPOTS = {
     "pawilony": { name: "Pawilony Nowy Świat", coords: [52.2323, 21.0206] },
@@ -336,7 +614,8 @@
     const btnLocate = document.getElementById("btn-locate-me");
     const btnLocateFloat = document.getElementById("btn-locate-float");
 
-    const labelText = isSimulated ? "Centrum (Nowy Świat)" : "Moja pozycja";
+    const curCity = getCurrentCity();
+    const labelText = isSimulated ? `Centrum (${curCity.name})` : "Moja pozycja";
     if (btnLocate) btnLocate.innerHTML = `<span>📍</span><span>${labelText}</span>`;
     if (btnLocateFloat) {
       const floatSpan = btnLocateFloat.querySelector("span.locate-label");
@@ -349,7 +628,7 @@
 
     if (map) {
       const popupHtml = isSimulated
-        ? `<div style="font-weight:700;padding:6px 8px;font-size:0.85rem;color:#f8fafc;background:#0f172a;border-radius:6px;">📍 Pozycja w Warszawie: Nowy Świat / Centrum</div>`
+        ? `<div style="font-weight:700;padding:6px 8px;font-size:0.85rem;color:#f8fafc;background:#0f172a;border-radius:6px;">📍 Pozycja domyślna: Centrum ${curCity.name}</div>`
         : `<div style="font-weight:700;padding:6px 8px;font-size:0.85rem;color:#f8fafc;background:#0f172a;border-radius:6px;">📍 Twoja lokalizacja GPS<div style="font-weight:400;font-size:0.75rem;color:#94a3b8;margin-top:2px;">Bary posortowane według odległości od Ciebie</div></div>`;
 
       const markerClass = isSimulated ? "user-gps-pulse-marker simulated" : "user-gps-pulse-marker";
@@ -366,12 +645,12 @@
       userMarker = L.marker(userLocation, {
         icon: gpsIcon,
         zIndexOffset: 1200,
-        title: isSimulated ? "Pozycja w Warszawie: Nowy Świat" : "Twoja lokalizacja GPS"
+        title: isSimulated ? `Pozycja domyślna: Centrum ${curCity.name}` : "Twoja lokalizacja GPS"
       }).addTo(map).bindPopup(popupHtml);
 
       if (isFar) {
-        // User is far away (e.g. Stockholm) - keep map inside Poland bounds at Warsaw center
-        map.flyTo(WARSAW_CENTER, 13, { duration: 1.2 });
+        // User is far away (e.g. outside city/country) - keep map inside selected city bounds
+        map.flyTo(curCity.center, curCity.zoom || 13, { duration: 1.2 });
       } else {
         map.flyTo(userLocation, 16, { duration: 1.2 });
       }
@@ -386,10 +665,11 @@
     const { flyTo = true, silent = false } = options;
     const btnLocateFloat = document.getElementById("btn-locate-float");
     const btnLocate = document.getElementById("btn-locate-me");
+    const curCity = getCurrentCity();
 
     if (!navigator.geolocation) {
-      if (!silent) showMapToast("⚠️ Twoja przeglądarka nie obsługuje GPS. Ustawiono Warszawę Centrum.");
-      setUserLocation(WARSAW_CENTER, true, false);
+      if (!silent) showMapToast(`⚠️ Twoja przeglądarka nie obsługuje GPS. Ustawiono ${curCity.name} Centrum.`);
+      setUserLocation(curCity.center, true, false);
       return;
     }
 
@@ -409,13 +689,13 @@
           btnLocateFloat.setAttribute("title", "Moja lokalizacja GPS (aktywna)");
         }
         const coords = [pos.coords.latitude, pos.coords.longitude];
-        const distFromWarsaw = calculateDistanceKm(coords[0], coords[1], WARSAW_CENTER[0], WARSAW_CENTER[1]);
+        const distFromCity = calculateDistanceKm(coords[0], coords[1], curCity.center[0], curCity.center[1]);
 
-        if (distFromWarsaw > 150) {
-          // User is far from Warsaw (abroad or other Polish city)
+        if (distFromCity > 120) {
+          // User is far from current selected city
           setUserLocation(coords, false, true);
           if (!silent) {
-            showMapToast(`📍 Jesteś poza Warszawą (~${Math.round(distFromWarsaw)} km). Wycentrowano na centrum.`);
+            showMapToast(`📍 Jesteś poza miastem ${curCity.name} (~${Math.round(distFromCity)} km). Wycentrowano na centrum.`);
           }
         } else {
           setUserLocation(coords, false, false);
@@ -440,28 +720,28 @@
           }
         }
         if (!userLocation) {
-          setUserLocation(WARSAW_CENTER, true, false);
+          setUserLocation(curCity.center, true, false);
         }
       },
       { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
     );
   }
 
-  // Auto-detect Geolocation on application boot
+  // Auto-detect Geolocation on application boot (never force camera jump if user selected city)
   function initUserGeolocation() {
     if (!navigator.geolocation) return;
 
     if (navigator.permissions && navigator.permissions.query) {
       navigator.permissions.query({ name: "geolocation" }).then((perm) => {
         if (perm.state === "granted" || perm.state === "prompt") {
-          requestUserLocation({ flyTo: true, silent: true });
+          requestUserLocation({ flyTo: false, silent: true });
         }
       }).catch(() => {
-        requestUserLocation({ flyTo: true, silent: true });
+        requestUserLocation({ flyTo: false, silent: true });
       });
     } else {
       // iOS Safari and older browsers
-      requestUserLocation({ flyTo: true, silent: true });
+      requestUserLocation({ flyTo: false, silent: true });
     }
   }
 
@@ -472,25 +752,28 @@
   ];
 
   // Polish Cities for Nationwide Expansion (Vad Kostar Ölen style)
-  const EXPANSION_CITIES = [
-    { name: "WARSZAWA", count: 349, coords: [52.2319, 21.0185], status: "active", sub: "349 barów · od 10 zł", zoom: 13 },
-    { name: "KRAKÓW", count: 0, coords: [50.0647, 19.9450], status: "coming_soon", sub: "wkrótce", zoom: 13 },
-    { name: "GDAŃSK", count: 0, coords: [54.3520, 18.6466], status: "coming_soon", sub: "wkrótce", zoom: 13 },
-    { name: "WROCŁAW", count: 0, coords: [51.1079, 17.0385], status: "coming_soon", sub: "wkrótce", zoom: 13 },
-    { name: "POZNAŃ", count: 0, coords: [52.4064, 16.9252], status: "coming_soon", sub: "wkrótce", zoom: 13 }
-  ];
+  const EXPANSION_CITIES = CITIES.map(c => ({
+    id: c.id,
+    name: c.name.toUpperCase(),
+    coords: c.center,
+    status: c.active ? "active" : "coming_soon",
+    sub: c.id === "warszawa" ? "349 barów · od 10 zł" : (c.desc || "wkrótce"),
+    zoom: c.zoom || 13
+  }));
 
   // Initialize Leaflet Map
   function initMap() {
+    const curCity = getCurrentCity();
     map = L.map("map", {
-      center: WARSAW_CENTER,
-      zoom: DEFAULT_ZOOM,
+      center: curCity.center,
+      zoom: curCity.zoom || DEFAULT_ZOOM,
       minZoom: 6,
       maxZoom: 19,
       maxBounds: POLAND_BOUNDS,
       maxBoundsViscosity: 0.95,
       zoomControl: false
     });
+    window.__mapInstance = map;
 
     // Zoom control at bottom-right
     L.control.zoom({ position: "bottomright" }).addTo(map);
@@ -601,10 +884,10 @@
 
       const m = L.marker(city.coords, { icon });
       m.on("click", () => {
-        if (!isComingSoon) {
+        if (typeof window.__switchCity === "function") {
+          window.__switchCity(city.id);
+        } else if (map) {
           map.flyTo(city.coords, city.zoom, { duration: 1.2 });
-        } else {
-          alert(`📍 ${city.name} - zbieranie bazy barów i cen piwa już wkrótce!\nJeśli chcesz pomóc jako lokalny ambasador w mieście ${city.name}, napisz do nas 🍻`);
         }
       });
       cityMarkersGroup.addLayer(m);
@@ -752,15 +1035,16 @@
 
   function buildGoogleMapsNavigationUrl(venue) {
     if (!venue) return "#";
+    const curCity = getCurrentCity();
     const name = venue.name || "";
-    let addr = venue.address && venue.address !== "Warszawa" ? venue.address : "";
+    let addr = venue.address && venue.address !== "Warszawa" && venue.address !== curCity.name ? venue.address : "";
     if ((venue.district === "Pawilony" || name.toLowerCase().includes("pawilon")) && !addr.toLowerCase().includes("nowy świat") && !addr.toLowerCase().includes("foksal")) {
       addr = "Nowy Świat 22/28";
     }
     const parts = [name];
     if (addr) parts.push(addr);
     else if (venue.district) parts.push(venue.district);
-    parts.push("Warszawa");
+    parts.push(curCity.name);
 
     const query = parts.filter(Boolean).join(", ");
     return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(query)}&travelmode=walking`;
@@ -952,7 +1236,7 @@
       if (currentDistrict !== "all") {
         countEl.textContent = `${filtered.length} barów w: ${currentDistrict}`;
       } else {
-        countEl.textContent = `${filtered.length} barów w Warszawie`;
+        countEl.textContent = `${filtered.length} barów – ${getCurrentCity().name}`;
       }
     }
 
@@ -1017,10 +1301,11 @@
       counts[d] = (counts[d] || 0) + 1;
     });
 
+    const cur = getCurrentCity();
     Array.from(select.options).forEach(opt => {
       const val = opt.value;
       if (val === "all") {
-        opt.textContent = `🏙️ Cała Warszawa (${allVenues.length} barów)`;
+        opt.textContent = `🏙️ Całe miasto (${cur.name})`;
       } else if (counts[val] !== undefined) {
         let baseName = opt.getAttribute("data-base-name");
         if (!baseName) {
@@ -1513,7 +1798,7 @@
             <div style="font-size:42px;">🎖️</div>
             <div class="ranking-empty-title" style="font-weight:700;font-size:1.05rem;">Brak odwiedzonych lokali</div>
             <div class="ranking-empty-desc" style="font-size:0.78rem;line-height:1.45;max-width:280px;">
-              Kliknij na dowolny bar na mapie i wciśnij <strong>„Byłem tu!”</strong>, aby zbierać pieczątki i zdobywać odznaki w Piwnym Paszporcie Warszawy.
+              Kliknij na dowolny bar na mapie i wciśnij <strong>„Byłem tu!”</strong>, aby zbierać pieczątki i zdobywać odznaki w Piwnym Paszporcie.
             </div>
             <button type="button" id="btn-browse-all-bars" class="btn-primary" style="margin-top:6px;font-size:0.8rem;padding:8px 16px;">
               💰 Zobacz najtańsze bary
@@ -1555,15 +1840,16 @@
       }
     } else if (rankingMode === "nearest") {
       if (!userLocation) {
+        const curCity = getCurrentCity();
         listEl.innerHTML = `
           <div class="ranking-empty-card" style="text-align:center;padding:26px 16px;display:flex;flex-direction:column;align-items:center;gap:12px;">
             <div style="font-size:38px;">🧭</div>
             <div class="ranking-empty-title" style="font-weight:700;font-size:1.05rem;">Włącz Piwny Kompas</div>
             <div class="ranking-empty-desc" style="font-size:0.78rem;line-height:1.45;max-width:280px;">
-              Jesteś w Sztokholmie 🇸🇪 lub Safari zablokowało GPS? Ustaw pozycję w centrum Warszawy, aby zobaczyć najbliższe bary i czas spaceru:
+              GPS jest wyłączony lub niedostępny? Ustaw pozycję domyślną w centrum miasta ${escapeHtml(curCity.name)}, aby zobaczyć najbliższe bary i czas spaceru:
             </div>
             <button type="button" class="btn-simulate-warsaw" id="btn-simulate-warsaw" style="width:100%;max-width:280px;font-size:0.82rem;">
-              📍 Ustaw pozycję: Centrum (Nowy Świat)
+              📍 Ustaw pozycję: Centrum (${escapeHtml(curCity.name)})
             </button>
             <button type="button" class="btn-retry-gps" id="btn-enable-gps" style="width:100%;max-width:280px;font-size:0.78rem;">
               🎯 Spróbuj pobrać GPS z telefonu
@@ -1573,7 +1859,7 @@
         const btnSimulate = document.getElementById("btn-simulate-warsaw");
         if (btnSimulate) {
           btnSimulate.addEventListener("click", () => {
-            setUserLocation([52.2323, 21.0206], true, false); // Nowy Świat / Pawilony
+            setUserLocation(curCity.center, true, false);
           });
         }
         const btnEnable = document.getElementById("btn-enable-gps");
@@ -1607,19 +1893,21 @@
     let bannerHtml = "";
     if (rankingMode === "nearest") {
       if (isLocationFarAway) {
-        const distFromWarsaw = Math.round(calculateDistanceKm(userLocation[0], userLocation[1], WARSAW_CENTER[0], WARSAW_CENTER[1]));
+        const curCity = getCurrentCity();
+        const distFromCity = Math.round(calculateDistanceKm(userLocation[0], userLocation[1], curCity.center[0], curCity.center[1]));
         bannerHtml = `
           <div class="ranking-banner-faraway" style="border-radius:10px;padding:8px 12px;margin:8px 10px;font-size:0.75rem;display:flex;flex-direction:column;gap:6px;">
-            <div>🇸🇪 Wykryto lokalizację: <strong>${distFromWarsaw} km od Warszawy</strong> (np. Sztokholm).</div>
+            <div>📍 Wykryto lokalizację: <strong>${distFromCity} km od miasta ${escapeHtml(curCity.name)}</strong>.</div>
             <button type="button" id="btn-switch-to-warsaw" style="background:#ea580c;color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:0.75rem;font-weight:700;cursor:pointer;">
-              📍 Przełącz na Centrum Warszawy (spacer w minutach)
+              📍 Przełącz na Centrum: ${escapeHtml(curCity.name)} (spacer w minutach)
             </button>
           </div>
         `;
       } else if (isSimulatedLocation) {
+        const curCity = getCurrentCity();
         bannerHtml = `
           <div class="ranking-banner-simulated" style="border-radius:10px;padding:6px 12px;margin:6px 10px;font-size:0.72rem;display:flex;align-items:center;justify-content:space-between;">
-            <span>📍 Pozycja: <strong>Centrum (Nowy Świat)</strong></span>
+            <span>📍 Pozycja domyślna: <strong>Centrum (${escapeHtml(curCity.name)})</strong></span>
             <button type="button" id="btn-refresh-gps" style="background:none;border:none;text-decoration:underline;cursor:pointer;font-size:0.72rem;font-weight:600;">Włącz GPS</button>
           </div>
         `;
@@ -1673,7 +1961,7 @@
     const btnSwitchWarsaw = document.getElementById("btn-switch-to-warsaw");
     if (btnSwitchWarsaw) {
       btnSwitchWarsaw.addEventListener("click", () => {
-        setUserLocation([52.2323, 21.0206], true, false);
+        setUserLocation(getCurrentCity().center, true, false);
       });
     }
     const btnRefreshGps = document.getElementById("btn-refresh-gps");
@@ -2422,7 +2710,7 @@
           <div style="text-align:center;padding:28px 16px;color:var(--text-muted);font-size:0.82rem;">
             <div style="font-size:36px;margin-bottom:8px;">🕒</div>
             <div style="font-weight:700;color:#fff;margin-bottom:4px;">Aktualnie brak trwających Happy Hours</div>
-            <div>Większość warszawskich lokali odpala promocje studenckie i biforowe w godzinach 16:00 - 19:00.</div>
+            <div>Większość lokali odpala promocje studenckie i biforowe w godzinach 16:00 - 19:00.</div>
             <button type="button" id="btn-switch-to-calendar" class="btn-primary" style="margin-top:12px;font-size:0.78rem;padding:7px 14px;">
               📅 Sprawdź Rozpiskę Tygodnia
             </button>
@@ -2677,7 +2965,7 @@
       id: "pub_crawler",
       name: "Pub Crawler",
       icon: "🚀",
-      desc: "Odwiedź co najmniej 3 bary w ramach warszawskiej trasy",
+      desc: "Odwiedź co najmniej 3 bary w ramach piwnej trasy",
       check: (visited, vMap) => {
         return { unlocked: visited.length >= 3, progress: `${Math.min(visited.length, 3)}/3` };
       }
@@ -2704,9 +2992,9 @@
     },
     {
       id: "warsaw_king",
-      name: "Król Warszawskiej Nocy",
+      name: "Władca Nocnego Życia",
       icon: "👑",
-      desc: "Odwiedź łącznie co najmniej 20 lokali w Warszawie",
+      desc: "Odwiedź łącznie co najmniej 20 lokali w swoim mieście",
       check: (visited, vMap) => {
         return { unlocked: visited.length >= 20, progress: `${Math.min(visited.length, 20)}/20` };
       }
@@ -2715,7 +3003,7 @@
       id: "pubquiz_master",
       name: "Mistrz Pub Quizu",
       icon: "🧠",
-      desc: "Zdobądź komplet 100% punktów w Warszawskim Pub Quizie (min. 5 pytań)",
+      desc: "Zdobądź komplet 100% punktów w Piwnym Pub Quizie (min. 5 pytań)",
       check: (visited, vMap) => {
         const won = localStorage.getItem("poilepiwko_pubquiz_won") === "true";
         return { unlocked: won, progress: won ? "100%" : "0%" };
@@ -2724,11 +3012,11 @@
   ];
 
   const PASSPORT_RANKS = [
-    { min: 0, title: "Nowicjusz w Warszawie", icon: "🎓", sub: "Rozpocznij przygodę — zaznacz pierwszy odwiedzony bar!", nextMin: 1, nextTitle: "Bywalec Barowy" },
-    { min: 1, title: "Bywalec Barowy", icon: "🍺", sub: "Znasz już dobre miejscówki w stolicy. Czas na więcej!", nextMin: 5, nextTitle: "Koneser Chmielu" },
-    { min: 5, title: "Koneser Chmielu", icon: "🍻", sub: "Imponujący dorobek! Warszawa nie ma przed Tobą tajemnic.", nextMin: 10, nextTitle: "Mistrz Stolicy" },
-    { min: 10, title: "Mistrz Stolicy", icon: "🌟", sub: "Jesteś prawdziwym ekspertem warszawskiej gastronomii!", nextMin: 20, nextTitle: "Legenda Warszawskiej Nocy" },
-    { min: 20, title: "Legenda Warszawskiej Nocy", icon: "👑", sub: "Absolutny mistrz! Twoja wiedza o barach przeszła do historii.", nextMin: null, nextTitle: null }
+    { min: 0, title: "Nowicjusz w Mieście", icon: "🎓", sub: "Rozpocznij przygodę — zaznacz pierwszy odwiedzony bar!", nextMin: 1, nextTitle: "Bywalec Barowy" },
+    { min: 1, title: "Bywalec Barowy", icon: "🍺", sub: "Znasz już dobre miejscówki w mieście. Czas na więcej!", nextMin: 5, nextTitle: "Koneser Chmielu" },
+    { min: 5, title: "Koneser Chmielu", icon: "🍻", sub: "Imponujący dorobek! Twoje miasto nie ma przed Tobą tajemnic.", nextMin: 10, nextTitle: "Mistrz Piwnych Szlaków" },
+    { min: 10, title: "Mistrz Piwnych Szlaków", icon: "🌟", sub: "Jesteś prawdziwym ekspertem lokalnej gastronomii!", nextMin: 20, nextTitle: "Legenda Nocnego Życia" },
+    { min: 20, title: "Legenda Nocnego Życia", icon: "👑", sub: "Absolutny mistrz! Twoja wiedza o barach przeszła do historii.", nextMin: null, nextTitle: null }
   ];
 
   function getPassportRank(count) {
@@ -3170,10 +3458,11 @@
         const unlockedBadges = PASSPORT_BADGES.filter(b => b.check(visitedVenues, vMap).unlocked);
         const badgesIcons = unlockedBadges.map(b => b.icon).join(" ") || "Brak odznak";
 
-        const text = `🎖️ Mój Piwny Paszport Warszawy (poilepiwko):\n👑 Ranga: ${rank.icon} ${rank.title}\n📍 Odwiedzone bary: ${count} / ${total}\n🏆 Odznaki (${unlockedBadges.length}/10): ${badgesIcons}\nSprawdź ceny piwa w Warszawie na https://poilepiwko.pl !`;
+        const curCity = getCurrentCity();
+        const text = `🎖️ Mój Piwny Paszport – ${curCity.name} (poilepiwko):\n👑 Ranga: ${rank.icon} ${rank.title}\n📍 Odwiedzone bary: ${count} / ${total}\n🏆 Odznaki (${unlockedBadges.length}/10): ${badgesIcons}\nSprawdź ceny piwa w mieście ${curCity.name} na https://poilepiwko.pl !`;
 
         if (navigator.share) {
-          navigator.share({ title: "Piwny Paszport Warszawy - poilepiwko", text: text }).catch(() => {});
+          navigator.share({ title: `Piwny Paszport – ${curCity.name} - poilepiwko`, text: text }).catch(() => {});
         } else if (navigator.clipboard) {
           navigator.clipboard.writeText(text).then(() => {
             alert("📋 Podsumowanie Paszportu skopiowane do schowka! Możesz wysłać je znajomym.");
@@ -3331,7 +3620,7 @@
         if (timeVal) timeVal.textContent = "--";
         if (priceVal) priceVal.textContent = "--";
         if (targetName) targetName.textContent = "Brak lokali";
-        if (targetDistrict) targetDistrict.textContent = "Warszawa";
+        if (targetDistrict) targetDistrict.textContent = getCurrentCity().name;
         if (targetBeer) targetBeer.textContent = "Brak pasujących piw";
         if (targetAddress) targetAddress.textContent = "Spróbuj zmienić filtr radaru";
         if (targetIndexLabel) targetIndexLabel.textContent = "0 z 0";
@@ -3364,12 +3653,12 @@
 
       // Text Info
       if (targetName) targetName.textContent = v.name;
-      if (targetDistrict) targetDistrict.textContent = v.district || "Warszawa";
+      if (targetDistrict) targetDistrict.textContent = v.district || getCurrentCity().name;
       if (targetBeer) {
         const beerName = v.beer_name || (v.is_craft ? "Piwo rzemieślnicze" : "Piwo z kranu");
         targetBeer.textContent = beerName;
       }
-      if (targetAddress) targetAddress.textContent = v.address || "Warszawa";
+      if (targetAddress) targetAddress.textContent = v.address || getCurrentCity().name;
       if (targetIndexLabel) {
         targetIndexLabel.textContent = `Bar ${currentCompassIndex + 1} z ${currentCompassTargets.length}`;
       }
@@ -3436,9 +3725,10 @@
     }
 
     function startGpsTracking() {
+      const curCity = getCurrentCity();
       if (!navigator.geolocation) {
-        if (!userLocation) setUserLocation(WARSAW_CENTER, true, true);
-        if (statusText) statusText.textContent = "Pozycja domyślna: Centrum Warszawy";
+        if (!userLocation) setUserLocation(curCity.center, true, true);
+        if (statusText) statusText.textContent = `Pozycja domyślna: Centrum ${curCity.name}`;
         if (tipBar) tipBar.innerHTML = "💡 <span>Włącz GPS w telefonie, aby namierzać bary z dokładną odległością.</span>";
         updateTargets();
         renderCurrentTarget();
@@ -3457,8 +3747,8 @@
         },
         (err) => {
           console.warn("Compass getCurrentPosition note:", err);
-          if (!userLocation) setUserLocation(WARSAW_CENTER, true, true);
-          if (statusText) statusText.textContent = "Pozycja domyślna: Centrum Warszawy";
+          if (!userLocation) setUserLocation(curCity.center, true, true);
+          if (statusText) statusText.textContent = `Pozycja domyślna: Centrum ${curCity.name}`;
           if (tipBar) tipBar.innerHTML = "💡 <span>Włącz lokalizację w przeglądarce, aby kompas wskazywał bary od Ciebie.</span>";
           updateTargets();
           renderCurrentTarget();
@@ -3696,7 +3986,7 @@
       btnFilterReset.addEventListener("click", () => {
         resetAllFilters();
         if (typeof showAppToast === "function") {
-          showAppToast("Zresetowano filtry", "Wyświetlam wszystkie lokale w Warszawie", "🎛️");
+          showAppToast("Zresetowano filtry", `Wyświetlam wszystkie lokale w mieście ${getCurrentCity().name}`, "🎛️");
         }
       });
     }
@@ -4040,7 +4330,7 @@
           nameInput.readOnly = false;
           nameInput.style.opacity = "1";
           nameInput.style.cursor = "text";
-          nameInput.placeholder = "np. Bar Pacyfik, Browar Warszawski...";
+          nameInput.placeholder = "np. Piwoteka, Browar, multitap...";
         }
       } else if (mode === "rename") {
         if (modalHeadTitle) modalHeadTitle.textContent = "🔄 Zmień Nazwę Baru z Mapy";
@@ -4491,7 +4781,7 @@
           if (address && address.trim()) {
             try {
               const cleanAddr = address.trim().replace(/^ul\.\s*/i, "");
-              const q = encodeURIComponent(`${cleanAddr}, Warszawa`);
+              const q = encodeURIComponent(`${cleanAddr}, ${getCurrentCity().name}`);
               const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`, {
                 headers: { "Accept": "application/json" }
               });
@@ -4684,21 +4974,117 @@
     // =========================================================================
     // CITIES & CITY SWITCHER (Jakdojade Style - Expansion Ready)
     // =========================================================================
-    const CITIES = [
-      { id: "warszawa", name: "Warszawa", icon: "🏙️", center: [52.2319, 21.0067], zoom: 13, active: true, count: 349, badge: "349 barów 🟢", desc: "Pełna baza lokali" },
-      { id: "krakow", name: "Kraków", icon: "🏰", center: [50.0614, 19.9383], zoom: 14, active: false, count: 0, badge: "Wkrótce 🚀", desc: "Rynek, Kazimierz, Podgórze" },
-      { id: "wroclaw", name: "Wrocław", icon: "🌉", center: [51.1079, 17.0385], zoom: 14, active: false, count: 0, badge: "Wkrótce 🚀", desc: "Rynek, Nadodrze, Wyspa Słodowa" },
-      { id: "poznan", name: "Poznań", icon: "🐐", center: [52.4064, 16.9252], zoom: 14, active: false, count: 0, badge: "Wkrótce 🚀", desc: "Stary Rynek, Jeżyce, Wilda" },
-      { id: "trojmiasto", name: "Trójmiasto", icon: "⚓", center: [54.3520, 18.6466], zoom: 13, active: false, count: 0, badge: "Wkrótce 🚀", desc: "Gdańsk, Sopot, Gdynia" },
-      { id: "lodz", name: "Łódź", icon: "🏭", center: [51.7687, 19.4560], zoom: 14, active: false, count: 0, badge: "Wkrótce 🚀", desc: "Piotrkowska, OFF Piotrkowska" },
-      { id: "katowice", name: "Katowice / Śląsk", icon: "⛏️", center: [50.2649, 19.0238], zoom: 14, active: false, count: 0, badge: "Wkrótce 🚀", desc: "Mariacka, Centrum" },
-      { id: "lublin", name: "Lublin", icon: "🏰", center: [51.2465, 22.5684], zoom: 14, active: false, count: 0, badge: "Wkrótce 🚀", desc: "Stare Miasto, Centrum" },
-      { id: "szczecin", name: "Szczecin", icon: "🌊", center: [53.4285, 14.5528], zoom: 14, active: false, count: 0, badge: "Wkrótce 🚀", desc: "Bulwary, Jasne Błonia" },
-      { id: "bydgoszcz_torun", name: "Toruń & Bydgoszcz", icon: "🐉", center: [53.0138, 18.5984], zoom: 14, active: false, count: 0, badge: "Wkrótce 🚀", desc: "Starówka Toruńska, Wyspa Młyńska" },
-      { id: "bialystok", name: "Białystok", icon: "🌳", center: [53.1325, 23.1688], zoom: 14, active: false, count: 0, badge: "Wkrótce 🚀", desc: "Lipowa, Rynek Kościuszki" }
-    ];
+    let currentCityId = (getCurrentCity && getCurrentCity().id) || "warszawa";
 
-    let currentCityId = localStorage.getItem("poilepiwko_city") || "warszawa";
+    function updateDistrictsForCity(cityObj) {
+      if (!cityObj) return;
+
+      // 1. Desktop #district-select
+      const districtSelect = document.getElementById("district-select");
+      if (districtSelect) {
+        let html = `<option value="all">🏙️ Całe miasto (${escapeHtml(cityObj.name)})</option>`;
+        if (cityObj.hotspots && cityObj.hotspots.length > 0) {
+          html += `<optgroup label="🔥 Zagłębia Imprezowe">`;
+          cityObj.hotspots.forEach(h => {
+            html += `<option value="${escapeHtml(h.val || h.name)}">${escapeHtml(h.icon || '🔥')} ${escapeHtml(h.name)}</option>`;
+          });
+          html += `</optgroup>`;
+        }
+        if (cityObj.districts && cityObj.districts.length > 0) {
+          html += `<optgroup label="🏙️ Dzielnice i Rejony">`;
+          cityObj.districts.forEach(d => {
+            html += `<option value="${escapeHtml(d.name)}">${escapeHtml(d.name)}</option>`;
+          });
+          html += `</optgroup>`;
+        }
+        districtSelect.innerHTML = html;
+        districtSelect.value = "all";
+      }
+
+      // 2. Filter Modal #filter-district-chips
+      const filterChipsWrap = document.getElementById("filter-district-chips");
+      if (filterChipsWrap) {
+        let chipsHtml = `<button type="button" class="filter-dist-chip active" data-dist="all">🏙️ Całe miasto</button>`;
+        if (cityObj.hotspots) {
+          cityObj.hotspots.forEach(h => {
+            chipsHtml += `<button type="button" class="filter-dist-chip" data-dist="${escapeHtml(h.val || h.name)}">${escapeHtml(h.icon || '🔥')} ${escapeHtml(h.name)}</button>`;
+          });
+        }
+        if (cityObj.districts) {
+          cityObj.districts.forEach(d => {
+            chipsHtml += `<button type="button" class="filter-dist-chip" data-dist="${escapeHtml(d.name)}">${escapeHtml(d.name)}</button>`;
+          });
+        }
+        filterChipsWrap.innerHTML = chipsHtml;
+
+        filterChipsWrap.querySelectorAll(".filter-dist-chip").forEach(dChip => {
+          dChip.addEventListener("click", () => {
+            currentDistrict = dChip.getAttribute("data-dist");
+            const dSelect = document.getElementById("district-select");
+            if (dSelect) dSelect.value = currentDistrict;
+            const target = getDistrictTarget(currentDistrict);
+            if (map && target) {
+              map.flyTo(target.coords, target.zoom, { duration: 1.0 });
+            }
+            syncFilterModalUI();
+          });
+        });
+      }
+
+      // 3. Mobile Search Sheet #mobile-search-districts
+      const mobileDistWrap = document.getElementById("mobile-search-districts");
+      if (mobileDistWrap) {
+        let mHtml = `<span class="m-dist-chip chip-city-switch" id="btn-city-switch-mobile">📍 Miasto: <span id="search-sheet-city-label">${escapeHtml(cityObj.name)}</span> ▾</span>`;
+        mHtml += `<span class="m-dist-chip active" data-dist="all">Wszystkie</span>`;
+        if (cityObj.hotspots) {
+          cityObj.hotspots.forEach(h => {
+            mHtml += `<span class="m-dist-chip" data-dist="${escapeHtml(h.val || h.name)}">${escapeHtml(h.icon || '🔥')} ${escapeHtml(h.name)}</span>`;
+          });
+        }
+        if (cityObj.districts) {
+          cityObj.districts.forEach(d => {
+            mHtml += `<span class="m-dist-chip" data-dist="${escapeHtml(d.name)}">${escapeHtml(d.name)}</span>`;
+          });
+        }
+        mHtml += `
+          <span class="m-dist-chip chip-roulette" id="chip-search-roulette">🎲 Ruletka</span>
+          <span class="m-dist-chip chip-happyhour" id="chip-search-happyhour">⚡ Happy Hours</span>
+          <span class="m-dist-chip chip-quiz" id="chip-search-quiz">🧠 Pub Quiz</span>
+          <span class="m-dist-chip chip-find-friends" id="chip-search-friends">👥 Szukaj znajomych</span>
+        `;
+        mobileDistWrap.innerHTML = mHtml;
+
+        const btnMobCity = document.getElementById("btn-city-switch-mobile");
+        if (btnMobCity && window.__openCitySwitcher) {
+          btnMobCity.addEventListener("click", window.__openCitySwitcher);
+        }
+
+        const chipRoulette = document.getElementById("chip-search-roulette");
+        if (chipRoulette && window.__openRoulette) chipRoulette.addEventListener("click", window.__openRoulette);
+        const chipHappy = document.getElementById("chip-search-happyhour");
+        if (chipHappy && window.__openHappyHours) chipHappy.addEventListener("click", window.__openHappyHours);
+        const chipQuiz = document.getElementById("chip-search-quiz");
+        if (chipQuiz && window.__openPubQuiz) chipQuiz.addEventListener("click", window.__openPubQuiz);
+        const chipFriends = document.getElementById("chip-search-friends");
+        if (chipFriends && window.__openFriendsSearch) chipFriends.addEventListener("click", window.__openFriendsSearch);
+
+        mobileDistWrap.querySelectorAll(".m-dist-chip[data-dist]").forEach(chip => {
+          chip.addEventListener("click", () => {
+            mobileDistWrap.querySelectorAll(".m-dist-chip[data-dist]").forEach(c => c.classList.remove("active"));
+            chip.classList.add("active");
+            const dist = chip.getAttribute("data-dist") || "all";
+            if (typeof window.__setMobileSearchDistrict === "function") {
+              window.__setMobileSearchDistrict(dist);
+            }
+          });
+        });
+      }
+
+      currentDistrict = "all";
+      if (typeof updateDistrictCounts === "function") {
+        updateDistrictCounts();
+      }
+    }
 
     function initCitySwitcher() {
       const modal = document.getElementById("city-switcher-modal");
@@ -4721,6 +5107,44 @@
         if (desktopLabel) desktopLabel.textContent = cur.name;
         if (mobileLabel) mobileLabel.textContent = cur.name;
         if (searchSheetLabel) searchSheetLabel.textContent = cur.name;
+
+        // Community header
+        const commSub = document.getElementById("community-header-sub");
+        if (commSub) {
+          commSub.textContent = cur.id === "warszawa" ? "Warszawscy Piwosze" : `Piwosze – ${cur.name}`;
+        }
+
+        // Community popular section title
+        const popTitle = document.getElementById("comm-popular-title");
+        if (popTitle) {
+          popTitle.textContent = `🔥 Popularni teraz (${cur.name})`;
+        }
+
+        // Live Map 24h Puls Miasta
+        const fmapTitle = document.getElementById("fmap-status-title");
+        if (fmapTitle) {
+          fmapTitle.textContent = `🍻 Puls – ${cur.name}`;
+        }
+
+        // Club Card
+        const cardSub = document.getElementById("club-card-brand-sub");
+        if (cardSub) {
+          cardSub.textContent = cur.id === "warszawa" ? "WARSZAWSKI KLUB PIWOSZA" : `KLUB PIWOSZA • ${cur.name.toUpperCase()}`;
+        }
+
+        const cardBackId = document.getElementById("club-card-back-id");
+        if (cardBackId) {
+          cardBackId.textContent = `ID: #000001 • ${cur.name}`;
+        }
+
+        // Compass district badge
+        const compassTargetDist = document.getElementById("compass-target-district");
+        if (compassTargetDist) {
+          compassTargetDist.textContent = cur.name;
+        }
+
+        // Dynamically update district select, filter modal chips, and mobile search sheet
+        updateDistrictsForCity(cur);
       }
 
       function renderList(query = "") {
@@ -4764,11 +5188,22 @@
           localStorage.setItem("poilepiwko_city", target.id);
         } catch (e) {}
 
+        currentDistrict = "all";
+        const districtSelect = document.getElementById("district-select");
+        if (districtSelect) districtSelect.value = "all";
+
         updateCityUI();
         closeModal();
 
         if (map && target.center) {
           map.flyTo(target.center, target.zoom, { duration: 1.2 });
+        }
+
+        renderMarkers();
+        renderRankingList(getFilteredVenues());
+
+        if (friendsMapInstance && target.center) {
+          friendsMapInstance.setView(target.center, target.zoom || 13);
         }
 
         if (!target.active) {
@@ -4795,6 +5230,7 @@
 
       window.__openCitySwitcher = openModal;
       window.__closeCitySwitcher = closeModal;
+      window.__switchCity = selectCity;
 
       if (btnDesktop) btnDesktop.addEventListener("click", openModal);
       if (btnMobile) btnMobile.addEventListener("click", openModal);
@@ -4842,9 +5278,11 @@
       const mobileSearchInput = document.getElementById("mobile-search-input");
       const btnCloseMobileSearch = document.getElementById("btn-close-mobile-search");
       const mobileSearchResults = document.getElementById("mobile-search-results");
-      const mobileDistChips = document.querySelectorAll("#mobile-search-districts .m-dist-chip");
-
       let mobileSelectedDistrict = "all";
+      window.__setMobileSearchDistrict = function(dist) {
+        mobileSelectedDistrict = dist;
+        renderMobileSearchResults();
+      };
 
       function openMobileSearchSheet() {
         if (!mobileSearchSheet) return;
@@ -5210,7 +5648,7 @@
           } catch (e) {}
           closeLegal();
           if (typeof showAppToast === "function") {
-            showAppToast("Zasady zatwierdzone", "Dobrego piwkowania w Warszawie! 🍻", "📜");
+            showAppToast("Zasady zatwierdzone", "Dobrego piwkowania! 🍻", "📜");
           }
         });
       }
@@ -5791,9 +6229,9 @@
   // ==========================================================================
 
   function calculateUserRank(visitedCount) {
-    if (visitedCount >= 50) return { title: "Warszawska Legenda 👑", level: 5 };
+    if (visitedCount >= 50) return { title: "Miejska Legenda 👑", level: 5 };
     if (visitedCount >= 25) return { title: "Piwny Koneser 🍺", level: 4 };
-    if (visitedCount >= 10) return { title: "Bywalec Pawilonów 🍻", level: 3 };
+    if (visitedCount >= 10) return { title: "Barowy Bywalec 🍻", level: 3 };
     if (visitedCount >= 5) return { title: "Miejski Eksplorator 🦁", level: 2 };
     return { title: "Początkujący Piwosz 🦊", level: 1 };
   }
@@ -5801,10 +6239,10 @@
   function calculateRankProgress(visitedCount) {
     const ranks = [
       { min: 0, title: "Początkujący Piwosz 🦊", nextMin: 5, nextTitle: "Miejski Eksplorator 🦁" },
-      { min: 5, title: "Miejski Eksplorator 🦁", nextMin: 10, nextTitle: "Bywalec Pawilonów 🍻" },
-      { min: 10, title: "Bywalec Pawilonów 🍻", nextMin: 25, nextTitle: "Piwny Koneser 🍺" },
-      { min: 25, title: "Piwny Koneser 🍺", nextMin: 50, nextTitle: "Warszawska Legenda 👑" },
-      { min: 50, title: "Warszawska Legenda 👑", nextMin: 100, nextTitle: "Mistrz Piwnych Szlaków ⚡" }
+      { min: 5, title: "Miejski Eksplorator 🦁", nextMin: 10, nextTitle: "Barowy Bywalec 🍻" },
+      { min: 10, title: "Barowy Bywalec 🍻", nextMin: 25, nextTitle: "Piwny Koneser 🍺" },
+      { min: 25, title: "Piwny Koneser 🍺", nextMin: 50, nextTitle: "Miejska Legenda 👑" },
+      { min: 50, title: "Miejska Legenda 👑", nextMin: 100, nextTitle: "Mistrz Piwnych Szlaków ⚡" }
     ];
 
     let current = ranks[0];
@@ -6975,9 +7413,9 @@
         avatar_icon: "🍺",
         avatar_photo: null,
         caps_balance: 275,
-        bio: "Warszawski poszukiwacz dobrego i taniego piwa 🍻",
+        bio: "Poszukiwacz dobrego i taniego piwa 🍻",
         favorite_beer: "Wszystkie dobre!",
-        favorite_district: "Śródmieście",
+        favorite_district: "Centrum",
         vibe_tags: "Kraft, Ogródki, Pub Quiz",
         user_number: "#000001"
       };
@@ -7030,9 +7468,9 @@
       }
       if (statFriends) statFriends.textContent = String(frCount);
 
-      if (bioDisplay) bioDisplay.textContent = prof.bio || "Warszawski poszukiwacz dobrego i taniego piwa 🍻";
+      if (bioDisplay) bioDisplay.textContent = prof.bio || "Poszukiwacz dobrego i taniego piwa 🍻";
       if (valBeer) valBeer.textContent = prof.favorite_beer || "Wszystkie dobre!";
-      if (valDistrict) valDistrict.textContent = prof.favorite_district || "Cała Warszawa";
+      if (valDistrict) valDistrict.textContent = prof.favorite_district || "Wszystkie dzielnice";
       if (valVibe) valVibe.textContent = prof.vibe_tags || "Kraft, Ogródki, Pub Quiz";
 
       // Progress bar (Goin' style)
@@ -7177,7 +7615,7 @@
     const tagVibeWrap = document.getElementById("prof-tag-vibe-wrap");
     if (tagVibeWrap) {
       tagVibeWrap.style.cursor = "pointer";
-      tagVibeWrap.title = "Kliknij, aby zagrać w Warszawski Pub Quiz!";
+      tagVibeWrap.title = "Kliknij, aby zagrać w Pub Quiz!";
       tagVibeWrap.addEventListener("click", () => {
         window.__closeMyProfile();
         if (window.__openPubQuiz) window.__openPubQuiz();
@@ -7301,7 +7739,7 @@
         if (visitedFilterBtn) {
           visitedFilterBtn.click();
         } else if (typeof showAppToast === "function") {
-          showAppToast("Odwiedzone bary 🍺", `Odwiedziłeś już ${visitedVenues.length} barów w Warszawie!`, "🍻");
+          showAppToast("Odwiedzone bary 🍺", `Odwiedziłeś już ${visitedVenues.length} barów!`, "🍻");
         }
       });
     }
@@ -8131,7 +8569,7 @@
               <div class="empty-title">Brak w Twojej ekipie</div>
               <p class="empty-sub">Nie masz w obserwowanych nikogo pasującego do "${escapeHtml(currentFriendsSearchQuery)}".</p>
               <button type="button" class="btn-secondary" id="btn-search-global-fallback" style="margin-top:12px; font-size:0.82rem; padding: 7px 16px;">
-                🌍 Szukaj "@${escapeHtml(currentFriendsSearchQuery)}" w całej Warszawie
+                🌍 Szukaj "@${escapeHtml(currentFriendsSearchQuery)}" w całej bazie
               </button>
             </div>
           `;
@@ -8342,6 +8780,7 @@
       const isLight = document.body.classList.contains("theme-light");
       const mapVariant = isLight ? "rastertiles/voyager" : "dark_all";
 
+      const curCity = getCurrentCity();
       if (!friendsMapInstance) {
         friendsMapInstance = L.map("friends-map-container", {
           zoomControl: false,
@@ -8352,7 +8791,7 @@
           doubleClickZoom: false,
           boxZoom: false,
           keyboard: false
-        }).setView([52.232, 21.018], 13);
+        }).setView(curCity.center, curCity.zoom || 13);
 
         friendsMapTileLayer = L.tileLayer(`https://{s}.basemaps.cartocdn.com/${mapVariant}/{z}/{x}/{y}{r}.png${cartoKey}`, {
           maxZoom: 19
@@ -8360,6 +8799,7 @@
 
         friendsMarkersLayer = L.layerGroup().addTo(friendsMapInstance);
       } else {
+        friendsMapInstance.setView(curCity.center, curCity.zoom || 13);
         if (friendsMapTileLayer) {
           friendsMapTileLayer.setUrl(`https://{s}.basemaps.cartocdn.com/${mapVariant}/{z}/{x}/{y}{r}.png${cartoKey}`);
         }
@@ -8386,7 +8826,7 @@
         if (friendsMarkersLayer) friendsMarkersLayer.clearLayers();
 
         const activeFriends = data.activeFriends || [];
-        const hotspots = data.hotspots || [];
+        const hotspots = (curCity.hotspots && curCity.hotspots.length > 0) ? curCity.hotspots : (data.hotspots || []);
 
         // 1. Add active friends markers
         activeFriends.forEach(f => {
@@ -8445,9 +8885,9 @@
         // Update status summary text
         if (statusSummary) {
           if (activeFriends.length > 0) {
-            statusSummary.innerHTML = `<strong>${activeFriends.length} znajomych</strong> z Twojej ekipy pije w Warszawie • ${hotspots.length} gorących stref`;
+            statusSummary.innerHTML = `<strong>${activeFriends.length} znajomych</strong> z Twojej ekipy pije na mieście • ${hotspots.length} gorących stref`;
           } else {
-            statusSummary.innerHTML = `Twoi znajomi jeszcze nie zrobili check-inu w 24h • <strong>${hotspots.length} stref</strong> tętni życiem w Warszawie!`;
+            statusSummary.innerHTML = `Twoi znajomi jeszcze nie zrobili check-inu w 24h • <strong>${hotspots.length} stref</strong> tętni życiem!`;
           }
         }
 
@@ -8545,7 +8985,7 @@
     // -------------------------------------------------------------------------
     async function loadLiveBarFeed() {
       if (!feedGrid) return;
-      feedGrid.innerHTML = `<div class="loading-state-hint" style="grid-column: 1 / -1; padding: 24px;">Ładowanie najświeższych fotek z warszawskich barów... 📸</div>`;
+      feedGrid.innerHTML = `<div class="loading-state-hint" style="grid-column: 1 / -1; padding: 24px;">Ładowanie najświeższych fotek z barów... 📸</div>`;
 
       try {
         const res = await fetch("/api/auth", {
@@ -8589,7 +9029,7 @@
             ? `<img src="${escapeHtml(item.avatar_photo || item.user_photo)}" alt="Avatar" />`
             : escapeHtml(item.avatar_icon || item.user_avatar || "🍺");
           const venueId = item.venue_id || "";
-          const venueName = item.venue_name || "Warszawa";
+          const venueName = item.venue_name || getCurrentCity().name;
           const authorId = item.author_id || item.user_id || "";
           const isAuthor = currentUser && (currentUser.id === authorId || (currentUser.user_metadata && currentUser.user_metadata.username === authorName));
 
@@ -8795,7 +9235,7 @@
     window.__openUgcReportModal = function(contentId, authorId, authorName, venueName) {
       activeUgcReport = { contentId, authorId, authorName, venueName };
       if (ugcTargetInfo) {
-        ugcTargetInfo.innerHTML = `Treść dodana przez: <strong>@${escapeHtml(authorName || "anonim")}</strong> w lokalu <strong>${escapeHtml(venueName || "Warszawa")}</strong>`;
+        ugcTargetInfo.innerHTML = `Treść dodana przez: <strong>@${escapeHtml(authorName || "anonim")}</strong> w lokalu <strong>${escapeHtml(venueName || getCurrentCity().name)}</strong>`;
       }
       if (ugcBlockText) {
         ugcBlockText.textContent = authorName ? `🚫 Zablokuj użytkownika @${authorName}` : "🚫 Zablokuj tego użytkownika";
@@ -9037,9 +9477,10 @@
       let venuesList = Array.isArray(allVenues) && allVenues.length > 0 ? [...allVenues] : [];
 
       if (venuesList.length === 0) {
+        const cur = getCurrentCity();
         const opt = document.createElement("option");
-        opt.value = "warszawa-live";
-        opt.textContent = "Bar w Warszawie";
+        opt.value = "local-live";
+        opt.textContent = `Bar w mieście (${cur.name})`;
         berealSelectVenue.appendChild(opt);
         return;
       }
@@ -9226,10 +9667,11 @@
           }
 
           // 2. Determine venue details
-          const venueId = (berealSelectVenue && berealSelectVenue.value) || "warszawa-live";
+          const curCity = getCurrentCity();
+          const venueId = (berealSelectVenue && berealSelectVenue.value) || "local-live";
           const venueObj = (allVenues || []).find(v => v.id === venueId);
-          const venueName = venueObj ? venueObj.name : (venueId === "warszawa-live" ? "Bar w Warszawie" : "Lokal");
-          const district = venueObj ? (venueObj.district || "Warszawa") : "Warszawa";
+          const venueName = venueObj ? venueObj.name : (venueId === "local-live" ? `Bar w mieście (${curCity.name})` : "Lokal");
+          const district = venueObj ? (venueObj.district || curCity.name) : curCity.name;
           const beerName = (berealInputBeer && berealInputBeer.value.trim()) || "Świeże Piwko";
           const beerPrice = (berealInputPrice && berealInputPrice.value)
             ? parseFloat(berealInputPrice.value)
@@ -9591,7 +10033,7 @@
         if (statFollowers) statFollowers.textContent = data.stats?.followersCount || 0;
         if (bioEl) bioEl.textContent = p.bio || "Brak opisu.";
         if (beerEl) beerEl.textContent = p.favorite_beer || "Wszystkie dobre!";
-        if (distEl) distEl.textContent = p.favorite_district || "Warszawa";
+        if (distEl) distEl.textContent = p.favorite_district || getCurrentCity().name;
 
         const vibePill = document.getElementById("pubprof-pill-vibe");
         const vibeVal = document.getElementById("pubprof-val-vibe");
@@ -10055,7 +10497,7 @@
         <div class="roulette-reel-card">
           <div class="roulette-item-title">${escapeHtml(v.name)}</div>
           <div class="roulette-item-meta">
-            <span>📍 ${escapeHtml(v.district || 'Warszawa')}</span>
+            <span>📍 ${escapeHtml(v.district || getCurrentCity().name)}</span>
             <span>•</span>
             <span class="roulette-item-price">🍺 ${v.beer_price_pln.toFixed(2)} zł</span>
           </div>
@@ -10103,10 +10545,10 @@
         if (resPrice) resPrice.textContent = `🍺 ${winner.beer_price_pln.toFixed(2)} zł`;
         if (resBeer) resBeer.textContent = winner.beer_name || "Piwo z kranu";
         if (resAddress) {
-          if (winner.address && winner.address !== "Warszawa") {
+          if (winner.address && winner.address !== "Warszawa" && winner.address !== getCurrentCity().name) {
             resAddress.textContent = `${winner.address}${winner.district ? ` (${winner.district})` : ""}`;
           } else {
-            resAddress.textContent = winner.district || "Warszawa";
+            resAddress.textContent = winner.district || getCurrentCity().name;
           }
         }
 
@@ -10188,10 +10630,11 @@
       btnShare.addEventListener("click", () => {
         if (!currentWinner) return;
         const gmapsUrl = buildGoogleMapsNavigationUrl(currentWinner);
+        const curCity = getCurrentCity();
         const text = `🎲 Piwna Ruletka poilepiwko wylosowała bar na dziś:\n` +
-          `📍 ${currentWinner.name} (${currentWinner.district || 'Warszawa'})\n` +
+          `📍 ${currentWinner.name} (${currentWinner.district || curCity.name})\n` +
           `🍺 ${currentWinner.beer_name || 'Piwo'}: ${currentWinner.beer_price_pln.toFixed(2)} zł\n` +
-          (currentWinner.address && currentWinner.address !== "Warszawa" ? `Adres: ${currentWinner.address}\n` : "") +
+          (currentWinner.address && currentWinner.address !== "Warszawa" && currentWinner.address !== curCity.name ? `Adres: ${currentWinner.address}\n` : "") +
           `🗺️ Nawigacja Google Maps: ${gmapsUrl}\n` +
           `Idziemy na piwko? Sprawdź na https://poilepiwko.pl 🍻`;
 
@@ -10494,7 +10937,7 @@
       {
         id: 9,
         cat: "warsaw",
-        catName: "Warszawska Noc 🏙️",
+        catName: "Nocne Życie & Bary 🏙️",
         q: "Gdzie w Warszawie znajduje się słynne zagłębie barowe zwane 'Pawilonami'?",
         options: [
           "Na tyłach Nowego Światu i ulicy Foksal",
@@ -10508,7 +10951,7 @@
       {
         id: 10,
         cat: "warsaw",
-        catName: "Warszawska Noc 🏙️",
+        catName: "Nocne Życie & Bary 🏙️",
         q: "Który warszawski most słynie z letnich spotkań przy piwku na betonowych schodkach nad Wisłą?",
         options: [
           "Most Poniatowskiego",
@@ -10522,7 +10965,7 @@
       {
         id: 11,
         cat: "warsaw",
-        catName: "Warszawska Noc 🏙️",
+        catName: "Nocne Życie & Bary 🏙️",
         q: "W której dzielnicy Warszawy znajdują się historyczne dawne Browary Haberbusch i Schiele?",
         options: [
           "Wola",
@@ -10536,7 +10979,7 @@
       {
         id: 12,
         cat: "warsaw",
-        catName: "Warszawska Noc 🏙️",
+        catName: "Nocne Życie & Bary 🏙️",
         q: "Która ulica w Śródmieściu Południowym jest uznawana za nieoficjalną 'stolicę warszawskiego kraftu'?",
         options: [
           "Nowogrodzka",
@@ -10550,7 +10993,7 @@
       {
         id: 13,
         cat: "warsaw",
-        catName: "Warszawska Noc 🏙️",
+        catName: "Nocne Życie & Bary 🏙️",
         q: "Jaki kultowy praski lokal przy ul. Ząbkowskiej słynie z wystroju vintage, starych maszyn do szycia i klimatu retro?",
         options: [
           "W Oparach Absurdu",
@@ -10564,7 +11007,7 @@
       {
         id: 14,
         cat: "warsaw",
-        catName: "Warszawska Noc 🏙️",
+        catName: "Nocne Życie & Bary 🏙️",
         q: "Jak w gwarze warszawskiej nazywano tradycyjny zestaw biesiadny: dwa kieliszki i zimne nóżki?",
         options: [
           "Lorneta z meduzą",
@@ -10578,7 +11021,7 @@
       {
         id: 15,
         cat: "warsaw",
-        catName: "Warszawska Noc 🏙️",
+        catName: "Nocne Życie & Bary 🏙️",
         q: "W którym roku otwarto zrewitalizowaną Halę Koszyki z restauracjami i barami?",
         options: [
           "2016",
@@ -10592,7 +11035,7 @@
       {
         id: 16,
         cat: "warsaw",
-        catName: "Warszawska Noc 🏙️",
+        catName: "Nocne Życie & Bary 🏙️",
         q: "Jak nazywa się plac w Warszawie, zwany pieszczotliwie 'Placem Hipstera' z licznymi ogródkami barowymi?",
         options: [
           "Plac Zbawiciela",
@@ -10788,7 +11231,7 @@
       {
         id: 30,
         cat: "warsaw",
-        catName: "Warszawska Noc 🏙️",
+        catName: "Nocne Życie & Bary 🏙️",
         q: "Który kultowy klubo-pub w Parku Pole Mokotowskie słynie z ogromnego grilla i ogródka?",
         options: [
           "Lolek Grill & Bar",
@@ -10802,7 +11245,7 @@
       {
         id: 31,
         cat: "warsaw",
-        catName: "Warszawska Noc 🏙️",
+        catName: "Nocne Życie & Bary 🏙️",
         q: "W którym gmachu w Warszawie mieścił się słynny multitap 'Cuda na Kiju'?",
         options: [
           "Dawny Dom Partii (KC PZPR) przy Rondzie de Gaulle'a",
@@ -10816,7 +11259,7 @@
       {
         id: 32,
         cat: "warsaw",
-        catName: "Warszawska Noc 🏙️",
+        catName: "Nocne Życie & Bary 🏙️",
         q: "Gdzie w Warszawie w dawnej wytwórni wódek powstało centrum kulturalno-gastronomiczne z barami?",
         options: [
           "Centrum Praskie Koneser",
@@ -10830,7 +11273,7 @@
       {
         id: 33,
         cat: "warsaw",
-        catName: "Warszawska Noc 🏙️",
+        catName: "Nocne Życie & Bary 🏙️",
         q: "Który warszawski festiwal piwny odbywa się na stadionie Legii Warszawa przy ul. Łazienkowskiej?",
         options: [
           "Warszawski Festiwal Piwa (WFP)",
@@ -10844,7 +11287,7 @@
       {
         id: 34,
         cat: "warsaw",
-        catName: "Warszawska Noc 🏙️",
+        catName: "Nocne Życie & Bary 🏙️",
         q: "W której dzielnicy Warszawy znajduje się historyczny Fort Bema z popularnymi lokalami i ogródkami?",
         options: [
           "Bemowo",
@@ -10858,7 +11301,7 @@
       {
         id: 35,
         cat: "warsaw",
-        catName: "Warszawska Noc 🏙️",
+        catName: "Nocne Życie & Bary 🏙️",
         q: "Co warszawiacy mają na myśli, mówiąc w letni piątkowy wieczór 'idziemy na Schodki'?",
         options: [
           "Spotkanie towarzyskie na betonowych schodkach Bulwarów Wiślanych",
@@ -11106,6 +11549,21 @@
 
     function renderLiveVenues() {
       if (!venuesContainer) return;
+      const curCity = getCurrentCity();
+      if (curCity.id !== "warszawa") {
+        venuesContainer.innerHTML = `
+          <div class="empty-state-hint" style="padding: 28px 14px; text-align: center;">
+            <div style="font-size: 2.2rem; margin-bottom: 8px;">🧠🍻</div>
+            <strong>Pub Quizy w mieście ${escapeHtml(curCity.name)}</strong>
+            <p style="color: #94a3b8; font-size: 0.78rem; margin-top: 6px; line-height: 1.5;">
+              Weryfikujemy i uzupełniamy aktualny harmonogram cotygodniowych pub quizów dla miasta ${escapeHtml(curCity.name)}.<br/>
+              Znasz bar organizujący quiz? Zgłoś go w formularzu zgłoszeń lub zagraj w Quiz wiedzy online powyżej!
+            </p>
+          </div>
+        `;
+        return;
+      }
+
       const todayDay = new Date().getDay(); // 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
 
       let filtered = LIVE_QUIZ_VENUES;
@@ -11122,7 +11580,7 @@
             <div style="font-size: 2.2rem; margin-bottom: 8px;">🍻📅</div>
             <strong>Brak zaplanowanych quizów w ten dzień tygodnia</strong>
             <p style="color: #94a3b8; font-size: 0.78rem; margin-top: 4px;">
-              Sprawdź inny dzień lub kliknij „Wszystkie”, aby zobaczyć pełen harmonogram Warszawy!
+              Sprawdź inny dzień lub kliknij „Wszystkie”, aby zobaczyć pełen harmonogram!
             </p>
           </div>
         `;
@@ -11339,8 +11797,8 @@
       const ratio = currentScore / totalCount;
       if (ratio === 1) {
         if (resIco) resIco.textContent = "👑";
-        if (resTitle) resTitle.textContent = "Mistrz Warszawskiego Pub Quizu!";
-        if (resSub) resSub.textContent = `Fenomenalnie! Komplet ${currentScore}/${totalCount} punktów! Warszawa i krafty nie mają przed Tobą żadnych tajemnic.`;
+        if (resTitle) resTitle.textContent = "Mistrz Piwnego Pub Quizu!";
+        if (resSub) resSub.textContent = `Fenomenalnie! Komplet ${currentScore}/${totalCount} punktów! Piwne klimaty i krafty nie mają przed Tobą żadnych tajemnic.`;
 
         if (totalCount >= 5) {
           const alreadyWon = localStorage.getItem("poilepiwko_pubquiz_won") === "true";
@@ -11365,11 +11823,11 @@
       } else if (ratio >= 0.4) {
         if (resIco) resIco.textContent = "🍻";
         if (resTitle) resTitle.textContent = "Doświadczony Piwosz!";
-        if (resSub) resSub.textContent = `Dobra runda (${currentScore}/${totalCount})! Kilka pytań było podchwytliwych, ale znasz warszawskie klimaty.`;
+        if (resSub) resSub.textContent = `Dobra runda (${currentScore}/${totalCount})! Kilka pytań było podchwytliwych, ale znasz barowe klimaty.`;
         if (unlockedNotice) unlockedNotice.style.display = "none";
       } else {
         if (resIco) resIco.textContent = "🎓";
-        if (resTitle) resTitle.textContent = "Praktykant na Pawilonach";
+        if (resTitle) resTitle.textContent = "Piwny Nowicjusz";
         if (resSub) resSub.textContent = `Wynik: ${currentScore}/${totalCount}. Każda barowa wiedza wymaga praktyki – zagraj jeszcze raz!`;
         if (unlockedNotice) unlockedNotice.style.display = "none";
       }
@@ -11386,7 +11844,7 @@
 
     if (btnShare) {
       btnShare.addEventListener("click", () => {
-        const text = `🧠 Mój wynik w Warszawskim Pub Quizie na poilepiwko.pl: ${currentScore}/${activeQuestions.length}! Sprawdź czy znasz warszawskie bary lepiej: ${window.location.origin}`;
+        const text = `🧠 Mój wynik w Pub Quizie na poilepiwko.pl: ${currentScore}/${activeQuestions.length}! Sprawdź czy znasz bary lepiej: ${window.location.origin}`;
         if (navigator.clipboard) {
           navigator.clipboard.writeText(text).then(() => {
             showAppToast("Skopiowano wynik!", "Możesz wkleić go znajomym na Messengerze lub WhatsAppie!", "📤");
@@ -11556,7 +12014,7 @@
       // Subtitle
       ctx.font = "700 24px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
       ctx.fillStyle = "#94a3b8";
-      ctx.fillText("WARSZAWSKI PASZPORT PIWNY", W / 2, 185);
+      ctx.fillText("PASZPORT PIWOSZA", W / 2, 185);
 
       // User Number Pill (e.g. #000042)
       const userNum = currentProfile.user_number || "#000001";
@@ -11700,14 +12158,14 @@
       ctx.stroke();
 
       // Bio text
-      const userBio = currentProfile.bio || "Warszawski poszukiwacz dobrego i taniego piwa 🍻";
+      const userBio = currentProfile.bio || "Poszukiwacz dobrego i taniego piwa 🍻";
       ctx.font = "italic 30px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
       ctx.fillStyle = "#cbd5e1";
       const displayBio = userBio.length > 55 ? userBio.slice(0, 52) + "..." : userBio;
       ctx.fillText(`“${displayBio}”`, W / 2, bioY + 65);
 
       // Meta Pills: Rewir & Ulubione piwo
-      const rewir = `📍 Rewir: ${currentProfile.favorite_district || "Cała Warszawa"}`;
+      const rewir = `📍 Rewir: ${currentProfile.favorite_district || "Wszystkie dzielnice"}`;
       const piwo = `🍺 Piwo: ${currentProfile.favorite_beer || "Wszystkie dobre!"}`;
 
       const pill1W = bioW - 60;
@@ -11774,7 +12232,7 @@
       // Bottom tagline
       ctx.font = "600 22px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
       ctx.fillStyle = "#64748b";
-      ctx.fillText("Puls cen piwa • Warszawski Pub Crawl • Pub Quizy", W / 2, 1780);
+      ctx.fillText("Puls cen piwa • Trasy Pub Crawl • Pub Quizy", W / 2, 1780);
 
       // Convert to blob and dataURL for preview
       currentDataUrl = canvas.toDataURL("image/png");
@@ -11848,7 +12306,7 @@
             if (navigator.canShare({ files: [file] })) {
               await navigator.share({
                 title: `${currentProfile?.display_name || currentProfile?.username} na poilepiwko`,
-                text: `Mój paszport piwny w Warszawie! 🍻 Sprawdź na poilepiwko.pl/#@${currentProfile?.username}`,
+                text: `Mój paszport piwny! 🍻 Sprawdź na poilepiwko.pl/#@${currentProfile?.username}`,
                 files: [file]
               });
               return;
@@ -11887,8 +12345,8 @@
       const num = (currentProfile && currentProfile.user_number) ? currentProfile.user_number : "#000001";
       if (elName) elName.textContent = name.toUpperCase();
       if (elNum) elNum.textContent = num;
-      if (elValidity) elValidity.textContent = "12/2027";
-      if (elBackId) elBackId.textContent = `ID: ${num} • Warszawa`;
+      const cur = getCurrentCity ? getCurrentCity() : { name: "Polska" };
+      if (elBackId) elBackId.textContent = `ID: ${num} • ${cur.name}`;
     }
 
     function toggleFlip() {
@@ -12097,10 +12555,11 @@
     }
 
     function updateDetectedLocation() {
-      // Find coordinates: userLocation or map center or Warsaw Center
+      const curCity = getCurrentCity();
+      // Find coordinates: userLocation or map center or City Center
       let coords = (userLocation && Array.isArray(userLocation) && userLocation.length === 2) 
         ? userLocation 
-        : (map ? [map.getCenter().lat, map.getCenter().lng] : WARSAW_CENTER);
+        : (map ? [map.getCenter().lat, map.getCenter().lng] : curCity.center);
       
       detectedCoords = coords;
 
@@ -12137,17 +12596,17 @@
           sosVenueName.innerHTML = `🍺 ${escapeHtml(nearest.name)} <span style="font-size:0.75rem;font-weight:600;color:#94a3b8;">(${distStr})</span>`;
         }
         if (sosVenueDetails) {
-          const addr = nearest.address && nearest.address !== "Warszawa" ? nearest.address : (nearest.district || "Warszawa");
+          const addr = nearest.address && nearest.address !== "Warszawa" && nearest.address !== curCity.name ? nearest.address : (nearest.district || curCity.name);
           sosVenueDetails.textContent = `📍 ${addr} · ${coords[0].toFixed(5)}, ${coords[1].toFixed(5)}`;
         }
       } else {
-        if (sosVenueName) sosVenueName.textContent = "📍 Centrum Warszawy";
+        if (sosVenueName) sosVenueName.textContent = `📍 Centrum ${curCity.name}`;
         if (sosVenueDetails) sosVenueDetails.textContent = `${coords[0].toFixed(5)}, ${coords[1].toFixed(5)}`;
       }
 
       // Update Share Text & Links
-      const vTitle = nearest ? nearest.name : "Warszawa";
-      const vAddr = nearest ? (nearest.address && nearest.address !== "Warszawa" ? nearest.address : (nearest.district || "")) : "";
+      const vTitle = nearest ? nearest.name : curCity.name;
+      const vAddr = nearest ? (nearest.address && nearest.address !== "Warszawa" && nearest.address !== curCity.name ? nearest.address : (nearest.district || "")) : "";
       const mapsLink = `https://www.google.com/maps?q=${coords[0]},${coords[1]}`;
 
       const shareMsg = `🚨 SOS PoIlePiwko: Potrzebuję pomocy/odebrania! Jestem w/przy: ${vTitle}${vAddr ? " (" + vAddr + ")" : ""}. Moje położenie: ${mapsLink}`;
@@ -12246,7 +12705,7 @@
               action: "trigger-sos-alert",
               payload: {
                 userId: currentUser.id,
-                venueName: detectedVenue ? detectedVenue.name : "Warszawa",
+                venueName: detectedVenue ? detectedVenue.name : getCurrentCity().name,
                 address: detectedVenue ? detectedVenue.address : "",
                 latitude: detectedCoords ? detectedCoords[0] : null,
                 longitude: detectedCoords ? detectedCoords[1] : null
