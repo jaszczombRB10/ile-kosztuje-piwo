@@ -61,6 +61,9 @@ Cena musi być psychologicznym „no-brainerem” (zwracać się po 1–2 wyjśc
   * Powiadomienie push do klubowiczów w okolicy w piątek/sobotę: *„Dziś w lokalu X zniżka 15% na kranach!”*.
   * Baner na samej górze rankingu piw w aplikacji.
 
+> [!WARNING]
+> **Do weryfikacji prawnej przed wdrożeniem (dopisane 12.10.2026).** Płatne wyróżnienia lokali z alkoholem („Bar Miesiąca”, push o zniżkach na piwo, baner) to płatna promocja, a ustawa o wychowaniu w trzeźwości zakazuje reklamy i promocji alkoholu (z ograniczonym wyjątkiem dla piwa). Taki model jest też sprzeczny z pozycjonowaniem „społecznościowa mapa, nie wyróżniamy lokali” z [broszury dla lokali](file:///Users/krystian/.gemini/antigravity/scratch/ile-kosztuje-piwo/docs/partnerzy/maile_do_lokali.md). Bezpieczniejsze kierunki przychodu: subskrypcja użytkowników (karta Pass), a po stronie lokali narzędzia niepromocyjne (panel do aktualizacji cennika, statystyki). Rabat Pass to autonomiczna decyzja lokalu. Przed oferowaniem płatnych pakietów potrzebna jest konsultacja prawnika.
+
 ---
 
 ## 📲 3. Integracja z Apple Wallet & Google Wallet
