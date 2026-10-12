@@ -334,7 +334,8 @@
     craftOnly: false,
     happyHourOnly: false,
     favoritesOnly: false,
-    nonAlcoholicOnly: false
+    nonAlcoholicOnly: false,
+    passOnly: false
   };
   let currentDistrict = "all";
   let searchQuery = "";
@@ -1007,6 +1008,7 @@
     const craftClass = venue.is_craft ? "marker-craft-halo" : "";
     const visited = isVenueVisited(venue.id);
     const visitedBadge = visited ? `<span class="marker-visited-badge" title="Odwiedzony bar!">✓</span>` : "";
+    const passBadge = (venue.is_partner || venue.pass_partner) ? `<span class="marker-pass-badge" title="Lokal honoruje kartę poilepiwko Pass (-10%)">🎟️</span>` : "";
 
     if (!open) {
       const size = [32, 32];
@@ -1015,6 +1017,7 @@
         html: `<div class="price-badge-marker marker-closed" style="width:${size[0]}px; height:${size[1]}px;" title="Zamknięte teraz · ${escapeHtml(formatDisplayHours(venue.hours) || '')}">
                 <span class="closed-x">✕</span>
                 ${visitedBadge}
+                ${passBadge}
                </div>`,
         iconSize: size,
         iconAnchor: [size[0] / 2, size[1] / 2]
@@ -1027,6 +1030,7 @@
       html: `<div class="price-badge-marker ${tier.class} ${craftClass}" style="width:${size[0]}px; height:${size[1]}px;">
               ${price.toFixed(price % 1 === 0 ? 0 : 1)}<span style="font-size:9px;margin-left:1px;">zł</span>
               ${visitedBadge}
+              ${passBadge}
              </div>`,
       iconSize: size,
       iconAnchor: [size[0] / 2, size[1] / 2]
@@ -1114,9 +1118,12 @@
 
         <div class="venue-meta-bar">
           ${statusBadge}
-          ${venue.is_verified
-            ? `<span class="venue-verified-pill" title="Cena zweryfikowana w lokalu"><span class="ver-dot"></span> Zweryfikowana</span>`
-            : `<span class="venue-unverified-pill" title="Cena szacunkowa na podstawie dzielnicy – pomóż zaktualizować!"><span class="unver-dot"></span> Szacunek</span>`
+          ${(venue.verified_by_venue)
+            ? `<span class="venue-verified-pill" title="Cennik zaktualizowany bezpośrednio przez personel lokalu"><span class="ver-dot"></span> Cennik z lokalu${venue.venue_updated_at ? ` (${escapeHtml(venue.venue_updated_at)})` : ''}</span>`
+            : (venue.is_verified
+                ? `<span class="venue-verified-pill" title="Cena zweryfikowana w lokalu"><span class="ver-dot"></span> Zweryfikowana</span>`
+                : `<span class="venue-unverified-pill" title="Cena szacunkowa na podstawie dzielnicy – pomóż zaktualizować!"><span class="unver-dot"></span> Szacunek</span>`
+              )
           }
           ${venue.hours ? `<span class="venue-hours-chip">🕒 ${escapeHtml(formatDisplayHours(venue.hours))}</span>` : ''}
         </div>
@@ -1127,7 +1134,7 @@
           <div class="price-beer-info">
             <div class="price-beer-title">
               Najtańsze piwo (0.5L)
-              ${!venue.is_verified ? '<span class="price-est-badge" title="Cena orientacyjna dla dzielnicy – zgłoś aktualną cenę!">szacunek</span>' : ''}
+              ${!venue.is_verified && !venue.verified_by_venue ? '<span class="price-est-badge" title="Cena orientacyjna dla dzielnicy – zgłoś aktualną cenę!">szacunek</span>' : ''}
             </div>
             <div class="price-beer-brand">${escapeHtml(venue.beer_name || "Piwo z nalewaka / kranu")}</div>
           </div>
@@ -1136,8 +1143,9 @@
           </div>
         </div>
 
-        ${(venue.shot_price_pln || venue.is_craft || (venue.happy_hour && !activeHh) || hasZero) ? `
+        ${(venue.is_partner || venue.pass_partner || venue.shot_price_pln || venue.is_craft || (venue.happy_hour && !activeHh) || hasZero) ? `
           <div class="venue-chips-row">
+            ${(venue.is_partner || venue.pass_partner) ? `<span class="venue-chip chip-pass" title="Lokal honoruje wirtualną kartę poilepiwko Pass (-10%)">🎟️ Karta Pass (-10%)</span>` : ''}
             ${venue.shot_price_pln ? `<span class="venue-chip">🥃 Shot: <strong>${venue.shot_price_pln.toFixed(2)} zł</strong></span>` : ''}
             ${venue.is_craft ? `<span class="venue-chip craft">⭐ Kraft / Multitap</span>` : ''}
             ${(venue.happy_hour && !activeHh) ? `<span class="venue-chip hh">⚡ ${escapeHtml(venue.happy_hour)}</span>` : ''}
@@ -1373,13 +1381,15 @@
       if (filterState.happyHourOnly && !(venue.happy_hour || venue.happy_hour_rule)) return false;
       if (filterState.favoritesOnly && !isVenueFavorite(venue.id)) return false;
       if (filterState.nonAlcoholicOnly && !isNonAlcoholicVenue(venue)) return false;
+      if (filterState.passOnly && !(venue.is_partner || venue.pass_partner)) return false;
 
       // Fallback for legacy currentFilter
-      if (currentFilter && currentFilter !== "all" && filterState.priceTier === "all" && filterState.maxPrice === null && !filterState.openNow && !filterState.craftOnly && !filterState.happyHourOnly && !filterState.favoritesOnly && !filterState.nonAlcoholicOnly) {
+      if (currentFilter && currentFilter !== "all" && filterState.priceTier === "all" && filterState.maxPrice === null && !filterState.openNow && !filterState.craftOnly && !filterState.happyHourOnly && !filterState.favoritesOnly && !filterState.nonAlcoholicOnly && !filterState.passOnly) {
         switch (currentFilter) {
           case "open-now": return isVenueOpen(venue);
           case "favorites": return isVenueFavorite(venue.id);
           case "non-alcoholic": return isNonAlcoholicVenue(venue);
+          case "pass": return !!(venue.is_partner || venue.pass_partner);
           case "pawilony": return venue.district.toLowerCase() === "pawilony";
           case "srodmiescie": return venue.district.toLowerCase().includes("śródmieście");
           case "praga": return venue.district.toLowerCase().includes("praga");
@@ -1404,6 +1414,7 @@
     if (filterState.happyHourOnly) count++;
     if (filterState.favoritesOnly) count++;
     if (filterState.nonAlcoholicOnly) count++;
+    if (filterState.passOnly) count++;
     if (currentDistrict !== "all") count++;
     return count;
   }
@@ -1441,7 +1452,7 @@
       const f = c.getAttribute("data-filter");
       let isActive = false;
       if (f === "all") {
-        isActive = (filterState.priceTier === "all" && filterState.maxPrice === null && !filterState.openNow && !filterState.craftOnly && !filterState.happyHourOnly && !filterState.favoritesOnly && !filterState.nonAlcoholicOnly);
+        isActive = (filterState.priceTier === "all" && filterState.maxPrice === null && !filterState.openNow && !filterState.craftOnly && !filterState.happyHourOnly && !filterState.favoritesOnly && !filterState.nonAlcoholicOnly && !filterState.passOnly);
       } else if (f === "tier-low") {
         isActive = (filterState.priceTier === "tier-low" && filterState.maxPrice === null);
       } else if (f === "tier-mid") {
@@ -1458,6 +1469,8 @@
         isActive = filterState.favoritesOnly;
       } else if (f === "non-alcoholic") {
         isActive = filterState.nonAlcoholicOnly;
+      } else if (f === "pass") {
+        isActive = filterState.passOnly;
       }
       if (isActive) c.classList.add("active");
       else c.classList.remove("active");
@@ -1501,7 +1514,8 @@
       "happyHourOnly": document.getElementById("filter-toggle-happyhour"),
       "craftOnly": document.getElementById("filter-toggle-craft"),
       "nonAlcoholicOnly": document.getElementById("filter-toggle-nonalco"),
-      "favoritesOnly": document.getElementById("filter-toggle-favorites")
+      "favoritesOnly": document.getElementById("filter-toggle-favorites"),
+      "passOnly": document.getElementById("filter-toggle-pass")
     };
     for (const [key, el] of Object.entries(toggleMap)) {
       if (el) {
@@ -1549,7 +1563,8 @@
       craftOnly: false,
       happyHourOnly: false,
       favoritesOnly: false,
-      nonAlcoholicOnly: false
+      nonAlcoholicOnly: false,
+      passOnly: false
     };
     currentFilter = "all";
     currentDistrict = "all";
@@ -1961,6 +1976,8 @@
       const isFav = isVenueFavorite(venue.id);
       const visitedChip = isVisited ? `<span style="color:#4ade80;font-size:0.7rem;font-weight:700;margin-left:4px;">✓ Byłem</span>` : "";
       const favChip = isFav ? `<span style="color:#fb7185;font-size:0.75rem;margin-left:4px;" title="W Twoich ulubionych">❤️</span>` : "";
+      const passChip = (venue.is_partner || venue.pass_partner) ? `<span title="Lokal honoruje kartę poilepiwko Pass (-10%)" style="font-size:12px;margin-left:4px;">🎟️</span>` : "";
+      const venueUpdatedChip = (venue.verified_by_venue) ? `<span title="Cennik zaktualizowany bezpośrednio przez personel lokalu" style="color:#22c55e;font-size:11px;font-weight:700;margin-left:4px;">✓</span>` : "";
 
       return `
         <div class="ranked-card" onclick="window.__zoomToVenue('${venue.id}')">
@@ -1970,6 +1987,8 @@
               ${escapeHtml(venue.name)}
               ${venue.old_name ? `<span style="font-size:0.75rem;font-weight:400;color:var(--text-muted);margin-left:4px;">(d. ${escapeHtml(venue.old_name)})</span>` : ''}
               ${hasProof ? '<span title="Posiada zdjęcie menu/paragonu" style="font-size:12px;margin-left:4px;">📸</span>' : ''}
+              ${passChip}
+              ${venueUpdatedChip}
               ${favChip}
               ${visitedChip}
             </div>
@@ -4202,6 +4221,7 @@
         filterState.happyHourOnly = false;
         filterState.favoritesOnly = false;
         filterState.nonAlcoholicOnly = false;
+        filterState.passOnly = false;
 
         if (filterVal === "tier-low" || filterVal === "tier-mid" || filterVal === "tier-high") {
           filterState.priceTier = filterVal;
@@ -4215,6 +4235,8 @@
           filterState.favoritesOnly = true;
         } else if (filterVal === "non-alcoholic") {
           filterState.nonAlcoholicOnly = true;
+        } else if (filterVal === "pass") {
+          filterState.passOnly = true;
         }
         currentFilter = filterVal;
         syncQuickChipsWithFilterState();

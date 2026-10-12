@@ -571,6 +571,13 @@ header {
   box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
 }
 
+.filter-chip.chip-pass.active {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border-color: #fbbf24;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.45);
+  color: #fff;
+}
+
 /* Legend Pill */
 .legend-pill {
   position: absolute;
@@ -1271,6 +1278,26 @@ body.theme-light .venue-btn-edit.highlight-edit {
   border-color: rgba(16, 185, 129, 0.4);
   color: #34d399;
   font-weight: 600;
+}
+
+.venue-chip.chip-pass {
+  background: rgba(245, 158, 11, 0.16);
+  border-color: rgba(245, 158, 11, 0.45);
+  color: #fde68a;
+  font-weight: 700;
+}
+
+.marker-pass-badge {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  width: 14px;
+  height: 14px;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.8));
 }
 
 /* Action Buttons (50/50 Grid - Never Clips) */
