@@ -308,7 +308,7 @@ module.exports = async (req, res) => {
       }
 
       let profile = null;
-      let userNumber = "#000001";
+      let userNumber = null;
       let followersCount = 0;
       let followingCount = 0;
       let followingIds = [];
@@ -321,7 +321,7 @@ module.exports = async (req, res) => {
             const meta = u.user_metadata || {};
             followingIds = Array.isArray(meta.following_ids) ? meta.following_ids : [];
             followersCount = Array.isArray(meta.follower_ids) ? meta.follower_ids.length : 0;
-            userNumber = meta.user_number || "#000001";
+            userNumber = meta.user_number || null;
 
             profile = {
               id: u.id,
@@ -352,7 +352,7 @@ module.exports = async (req, res) => {
               const meta = match.user_metadata || {};
               followingIds = Array.isArray(meta.following_ids) ? meta.following_ids : [];
               followersCount = Array.isArray(meta.follower_ids) ? meta.follower_ids.length : 0;
-              userNumber = meta.user_number || "#000001";
+              userNumber = meta.user_number || null;
 
               profile = {
                 id: match.id,
@@ -585,7 +585,7 @@ module.exports = async (req, res) => {
               display_name: m.display_name || m.full_name || m.username || "Piwosz",
               avatar_icon: m.avatar_icon || "🍺",
               avatar_photo: m.avatar_photo || null,
-              user_number: m.user_number || "#000001",
+              user_number: m.user_number || null,
               bio: m.bio || "Warszawski poszukiwacz dobrego i taniego piwa 🍻",
               visited_count: Array.isArray(m.visited_venues) ? m.visited_venues.length : 0,
               popular_badge: "🔥 Aktywny piwosz"

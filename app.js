@@ -5350,7 +5350,8 @@
 
         const cardBackId = document.getElementById("club-card-back-id");
         if (cardBackId) {
-          cardBackId.textContent = `ID: #000001 • ${cur.name}`;
+          const num = (currentProfile && currentProfile.user_number) ? currentProfile.user_number : "-";
+          cardBackId.textContent = `ID: ${num} • ${cur.name}`;
         }
 
         // Compass district badge
@@ -6664,11 +6665,12 @@
           currentProfile = data.profile;
           if (data.userNumber) {
             currentProfile.user_number = data.userNumber;
-            const userNumEl = document.getElementById("prof-user-number");
-            if (userNumEl) userNumEl.textContent = data.userNumber;
-            const pubUserNum = document.getElementById("pubprof-user-number");
-            if (pubUserNum) pubUserNum.textContent = data.userNumber;
           }
+          const dispUserNum = (currentProfile && currentProfile.user_number) ? currentProfile.user_number : "-";
+          const userNumEl = document.getElementById("prof-user-number");
+          if (userNumEl) userNumEl.textContent = dispUserNum;
+          const pubUserNum = document.getElementById("pubprof-user-number");
+          if (pubUserNum) pubUserNum.textContent = dispUserNum;
           if (Array.isArray(data.followingIds)) {
             myFollowingIds = data.followingIds;
           }
@@ -6730,7 +6732,7 @@
         display_name: meta.display_name || meta.full_name || meta.name || fallbackUsername,
         avatar_icon: meta.avatar_icon || "🍺",
         avatar_photo: savedPhoto,
-        user_number: "#000001",
+        user_number: meta.user_number || null,
         bio: "Koneser lanego z kija i dobrych ogródków.",
         vibe_tags: "Kraft, Ogródki, Pub Quiz",
         visited_venues: visitedVenues,
@@ -7721,7 +7723,7 @@
         favorite_beer: "Wszystkie dobre!",
         favorite_district: "Centrum",
         vibe_tags: "Kraft, Ogródki, Pub Quiz",
-        user_number: "#000001"
+        user_number: null
       };
     }
 
@@ -7757,7 +7759,7 @@
       }
       if (heroName) heroName.textContent = prof.display_name || prof.username;
       if (heroHandle) heroHandle.textContent = `@${(prof.username || "krystian").toLowerCase()}`;
-      if (userNumEl) userNumEl.textContent = prof.user_number || "#000001";
+      if (userNumEl) userNumEl.textContent = prof.user_number || "-";
       if (rankTitle) rankTitle.textContent = rank.title;
       if (statVisited) statVisited.textContent = visitedVenues.length;
       if (statBadges) statBadges.textContent = loadUnlockedBadges().length;
@@ -12804,7 +12806,7 @@
       ctx.fillText("PASZPORT PIWOSZA", W / 2, 185);
 
       // User Number Pill (e.g. #000042)
-      const userNum = currentProfile.user_number || "#000001";
+      const userNum = (currentProfile && currentProfile.user_number) ? currentProfile.user_number : "-";
       const pillW = 200;
       const pillH = 46;
       ctx.fillStyle = "rgba(245, 158, 11, 0.16)";
@@ -13129,7 +13131,7 @@
 
     function renderClubCardData() {
       const name = (currentProfile && (currentProfile.display_name || currentProfile.username)) ? (currentProfile.display_name || currentProfile.username) : "PIWOSZ";
-      const num = (currentProfile && currentProfile.user_number) ? currentProfile.user_number : "#000001";
+      const num = (currentProfile && currentProfile.user_number) ? currentProfile.user_number : "-";
       if (elName) elName.textContent = name.toUpperCase();
       if (elNum) elNum.textContent = num;
       const cur = getCurrentCity ? getCurrentCity() : { name: "Polska" };
@@ -13238,15 +13240,19 @@
         const passUrl = `${window.location.origin}/#pass`;
         if (navigator.share) {
           try {
+            const shareText = currentProfile?.user_number
+              ? `Moja wirtualna karta członkowska PoIlePiwko Pass: ${currentProfile.user_number}! Sprawdź na poilepiwko.pl`
+              : "Moja wirtualna karta członkowska PoIlePiwko Pass! Sprawdź na poilepiwko.pl";
             await navigator.share({
               title: "PoIlePiwko Pass - Karta Klubowa (-10%)",
-              text: `Moja wirtualna karta członkowska PoIlePiwko Pass: ${currentProfile?.user_number || "#000001"}! Sprawdź na poilepiwko.pl`,
+              text: shareText,
               url: passUrl
             });
             return;
           } catch (e) {}
         }
-        showAppToast("Karta Pass 💳", `Twój numer klubowicza to ${currentProfile?.user_number || "#000001"}. Karta jest aktywna w Twoim profilu!`, "✅", 2800);
+        const numMsg = currentProfile?.user_number ? `Twój numer klubowicza to ${currentProfile.user_number}. ` : "";
+        showAppToast("Karta Pass 💳", `${numMsg}Karta jest aktywna w Twoim profilu!`, "✅", 2800);
       });
     }
   }
