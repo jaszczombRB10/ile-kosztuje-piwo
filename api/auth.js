@@ -19,6 +19,18 @@ module.exports = async (req, res) => {
     "Prefer": "return=representation"
   };
 
+  async function getAllAuthUsers() {
+    try {
+      const listRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?per_page=1000`, { headers });
+      if (!listRes.ok) return [];
+      const listData = await listRes.json();
+      return listData.users || (Array.isArray(listData) ? listData : []);
+    } catch (e) {
+      console.warn("getAllAuthUsers error:", e);
+      return [];
+    }
+  }
+
   try {
     const { action, payload } = req.body || {};
 
@@ -26,7 +38,7 @@ module.exports = async (req, res) => {
     // 1. Check Username Availability
     // =========================================================================
     if (action === "check-username") {
-      const rawUser = String(payload?.username || "").trim().toLowerCase();
+      const rawUser = String(payload?.username || "").trim().toLowerCase().replace(/^@/, "");
       const userValidation = validateUsername(rawUser);
       if (!userValidation.valid) {
         return res.status(200).json({ 
@@ -36,17 +48,13 @@ module.exports = async (req, res) => {
       }
 
       const cleanUser = userValidation.clean;
-      const response = await fetch(`${SUPABASE_URL}/rest/v1/profiles?username=eq.${encodeURIComponent(cleanUser)}&select=id`, {
-        headers
+      const allUsers = await getAllAuthUsers();
+      const isTaken = allUsers.some(u => {
+        const uName = (u.user_metadata?.username || "").toLowerCase();
+        return uName === cleanUser;
       });
 
-      if (!response.ok) {
-        // If table doesn't exist yet or other DB note, report available
-        return res.status(200).json({ available: true, message: "Nick jest dostępny." });
-      }
-
-      const existing = await response.json();
-      if (Array.isArray(existing) && existing.length > 0) {
+      if (isTaken) {
         return res.status(200).json({ available: false, message: "Ten nick jest już zajęty." });
       }
 
@@ -54,13 +62,52 @@ module.exports = async (req, res) => {
     }
 
     // =========================================================================
+    // 1b. Resolve Login (Allows logging in by username or email)
+    // =========================================================================
+    if (action === "resolve-login") {
+      const login = String(payload?.login || "").trim().toLowerCase().replace(/^@/, "");
+      if (!login) {
+        return res.status(400).json({ success: false, error: "Podaj nick lub adres e-mail." });
+      }
+
+      const allUsers = await getAllAuthUsers();
+      const matched = allUsers.find(u => {
+        const email = (u.email || "").toLowerCase();
+        const username = (u.user_metadata?.username || "").toLowerCase();
+        return email === login || username === login;
+      });
+
+      if (!matched) {
+        return res.status(404).json({
+          success: false,
+          error: `Nie znaleziono konta przypisanego do "${login}". Upewnij się, że wpisujesz poprawny nick lub adres e-mail.`
+        });
+      }
+
+      const isOAuth = Boolean(matched.app_metadata?.provider && matched.app_metadata.provider !== "email");
+
+      return res.status(200).json({
+        success: true,
+        email: matched.email,
+        username: matched.user_metadata?.username || null,
+        isOAuth,
+        provider: matched.app_metadata?.provider || "email"
+      });
+    }
+
+    // =========================================================================
     // 2. Register New User (Instant auto-confirm via Supabase Admin API)
     // =========================================================================
     if (action === "register") {
-      const { email, password, username, displayName, avatarIcon } = payload || {};
+      const { email, password, username, displayName, avatarIcon, birthDate } = payload || {};
 
       if (!email || !password || !username) {
         return res.status(400).json({ error: "Podaj adres e-mail, hasło oraz nick." });
+      }
+
+      const cleanEmail = String(email).trim().toLowerCase();
+      if (!cleanEmail.includes("@") || !cleanEmail.includes(".")) {
+        return res.status(400).json({ error: "Podaj prawidłowy adres e-mail (np. piwosz@gmail.com)." });
       }
 
       const userValidation = validateUsername(username);
@@ -80,15 +127,16 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: "Hasło musi mieć co najmniej 6 znaków." });
       }
 
-      // Check if username already exists in profiles
-      const checkRes = await fetch(`${SUPABASE_URL}/rest/v1/profiles?username=eq.${encodeURIComponent(cleanUser)}&select=id`, {
-        headers
-      });
-      if (checkRes.ok) {
-        const existingUsers = await checkRes.json();
-        if (Array.isArray(existingUsers) && existingUsers.length > 0) {
-          return res.status(400).json({ error: "Użytkownik o tym nicku już istnieje. Wybierz inny nick." });
-        }
+      // Check if username or email already exists in Supabase
+      const allUsers = await getAllAuthUsers();
+      const usernameExists = allUsers.some(u => (u.user_metadata?.username || "").toLowerCase() === cleanUser);
+      if (usernameExists) {
+        return res.status(400).json({ error: `Użytkownik o nicku @${cleanUser} już istnieje. Wybierz inny nick.` });
+      }
+
+      const emailExists = allUsers.some(u => (u.email || "").toLowerCase() === cleanEmail);
+      if (emailExists) {
+        return res.status(400).json({ error: "Konto o tym adresie e-mail już istnieje. Zaloguj się lub skorzystaj z resetu hasła." });
       }
 
       // Create user via Admin API with email_confirm: true
@@ -96,7 +144,7 @@ module.exports = async (req, res) => {
         method: "POST",
         headers,
         body: JSON.stringify({
-          email: String(email).trim().toLowerCase(),
+          email: cleanEmail,
           password: password,
           email_confirm: true,
           user_metadata: {
@@ -104,21 +152,25 @@ module.exports = async (req, res) => {
             username_custom: true,
             display_name: displayName || cleanUser,
             avatar_icon: avatarIcon || "🍺",
-            birth_date: payload.birthDate || null,
-            age_verified: true
+            birth_date: birthDate || payload?.birthDate || null,
+            age_verified: true,
+            user_number: "-"
           }
         })
       });
 
       const createData = await createRes.json();
       if (!createRes.ok) {
-        const msg = createData.message || createData.msg || createData.error_description || "Błąd podczas rejestracji użytkownika.";
+        let msg = createData.message || createData.msg || createData.error_description || "Błąd podczas rejestracji użytkownika.";
+        if (msg.includes("already been registered") || msg.includes("already exists")) {
+          msg = "Konto o tym adresie e-mail już istnieje. Zaloguj się lub skorzystaj z resetu hasła.";
+        }
         return res.status(400).json({ error: msg });
       }
 
       const newUser = createData;
 
-      // Ensure profile is inserted into public.profiles
+      // Ensure profile is inserted into public.profiles if table exists
       try {
         await fetch(`${SUPABASE_URL}/rest/v1/profiles`, {
           method: "POST",
@@ -1059,7 +1111,7 @@ module.exports = async (req, res) => {
     // 9. Set / Change Username (e.g. after Google OAuth or in settings)
     // =========================================================================
     if (action === "set-username") {
-      const { userId, username, displayName, avatarIcon, avatarPhoto, vibeTags, bio } = payload || {};
+      const { userId, username, displayName, avatarIcon, avatarPhoto, vibeTags, bio, birthDate } = payload || {};
       if (!userId || !username) {
         return res.status(400).json({ error: "Brak userId lub nicku." });
       }
@@ -1085,12 +1137,10 @@ module.exports = async (req, res) => {
       }
 
       // Check if username is already taken by someone else
-      const checkRes = await fetch(`${SUPABASE_URL}/rest/v1/profiles?username=eq.${encodeURIComponent(cleanUser)}&id=neq.${encodeURIComponent(userId)}&select=id`, { headers });
-      if (checkRes.ok) {
-        const existing = await checkRes.json();
-        if (Array.isArray(existing) && existing.length > 0) {
-          return res.status(400).json({ error: "Ten nick jest już zajęty. Wybierz inny." });
-        }
+      const allUsers = await getAllAuthUsers();
+      const isTaken = allUsers.some(u => u.id !== userId && (u.user_metadata?.username || "").toLowerCase() === cleanUser);
+      if (isTaken) {
+        return res.status(400).json({ error: "Ten nick jest już zajęty. Wybierz inny." });
       }
 
       // Update in profiles table (upsert)

@@ -1566,8 +1566,8 @@
       <!-- Form 1: Logowanie -->
       <form id="form-auth-login" class="auth-form">
         <div class="form-group">
-          <label for="login-email" class="form-label">Adres e-mail</label>
-          <input type="email" id="login-email" class="form-input" required placeholder="twoj@email.pl" autocomplete="email" />
+          <label for="login-email" class="form-label">E-mail lub Twój nick (@username)</label>
+          <input type="text" id="login-email" class="form-input" required placeholder="np. jaszczomb lub twoj@email.pl" autocomplete="username email" autocapitalize="none" spellcheck="false" />
         </div>
         <div class="form-group">
           <div class="label-with-link">
@@ -1591,7 +1591,7 @@
           <label for="reg-username" class="form-label">Twój unikalny nick (@username)</label>
           <div class="input-with-prefix">
             <span class="input-prefix">@</span>
-            <input type="text" id="reg-username" required placeholder="piwosz_mokotow" autocomplete="username" maxlength="20" />
+            <input type="text" id="reg-username" required placeholder="piwosz_mokotow" autocomplete="username" maxlength="20" autocapitalize="none" spellcheck="false" />
           </div>
           <div class="input-hint" id="reg-username-hint">3-20 liter, cyfr lub podkreślenie (_)</div>
         </div>
@@ -1627,10 +1627,13 @@
           <div class="input-hint" id="reg-birthdate-hint">Dostęp do serwisu dozwolony wyłącznie dla osób pełnoletnich.</div>
         </div>
         <div class="form-group terms-checkbox-group">
-          <label class="terms-checkbox-label">
+          <label class="terms-checkbox-label" for="reg-terms-agree">
             <input type="checkbox" id="reg-terms-agree" required checked />
-            <span>Oświadczam, że mam 18+ lat i akceptuję <button type="button" class="btn-text-legal btn-open-legal-terms">Regulamin serwisu</button> (w tym zasady crowdsourcingu i wyłączenie odpowiedzialności twórcy za zgłoszone ceny).</span>
+            <span>Oświadczam, że mam 18+ lat i akceptuję Regulamin serwisu oraz zasady crowdsourcingu.</span>
           </label>
+          <div class="terms-link-row" style="margin-top: 4px; padding-left: 26px;">
+            <button type="button" class="btn-text-legal btn-open-legal-terms" style="text-decoration: underline; cursor: pointer; color: var(--accent); font-size: 0.76rem; background: none; border: none; padding: 0;">📖 Zobacz Regulamin serwisu i zasady</button>
+          </div>
         </div>
         <div class="auth-error-msg" id="reg-error-msg" style="display:none;"></div>
         <button type="submit" class="btn-primary btn-auth-submit" id="btn-submit-register">
@@ -1641,8 +1644,8 @@
       <!-- Form 3: Przypomnienie hasła -->
       <form id="form-auth-forgot" class="auth-form" style="display:none;">
         <div class="form-group">
-          <label for="forgot-email" class="form-label">Adres e-mail Twojego konta</label>
-          <input type="email" id="forgot-email" class="form-input" required placeholder="twoj@email.pl" autocomplete="email" />
+          <label for="forgot-email" class="form-label">Adres e-mail lub Twój nick</label>
+          <input type="text" id="forgot-email" class="form-input" required placeholder="twoj@email.pl lub @jaszczomb" autocomplete="username email" autocapitalize="none" spellcheck="false" />
         </div>
         <div class="auth-error-msg" id="forgot-error-msg" style="display:none;"></div>
         <div class="auth-success-msg" id="forgot-success-msg" style="display:none;"></div>

@@ -5770,8 +5770,14 @@
           if (window.__closePubCrawl) window.__closePubCrawl();
           if (window.__closeCompass) window.__closeCompass();
           if (window.__closeMobileSearch) window.__closeMobileSearch();
-          if (window.__openMyProfile) {
-            window.__openMyProfile();
+          if (currentUser && currentProfile) {
+            if (window.__openMyProfile) window.__openMyProfile();
+          } else {
+            if (window.__openAuth) {
+              window.__openAuth("login");
+            } else if (window.__openMyProfile) {
+              window.__openMyProfile();
+            }
           }
         } else if (target === "barometer") {
           if (window.__closeRankingDrawer) window.__closeRankingDrawer();
@@ -5796,11 +5802,25 @@
     // Age Gate Verification (18+ Polish Law Requirement)
     function isAtLeast18YearsOld(dateStr) {
       if (!dateStr) return false;
-      const parts = dateStr.split("-");
-      if (parts.length !== 3) return false;
-      const y = parseInt(parts[0], 10);
-      const m = parseInt(parts[1], 10) - 1;
-      const d = parseInt(parts[2], 10);
+      const cleanStr = String(dateStr).trim();
+      let y, m, d;
+      if (/^\d{4}[-./]\d{1,2}[-./]\d{1,2}$/.test(cleanStr)) {
+        const parts = cleanStr.split(/[-./]/);
+        y = parseInt(parts[0], 10);
+        m = parseInt(parts[1], 10) - 1;
+        d = parseInt(parts[2], 10);
+      } else if (/^\d{1,2}[-./]\d{1,2}[-./]\d{4}$/.test(cleanStr)) {
+        const parts = cleanStr.split(/[-./]/);
+        d = parseInt(parts[0], 10);
+        m = parseInt(parts[1], 10) - 1;
+        y = parseInt(parts[2], 10);
+      } else {
+        const parsed = new Date(cleanStr);
+        if (isNaN(parsed.getTime())) return false;
+        y = parsed.getFullYear();
+        m = parsed.getMonth();
+        d = parsed.getDate();
+      }
       const birth = new Date(y, m, d);
       if (isNaN(birth.getTime())) return false;
       const today = new Date();
@@ -7200,7 +7220,16 @@
       });
     }
 
-    // Login Form Submit
+    // Dynamically set max birthdate on date pickers (exactly 18 years ago today)
+    try {
+      const maxAdultDate = new Date(Date.now() - 18 * 365.25 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+      const rDate = document.getElementById("reg-birthdate");
+      if (rDate) rDate.max = maxAdultDate;
+      const oDate = document.getElementById("onboarding-birthdate");
+      if (oDate) oDate.max = maxAdultDate;
+    } catch (e) {}
+
+    // Login Form Submit (Supports Email OR @Username)
     if (formLogin) {
       formLogin.addEventListener("submit", async (e) => {
         e.preventDefault();
@@ -7222,19 +7251,45 @@
             throw new Error("Klient Supabase nie jest gotowy.");
           }
 
-          if (!rawLogin.includes("@")) {
-            throw new Error("Wpisz adres e-mail przypisany do Twojego konta (np. jan@gmail.com).");
+          if (!rawLogin) {
+            throw new Error("Wpisz swój adres e-mail lub unikalny nick.");
+          }
+          if (!password) {
+            throw new Error("Wpisz hasło.");
+          }
+
+          let targetEmail = rawLogin;
+
+          // If login does not look like an email address, resolve username to email via backend
+          if (!rawLogin.includes("@") || !rawLogin.includes(".")) {
+            const cleanNick = rawLogin.replace(/^@/, "");
+            const res = await fetch("/api/auth", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                action: "resolve-login",
+                payload: { login: cleanNick }
+              })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+              throw new Error(data.error || `Nie znaleziono konta o nicku "${rawLogin}". Sprawdź pisownię lub wpisz adres e-mail.`);
+            }
+            if (data.isOAuth) {
+              throw new Error(`Konto @${data.username || cleanNick} loguje się przez Google. Kliknij przycisk "Kontynuuj z Google" powyżej.`);
+            }
+            targetEmail = data.email;
           }
 
           const { data, error } = await supabaseClient.auth.signInWithPassword({
-            email: rawLogin,
+            email: targetEmail,
             password: password
           });
 
           if (error) {
             let msg = error.message;
             if (msg.includes("Invalid login credentials")) {
-              msg = "Nieprawidłowy adres e-mail lub hasło.";
+              msg = "Nieprawidłowy e-mail/nick lub hasło. Jeśli rejestrowałeś się przez Google, kliknij przycisk \"Kontynuuj z Google\" powyżej.";
             } else if (msg.includes("Email not confirmed")) {
               msg = "Adres e-mail nie został jeszcze potwierdzony.";
             }
@@ -7274,6 +7329,33 @@
         const termsAgree = document.getElementById("reg-terms-agree");
         const birthInput = document.getElementById("reg-birthdate");
         const birthVal = birthInput ? birthInput.value : "";
+
+        if (!username) {
+          if (regErrorMsg) {
+            regErrorMsg.textContent = "Wpisz swój unikalny nick piwosza.";
+            regErrorMsg.style.display = "block";
+          }
+          if (usernameInput) usernameInput.focus();
+          return;
+        }
+
+        if (!email) {
+          if (regErrorMsg) {
+            regErrorMsg.textContent = "Wpisz adres e-mail.";
+            regErrorMsg.style.display = "block";
+          }
+          if (emailInput) emailInput.focus();
+          return;
+        }
+
+        if (!password || password.length < 6) {
+          if (regErrorMsg) {
+            regErrorMsg.textContent = "Hasło musi mieć co najmniej 6 znaków.";
+            regErrorMsg.style.display = "block";
+          }
+          if (passInput) passInput.focus();
+          return;
+        }
 
         if (!birthVal) {
           if (regErrorMsg) {
@@ -7367,6 +7449,11 @@
             });
             if (signInErr) {
               console.warn("Auto sign-in note:", signInErr);
+              showTab("login");
+              const lEmail = document.getElementById("login-email");
+              if (lEmail) lEmail.value = email;
+              showAppToast(`Siemanko @${username}! 🍻`, "Konto gotowe! Wpisz hasło, aby się zalogować.", selectedAvatar);
+              return;
             }
           }
 
@@ -7386,13 +7473,13 @@
       });
     }
 
-    // Forgot Password Form Submit
+    // Forgot Password Form Submit (Supports Email OR Username)
     if (formForgot) {
       formForgot.addEventListener("submit", async (e) => {
         e.preventDefault();
         const emailInput = document.getElementById("forgot-email");
         const submitBtn = document.getElementById("btn-submit-forgot");
-        const email = emailInput ? emailInput.value.trim() : "";
+        const rawForgot = emailInput ? emailInput.value.trim() : "";
 
         if (forgotErrorMsg) forgotErrorMsg.style.display = "none";
         if (forgotSuccessMsg) forgotSuccessMsg.style.display = "none";
@@ -7405,12 +7492,40 @@
           if (!supabaseClient || !supabaseClient.auth) {
             throw new Error("Klient Supabase niedostępny.");
           }
-          const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+
+          if (!rawForgot) {
+            throw new Error("Podaj adres e-mail lub nick przypisany do konta.");
+          }
+
+          let targetEmail = rawForgot;
+
+          // If rawForgot doesn't look like email, resolve username to email first
+          if (!rawForgot.includes("@") || !rawForgot.includes(".")) {
+            const cleanNick = rawForgot.replace(/^@/, "");
+            const res = await fetch("/api/auth", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                action: "resolve-login",
+                payload: { login: cleanNick }
+              })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+              throw new Error(data.error || `Nie znaleziono konta o nicku "${rawForgot}".`);
+            }
+            if (data.isOAuth) {
+              throw new Error(`To konto (@${data.username || cleanNick}) loguje się przez Google i nie posiada hasła do resetu.`);
+            }
+            targetEmail = data.email;
+          }
+
+          const { error } = await supabaseClient.auth.resetPasswordForEmail(targetEmail, {
             redirectTo: window.location.origin
           });
           if (error) throw error;
           if (forgotSuccessMsg) {
-            forgotSuccessMsg.textContent = "Link do zresetowania hasła został wysłany na Twój e-mail!";
+            forgotSuccessMsg.textContent = `Link do zresetowania hasła został wysłany na Twój e-mail (${targetEmail.replace(/(.{2})(.*)(@.*)/, "$1***$3")})!`;
             forgotSuccessMsg.style.display = "block";
           }
         } catch (err) {
@@ -7779,13 +7894,24 @@
           heroAvatar.textContent = prof.avatar_icon || "🍺";
         }
       }
-      if (heroName) heroName.textContent = prof.display_name || prof.username;
-      if (heroHandle) heroHandle.textContent = `@${(prof.username || "krystian").toLowerCase()}`;
-      if (userNumEl) userNumEl.textContent = prof.user_number || "-";
+      if (heroName) heroName.textContent = currentUser ? (prof.display_name || prof.username) : "Gość";
+      if (heroHandle) heroHandle.textContent = currentUser ? `@${(prof.username || "piwosz").toLowerCase()}` : "@gosc";
+      if (userNumEl) userNumEl.textContent = currentUser ? (prof.user_number || "-") : "-";
       if (rankTitle) rankTitle.textContent = rank.title;
       if (statVisited) statVisited.textContent = visitedVenues.length;
       if (statBadges) statBadges.textContent = loadUnlockedBadges().length;
       if (statFavorites) statFavorites.textContent = favoriteVenues.length;
+
+      const logoutBtn = document.getElementById("btn-logout");
+      if (logoutBtn) {
+        if (!currentUser) {
+          logoutBtn.innerHTML = "<span>🚀 Zaloguj się / Załóż konto</span>";
+          logoutBtn.title = "Zaloguj się lub załóż darmowe konto";
+        } else {
+          logoutBtn.innerHTML = "<span>Wyloguj się</span>";
+          logoutBtn.title = "Wyloguj się z konta";
+        }
+      }
 
       let frCount = myFollowingIds.length;
       if (!frCount) {
@@ -8315,9 +8441,14 @@
       });
     }
 
-    // Logout
+    // Logout or Log In (Guest Mode)
     if (btnLogout) {
       btnLogout.addEventListener("click", async () => {
+        if (!currentUser) {
+          window.__closeMyProfile();
+          if (window.__openAuth) window.__openAuth("login");
+          return;
+        }
         if (!confirm("Czy na pewno chcesz się wylogować?")) return;
         try {
           if (supabaseClient && supabaseClient.auth) {
