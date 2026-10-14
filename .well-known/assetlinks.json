@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "pl.poilepiwko.app",
+      "sha256_cert_fingerprints": [
+        "14:6D:E9:7D:0F:52:AB:EB:46:16:32:04:8E:74:23:44:64:12:15:37:34:64:9D:69:34:A4:14:4E:9F:8B:7C:F4"
+      ]
+    }
+  }
+]

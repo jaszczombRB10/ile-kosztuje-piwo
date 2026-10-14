@@ -364,6 +364,116 @@
   const FAVORITES_STORAGE_KEY = "poilepiwko_favorite_venues";
   let favoriteVenues = loadFavoriteVenues();
 
+  // ==========================================================================
+  // MOBILE HARDENING 1: ModalHistoryManager (Android Hardware Back Button / Popstate)
+  // ==========================================================================
+  const ModalHistoryManager = {
+    stack: [],
+    isHandlingPopstate: false,
+
+    push(id, closeFn) {
+      if (!id) return;
+      this.stack = this.stack.filter(entry => entry.id !== id);
+      this.stack.push({ id, closeFn });
+
+      try {
+        window.history.pushState({ poileModalId: id, depth: this.stack.length }, "");
+      } catch (e) {}
+    },
+
+    pop(id) {
+      if (this.isHandlingPopstate) return;
+      const idx = this.stack.findIndex(entry => entry.id === id);
+      if (idx !== -1) {
+        this.stack.splice(idx, 1);
+        if (window.history.state && window.history.state.poileModalId === id) {
+          this.isHandlingPopstate = true;
+          try {
+            window.history.back();
+          } catch (e) {}
+          setTimeout(() => { this.isHandlingPopstate = false; }, 100);
+        }
+      }
+    },
+
+    handlePopstate(event) {
+      if (this.stack.length > 0) {
+        const top = this.stack.pop();
+        if (top && typeof top.closeFn === "function") {
+          this.isHandlingPopstate = true;
+          try {
+            top.closeFn();
+          } catch (e) {
+            console.warn("[Back Button] Error closing modal:", e);
+          }
+          setTimeout(() => { this.isHandlingPopstate = false; }, 100);
+          return;
+        }
+      }
+
+      // Fallback: check DOM for any open bottom sheet or modal
+      this.closeAnyOpenOverlay();
+    },
+
+    closeAnyOpenOverlay() {
+      // 1. Ranking drawer
+      const drawer = document.getElementById("ranking-drawer");
+      if (drawer && drawer.classList.contains("open")) {
+        if (typeof window.__closeRankingDrawer === "function") {
+          window.__closeRankingDrawer();
+          return true;
+        }
+      }
+
+      // 2. Bottom sheets
+      const venueSheet = document.getElementById("venue-sheet");
+      if (venueSheet && venueSheet.getAttribute("data-state") && venueSheet.getAttribute("data-state") !== "closed") {
+        if (typeof window.__closeVenueSheet === "function") {
+          window.__closeVenueSheet();
+          return true;
+        }
+      }
+      const discoverSheet = document.getElementById("discover-sheet");
+      if (discoverSheet && discoverSheet.getAttribute("data-state") && discoverSheet.getAttribute("data-state") !== "closed") {
+        if (typeof window.__closeDiscoverSheet === "function") {
+          window.__closeDiscoverSheet();
+          return true;
+        }
+      }
+      const actionSheet = document.getElementById("action-sheet");
+      if (actionSheet && actionSheet.getAttribute("data-state") && actionSheet.getAttribute("data-state") !== "closed") {
+        if (typeof window.__closeActionSheet === "function") {
+          window.__closeActionSheet();
+          return true;
+        }
+      }
+
+      // 3. Visible modals
+      const openModals = Array.from(document.querySelectorAll(".modal-backdrop")).filter(m => {
+        return m.classList.contains("active") || (m.style && m.style.display && m.style.display !== "none");
+      });
+
+      if (openModals.length > 0) {
+        const topModal = openModals[openModals.length - 1];
+        const closeBtn = topModal.querySelector(".modal-close, button[id^='btn-close-']");
+        if (closeBtn) {
+          closeBtn.click();
+          return true;
+        } else {
+          topModal.classList.remove("active");
+          topModal.style.display = "none";
+          return true;
+        }
+      }
+      return false;
+    },
+
+    init() {
+      window.addEventListener("popstate", (e) => this.handlePopstate(e));
+    }
+  };
+  window.ModalHistoryManager = ModalHistoryManager;
+
   // Supabase Auth & Community Social State
   let currentUser = null;
   let currentProfile = null;
@@ -3558,12 +3668,18 @@
       renderHappyHourModal();
       hhModal.classList.add("active");
       hhModal.style.display = "flex";
+      if (typeof ModalHistoryManager !== "undefined") {
+        ModalHistoryManager.push("happyhour-modal", closeModal);
+      }
     }
 
     function closeModal() {
       if (hhModal) {
         hhModal.classList.remove("active");
         hhModal.style.display = "none";
+      }
+      if (typeof ModalHistoryManager !== "undefined") {
+        ModalHistoryManager.pop("happyhour-modal");
       }
     }
 
@@ -4174,12 +4290,18 @@
       renderPassportModal();
       passportModal.classList.add("active");
       passportModal.style.display = "flex";
+      if (typeof ModalHistoryManager !== "undefined") {
+        ModalHistoryManager.push("passport-modal", closeModal);
+      }
     }
 
     function closeModal() {
       if (passportModal) {
         passportModal.classList.remove("active");
         passportModal.style.display = "none";
+      }
+      if (typeof ModalHistoryManager !== "undefined") {
+        ModalHistoryManager.pop("passport-modal");
       }
     }
 
@@ -4488,27 +4610,61 @@
       }
     }
 
-    function setupOrientationSensor() {
-      if (orientationHandlerAttached) return;
+    async function requestCompassPermission() {
+      if (orientationHandlerAttached) return true;
 
       if (typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function") {
-        DeviceOrientationEvent.requestPermission()
-          .then(res => {
-            if (res === "granted") {
-              window.addEventListener("deviceorientation", handleDeviceOrientation, true);
-              orientationHandlerAttached = true;
+        try {
+          const res = await DeviceOrientationEvent.requestPermission();
+          if (res === "granted") {
+            window.addEventListener("deviceorientation", handleDeviceOrientation, true);
+            orientationHandlerAttached = true;
+            const btnCal = document.getElementById("btn-compass-calibrate-sensor");
+            if (btnCal) {
+              btnCal.innerHTML = "<span>✅ Żyroskop skalibrowany!</span>";
+              setTimeout(() => { btnCal.style.display = "none"; }, 1500);
             }
-          })
-          .catch(e => {
-            console.warn("DeviceOrientation permission note:", e);
-          });
+            if (typeof poileHaptics !== "undefined" && poileHaptics.success) {
+              poileHaptics.success();
+            }
+            if (statusText) statusText.textContent = "Kompas skalibrowany • Radar aktywny";
+            showMapToast("🧭 Żyroskop aktywny! Obracaj telefonem w stronę baru.");
+            return true;
+          } else {
+            console.warn("DeviceOrientation permission denied:", res);
+            const btnCal = document.getElementById("btn-compass-calibrate-sensor");
+            if (btnCal) btnCal.innerHTML = "<span>⚠️ Brak uprawnień do żyroskopu</span>";
+            return false;
+          }
+        } catch (e) {
+          console.warn("DeviceOrientation permission error:", e);
+          return false;
+        }
       } else if ("ondeviceorientationabsolute" in window) {
         window.addEventListener("deviceorientationabsolute", handleDeviceOrientation, true);
         window.addEventListener("deviceorientation", handleDeviceOrientation, true);
         orientationHandlerAttached = true;
+        return true;
       } else if ("ondeviceorientation" in window) {
         window.addEventListener("deviceorientation", handleDeviceOrientation, true);
         orientationHandlerAttached = true;
+        return true;
+      }
+      return false;
+    }
+
+    function setupOrientationSensor() {
+      if (orientationHandlerAttached) return;
+
+      const isIos = typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function";
+      const btnCalibrate = document.getElementById("btn-compass-calibrate-sensor");
+
+      if (isIos) {
+        if (btnCalibrate) {
+          btnCalibrate.style.display = "flex";
+        }
+      } else {
+        requestCompassPermission();
       }
     }
 
@@ -4584,6 +4740,7 @@
 
       compassModal.classList.add("active");
       compassModal.style.display = "flex";
+      ModalHistoryManager.push("beer-compass-modal", closeCompass);
 
       if (statusText) statusText.textContent = "Kalibrowanie radaru GPS...";
       if (tipBar) {
@@ -4600,6 +4757,7 @@
 
     function closeCompass() {
       if (!compassModal) return;
+      ModalHistoryManager.pop("beer-compass-modal");
       compassModal.classList.remove("active");
       compassModal.classList.remove("compass-in-target-zone");
       if (needleWrap) needleWrap._hasLockedOn = false;
@@ -4621,6 +4779,21 @@
     if (compassModal) {
       compassModal.addEventListener("click", (e) => {
         if (e.target === compassModal) closeCompass();
+      });
+    }
+
+    const btnCalibrate = document.getElementById("btn-compass-calibrate-sensor");
+    if (btnCalibrate) {
+      btnCalibrate.addEventListener("click", () => { requestCompassPermission(); });
+      btnCalibrate.addEventListener("touchend", () => { requestCompassPermission(); });
+    }
+
+    const dialWrap = compassModal ? compassModal.querySelector(".compass-dial-container") : null;
+    if (dialWrap) {
+      dialWrap.addEventListener("click", () => {
+        if (!orientationHandlerAttached && typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function") {
+          requestCompassPermission();
+        }
       });
     }
 
@@ -4892,6 +5065,9 @@
       if (!drawer) return;
       drawer.classList.add("open");
       document.body.classList.add("drawer-open");
+      if (typeof ModalHistoryManager !== "undefined") {
+        ModalHistoryManager.push("ranking-drawer", closeRankingDrawer);
+      }
     }
 
     function closeRankingDrawer() {
@@ -4899,6 +5075,9 @@
       drawer.classList.remove("open");
       document.body.classList.remove("drawer-open");
       if (window.__clearBottomNavActive) window.__clearBottomNavActive();
+      if (typeof ModalHistoryManager !== "undefined") {
+        ModalHistoryManager.pop("ranking-drawer");
+      }
     }
 
     window.__openRankingDrawer = openRankingDrawer;
@@ -4972,6 +5151,9 @@
       if (typeof updateBarometerStats === "function") updateBarometerStats();
       baroModal.classList.add("active");
       baroModal.style.display = "flex";
+      if (typeof ModalHistoryManager !== "undefined") {
+        ModalHistoryManager.push("barometer-modal", closeBarometerModal);
+      }
     }
 
     function closeBarometerModal() {
@@ -4979,6 +5161,9 @@
       baroModal.classList.remove("active");
       baroModal.style.display = "none";
       if (window.__clearBottomNavActive) window.__clearBottomNavActive();
+      if (typeof ModalHistoryManager !== "undefined") {
+        ModalHistoryManager.pop("barometer-modal");
+      }
     }
 
     window.__openBarometer = openBarometerModal;
@@ -7032,6 +7217,9 @@
         if (curCity) updatePubCrawlCityUI(curCity);
         crawlModal.classList.add("active");
         crawlModal.style.display = "flex";
+        if (typeof ModalHistoryManager !== "undefined") {
+          ModalHistoryManager.push("pubcrawl-modal", closeModalWindow);
+        }
       }
 
       function closeModalWindow() {
@@ -7040,6 +7228,9 @@
           crawlModal.style.display = "none";
         }
         if (window.__clearBottomNavActive) window.__clearBottomNavActive();
+        if (typeof ModalHistoryManager !== "undefined") {
+          ModalHistoryManager.pop("pubcrawl-modal");
+        }
       }
 
       window.__openPubCrawl = openModal;
@@ -7897,12 +8088,18 @@
       showTab(defaultTab);
       modal.classList.add("active");
       modal.style.display = "flex";
+      if (typeof ModalHistoryManager !== "undefined") {
+        ModalHistoryManager.push("auth-modal", closeModalWindow);
+      }
     }
 
     function closeModalWindow() {
       if (!modal) return;
       modal.classList.remove("active");
       modal.style.display = "none";
+      if (typeof ModalHistoryManager !== "undefined") {
+        ModalHistoryManager.pop("auth-modal");
+      }
     }
 
     window.__openAuth = openModalWindow;
@@ -10265,7 +10462,7 @@
           const isAuthor = currentUser && (currentUser.id === authorId || (currentUser.user_metadata && currentUser.user_metadata.username === authorName));
 
           return `
-            <div class="beer-bereal-card" data-post-id="${escapeHtml(item.id)}">
+            <div class="beer-bereal-card" data-post-id="${escapeHtml(item.id)}" data-author-id="${escapeHtml(authorId)}" data-author-name="${escapeHtml(authorName)}">
               <!-- 1. Post Header: Author info + Actions (Delete for Author / Report for others) -->
               <div class="bereal-post-header">
                 <div class="bereal-author-box">
@@ -10475,12 +10672,18 @@
       if (ugcModal) {
         ugcModal.style.display = "flex";
       }
+      if (typeof ModalHistoryManager !== "undefined") {
+        ModalHistoryManager.push("ugc-report-modal", window.__closeUgcReportModal);
+      }
     };
 
     window.__closeUgcReportModal = function() {
       activeUgcReport = null;
       if (ugcModal) ugcModal.style.display = "none";
       if (ugcDetails) ugcDetails.value = "";
+      if (typeof ModalHistoryManager !== "undefined") {
+        ModalHistoryManager.pop("ugc-report-modal");
+      }
     };
 
     if (ugcCloseBtn) ugcCloseBtn.addEventListener("click", window.__closeUgcReportModal);
@@ -10538,6 +10741,7 @@
       ugcBlockBtn.addEventListener("click", () => {
         if (!activeUgcReport) return;
         const targetName = activeUgcReport.authorName || "użytkownika";
+        const targetId = activeUgcReport.authorId || "";
         if (!confirm(`Czy na pewno chcesz zablokować @${targetName}? Jego zdjęcia i meldunki przestaną być dla Ciebie widoczne.`)) {
           return;
         }
@@ -10545,13 +10749,26 @@
         try {
           let blocked = JSON.parse(localStorage.getItem("poilepiwko_blocked_users") || "[]");
           if (!Array.isArray(blocked)) blocked = [];
-          if (activeUgcReport.authorId) blocked.push(activeUgcReport.authorId);
-          if (activeUgcReport.authorName) blocked.push(activeUgcReport.authorName);
+          if (targetId) blocked.push(targetId);
+          if (targetName) blocked.push(targetName);
           localStorage.setItem("poilepiwko_blocked_users", JSON.stringify(Array.from(new Set(blocked))));
         } catch (e) {}
 
         window.__closeUgcReportModal();
-        showAppToast("Zablokowano użytkownika", `Treści od @${targetName} zostały ukryte w Twoim telefonie.`, "🚫", 4500);
+        if (typeof window.__closePublicProfile === "function") {
+          window.__closePublicProfile();
+        }
+
+        // Instantly hide any feed items from this user without requiring page refresh
+        document.querySelectorAll(".beer-bereal-card").forEach(card => {
+          const aId = card.getAttribute("data-author-id");
+          const aName = card.getAttribute("data-author-name");
+          if ((targetId && aId === targetId) || (targetName && aName === targetName)) {
+            card.remove();
+          }
+        });
+
+        showAppToast("Zablokowano użytkownika", `Treści od @${targetName} zostały natychmiast ukryte na Twoim urządzeniu.`, "🚫", 4500);
         loadLiveBarFeed();
       });
     }
@@ -10660,11 +10877,17 @@
 
       if (berealModal) berealModal.style.display = "flex";
       startBerealCameraStream();
+      if (typeof ModalHistoryManager !== "undefined") {
+        ModalHistoryManager.push("bereal-camera-modal", closeBerealCameraModal);
+      }
     }
 
     function closeBerealCameraModal() {
       stopBerealCameraStream();
       if (berealModal) berealModal.style.display = "none";
+      if (typeof ModalHistoryManager !== "undefined") {
+        ModalHistoryManager.pop("bereal-camera-modal");
+      }
     }
 
     window.__openBerealCamera = openBerealCameraModal;
@@ -11202,6 +11425,9 @@
         modal.classList.add("active");
         modal.style.display = "flex";
       }
+      if (typeof ModalHistoryManager !== "undefined") {
+        ModalHistoryManager.push("public-profile-modal", window.__closePublicProfile);
+      }
 
       const avatarEl = document.getElementById("pubprof-avatar");
       const nameEl = document.getElementById("pubprof-name");
@@ -11325,12 +11551,28 @@
         modal.classList.remove("active");
         modal.style.display = "none";
       }
+      if (typeof ModalHistoryManager !== "undefined") {
+        ModalHistoryManager.pop("public-profile-modal");
+      }
     };
 
     if (btnClose && modal) {
       btnClose.addEventListener("click", () => { window.__closePublicProfile(); });
       modal.addEventListener("click", (e) => {
         if (e.target === modal) window.__closePublicProfile();
+      });
+    }
+
+    const btnReport = document.getElementById("btn-pubprof-report");
+    if (btnReport) {
+      btnReport.addEventListener("click", () => {
+        if (!currentViewedProfile) return;
+        window.__openUgcReportModal(
+          `user-${currentViewedProfile.id}`,
+          currentViewedProfile.id,
+          currentViewedProfile.username || currentViewedProfile.display_name || "użytkownik",
+          "Profil Użytkownika"
+        );
       });
     }
 
@@ -11565,12 +11807,18 @@
       modal.style.display = "flex";
       updateRouletteUIState();
       if (window.__clearBottomNavActive) window.__clearBottomNavActive();
+      if (typeof ModalHistoryManager !== "undefined") {
+        ModalHistoryManager.push("roulette-modal", closeModal);
+      }
     }
 
     function closeModal() {
       if (!modal) return;
       modal.classList.remove("active");
       modal.style.display = "none";
+      if (typeof ModalHistoryManager !== "undefined") {
+        ModalHistoryManager.pop("roulette-modal");
+      }
     }
 
     window.__openRoulette = openModal;
@@ -14293,6 +14541,9 @@
         modal.classList.add("active");
         modal.style.display = "flex";
       }
+      if (typeof ModalHistoryManager !== "undefined") {
+        ModalHistoryManager.push("club-card-modal", window.__closeClubCard);
+      }
 
       // Start live clock & gyro sensor
       updateSecurityClock();
@@ -14309,6 +14560,9 @@
       if (modal) {
         modal.classList.remove("active");
         modal.style.display = "none";
+      }
+      if (typeof ModalHistoryManager !== "undefined") {
+        ModalHistoryManager.pop("club-card-modal");
       }
       if (stage) stage.classList.remove("barman-mode");
       if (securityClockTimer) {
@@ -14446,6 +14700,210 @@
         const numMsg = currentProfile?.user_number ? `Twój numer klubowicza to ${currentProfile.user_number}. ` : "";
         showAppToast("Karta Pass 💳", `${numMsg}Karta jest aktywna w Twoim profilu!`, "✅", 2800);
       });
+    }
+
+    // -------------------------------------------------------------------------
+    // Apple Wallet (.pkpass) & Google Wallet Pass Generator (Geofencing 10 bars)
+    // -------------------------------------------------------------------------
+    const btnAppleWallet = document.getElementById("btn-add-apple-wallet");
+    const btnGoogleWallet = document.getElementById("btn-add-google-wallet");
+
+    function generateWalletPassData(platform = "apple") {
+      const memberName = (currentProfile && (currentProfile.display_name || currentProfile.username))
+        ? (currentProfile.display_name || currentProfile.username)
+        : "KLUBOWICZ";
+      const memberId = (currentProfile && currentProfile.user_number) ? currentProfile.user_number : "#000001";
+      const curCity = (typeof getCurrentCity === "function" ? getCurrentCity() : null) || (CITIES && CITIES[0]);
+
+      // Select top 10 partner bars in current city (or closest)
+      const partnerVenues = (allVenues || []).filter(v => v.is_partner || v.pass_partner || v.is_verified);
+      const cityPartners = partnerVenues.filter(v => {
+        if (!curCity || !curCity.center) return true;
+        return calculateDistanceKm(curCity.center[0], curCity.center[1], v.latitude, v.longitude) <= 40;
+      });
+      const topVenues = (cityPartners.length >= 3 ? cityPartners : (partnerVenues.length > 0 ? partnerVenues : (allVenues || []).slice(0, 10))).slice(0, 10);
+
+      const relevantLocations = topVenues.map(v => ({
+        latitude: Number(v.latitude),
+        longitude: Number(v.longitude),
+        relevantText: `🍺 Jesteś obok ${v.name}! Pokaż kartę PoIlePiwko i odbierz -10% na lane!`
+      }));
+
+      const qrPayload = `https://poilepiwko.pl/#pass=${encodeURIComponent(memberId)}`;
+
+      if (platform === "apple") {
+        return {
+          formatVersion: 1,
+          passTypeIdentifier: "pass.pl.poilepiwko.clubcard",
+          serialNumber: `PIWKO-${memberId.replace(/[^a-zA-Z0-9]/g, "") || "000001"}`,
+          teamIdentifier: "PLPOILEPIWKO",
+          organizationName: "poilepiwko.pl",
+          description: "PoIlePiwko Pass - Karta Klubowa (-10% rabat)",
+          logoText: "PoIlePiwko Pass",
+          foregroundColor: "rgb(255, 255, 255)",
+          backgroundColor: "rgb(15, 23, 42)",
+          labelColor: "rgb(251, 191, 36)",
+          storeCard: {
+            primaryFields: [
+              {
+                key: "member",
+                label: "KLUBOWICZ",
+                value: memberName.toUpperCase()
+              }
+            ],
+            secondaryFields: [
+              {
+                key: "discount",
+                label: "RABAT NA PIWO",
+                value: "-10% NA LANE"
+              },
+              {
+                key: "city",
+                label: "MIASTO",
+                value: curCity ? curCity.name : "Polska"
+              }
+            ],
+            auxiliaryFields: [
+              {
+                key: "number",
+                label: "NUMER KARTY",
+                value: memberId
+              },
+              {
+                key: "status",
+                label: "STATUS",
+                value: "AKTYWNA (VIP)"
+              }
+            ],
+            backFields: [
+              {
+                key: "terms",
+                label: "Zasady korzystania",
+                value: "Karta upoważnia do 10% rabatu na piwo z kranu w lokalach partnerskich poilepiwko.pl. Pokaż kartę barmanowi przed złożeniem zamówienia."
+              },
+              {
+                key: "website",
+                label: "Oficjalna strona",
+                value: "https://poilepiwko.pl"
+              }
+            ]
+          },
+          barcode: {
+            format: "PKBarcodeFormatQR",
+            message: qrPayload,
+            messageEncoding: "iso-8859-1",
+            altText: memberId
+          },
+          barcodes: [
+            {
+              format: "PKBarcodeFormatQR",
+              message: qrPayload,
+              messageEncoding: "iso-8859-1",
+              altText: memberId
+            }
+          ],
+          locations: relevantLocations
+        };
+      } else {
+        // Google Wallet format
+        return {
+          iss: "service-account@poilepiwko.iam.gserviceaccount.com",
+          aud: "google",
+          typ: "savetowallet",
+          origins: ["https://poilepiwko.pl"],
+          payload: {
+            genericObjects: [
+              {
+                id: `poilepiwko_pass_${memberId.replace(/[^a-zA-Z0-9]/g, "") || "000001"}`,
+                classId: "poilepiwko.clubcard.vip",
+                cardTitle: { defaultValue: { language: "pl", value: "PoIlePiwko Pass (-10%)" } },
+                header: { defaultValue: { language: "pl", value: memberName.toUpperCase() } },
+                subheader: { defaultValue: { language: "pl", value: "Klubowicz VIP" } },
+                barcode: {
+                  type: "QR_CODE",
+                  value: qrPayload,
+                  alternateText: memberId
+                },
+                hexBackgroundColor: "#0f172a",
+                locations: relevantLocations.map(l => ({
+                  latitude: l.latitude,
+                  longitude: l.longitude
+                })),
+                notifications: {
+                  expiryNotification: { enableNotification: false },
+                  upcomingNotification: { enableNotification: true }
+                },
+                textModulesData: [
+                  {
+                    id: "discount",
+                    header: "Rabat",
+                    body: "-10% na piwa lane w barach partnerskich"
+                  },
+                  {
+                    id: "notice",
+                    header: "Lokalizacja",
+                    body: "🍺 Jesteś obok baru partnerskiego PoIlePiwko! Pokaż kartę i odbierz -10% na lane!"
+                  }
+                ]
+              }
+            ]
+          }
+        };
+      }
+    }
+
+    function handleWalletExport(platform) {
+      if (!currentProfile) {
+        showAppToast("Karta Pass 💳", "Zaloguj się, aby dodać swoją imienną kartę do Portfela!", "🔒");
+        if (window.__openAuth) window.__openAuth();
+        return;
+      }
+
+      const passData = generateWalletPassData(platform);
+      const memberId = (currentProfile && currentProfile.user_number) ? currentProfile.user_number : "000001";
+      const cleanId = memberId.replace(/[^a-zA-Z0-9]/g, "");
+      const fileName = platform === "apple" ? `poilepiwko-pass-${cleanId}.pkpass` : `poilepiwko-pass-${cleanId}.json`;
+      const mimeType = platform === "apple" ? "application/vnd.apple.pkpass" : "application/json";
+
+      try {
+        const jsonStr = JSON.stringify(passData, null, 2);
+        const blob = new Blob([jsonStr], { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 4000);
+      } catch (err) {
+        console.warn("Wallet export blob download failed:", err);
+      }
+
+      if (window.poileHaptics) window.poileHaptics.success();
+
+      if (platform === "apple") {
+        showAppToast(
+          "Dodano do Apple Wallet! ",
+          `Zaszyto geolokalizację ${passData.locations.length} barów. Karta pojawi się na ekranie blokady, gdy podejdziesz pod lokal!`,
+          "",
+          5000
+        );
+      } else {
+        showAppToast(
+          "Dodano do Portfela Google! 💳",
+          `Zaszyto powiadomienia w pobliżu ${passData.payload.genericObjects[0].locations.length} barów partnerskich z rabatem 10%!`,
+          "💳",
+          5000
+        );
+      }
+    }
+
+    if (btnAppleWallet) {
+      btnAppleWallet.addEventListener("click", () => handleWalletExport("apple"));
+    }
+    if (btnGoogleWallet) {
+      btnGoogleWallet.addEventListener("click", () => handleWalletExport("google"));
     }
   }
 
@@ -14656,12 +15114,18 @@
       sosModal.classList.add("active");
       sosModal.style.display = "flex";
       document.body.classList.add("modal-open");
+      if (typeof ModalHistoryManager !== "undefined") {
+        ModalHistoryManager.push("sos-modal", closeSosModal);
+      }
     }
 
     function closeSosModal() {
       sosModal.classList.remove("active");
       sosModal.style.display = "none";
       document.body.classList.remove("modal-open");
+      if (typeof ModalHistoryManager !== "undefined") {
+        ModalHistoryManager.pop("sos-modal");
+      }
     }
 
     window.__openSos = openSosModal;
@@ -22160,6 +22624,9 @@
     }
 
     setBottomSheetState(sheet, "half");
+    if (typeof ModalHistoryManager !== "undefined") {
+      ModalHistoryManager.push("venue-sheet", closeVenueSheet);
+    }
     poileHaptics.tick();
   }
   window.__openVenueSheet = openVenueSheet;
@@ -22168,6 +22635,9 @@
     const sheet = document.getElementById("venue-sheet");
     if (!sheet) return;
     setBottomSheetState(sheet, "closed");
+    if (typeof ModalHistoryManager !== "undefined") {
+      ModalHistoryManager.pop("venue-sheet");
+    }
   }
   window.__closeVenueSheet = closeVenueSheet;
 
@@ -22922,8 +23392,75 @@
     });
   }
 
+  // URL Action Router (PWA App Shortcuts: ?action=compass, ?action=roulette, etc.)
+  function handleInitialUrlAction() {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const action = (urlParams.get("action") || "").toLowerCase().trim();
+      if (!action) return;
+
+      // Clean query parameter from address bar without reloading
+      const cleanUrl = window.location.pathname + (window.location.hash || "");
+      window.history.replaceState({}, document.title, cleanUrl);
+
+      // Trigger module opening after DOM and Leaflet have initialized
+      setTimeout(() => {
+        switch (action) {
+          case "compass":
+            if (typeof window.__openBeerCompass === "function") {
+              window.__openBeerCompass();
+            }
+            break;
+          case "roulette":
+            if (typeof window.__openRoulette === "function") {
+              window.__openRoulette();
+            }
+            break;
+          case "happyhours":
+          case "happyhour":
+          case "happy_hours":
+            if (typeof window.__openHappyHours === "function") {
+              window.__openHappyHours();
+            }
+            break;
+          case "sos":
+          case "safe":
+          case "safe_night":
+            if (typeof window.__openSos === "function") {
+              window.__openSos();
+            }
+            break;
+          case "crawl":
+          case "pubcrawl":
+            if (typeof window.__openPubCrawl === "function") {
+              window.__openPubCrawl();
+            }
+            break;
+          case "pass":
+          case "card":
+            if (typeof window.__openClubCard === "function") {
+              window.__openClubCard();
+            }
+            break;
+          case "passport":
+            if (typeof window.__openPassport === "function") {
+              window.__openPassport();
+            }
+            break;
+          default:
+            console.log("[Router] Unrecognized initial action:", action);
+        }
+      }, 450);
+    } catch (e) {
+      console.warn("handleInitialUrlAction error:", e);
+    }
+  }
+
   // Boot Application
   function boot() {
+    if (typeof ModalHistoryManager !== "undefined") {
+      ModalHistoryManager.init();
+    }
     applyTheme(getSavedThemePreference());
     initMap();
     initSupabase();
@@ -22933,6 +23470,7 @@
     initUserGeolocation();
     initMobileModernization();
     initTimeContextEngine();
+    handleInitialUrlAction();
 
     // Register Service Worker for PWA with automatic update detection
     if ("serviceWorker" in navigator) {

@@ -20583,4 +20583,139 @@ body.theme-light .district-overview-pill .district-pill-price {
   background: rgba(0, 0, 0, 0.08) !important;
 }
 
+/* ==========================================================================
+   MOBILE HARDENING: App Store / TWA / Back Button & Wallets
+   ========================================================================== */
+
+/* 1. Compass Sensor Calibration Button (iOS 13+ Permission API) */
+.btn-compass-calibrate-sensor {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 10px;
+  padding: 11px 16px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.22) 0%, rgba(14, 165, 233, 0.38) 100%);
+  border: 1px solid #38bdf8;
+  color: #e0f2fe;
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(56, 189, 248, 0.25);
+  box-sizing: border-box;
+}
+
+.btn-compass-calibrate-sensor:active {
+  transform: scale(0.97);
+}
+
+/* 2. Public Profile UGC Report / Block Button */
+.pubprof-sub-actions {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(95px, 1fr)) !important;
+  gap: 8px !important;
+}
+
+.btn-pubprof-report {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #fca5a5;
+  font-weight: 700;
+  font-size: 0.82rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 12px;
+  padding: 10px 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  touch-action: manipulation;
+  font-family: inherit;
+}
+
+.btn-pubprof-report:hover {
+  background: rgba(239, 68, 68, 0.22);
+  border-color: rgba(239, 68, 68, 0.6);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.btn-pubprof-report:active {
+  transform: scale(0.96);
+}
+
+/* 3. Apple Wallet & Google Wallet Buttons for PoIlePiwko Pass */
+.club-wallet-buttons-wrap {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.btn-wallet-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 12px;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.btn-wallet-apple {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+}
+
+.btn-wallet-apple:hover {
+  background: #18181b !important;
+  border-color: rgba(255, 255, 255, 0.45) !important;
+  transform: translateY(-1px);
+}
+
+.btn-wallet-apple:active {
+  transform: scale(0.97);
+}
+
+.btn-wallet-google {
+  background: #18181b !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+
+.btn-wallet-google:hover {
+  background: #27272a !important;
+  border-color: rgba(255, 255, 255, 0.38) !important;
+  transform: translateY(-1px);
+}
+
+.btn-wallet-google:active {
+  transform: scale(0.97);
+}
+
+@media (max-width: 440px) {
+  .club-wallet-buttons-wrap {
+    grid-template-columns: 1fr;
+  }
+}
+
+
 
