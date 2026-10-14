@@ -356,6 +356,10 @@
           <span class="crawl-checkin-icon">🍺</span>
           <span id="crawl-checkin-label">Wypite! Kolejny →</span>
         </button>
+        <button type="button" id="btn-crawl-quick-payer" class="btn-crawl-action-payer" title="Rozlicz kolejkę w tym barze">
+          <span class="crawl-payer-icon">💸</span>
+          <span id="crawl-payer-label">Kto płacił?</span>
+        </button>
         <a href="#" id="btn-crawl-active-gmaps" target="_blank" rel="noopener" class="btn-crawl-action-gmaps" title="Prowadź w Google Maps">🧭</a>
         <button type="button" id="btn-crawl-active-details" class="btn-crawl-action-details" title="Szczegóły trasy">📋</button>
         <button type="button" id="btn-crawl-clear" class="btn-crawl-action-clear" title="Zakończ trasę">✕</button>
@@ -661,6 +665,12 @@
             <span class="hud-label">CENA PIWA</span>
             <span class="hud-val highlight" id="compass-price-val">-- zł</span>
           </div>
+        </div>
+
+        <!-- Dynamic Step Counter Badge (Apple Find My Precision Finding) -->
+        <div class="compass-steps-badge" id="compass-steps-badge">
+          <span class="steps-icon">🍺</span>
+          <span class="steps-text" id="compass-steps-text">~<strong>--</strong> kroków do kufla za <strong>-- zł</strong></span>
         </div>
       </div>
 
@@ -2810,6 +2820,16 @@
         <button type="button" class="modal-close" id="btn-close-story-modal" aria-label="Zamknij podgląd Story">✕</button>
       </div>
 
+      <!-- Story Card Mode Switch (Poster 9:16 vs Strava-style Transparent Sticker) -->
+      <div class="story-mode-switch" id="story-mode-switch">
+        <button type="button" class="story-mode-tab active" data-story-mode="poster">
+          <span>🖼️ Plakat 9:16</span>
+        </button>
+        <button type="button" class="story-mode-tab" data-story-mode="sticker">
+          <span>✨ Naklejka (Strava PNG)</span>
+        </button>
+      </div>
+
       <div class="story-preview-container">
         <!-- Offscreen Canvas for crisp 1080x1920 generation -->
         <canvas id="story-canvas" width="1080" height="1920" style="display:none;"></canvas>
@@ -2823,6 +2843,9 @@
       </div>
 
       <div class="story-actions-bar">
+        <button type="button" class="btn-primary btn-story-copy-sticker" id="btn-story-copy-sticker" style="display:none;">
+          <span>📋 Kopiuj naklejkę do schowka</span>
+        </button>
         <button type="button" class="btn-primary btn-story-download" id="btn-story-download">
           <span>📥 Pobierz grafikę (PNG)</span>
         </button>
@@ -2892,8 +2915,15 @@
               </div>
             </div>
 
-            <!-- Glare effect on tilt -->
+            <!-- Live Anti-screenshot Clock for Barmen -->
+            <div class="card-security-clock" id="club-card-live-clock">
+              <span class="clock-live-dot"></span>
+              <span class="clock-live-text" id="club-card-clock-text">🟢 AKTYWNA TERAZ · Ładowanie...</span>
+            </div>
+
+            <!-- Glare effect on tilt & dynamic holographic foil shimmer -->
             <div class="card-glare" id="club-card-glare"></div>
+            <div class="card-hologram-shimmer" id="club-card-hologram"></div>
           </div>
 
           <!-- Card Back (Rewers) -->
@@ -2932,6 +2962,9 @@
       <p class="club-card-hint">Dotknij karty, aby ją obrócić i sprawdzić warunki zniżki</p>
 
       <div class="club-card-actions">
+        <button type="button" class="btn-card-action btn-card-venues" id="btn-club-filter-venues" title="Filtruj mapę do lokali honorujących rabat">
+          <span>🗺️ Lokale z rabatem (-10%)</span>
+        </button>
         <button type="button" class="btn-card-action btn-card-flip" id="btn-action-flip-card">
           <span>🔄 Obróć</span>
         </button>
@@ -2939,7 +2972,7 @@
           <span>📱 Pokaż w barze</span>
         </button>
         <button type="button" class="btn-card-action btn-card-download" id="btn-action-save-pass">
-          <span>📥 Pobierz</span>
+          <span>📥 Udostępnij</span>
         </button>
       </div>
     </div>
@@ -3081,6 +3114,26 @@
         <!-- Visited Bars List -->
         <div class="celebration-stops-list" id="crawl-done-stops-list"></div>
 
+        <!-- Settlement & BLIK Breakdown Box (Splitwise / Kto komu ile zwraca) -->
+        <div class="crawl-settlement-card" id="crawl-bill-split-box">
+          <div class="settlement-header">
+            <div class="settlement-title">
+              <span class="settlement-icon">💸</span>
+              <div>
+                <strong>Rozliczenie Ekipy (BLIK)</strong>
+                <p class="settlement-sub">Kto komu ile zwraca za piwka z trasy</p>
+              </div>
+            </div>
+            <span class="settlement-total-badge" id="crawl-split-total-badge">Łącznie: 0 zł</span>
+          </div>
+          <div class="settlement-transfers-list" id="crawl-split-transfers-list">
+            <!-- Dynamically populated BLIK transfers -->
+          </div>
+          <button type="button" class="btn-copy-blik-split" id="btn-copy-blik-split">
+            <span>📋 Kopiuj rozliczenie dla ekipy (BLIK)</span>
+          </button>
+        </div>
+
         <!-- Actions -->
         <div class="celebration-actions">
           <button type="button" class="btn-primary btn-celebration-share" id="btn-crawl-finish-share">
@@ -3091,6 +3144,47 @@
           </button>
           <button type="button" class="btn-ghost btn-celebration-close" id="btn-close-crawl-complete">
             ✕ Zamknij
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Pub Crawl Quick Expense Logger ("Kto stawia kolejkę?") -->
+  <div class="modal-backdrop" id="crawl-expense-modal" style="display:none; z-index: 10320;">
+    <div class="modal-card modal-card-crawl-expense">
+      <div class="modal-head">
+        <div class="modal-head-title">
+          <div class="modal-icon-badge">🍻</div>
+          <div>
+            <h2>Kto stawia tę kolejkę?</h2>
+            <p class="modal-head-sub" id="crawl-expense-venue-title">Zapisz rachunek w bieżącym barze</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close" id="btn-close-crawl-expense" aria-label="Zamknij">✕</button>
+      </div>
+      <div class="crawl-expense-body">
+        <div class="expense-input-group">
+          <label class="expense-label">Kto płacił za tę rundę?</label>
+          <div class="crew-chips-selector" id="crawl-crew-chips">
+            <!-- Rendered dynamically: e.g. Ja, Kumpel 1, Kumpel 2 + Dodaj -->
+          </div>
+          <div class="crew-add-row">
+            <input type="text" id="input-new-crew-member" class="input-modern" placeholder="Dodaj imię (np. Maciej, Ania)..." maxlength="20" />
+            <button type="button" id="btn-add-crew-member" class="btn-secondary btn-sm">+ Dodaj</button>
+          </div>
+        </div>
+        <div class="expense-input-group">
+          <label class="expense-label" for="crawl-expense-amount">Kwota rachunku w tym barze (zł)</label>
+          <div class="expense-amount-wrap">
+            <input type="number" id="crawl-expense-amount" class="input-modern expense-amount-input" step="0.5" min="1" placeholder="np. 48" />
+            <span class="currency-suffix">zł</span>
+          </div>
+          <span class="expense-hint" id="crawl-expense-hint">Sugerowane: ~36.00 zł (cena piwa × liczba osób)</span>
+        </div>
+        <div class="expense-actions">
+          <button type="button" class="btn-primary btn-save-expense" id="btn-save-crawl-expense">
+            <span>💾 Zapisz kolejkę do rozliczenia</span>
           </button>
         </div>
       </div>

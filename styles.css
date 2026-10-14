@@ -19840,3 +19840,470 @@ body[data-time-mode="day_recovery"] .context-pill-badge {
   text-overflow: ellipsis;
   font-weight: 500;
 }
+
+/* ==========================================================================
+   MODUŁ 4: Wiralowość, Funkcje Społecznościowe i Monetyzacja
+   4.1. Piwny Kompas Apple Find My Precision Finding UI
+   4.2. Rozliczanie Rachunku w Pub Crawlu (Splitwise / BLIK)
+   4.3. Przezroczyste Naklejki na Instagram Story & TikTok (Styl Strava)
+   4.4. Karta Klubowa PoIlePiwko Pass Hologram & Live Anti-Screenshot Clock
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   4.1. Precision Finding UI (Apple Find My Target Lock Zone)
+   -------------------------------------------------------------------------- */
+#beer-compass-modal.compass-in-target-zone .compass-modal-card {
+  background: radial-gradient(circle at 50% 38%, rgba(16, 185, 129, 0.28) 0%, rgba(5, 46, 22, 0.45) 45%, rgba(10, 15, 20, 0.98) 85%) !important;
+  border-color: rgba(52, 211, 153, 0.7) !important;
+  box-shadow: 0 0 50px rgba(16, 185, 129, 0.4), 0 25px 60px rgba(0, 0, 0, 0.85) !important;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.compass-in-target-zone .compass-radar-circle {
+  border-color: rgba(52, 211, 153, 0.85) !important;
+  box-shadow: 0 0 30px rgba(52, 211, 153, 0.35), inset 0 0 25px rgba(16, 185, 129, 0.25) !important;
+  transition: all 0.35s ease;
+}
+
+.compass-in-target-zone .compass-radar-sweep {
+  background: conic-gradient(from 0deg, transparent 0deg, transparent 260deg, rgba(52, 211, 153, 0.15) 320deg, rgba(52, 211, 153, 0.5) 360deg) !important;
+  animation-duration: 2.2s !important;
+}
+
+.compass-in-target-zone .ring {
+  border-color: rgba(52, 211, 153, 0.4) !important;
+}
+
+.compass-in-target-zone .compass-needle-wrap {
+  filter: drop-shadow(0 0 16px rgba(52, 211, 153, 0.9));
+}
+
+.compass-in-target-zone .needle-arrow {
+  color: #34d399 !important;
+  transform: scale(1.18);
+  transition: transform 0.25s ease, color 0.25s ease;
+}
+
+.compass-in-target-zone .needle-line {
+  background: linear-gradient(180deg, #34d399 0%, rgba(52, 211, 153, 0.2) 100%) !important;
+  box-shadow: 0 0 8px #34d399;
+}
+
+.compass-in-target-zone .core-dot {
+  background: #34d399 !important;
+  box-shadow: 0 0 16px #34d399 !important;
+}
+
+.compass-steps-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 12px auto 4px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 0.88rem;
+  color: #cbd5e1;
+  max-width: 92%;
+  box-sizing: border-box;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.compass-steps-badge strong {
+  color: #fbbf24;
+}
+
+.compass-in-target-zone .compass-steps-badge {
+  background: rgba(16, 185, 129, 0.22);
+  border-color: rgba(52, 211, 153, 0.6);
+  color: #ecfdf5;
+  transform: scale(1.04);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+}
+
+.compass-in-target-zone .compass-steps-badge strong {
+  color: #a7f3d0;
+}
+
+/* --------------------------------------------------------------------------
+   4.2. Rozliczanie Rachunku w Pub Crawlu (Splitwise & BLIK)
+   -------------------------------------------------------------------------- */
+.btn-crawl-action-payer {
+  background: rgba(245, 158, 11, 0.18);
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  color: #fbbf24;
+  border-radius: 999px;
+  padding: 6px 13px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.btn-crawl-action-payer:active {
+  transform: scale(0.96);
+  background: rgba(245, 158, 11, 0.3);
+}
+
+.modal-card-crawl-expense {
+  max-width: 440px;
+  width: 92vw;
+  padding: 22px;
+  background: linear-gradient(180deg, #161a29 0%, #0d111c 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+}
+
+.crawl-expense-body {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 14px;
+}
+
+.expense-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.expense-label {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.crew-chips-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-height: 120px;
+  overflow-y: auto;
+  padding-bottom: 2px;
+}
+
+.crew-chip {
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #e2e8f0;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.crew-chip.active {
+  background: #f59e0b;
+  border-color: #fbbf24;
+  color: #0f172a;
+  font-weight: 800;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
+}
+
+.crew-chip-remove {
+  font-size: 0.75rem;
+  opacity: 0.6;
+  margin-left: 2px;
+}
+
+.crew-chip-remove:hover {
+  opacity: 1;
+}
+
+.crew-add-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.crew-add-row input {
+  flex: 1;
+}
+
+.expense-amount-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.expense-amount-input {
+  width: 100%;
+  font-size: 1.3rem !important;
+  font-weight: 800 !important;
+  padding-right: 42px !important;
+  color: #fef08a !important;
+}
+
+.currency-suffix {
+  position: absolute;
+  right: 14px;
+  font-weight: 800;
+  color: #94a3b8;
+  font-size: 1rem;
+}
+
+.expense-hint {
+  font-size: 0.78rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+.btn-save-expense {
+  width: 100%;
+  padding: 13px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  border-radius: 14px;
+}
+
+/* Crawl Settlement Card in Celebration Modal */
+.crawl-settlement-card {
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: 18px;
+  padding: 16px;
+  margin: 16px 0;
+  text-align: left;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.settlement-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.settlement-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.settlement-icon {
+  font-size: 1.5rem;
+}
+
+.settlement-title strong {
+  display: block;
+  font-size: 0.95rem;
+  color: #f8fafc;
+}
+
+.settlement-sub {
+  font-size: 0.74rem;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.settlement-total-badge {
+  background: rgba(245, 158, 11, 0.18);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #fbbf24;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.settlement-transfers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.split-transfer-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  font-size: 0.86rem;
+}
+
+.transfer-from-to {
+  color: #e2e8f0;
+}
+
+.transfer-amount {
+  color: #34d399;
+  font-weight: 800;
+  font-family: monospace;
+  font-size: 0.92rem;
+}
+
+.btn-copy-blik-split {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
+  transition: all 0.2s ease;
+}
+
+.btn-copy-blik-split:active {
+  transform: scale(0.97);
+}
+
+/* --------------------------------------------------------------------------
+   4.3. Przezroczyste Naklejki na Instagram Story & TikTok (Styl Strava)
+   -------------------------------------------------------------------------- */
+.story-mode-switch {
+  display: flex;
+  gap: 6px;
+  margin: 12px 0 16px;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 4px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.story-mode-tab {
+  flex: 1;
+  padding: 9px 12px;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 0.82rem;
+  font-weight: 700;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.story-mode-tab.active {
+  background: #f59e0b;
+  color: #0f172a;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
+}
+
+.story-img-wrapper.sticker-mode {
+  background-image: 
+    linear-gradient(45deg, #181c28 25%, transparent 25%), 
+    linear-gradient(-45deg, #181c28 25%, transparent 25%), 
+    linear-gradient(45deg, transparent 75%, #181c28 75%), 
+    linear-gradient(-45deg, transparent 75%, #181c28 75%) !important;
+  background-size: 24px 24px !important;
+  background-position: 0 0, 0 12px, 12px -12px, -12px 0px !important;
+  background-color: #0e121d !important;
+}
+
+.btn-story-copy-sticker {
+  background: linear-gradient(135deg, #ec4899 0%, #d946ef 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 16px rgba(236, 72, 153, 0.35) !important;
+  border: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   4.4. Karta Klubowa PoIlePiwko Pass (Hologram Foil & Live Clock & Filter)
+   -------------------------------------------------------------------------- */
+.card-hologram-shimmer {
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  pointer-events: none;
+  z-index: 5;
+  opacity: 0.6;
+  mix-blend-mode: color-dodge;
+  background: linear-gradient(
+    var(--holo-angle, 135deg),
+    rgba(255, 0, 128, 0.35) 0%,
+    rgba(0, 240, 255, 0.35) 25%,
+    rgba(255, 230, 0, 0.35) 50%,
+    rgba(140, 0, 255, 0.35) 75%,
+    rgba(255, 0, 128, 0.35) 100%
+  );
+  background-size: 200% 200%;
+  background-position: var(--holo-x, 50%) var(--holo-y, 50%);
+  transition: opacity 0.3s ease;
+}
+
+.card-security-clock {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  font-size: 0.72rem;
+  color: #86efac;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin-top: 8px;
+  z-index: 6;
+  position: relative;
+  align-self: flex-start;
+}
+
+.clock-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 10px #22c55e;
+  animation: pulseLiveBeacon 1.2s infinite ease-in-out;
+  flex-shrink: 0;
+}
+
+@keyframes pulseLiveBeacon {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 10px #22c55e;
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(0.75);
+    box-shadow: 0 0 3px #22c55e;
+  }
+}
+
+.btn-card-venues {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(217, 119, 6, 0.35) 100%) !important;
+  border: 1px solid #f59e0b !important;
+  color: #fef08a !important;
+  font-weight: 800 !important;
+}
+
+.btn-card-venues:active {
+  transform: scale(0.96);
+}
+

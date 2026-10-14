@@ -2703,6 +2703,213 @@
   let crawlMarkerInstances = [];
   let lastCompletedCrawlRoute = null;
 
+  function loadCrawlCrew() {
+    try {
+      const stored = localStorage.getItem("poile_crawl_crew");
+      if (stored) {
+        const arr = JSON.parse(stored);
+        if (Array.isArray(arr) && arr.length > 0) return arr;
+      }
+    } catch (e) {}
+    const defaultMe = (currentProfile && (currentProfile.display_name || currentProfile.username)) ? (currentProfile.display_name || currentProfile.username) : "Ja";
+    return [defaultMe, "Kumpel 1", "Kumpel 2"];
+  }
+
+  function saveCrawlCrew(crew) {
+    try {
+      localStorage.setItem("poile_crawl_crew", JSON.stringify(crew));
+    } catch (e) {}
+  }
+
+  function loadCrawlExpenses() {
+    try {
+      const stored = localStorage.getItem("poile_crawl_expenses");
+      if (stored) {
+        const arr = JSON.parse(stored);
+        if (Array.isArray(arr)) return arr;
+      }
+    } catch (e) {}
+    return [];
+  }
+
+  function saveCrawlExpenses(expenses) {
+    try {
+      localStorage.setItem("poile_crawl_expenses", JSON.stringify(expenses));
+    } catch (e) {}
+  }
+
+  let activeCrawlExpenses = loadCrawlExpenses();
+
+  function computeCrawlSettlement(expenses, crew) {
+    if (!crew || crew.length === 0) crew = loadCrawlCrew();
+    const paidMap = {};
+    crew.forEach(name => { paidMap[name] = 0; });
+    let totalSpent = 0;
+
+    expenses.forEach(exp => {
+      const p = exp.payer || crew[0];
+      if (typeof paidMap[p] === "undefined") {
+        paidMap[p] = 0;
+        if (!crew.includes(p)) crew.push(p);
+      }
+      paidMap[p] += exp.amount;
+      totalSpent += exp.amount;
+    });
+
+    if (totalSpent === 0) {
+      return { totalSpent: 0, fairShare: 0, transfers: [] };
+    }
+
+    const fairShare = totalSpent / crew.length;
+    const balances = [];
+    crew.forEach(name => {
+      balances.push({ name, balance: (paidMap[name] || 0) - fairShare });
+    });
+
+    const debtors = balances.filter(b => b.balance < -0.01).map(b => ({ ...b, balance: -b.balance }));
+    const creditors = balances.filter(b => b.balance > 0.01).map(b => ({ ...b }));
+
+    debtors.sort((a, b) => b.balance - a.balance);
+    creditors.sort((a, b) => b.balance - a.balance);
+
+    const transfers = [];
+    let i = 0, j = 0;
+    while (i < debtors.length && j < creditors.length) {
+      const debtor = debtors[i];
+      const creditor = creditors[j];
+      const amount = Math.min(debtor.balance, creditor.balance);
+      if (amount > 0.01) {
+        transfers.push({
+          from: debtor.name,
+          to: creditor.name,
+          amount: parseFloat(amount.toFixed(2))
+        });
+      }
+      debtor.balance -= amount;
+      creditor.balance -= amount;
+      if (debtor.balance <= 0.01) i++;
+      if (creditor.balance <= 0.01) j++;
+    }
+
+    return { totalSpent, fairShare, transfers };
+  }
+
+  function openCrawlExpenseModal() {
+    if (!activeCrawlRoute || !activeCrawlRoute.stops.length) return;
+    const currentStop = activeCrawlRoute.stops[activeCrawlStep];
+    if (!currentStop) return;
+
+    const modal = document.getElementById("crawl-expense-modal");
+    if (!modal) return;
+
+    const venueTitle = document.getElementById("crawl-expense-venue-title");
+    const chipsContainer = document.getElementById("crawl-crew-chips");
+    const amountInput = document.getElementById("crawl-expense-amount");
+    const hintEl = document.getElementById("crawl-expense-hint");
+
+    if (venueTitle) {
+      venueTitle.textContent = `${activeCrawlStep + 1}. ${currentStop.venue.name}`;
+    }
+
+    let crew = loadCrawlCrew();
+    let existingExp = activeCrawlExpenses.find(e => e.stopIndex === activeCrawlStep);
+    let selectedPayer = existingExp ? existingExp.payer : (crew[activeCrawlStep % crew.length] || crew[0]);
+
+    function renderCrewChips() {
+      if (!chipsContainer) return;
+      chipsContainer.innerHTML = crew.map(name => `
+        <button type="button" class="crew-chip ${name === selectedPayer ? 'active' : ''}" data-crew-name="${escapeHtml(name)}">
+          <span>${escapeHtml(name)}</span>
+          ${crew.length > 2 ? `<span class="crew-chip-remove" data-remove-name="${escapeHtml(name)}" title="Usuń z ekipy">✕</span>` : ''}
+        </button>
+      `).join("");
+
+      chipsContainer.querySelectorAll(".crew-chip").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          if (e.target.classList.contains("crew-chip-remove")) {
+            e.stopPropagation();
+            const toRemove = e.target.getAttribute("data-remove-name");
+            crew = crew.filter(c => c !== toRemove);
+            saveCrawlCrew(crew);
+            if (selectedPayer === toRemove) selectedPayer = crew[0] || "Ja";
+            renderCrewChips();
+            updateSuggestedAmount();
+            return;
+          }
+          selectedPayer = btn.getAttribute("data-crew-name");
+          renderCrewChips();
+        });
+      });
+    }
+
+    function updateSuggestedAmount() {
+      const perBeer = currentStop.venue.beer_price_pln || 12.0;
+      const suggested = (perBeer * crew.length).toFixed(2);
+      if (amountInput && (!amountInput.value || !existingExp)) {
+        amountInput.value = suggested;
+      }
+      if (hintEl) {
+        hintEl.textContent = `Sugerowane: ~${suggested} zł (${crew.length} osób × ${perBeer.toFixed(2)} zł)`;
+      }
+    }
+
+    renderCrewChips();
+    if (existingExp && amountInput) {
+      amountInput.value = existingExp.amount.toFixed(2);
+    } else {
+      updateSuggestedAmount();
+    }
+
+    // Add new crew member handler
+    const inputNew = document.getElementById("input-new-crew-member");
+    const btnAdd = document.getElementById("btn-add-crew-member");
+    if (btnAdd && inputNew) {
+      btnAdd.onclick = () => {
+        const val = inputNew.value.trim();
+        if (val && !crew.includes(val)) {
+          crew.push(val);
+          saveCrawlCrew(crew);
+          inputNew.value = "";
+          renderCrewChips();
+          updateSuggestedAmount();
+        }
+      };
+    }
+
+    // Save handler
+    const btnSave = document.getElementById("btn-save-crawl-expense");
+    if (btnSave) {
+      btnSave.onclick = () => {
+        const val = parseFloat(amountInput ? amountInput.value : 0);
+        const amount = (!isNaN(val) && val > 0) ? val : (currentStop.venue.beer_price_pln * crew.length);
+
+        const existingIdx = activeCrawlExpenses.findIndex(e => e.stopIndex === activeCrawlStep);
+        const newRecord = {
+          stopIndex: activeCrawlStep,
+          venueName: currentStop.venue.name,
+          payer: selectedPayer,
+          amount: parseFloat(amount.toFixed(2)),
+          participants: [...crew]
+        };
+
+        if (existingIdx !== -1) {
+          activeCrawlExpenses[existingIdx] = newRecord;
+        } else {
+          activeCrawlExpenses.push(newRecord);
+        }
+        saveCrawlExpenses(activeCrawlExpenses);
+
+        updateCrawlStepUI();
+        modal.style.display = "none";
+        if (window.poileHaptics) window.poileHaptics.tick();
+        showAppToast("Pub Crawl 💸", `Zapisano! Tę kolejkę stawia: ${selectedPayer} (${amount.toFixed(2)} zł)`, "🍻", 2800);
+      };
+    }
+
+    modal.style.display = "flex";
+  }
+  window.__openCrawlExpenseModal = openCrawlExpenseModal;
+
   function updateCrawlStepUI() {
     if (!activeCrawlRoute || !activeCrawlRoute.stops.length) return;
     const activeStepIndicator = document.getElementById("crawl-active-step-indicator");
@@ -2718,7 +2925,13 @@
       activeStepIndicator.innerHTML = `📍 Przystanek <strong>${activeCrawlStep + 1}</strong> z <strong>${totalStops}</strong>: <span class="crawl-current-name">${escapeHtml(currentStop.venue.name)}</span> <span class="crawl-current-price">(${currentStop.venue.beer_price_pln.toFixed(2)} zł)</span>`;
     }
     if (activeSub) {
-      activeSub.textContent = `Koszt trasy: ~${activeCrawlRoute.totalCost.toFixed(2)} zł · śr. ${activeCrawlRoute.avgPrice.toFixed(2)} zł/piwo`;
+      const loggedExp = activeCrawlExpenses.find(e => e.stopIndex === activeCrawlStep);
+      const totalLogged = activeCrawlExpenses.reduce((s, e) => s + e.amount, 0);
+      if (loggedExp) {
+        activeSub.innerHTML = `Rachunek: <strong>~${totalLogged.toFixed(2)} zł</strong> · Płaci: <strong>${escapeHtml(loggedExp.payer)}</strong> (${loggedExp.amount.toFixed(2)} zł)`;
+      } else {
+        activeSub.textContent = `Koszt trasy: ~${activeCrawlRoute.totalCost.toFixed(2)} zł · śr. ${activeCrawlRoute.avgPrice.toFixed(2)} zł/piwo`;
+      }
     }
     if (checkinLabel) {
       if (activeCrawlStep >= totalStops - 1) {
@@ -2759,6 +2972,21 @@
     // Stamp passport if not visited
     if (!visitedVenues.includes(currentStop.venue.id)) {
       toggleVisitedVenue(currentStop.venue.id);
+    }
+
+    // Auto-record round expense if not explicitly logged
+    const crew = loadCrawlCrew();
+    if (!activeCrawlExpenses.find(e => e.stopIndex === activeCrawlStep)) {
+      const defaultPayer = crew[activeCrawlStep % crew.length] || crew[0] || "Ja";
+      const defaultAmount = parseFloat((currentStop.venue.beer_price_pln * crew.length).toFixed(2));
+      activeCrawlExpenses.push({
+        stopIndex: activeCrawlStep,
+        venueName: currentStop.venue.name,
+        payer: defaultPayer,
+        amount: defaultAmount,
+        participants: [...crew]
+      });
+      saveCrawlExpenses(activeCrawlExpenses);
     }
 
     // Trigger toast & cheer sound & haptic feedback
@@ -2815,6 +3043,73 @@
           <span class="celebration-stop-price">${s.venue.beer_price_pln.toFixed(2)} zł</span>
         </div>
       `).join("");
+    }
+
+    // Auto-complete any missing expenses from stops
+    const crew = loadCrawlCrew();
+    route.stops.forEach((s, idx) => {
+      if (!activeCrawlExpenses.find(e => e.stopIndex === idx)) {
+        activeCrawlExpenses.push({
+          stopIndex: idx,
+          venueName: s.venue.name,
+          payer: crew[idx % crew.length] || crew[0] || "Ja",
+          amount: parseFloat((s.venue.beer_price_pln * crew.length).toFixed(2)),
+          participants: [...crew]
+        });
+      }
+    });
+    saveCrawlExpenses(activeCrawlExpenses);
+
+    // Compute & render financial settlement breakdown
+    const settlement = computeCrawlSettlement(activeCrawlExpenses, crew);
+    const splitTotalBadge = document.getElementById("crawl-split-total-badge");
+    const splitList = document.getElementById("crawl-split-transfers-list");
+    const btnCopyBlik = document.getElementById("btn-copy-blik-split");
+
+    if (splitTotalBadge) {
+      splitTotalBadge.textContent = `Łącznie: ${settlement.totalSpent.toFixed(2)} zł (~${settlement.fairShare.toFixed(2)} zł/os.)`;
+    }
+
+    if (splitList) {
+      if (settlement.transfers.length === 0) {
+        splitList.innerHTML = `
+          <div class="split-transfer-item">
+            <span>🎉 Wszyscy rozliczeni po równo!</span>
+            <span class="transfer-amount">0.00 zł</span>
+          </div>`;
+      } else {
+        splitList.innerHTML = settlement.transfers.map(t => `
+          <div class="split-transfer-item">
+            <span class="transfer-from-to"><strong>${escapeHtml(t.from)}</strong> ➡️ <strong>${escapeHtml(t.to)}</strong></span>
+            <span class="transfer-amount">${t.amount.toFixed(2)} zł na BLIK</span>
+          </div>
+        `).join("");
+      }
+    }
+
+    if (btnCopyBlik) {
+      btnCopyBlik.onclick = () => {
+        const transfersText = settlement.transfers.length > 0
+          ? settlement.transfers.map(t => `• ${t.from} ➡️ ${t.to}: ${t.amount.toFixed(2)} zł`).join("\n")
+          : "• Wszyscy rozliczeni po równo!";
+
+        const text = `🍻 Rozliczenie Pub Crawlu (poilepiwko.pl)!\n` +
+          `📍 Zaliczone bary (${route.stops.length}):\n${route.stops.map((s, idx) => `${idx + 1}. ${s.venue.name}`).join("\n")}\n\n` +
+          `💰 Łączny rachunek: ${settlement.totalSpent.toFixed(2)} zł (~${settlement.fairShare.toFixed(2)} zł / os.)\n\n` +
+          `💸 Kto komu ile oddaje na BLIK:\n${transfersText}\n\n` +
+          `Dzięki za wspólny wieczór! 🍻`;
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(() => {
+            if (window.poileHaptics) window.poileHaptics.success();
+            showAppToast("BLIK 💸", "Rozliczenie skopiowane do schowka! Wklej na Messenger / WhatsApp 💬", "📋", 3500);
+          }).catch(() => {
+            prompt("Skopiuj rozliczenie:", text);
+          });
+        } else {
+          prompt("Skopiuj rozliczenie:", text);
+        }
+      };
     }
 
     modal.style.display = "flex";
@@ -3923,28 +4218,46 @@
       if (!needleWrap) return;
       if (!currentCompassTargets || currentCompassTargets.length === 0) {
         needleWrap.style.transform = "rotate(0deg)";
+        if (compassModal) compassModal.classList.remove("compass-in-target-zone");
         return;
       }
       const target = currentCompassTargets[currentCompassIndex];
       if (!target) return;
 
       let rotation = target.bearing;
+      let diff = 0;
       if (deviceHeading !== null && !isNaN(deviceHeading)) {
         // Point arrow towards venue relative to current phone orientation
         rotation = (target.bearing - deviceHeading + 360) % 360;
+        diff = (rotation + 180) % 360 - 180; // normalized angular difference in [-180, 180]
       }
       needleWrap.style.transform = `rotate(${rotation.toFixed(1)}deg)`;
 
-      // Haptic Lock-on feedback when pointed directly towards venue (< 10 deg)
-      if (deviceHeading !== null && !isNaN(deviceHeading)) {
-        const isLocked = rotation <= 10 || rotation >= 350;
-        if (isLocked) {
-          if (!needleWrap._hasLockedOn) {
-            needleWrap._hasLockedOn = true;
-            if (window.poileHaptics) window.poileHaptics.lockOn();
+      // Precision Finding: Apple Find My Target Lock Zone (within 15°)
+      const isTargetLock = (deviceHeading !== null && !isNaN(deviceHeading) && Math.abs(diff) <= 15);
+      if (compassModal) {
+        compassModal.classList.toggle("compass-in-target-zone", isTargetLock);
+      }
+
+      const item = currentCompassTargets[currentCompassIndex];
+      const steps = item ? Math.max(1, Math.round(item.distMeters / 0.75)) : 0;
+
+      if (isTargetLock) {
+        if (!needleWrap._hasLockedOn) {
+          needleWrap._hasLockedOn = true;
+          if (window.poileHaptics && typeof window.poileHaptics.lockOn === "function") {
+            window.poileHaptics.lockOn();
           }
-        } else if (rotation > 25 && rotation < 335) {
+        }
+        if (statusText) {
+          statusText.textContent = `🎯 CEL W CELOWNIKU · Idź prosto (~${steps} kroków)!`;
+        }
+      } else {
+        if (Math.abs(diff) > 22) {
           needleWrap._hasLockedOn = false;
+        }
+        if (statusText && deviceHeading !== null) {
+          statusText.textContent = "Kompas skalibrowany • Obróć się w stronę strzałki";
         }
       }
     }
@@ -3960,6 +4273,9 @@
         if (targetAddress) targetAddress.textContent = "Spróbuj zmienić filtr radaru";
         if (targetIndexLabel) targetIndexLabel.textContent = "0 z 0";
         if (btnNavigate) btnNavigate.removeAttribute("href");
+        const stepsText = document.getElementById("compass-steps-text");
+        if (stepsText) stepsText.innerHTML = `~<strong>--</strong> kroków do kufla za <strong>-- zł</strong>`;
+        if (compassModal) compassModal.classList.remove("compass-in-target-zone");
         return;
       }
 
@@ -3984,6 +4300,13 @@
       // Price
       if (priceVal) {
         priceVal.textContent = `${v.beer_price_pln.toFixed(2)} zł`;
+      }
+
+      // Dynamic Step Counter Badge (Apple Find My Precision Finding)
+      const stepsText = document.getElementById("compass-steps-text");
+      const steps = Math.max(1, Math.round(item.distMeters / 0.75));
+      if (stepsText) {
+        stepsText.innerHTML = `~<strong>${steps.toLocaleString('pl-PL')}</strong> kroków do kufla za <strong>${v.beer_price_pln.toFixed(2)} zł</strong>`;
       }
 
       // Text Info
@@ -4148,6 +4471,8 @@
     function closeCompass() {
       if (!compassModal) return;
       compassModal.classList.remove("active");
+      compassModal.classList.remove("compass-in-target-zone");
+      if (needleWrap) needleWrap._hasLockedOn = false;
       compassModal.style.display = "none";
       stopGpsTracking();
       if (window.__clearBottomNavActive) window.__clearBottomNavActive();
@@ -6670,6 +6995,28 @@
       if (btnCheckinNext) {
         btnCheckinNext.addEventListener("click", () => {
           advancePubCrawlStep();
+        });
+      }
+
+      // Active Payer Button ("Kto płacił?")
+      const btnQuickPayer = document.getElementById("btn-crawl-quick-payer");
+      if (btnQuickPayer) {
+        btnQuickPayer.addEventListener("click", () => {
+          openCrawlExpenseModal();
+        });
+      }
+
+      // Crawl Expense Modal Close Button & Backdrop
+      const expenseModal = document.getElementById("crawl-expense-modal");
+      const btnCloseExpense = document.getElementById("btn-close-crawl-expense");
+      if (btnCloseExpense && expenseModal) {
+        btnCloseExpense.addEventListener("click", () => {
+          expenseModal.style.display = "none";
+        });
+      }
+      if (expenseModal) {
+        expenseModal.addEventListener("click", (e) => {
+          if (e.target === expenseModal) expenseModal.style.display = "none";
         });
       }
 
@@ -13127,7 +13474,7 @@
   }
 
   // ==========================================================================
-  // Instagram Story Card Generator (Canvas 1080x1920 / 9:16)
+  // Instagram Story Card Generator (Canvas 1080x1920 / 9:16 & Strava Sticker)
   // ==========================================================================
   function initStoryCardModal() {
     const modal = document.getElementById("story-card-modal");
@@ -13137,9 +13484,14 @@
     const spinner = document.getElementById("story-loading-spinner");
     const btnDownload = document.getElementById("btn-story-download");
     const btnShare = document.getElementById("btn-story-share");
+    const btnCopySticker = document.getElementById("btn-story-copy-sticker");
+    const imgWrapper = document.getElementById("story-img-wrapper");
+    const modeTabs = document.querySelectorAll("#story-mode-switch .story-mode-tab");
 
     let currentBlob = null;
     let currentDataUrl = null;
+    let currentStoryMode = "poster"; // "poster" | "sticker"
+    let cachedAvatarImg = null;
 
     function drawRoundedRect(ctx, x, y, width, height, radius) {
       if (ctx.roundRect) {
@@ -13159,7 +13511,7 @@
       }
     }
 
-    function generateStoryCard(avatarImg = null) {
+    function generateStoryCard(avatarImg = null, mode = "poster") {
       if (!canvas || !currentProfile) return;
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
@@ -13169,312 +13521,444 @@
       canvas.width = W;
       canvas.height = H;
 
-      // 1. Dark Beer Pub Gradient Background
-      const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
-      bgGrad.addColorStop(0, "#141522");
-      bgGrad.addColorStop(0.35, "#0a0b10");
-      bgGrad.addColorStop(0.7, "#1c1106");
-      bgGrad.addColorStop(1, "#07080c");
-      ctx.fillStyle = bgGrad;
-      ctx.fillRect(0, 0, W, H);
+      if (mode === "sticker") {
+        // Mode 2: Przezroczysta Naklejka (Styl Strava Overlay PNG)
+        ctx.clearRect(0, 0, W, H);
 
-      // Radial Golden Ambient Glow in upper area
-      const radialGlow = ctx.createRadialGradient(W / 2, 490, 40, W / 2, 490, 500);
-      radialGlow.addColorStop(0, "rgba(245, 158, 11, 0.28)");
-      radialGlow.addColorStop(0.5, "rgba(217, 119, 6, 0.1)");
-      radialGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
-      ctx.fillStyle = radialGlow;
-      ctx.fillRect(0, 0, W, H);
+        const cardX = 80;
+        const cardY = 660;
+        const cardW = 920;
+        const cardH = 600;
+        const radius = 44;
 
-      // Subtle golden floating bubbles / sparkles
-      const bubbles = [
-        { x: 130, y: 310, r: 16, a: 0.16 },
-        { x: 930, y: 270, r: 22, a: 0.13 },
-        { x: 210, y: 820, r: 12, a: 0.18 },
-        { x: 870, y: 770, r: 15, a: 0.15 },
-        { x: 160, y: 1370, r: 18, a: 0.12 },
-        { x: 920, y: 1410, r: 20, a: 0.14 },
-        { x: 540, y: 210, r: 7, a: 0.22 }
-      ];
-      bubbles.forEach(b => {
-        ctx.beginPath();
-        ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(245, 158, 11, ${b.a})`;
-        ctx.fill();
-      });
-
-      // Outer Decorative Border Frame
-      ctx.save();
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
-      ctx.lineWidth = 2;
-      drawRoundedRect(ctx, 45, 45, W - 90, H - 90, 44);
-      ctx.stroke();
-
-      // Golden Corner accents
-      ctx.strokeStyle = "#f59e0b";
-      ctx.lineWidth = 4;
-      // Top left
-      ctx.beginPath();
-      ctx.moveTo(45, 95); ctx.lineTo(45, 65); ctx.arcTo(45, 45, 65, 45, 20); ctx.lineTo(95, 45);
-      ctx.stroke();
-      // Top right
-      ctx.beginPath();
-      ctx.moveTo(W - 95, 45); ctx.lineTo(W - 65, 45); ctx.arcTo(W - 45, 45, W - 45, 65, 20); ctx.lineTo(W - 45, 95);
-      ctx.stroke();
-      // Bottom left
-      ctx.beginPath();
-      ctx.moveTo(45, H - 95); ctx.lineTo(45, H - 65); ctx.arcTo(45, H - 45, 65, H - 45, 20); ctx.lineTo(95, H - 45);
-      ctx.stroke();
-      // Bottom right
-      ctx.beginPath();
-      ctx.moveTo(W - 95, H - 45); ctx.lineTo(W - 65, H - 45); ctx.arcTo(W - 45, H - 45, W - 45, H - 65, 20); ctx.lineTo(W - 45, H - 95);
-      ctx.stroke();
-      ctx.restore();
-
-      // 2. Header Brand & Subtitle
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-
-      // POILEPIWKO.PL logo
-      ctx.font = "900 48px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
-      ctx.fillStyle = "#fbbf24";
-      ctx.shadowColor = "rgba(245, 158, 11, 0.6)";
-      ctx.shadowBlur = 18;
-      ctx.fillText("🍻 POILEPIWKO.PL", W / 2, 130);
-      ctx.shadowBlur = 0;
-
-      // Subtitle
-      ctx.font = "700 24px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
-      ctx.fillStyle = "#94a3b8";
-      ctx.fillText("PASZPORT PIWOSZA", W / 2, 185);
-
-      // User Number Pill (e.g. #000042)
-      const userNum = (currentProfile && currentProfile.user_number) ? currentProfile.user_number : "-";
-      const pillW = 200;
-      const pillH = 46;
-      ctx.fillStyle = "rgba(245, 158, 11, 0.16)";
-      ctx.strokeStyle = "rgba(245, 158, 11, 0.4)";
-      ctx.lineWidth = 1.5;
-      drawRoundedRect(ctx, W / 2 - pillW / 2, 225, pillW, pillH, 999);
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.font = "700 24px monospace";
-      ctx.fillStyle = "#fef08a";
-      ctx.fillText(userNum, W / 2, 248);
-
-      // 3. Avatar Badge Circle
-      const avatarY = 460;
-      const avatarR = 115;
-
-      // Outer glow circle
-      ctx.save();
-      ctx.shadowColor = "rgba(245, 158, 11, 0.5)";
-      ctx.shadowBlur = 30;
-      ctx.beginPath();
-      ctx.arc(W / 2, avatarY, avatarR + 6, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(245, 158, 11, 0.25)";
-      ctx.fill();
-      ctx.restore();
-
-      // Avatar background
-      ctx.beginPath();
-      ctx.arc(W / 2, avatarY, avatarR, 0, Math.PI * 2);
-      ctx.fillStyle = "#1e2233";
-      ctx.fill();
-
-      // Render photo or emoji
-      if (avatarImg) {
+        // Glassmorphic shadow & card fill
         ctx.save();
-        ctx.beginPath();
-        ctx.arc(W / 2, avatarY, avatarR, 0, Math.PI * 2);
-        ctx.closePath();
-        ctx.clip();
-        ctx.drawImage(avatarImg, W / 2 - avatarR, avatarY - avatarR, avatarR * 2, avatarR * 2);
+        ctx.shadowColor = "rgba(0, 0, 0, 0.7)";
+        ctx.shadowBlur = 48;
+        ctx.shadowOffsetY = 20;
+        ctx.fillStyle = "rgba(13, 22, 21, 0.94)";
+        drawRoundedRect(ctx, cardX, cardY, cardW, cardH, radius);
+        ctx.fill();
         ctx.restore();
-      } else {
-        // Avatar Emoji
-        ctx.font = "120px apple color emoji, segoe ui emoji, sans-serif";
-        ctx.fillText(currentProfile.avatar_icon || "🍺", W / 2, avatarY + 12);
-      }
 
-      ctx.strokeStyle = "#f59e0b";
-      ctx.lineWidth = 5;
-      ctx.beginPath();
-      ctx.arc(W / 2, avatarY, avatarR, 0, Math.PI * 2);
-      ctx.stroke();
+        // Glowing border
+        ctx.strokeStyle = "rgba(245, 158, 11, 0.65)";
+        ctx.lineWidth = 3;
+        drawRoundedRect(ctx, cardX, cardY, cardW, cardH, radius);
+        ctx.stroke();
 
-      // 4. Display Name & Username
-      const displayName = currentProfile.display_name || currentProfile.username;
-      ctx.font = "900 56px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
-      ctx.fillStyle = "#ffffff";
-      ctx.fillText(displayName, W / 2, 640);
+        // 1. Header inside sticker
+        ctx.textAlign = "left";
+        ctx.textBaseline = "middle";
 
-      ctx.font = "700 34px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
-      ctx.fillStyle = "#60a5fa";
-      ctx.fillText(`@${currentProfile.username}`, W / 2, 705);
+        // Logo
+        ctx.font = "900 38px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+        ctx.fillStyle = "#fbbf24";
+        ctx.fillText("🍻 POILEPIWKO.PL", cardX + 45, cardY + 65);
 
-      // 5. Rank Title Pill (e.g. 🏆 Koneser Kraftu)
-      const rank = calculateUserRank(visitedVenues.length);
-      const rankText = `🏆 ${rank.title}`;
-      ctx.font = "800 32px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
-      const rankW = ctx.measureText(rankText).width + 60;
-      const rankH = 54;
-      ctx.fillStyle = "rgba(245, 158, 11, 0.22)";
-      ctx.strokeStyle = "rgba(245, 158, 11, 0.55)";
-      ctx.lineWidth = 2;
-      drawRoundedRect(ctx, W / 2 - rankW / 2, 755, rankW, rankH, 999);
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.fillStyle = "#fde68a";
-      ctx.fillText(rankText, W / 2, 782);
-
-      // 6. Stats Glass Card (3 Columns: Odwiedzone, Odznaki, Ulubione)
-      const statsX = 85;
-      const statsY = 850;
-      const statsW = W - 170;
-      const statsH = 210;
-
-      ctx.fillStyle = "rgba(255, 255, 255, 0.05)";
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.14)";
-      ctx.lineWidth = 1.5;
-      drawRoundedRect(ctx, statsX, statsY, statsW, statsH, 26);
-      ctx.fill();
-      ctx.stroke();
-
-      const colW = statsW / 3;
-      const statItems = [
-        { icon: "🍺", num: visitedVenues.length, label: "ODWIEDZONE" },
-        { icon: "🎖️", num: loadUnlockedBadges().length, label: "ODZNAKI" },
-        { icon: "❤️", num: favoriteVenues.length, label: "ULUBIONE" }
-      ];
-
-      statItems.forEach((st, idx) => {
-        const cx = statsX + colW * idx + colW / 2;
-        // Icon
-        ctx.font = "38px apple color emoji, segoe ui emoji, sans-serif";
-        ctx.fillText(st.icon, cx, statsY + 55);
-
-        // Number
-        ctx.font = "900 52px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
-        ctx.fillStyle = "#ffffff";
-        ctx.fillText(String(st.num), cx, statsY + 115);
-
-        // Label
-        ctx.font = "700 20px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
-        ctx.fillStyle = "#94a3b8";
-        ctx.fillText(st.label, cx, statsY + 165);
+        // User handle pill
+        ctx.textAlign = "right";
+        ctx.font = "800 28px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+        ctx.fillStyle = "#60a5fa";
+        ctx.fillText(`@${currentProfile.username}`, cardX + cardW - 45, cardY + 65);
 
         // Divider
-        if (idx < 2) {
-          ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(cardX + 45, cardY + 115);
+        ctx.lineTo(cardX + cardW - 45, cardY + 115);
+        ctx.stroke();
+
+        // 2. Rank & Bio Tagline
+        const rank = calculateUserRank(visitedVenues.length);
+        ctx.textAlign = "center";
+        ctx.font = "800 30px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+        ctx.fillStyle = "#fde68a";
+        ctx.fillText(`🏆 ${rank.title}`, W / 2, cardY + 160);
+
+        // 3. Stats Columns (Strava Style)
+        const colW = (cardW - 80) / 3;
+        const avgPrice = visitedVenues.length > 0
+          ? (allVenues.filter(v => visitedVenues.includes(v.id)).reduce((s, v) => s + (v.beer_price_pln || 0), 0) / visitedVenues.length)
+          : 13.50;
+
+        const stickerStats = [
+          { icon: "🍺", num: String(visitedVenues.length), label: "ODWIEDZONE BARY" },
+          { icon: "🪙", num: `~${avgPrice.toFixed(2)} zł`, label: "ŚR. CENA PIWKA" },
+          { icon: "🎖️", num: String(loadUnlockedBadges().length), label: "ODZNAKI" }
+        ];
+
+        stickerStats.forEach((st, idx) => {
+          const cx = cardX + 40 + colW * idx + colW / 2;
+          const statY = cardY + 285;
+
+          // Icon
+          ctx.font = "38px apple color emoji, segoe ui emoji, sans-serif";
+          ctx.fillText(st.icon, cx, statY - 40);
+
+          // Num
+          ctx.font = "900 44px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+          ctx.fillStyle = "#ffffff";
+          ctx.fillText(st.num, cx, statY + 20);
+
+          // Label
+          ctx.font = "700 18px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+          ctx.fillStyle = "#94a3b8";
+          ctx.fillText(st.label, cx, statY + 65);
+
+          // Divider between cols
+          if (idx < 2) {
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
+            ctx.beginPath();
+            ctx.moveTo(cardX + 40 + colW * (idx + 1), statY - 45);
+            ctx.lineTo(cardX + 40 + colW * (idx + 1), statY + 75);
+            ctx.stroke();
+          }
+        });
+
+        // 4. Bottom Sticker Tag
+        const tagText = "✨ STICKER NA INSTAGRAM STORY & TIKTOK";
+        ctx.font = "800 22px monospace";
+        const tagW = ctx.measureText(tagText).width + 50;
+        const tagH = 44;
+        ctx.fillStyle = "rgba(245, 158, 11, 0.18)";
+        ctx.strokeStyle = "rgba(245, 158, 11, 0.5)";
+        ctx.lineWidth = 1.5;
+        drawRoundedRect(ctx, W / 2 - tagW / 2, cardY + 500, tagW, tagH, 999);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = "#fef08a";
+        ctx.fillText(tagText, W / 2, cardY + 522);
+
+      } else {
+        // Mode 1: Pełny Plakat 9:16 (1080x1920)
+        // 1. Dark Beer Pub Gradient Background
+        const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+        bgGrad.addColorStop(0, "#141522");
+        bgGrad.addColorStop(0.35, "#0a0b10");
+        bgGrad.addColorStop(0.7, "#1c1106");
+        bgGrad.addColorStop(1, "#07080c");
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, W, H);
+
+        // Radial Golden Ambient Glow in upper area
+        const radialGlow = ctx.createRadialGradient(W / 2, 490, 40, W / 2, 490, 500);
+        radialGlow.addColorStop(0, "rgba(245, 158, 11, 0.28)");
+        radialGlow.addColorStop(0.5, "rgba(217, 119, 6, 0.1)");
+        radialGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
+        ctx.fillStyle = radialGlow;
+        ctx.fillRect(0, 0, W, H);
+
+        // Subtle golden floating bubbles / sparkles
+        const bubbles = [
+          { x: 130, y: 310, r: 16, a: 0.16 },
+          { x: 930, y: 270, r: 22, a: 0.13 },
+          { x: 210, y: 820, r: 12, a: 0.18 },
+          { x: 870, y: 770, r: 15, a: 0.15 },
+          { x: 160, y: 1370, r: 18, a: 0.12 },
+          { x: 920, y: 1410, r: 20, a: 0.14 },
+          { x: 540, y: 210, r: 7, a: 0.22 }
+        ];
+        bubbles.forEach(b => {
           ctx.beginPath();
-          ctx.moveTo(statsX + colW * (idx + 1), statsY + 35);
-          ctx.lineTo(statsX + colW * (idx + 1), statsY + statsH - 35);
-          ctx.stroke();
+          ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(245, 158, 11, ${b.a})`;
+          ctx.fill();
+        });
+
+        // Outer Decorative Border Frame
+        ctx.save();
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+        ctx.lineWidth = 2;
+        drawRoundedRect(ctx, 45, 45, W - 90, H - 90, 44);
+        ctx.stroke();
+
+        // Golden Corner accents
+        ctx.strokeStyle = "#f59e0b";
+        ctx.lineWidth = 4;
+        // Top left
+        ctx.beginPath();
+        ctx.moveTo(45, 95); ctx.lineTo(45, 65); ctx.arcTo(45, 45, 65, 45, 20); ctx.lineTo(95, 45);
+        ctx.stroke();
+        // Top right
+        ctx.beginPath();
+        ctx.moveTo(W - 95, 45); ctx.lineTo(W - 65, 45); ctx.arcTo(W - 45, 45, W - 45, 65, 20); ctx.lineTo(W - 45, 95);
+        ctx.stroke();
+        // Bottom left
+        ctx.beginPath();
+        ctx.moveTo(45, H - 95); ctx.lineTo(45, H - 65); ctx.arcTo(45, H - 45, 65, H - 45, 20); ctx.lineTo(95, H - 45);
+        ctx.stroke();
+        // Bottom right
+        ctx.beginPath();
+        ctx.moveTo(W - 95, H - 45); ctx.lineTo(W - 65, H - 45); ctx.arcTo(W - 45, H - 45, W - 45, H - 65, 20); ctx.lineTo(W - 45, H - 95);
+        ctx.stroke();
+        ctx.restore();
+
+        // 2. Header Brand & Subtitle
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        // POILEPIWKO.PL logo
+        ctx.font = "900 48px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+        ctx.fillStyle = "#fbbf24";
+        ctx.shadowColor = "rgba(245, 158, 11, 0.6)";
+        ctx.shadowBlur = 18;
+        ctx.fillText("🍻 POILEPIWKO.PL", W / 2, 130);
+        ctx.shadowBlur = 0;
+
+        // Subtitle
+        ctx.font = "700 24px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+        ctx.fillStyle = "#94a3b8";
+        ctx.fillText("PASZPORT PIWOSZA", W / 2, 185);
+
+        // User Number Pill (e.g. #000042)
+        const userNum = (currentProfile && currentProfile.user_number) ? currentProfile.user_number : "-";
+        const pillW = 200;
+        const pillH = 46;
+        ctx.fillStyle = "rgba(245, 158, 11, 0.16)";
+        ctx.strokeStyle = "rgba(245, 158, 11, 0.4)";
+        ctx.lineWidth = 1.5;
+        drawRoundedRect(ctx, W / 2 - pillW / 2, 225, pillW, pillH, 999);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.font = "700 24px monospace";
+        ctx.fillStyle = "#fef08a";
+        ctx.fillText(userNum, W / 2, 248);
+
+        // 3. Avatar Badge Circle
+        const avatarY = 460;
+        const avatarR = 115;
+
+        // Outer glow circle
+        ctx.save();
+        ctx.shadowColor = "rgba(245, 158, 11, 0.5)";
+        ctx.shadowBlur = 30;
+        ctx.beginPath();
+        ctx.arc(W / 2, avatarY, avatarR + 6, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(245, 158, 11, 0.25)";
+        ctx.fill();
+        ctx.restore();
+
+        // Avatar background
+        ctx.beginPath();
+        ctx.arc(W / 2, avatarY, avatarR, 0, Math.PI * 2);
+        ctx.fillStyle = "#1e2233";
+        ctx.fill();
+
+        // Render photo or emoji
+        if (avatarImg) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(W / 2, avatarY, avatarR, 0, Math.PI * 2);
+          ctx.closePath();
+          ctx.clip();
+          ctx.drawImage(avatarImg, W / 2 - avatarR, avatarY - avatarR, avatarR * 2, avatarR * 2);
+          ctx.restore();
+        } else {
+          // Avatar Emoji
+          ctx.font = "120px apple color emoji, segoe ui emoji, sans-serif";
+          ctx.fillText(currentProfile.avatar_icon || "🍺", W / 2, avatarY + 12);
         }
-      });
 
-      // 7. Bio & Favorites Glass Card
-      const bioX = 85;
-      const bioY = 1100;
-      const bioW = W - 170;
-      const bioH = 260;
+        ctx.strokeStyle = "#f59e0b";
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.arc(W / 2, avatarY, avatarR, 0, Math.PI * 2);
+        ctx.stroke();
 
-      ctx.fillStyle = "rgba(255, 255, 255, 0.035)";
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
-      ctx.lineWidth = 1.5;
-      drawRoundedRect(ctx, bioX, bioY, bioW, bioH, 26);
-      ctx.fill();
-      ctx.stroke();
+        // 4. Display Name & Username
+        const displayName = currentProfile.display_name || currentProfile.username;
+        ctx.font = "900 56px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+        ctx.fillStyle = "#ffffff";
+        ctx.fillText(displayName, W / 2, 640);
 
-      // Bio text
-      const userBio = currentProfile.bio || "Poszukiwacz dobrego i taniego piwa 🍻";
-      ctx.font = "italic 30px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
-      ctx.fillStyle = "#cbd5e1";
-      const displayBio = userBio.length > 55 ? userBio.slice(0, 52) + "..." : userBio;
-      ctx.fillText(`“${displayBio}”`, W / 2, bioY + 65);
+        ctx.font = "700 34px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+        ctx.fillStyle = "#60a5fa";
+        ctx.fillText(`@${currentProfile.username}`, W / 2, 705);
 
-      // Meta Pills: Rewir & Ulubione piwo
-      const rewir = `📍 Rewir: ${currentProfile.favorite_district || "Wszystkie dzielnice"}`;
-      const piwo = `🍺 Piwo: ${currentProfile.favorite_beer || "Wszystkie dobre!"}`;
+        // 5. Rank Title Pill (e.g. 🏆 Koneser Kraftu)
+        const rank = calculateUserRank(visitedVenues.length);
+        const rankText = `🏆 ${rank.title}`;
+        ctx.font = "800 32px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+        const rankW = ctx.measureText(rankText).width + 60;
+        const rankH = 54;
+        ctx.fillStyle = "rgba(245, 158, 11, 0.22)";
+        ctx.strokeStyle = "rgba(245, 158, 11, 0.55)";
+        ctx.lineWidth = 2;
+        drawRoundedRect(ctx, W / 2 - rankW / 2, 755, rankW, rankH, 999);
+        ctx.fill();
+        ctx.stroke();
 
-      const pill1W = bioW - 60;
-      ctx.fillStyle = "rgba(255, 255, 255, 0.06)";
-      drawRoundedRect(ctx, bioX + 30, bioY + 115, pill1W, 52, 14);
-      ctx.fill();
-      ctx.font = "700 26px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
-      ctx.fillStyle = "#38bdf8";
-      ctx.fillText(rewir, W / 2, bioY + 141);
+        ctx.fillStyle = "#fde68a";
+        ctx.fillText(rankText, W / 2, 782);
 
-      ctx.fillStyle = "rgba(255, 255, 255, 0.06)";
-      drawRoundedRect(ctx, bioX + 30, bioY + 180, pill1W, 52, 14);
-      ctx.fill();
-      ctx.fillStyle = "#fbbf24";
-      ctx.fillText(piwo, W / 2, bioY + 206);
+        // 6. Stats Glass Card (3 Columns: Odwiedzone, Odznaki, Ulubione)
+        const statsX = 85;
+        const statsY = 850;
+        const statsW = W - 170;
+        const statsH = 210;
 
-      // 8. Achievements Row
-      const achY = 1400;
-      const achW = W - 170;
-      const achH = 180;
-      ctx.fillStyle = "rgba(255, 255, 255, 0.035)";
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
-      drawRoundedRect(ctx, 85, achY, achW, achH, 26);
-      ctx.fill();
-      ctx.stroke();
+        ctx.fillStyle = "rgba(255, 255, 255, 0.05)";
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.14)";
+        ctx.lineWidth = 1.5;
+        drawRoundedRect(ctx, statsX, statsY, statsW, statsH, 26);
+        ctx.fill();
+        ctx.stroke();
 
-      ctx.font = "700 22px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
-      ctx.fillStyle = "#94a3b8";
-      ctx.fillText("ZDOBYTE ODZNAKI PASZPORTU", W / 2, achY + 45);
+        const colW = statsW / 3;
+        const statItems = [
+          { icon: "🍺", num: visitedVenues.length, label: "ODWIEDZONE" },
+          { icon: "🎖️", num: loadUnlockedBadges().length, label: "ODZNAKI" },
+          { icon: "❤️", num: favoriteVenues.length, label: "ULUBIONE" }
+        ];
 
-      const unlockedBadges = loadUnlockedBadges();
-      const badgeList = PASSPORT_BADGES.filter(b => unlockedBadges.includes(b.id));
-      const iconsToShow = badgeList.length > 0 ? badgeList.map(b => b.icon) : ["🍺", "🗺️", "👑", "🦉", "🧠"];
-      const displayIcons = iconsToShow.slice(0, 5);
+        statItems.forEach((st, idx) => {
+          const cx = statsX + colW * idx + colW / 2;
+          // Icon
+          ctx.font = "38px apple color emoji, segoe ui emoji, sans-serif";
+          ctx.fillText(st.icon, cx, statsY + 55);
 
-      const iconSpacing = achW / (displayIcons.length + 1);
-      displayIcons.forEach((ico, idx) => {
-        const ix = 85 + iconSpacing * (idx + 1);
-        ctx.font = "46px apple color emoji, segoe ui emoji, sans-serif";
-        ctx.fillText(ico, ix, achY + 115);
-      });
+          // Number
+          ctx.font = "900 52px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+          ctx.fillStyle = "#ffffff";
+          ctx.fillText(String(st.num), cx, statsY + 115);
 
-      // 9. Footer Call-to-action & Profile Link
-      const footY = 1630;
-      ctx.font = "700 24px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
-      ctx.fillStyle = "#94a3b8";
-      ctx.fillText("SPRAWDŹ MÓJ PROFIL & ZNAJDŹ NAJTAŃSZE PIWO:", W / 2, footY);
+          // Label
+          ctx.font = "700 20px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+          ctx.fillStyle = "#94a3b8";
+          ctx.fillText(st.label, cx, statsY + 165);
 
-      // Golden link pill
-      const linkText = `poilepiwko.pl/#@${currentProfile.username}`;
-      ctx.font = "800 32px monospace";
-      const linkW = ctx.measureText(linkText).width + 60;
-      const linkH = 64;
-      ctx.fillStyle = "rgba(245, 158, 11, 0.2)";
-      ctx.strokeStyle = "#f59e0b";
-      ctx.lineWidth = 2;
-      drawRoundedRect(ctx, W / 2 - linkW / 2, footY + 28, linkW, linkH, 999);
-      ctx.fill();
-      ctx.stroke();
+          // Divider
+          if (idx < 2) {
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
+            ctx.beginPath();
+            ctx.moveTo(statsX + colW * (idx + 1), statsY + 35);
+            ctx.lineTo(statsX + colW * (idx + 1), statsY + statsH - 35);
+            ctx.stroke();
+          }
+        });
 
-      ctx.fillStyle = "#fbbf24";
-      ctx.fillText(linkText, W / 2, footY + 60);
+        // 7. Bio & Favorites Glass Card
+        const bioX = 85;
+        const bioY = 1100;
+        const bioW = W - 170;
+        const bioH = 260;
 
-      // Bottom tagline
-      ctx.font = "600 22px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
-      ctx.fillStyle = "#64748b";
-      ctx.fillText("Puls cen piwa • Trasy Pub Crawl • Pub Quizy", W / 2, 1780);
+        ctx.fillStyle = "rgba(255, 255, 255, 0.035)";
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+        ctx.lineWidth = 1.5;
+        drawRoundedRect(ctx, bioX, bioY, bioW, bioH, 26);
+        ctx.fill();
+        ctx.stroke();
+
+        // Bio text
+        const userBio = currentProfile.bio || "Poszukiwacz dobrego i taniego piwa 🍻";
+        ctx.font = "italic 30px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+        ctx.fillStyle = "#cbd5e1";
+        const displayBio = userBio.length > 55 ? userBio.slice(0, 52) + "..." : userBio;
+        ctx.fillText(`“${displayBio}”`, W / 2, bioY + 65);
+
+        // Meta Pills: Rewir & Ulubione piwo
+        const rewir = `📍 Rewir: ${currentProfile.favorite_district || "Wszystkie dzielnice"}`;
+        const piwo = `🍺 Piwo: ${currentProfile.favorite_beer || "Wszystkie dobre!"}`;
+
+        const pill1W = bioW - 60;
+        ctx.fillStyle = "rgba(255, 255, 255, 0.06)";
+        drawRoundedRect(ctx, bioX + 30, bioY + 115, pill1W, 52, 14);
+        ctx.fill();
+        ctx.font = "700 26px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+        ctx.fillStyle = "#38bdf8";
+        ctx.fillText(rewir, W / 2, bioY + 141);
+
+        ctx.fillStyle = "rgba(255, 255, 255, 0.06)";
+        drawRoundedRect(ctx, bioX + 30, bioY + 180, pill1W, 52, 14);
+        ctx.fill();
+        ctx.fillStyle = "#fbbf24";
+        ctx.fillText(piwo, W / 2, bioY + 206);
+
+        // 8. Achievements Row
+        const achY = 1400;
+        const achW = W - 170;
+        const achH = 180;
+        ctx.fillStyle = "rgba(255, 255, 255, 0.035)";
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+        drawRoundedRect(ctx, 85, achY, achW, achH, 26);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.font = "700 22px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+        ctx.fillStyle = "#94a3b8";
+        ctx.fillText("ZDOBYTE ODZNAKI PASZPORTU", W / 2, achY + 45);
+
+        const unlockedBadges = loadUnlockedBadges();
+        const badgeList = PASSPORT_BADGES.filter(b => unlockedBadges.includes(b.id));
+        const iconsToShow = badgeList.length > 0 ? badgeList.map(b => b.icon) : ["🍺", "🗺️", "👑", "🦉", "🧠"];
+        const displayIcons = iconsToShow.slice(0, 5);
+
+        const iconSpacing = achW / (displayIcons.length + 1);
+        displayIcons.forEach((ico, idx) => {
+          const ix = 85 + iconSpacing * (idx + 1);
+          ctx.font = "46px apple color emoji, segoe ui emoji, sans-serif";
+          ctx.fillText(ico, ix, achY + 115);
+        });
+
+        // 9. Footer Call-to-action & Profile Link
+        const footY = 1630;
+        ctx.font = "700 24px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+        ctx.fillStyle = "#94a3b8";
+        ctx.fillText("SPRAWDŹ MÓJ PROFIL & ZNAJDŹ NAJTAŃSZE PIWO:", W / 2, footY);
+
+        // Golden link pill
+        const linkText = `poilepiwko.pl/#@${currentProfile.username}`;
+        ctx.font = "800 32px monospace";
+        const linkW = ctx.measureText(linkText).width + 60;
+        const linkH = 64;
+        ctx.fillStyle = "rgba(245, 158, 11, 0.2)";
+        ctx.strokeStyle = "#f59e0b";
+        ctx.lineWidth = 2;
+        drawRoundedRect(ctx, W / 2 - linkW / 2, footY + 28, linkW, linkH, 999);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = "#fbbf24";
+        ctx.fillText(linkText, W / 2, footY + 60);
+
+        // Bottom tagline
+        ctx.font = "600 22px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+        ctx.fillStyle = "#64748b";
+        ctx.fillText("Puls cen piwa • Trasy Pub Crawl • Pub Quizy", W / 2, 1780);
+      }
 
       // Convert to blob and dataURL for preview
       currentDataUrl = canvas.toDataURL("image/png");
       if (previewImg) previewImg.src = currentDataUrl;
       if (spinner) spinner.style.display = "none";
 
+      if (imgWrapper) {
+        imgWrapper.classList.toggle("sticker-mode", mode === "sticker");
+      }
+      if (btnCopySticker) {
+        btnCopySticker.style.display = (mode === "sticker") ? "inline-flex" : "none";
+      }
+
       canvas.toBlob(blob => {
         currentBlob = blob;
       }, "image/png");
     }
+
+    // Switch between 9:16 poster and Strava-style transparent sticker
+    modeTabs.forEach(tab => {
+      tab.addEventListener("click", () => {
+        modeTabs.forEach(t => t.classList.remove("active"));
+        tab.classList.add("active");
+        currentStoryMode = tab.getAttribute("data-story-mode") || "poster";
+        if (spinner) spinner.style.display = "flex";
+        setTimeout(() => generateStoryCard(cachedAvatarImg, currentStoryMode), 40);
+      });
+    });
 
     window.__openStoryCardModal = function () {
       if (!currentProfile) {
@@ -13491,14 +13975,17 @@
         const img = new Image();
         img.crossOrigin = "anonymous";
         img.onload = () => {
-          generateStoryCard(img);
+          cachedAvatarImg = img;
+          generateStoryCard(img, currentStoryMode);
         };
         img.onerror = () => {
-          generateStoryCard(null);
+          cachedAvatarImg = null;
+          generateStoryCard(null, currentStoryMode);
         };
         img.src = currentProfile.avatar_photo;
       } else {
-        setTimeout(() => generateStoryCard(null), 60);
+        cachedAvatarImg = null;
+        setTimeout(() => generateStoryCard(null, currentStoryMode), 60);
       }
     };
 
@@ -13516,16 +14003,42 @@
       });
     }
 
+    // Copy sticker directly to system clipboard as image/png
+    if (btnCopySticker) {
+      btnCopySticker.addEventListener("click", async () => {
+        if (!canvas) return;
+        canvas.toBlob(async (blob) => {
+          if (!blob) return;
+          try {
+            if (typeof ClipboardItem !== "undefined" && navigator.clipboard && navigator.clipboard.write) {
+              const item = new ClipboardItem({ "image/png": blob });
+              await navigator.clipboard.write([item]);
+              if (window.poileHaptics) window.poileHaptics.success();
+              showAppToast("Skopiowano naklejkę! 📸", "Wklej przez schowek bezpośrednio w relacji na Instagramie lub TikToku!", "✨", 4000);
+              return;
+            }
+          } catch (err) {
+            console.warn("ClipboardItem write note:", err);
+          }
+
+          // Fallback: download PNG file
+          if (btnDownload) btnDownload.click();
+          showAppToast("Pobrano naklejkę! 📸", "Dodaj pobrany plik PNG jako naklejkę w relacji!", "📥", 3500);
+        }, "image/png");
+      });
+    }
+
     if (btnDownload) {
       btnDownload.addEventListener("click", () => {
         if (!currentDataUrl) return;
         const a = document.createElement("a");
         a.href = currentDataUrl;
-        a.download = `poilepiwko-story-${currentProfile?.username || "profil"}.png`;
+        const prefix = (currentStoryMode === "sticker") ? "poilepiwko-naklejka" : "poilepiwko-story";
+        a.download = `${prefix}-${currentProfile?.username || "profil"}.png`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        showAppToast("Pobrano!", "Karta na Story zapisana w pobranych plikach 📸", "📥");
+        showAppToast("Pobrano!", "Karta zapisana w pobranych plikach 📸", "📥");
       });
     }
 
@@ -13534,7 +14047,8 @@
         if (!currentBlob && !currentDataUrl) return;
         try {
           if (navigator.canShare && currentBlob) {
-            const file = new File([currentBlob], `poilepiwko-story-${currentProfile?.username || "profil"}.png`, { type: "image/png" });
+            const prefix = (currentStoryMode === "sticker") ? "poilepiwko-naklejka" : "poilepiwko-story";
+            const file = new File([currentBlob], `${prefix}-${currentProfile?.username || "profil"}.png`, { type: "image/png" });
             if (navigator.canShare({ files: [file] })) {
               await navigator.share({
                 title: `${currentProfile?.display_name || currentProfile?.username} na poilepiwko`,
@@ -13553,7 +14067,8 @@
   }
 
   // ==========================================================================
-  // Wirtualna Karta Klubowa (PoIlePiwko Pass 3D)
+  // ==========================================================================
+  // Wirtualna Karta Klubowa (PoIlePiwko Pass 3D & Hologram Security)
   // ==========================================================================
   function initClubCardModal() {
     const modal = document.getElementById("club-card-modal");
@@ -13566,11 +14081,42 @@
     const btnFlipBack = document.getElementById("btn-flip-back");
     const btnShow = document.getElementById("btn-action-show-barman");
     const btnDownload = document.getElementById("btn-action-save-pass");
+    const btnFilterVenues = document.getElementById("btn-club-filter-venues");
 
     const elName = document.getElementById("club-card-name");
     const elNum = document.getElementById("club-card-number");
     const elValidity = document.getElementById("club-card-validity");
     const elBackId = document.getElementById("club-card-back-id");
+
+    let securityClockTimer = null;
+    let cardOrientationAttached = false;
+
+    function updateSecurityClock() {
+      const clockEl = document.getElementById("club-card-clock-text");
+      if (!clockEl) return;
+      const now = new Date();
+      const days = ["Nd", "Pn", "Wt", "Śr", "Czw", "Pt", "Sob"];
+      const dayName = days[now.getDay()];
+      const dateStr = `${String(now.getDate()).padStart(2, "0")}.${String(now.getMonth() + 1).padStart(2, "0")}`;
+      const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+      clockEl.textContent = `🟢 AKTYWNA TERAZ · ${dayName}, ${dateStr} · ${timeStr}`;
+    }
+
+    function handleCardOrientation(e) {
+      if (!modal || !modal.classList.contains("active")) return;
+      const gamma = e.gamma || 0; // [-90, 90]
+      const beta = e.beta || 0;   // [-180, 180]
+      const xPct = Math.min(100, Math.max(0, 50 + (gamma / 45) * 50));
+      const yPct = Math.min(100, Math.max(0, 50 + ((beta - 45) / 45) * 50));
+      const angle = (135 + gamma) % 360;
+
+      const frontSide = modal.querySelector(".club-card-front");
+      if (frontSide) {
+        frontSide.style.setProperty("--holo-x", `${xPct.toFixed(1)}%`);
+        frontSide.style.setProperty("--holo-y", `${yPct.toFixed(1)}%`);
+        frontSide.style.setProperty("--holo-angle", `${angle.toFixed(1)}deg`);
+      }
+    }
 
     function renderClubCardData() {
       const name = (currentProfile && (currentProfile.display_name || currentProfile.username)) ? (currentProfile.display_name || currentProfile.username) : "PIWOSZ";
@@ -13579,6 +14125,7 @@
       if (elNum) elNum.textContent = num;
       const cur = getCurrentCity ? getCurrentCity() : { name: "Polska" };
       if (elBackId) elBackId.textContent = `ID: ${num} • ${cur.name}`;
+      updateSecurityClock();
     }
 
     function toggleFlip() {
@@ -13604,6 +14151,16 @@
         modal.classList.add("active");
         modal.style.display = "flex";
       }
+
+      // Start live clock & gyro sensor
+      updateSecurityClock();
+      if (securityClockTimer) clearInterval(securityClockTimer);
+      securityClockTimer = setInterval(updateSecurityClock, 1000);
+
+      if (!cardOrientationAttached && typeof window !== "undefined") {
+        window.addEventListener("deviceorientation", handleCardOrientation, true);
+        cardOrientationAttached = true;
+      }
     };
 
     window.__closeClubCard = function () {
@@ -13612,6 +14169,14 @@
         modal.style.display = "none";
       }
       if (stage) stage.classList.remove("barman-mode");
+      if (securityClockTimer) {
+        clearInterval(securityClockTimer);
+        securityClockTimer = null;
+      }
+      if (cardOrientationAttached && typeof window !== "undefined") {
+        window.removeEventListener("deviceorientation", handleCardOrientation, true);
+        cardOrientationAttached = false;
+      }
     };
 
     if (btnOpenFromProf) {
@@ -13633,7 +14198,7 @@
         toggleFlip();
       });
 
-      // 3D Tilt effect on mousemove
+      // 3D Tilt effect & dynamic holographic sheen on mousemove
       stage.addEventListener("mousemove", (e) => {
         if (stage.classList.contains("barman-mode")) return;
         const rect = stage.getBoundingClientRect();
@@ -13650,6 +14215,15 @@
         }
         if (glare) {
           glare.style.background = `radial-gradient(circle at ${(x / rect.width) * 100}% ${(y / rect.height) * 100}%, rgba(255, 255, 255, 0.25) 0%, transparent 60%)`;
+        }
+
+        const frontSide = modal.querySelector(".club-card-front");
+        if (frontSide) {
+          const xPct = (x / rect.width) * 100;
+          const yPct = (y / rect.height) * 100;
+          frontSide.style.setProperty("--holo-x", `${xPct.toFixed(1)}%`);
+          frontSide.style.setProperty("--holo-y", `${yPct.toFixed(1)}%`);
+          frontSide.style.setProperty("--holo-angle", `${(135 + rotateY * 2.5).toFixed(1)}deg`);
         }
       });
 
@@ -13675,6 +14249,39 @@
         if (isBarman) {
           showAppToast("Tryb przy barze 🍺", "Karta powiększona i rozjaśniona do pokazania barmanowi!", "📱", 2500);
         }
+      });
+    }
+
+    // Filter map to partner venues honoring PoIlePiwko Pass (-10%)
+    if (btnFilterVenues) {
+      btnFilterVenues.addEventListener("click", () => {
+        window.__closeClubCard();
+
+        filterState.priceTier = "all";
+        filterState.maxPrice = null;
+        filterState.openNow = false;
+        filterState.craftOnly = false;
+        filterState.happyHourOnly = false;
+        filterState.favoritesOnly = false;
+        filterState.nonAlcoholicOnly = false;
+        filterState.passOnly = true;
+        currentFilter = "pass";
+
+        syncQuickChipsWithFilterState();
+        renderMarkers();
+
+        const partnerVenues = allVenues.filter(v => v.is_partner || v.pass_partner);
+        if (partnerVenues.length > 0 && map) {
+          const curCity = (typeof getCurrentCity === "function" ? getCurrentCity() : null) || (CITIES && CITIES[0]);
+          const cityPartners = partnerVenues.filter(v => calculateDistanceKm(curCity.center[0], curCity.center[1], v.latitude, v.longitude) <= 45);
+          const toZoom = cityPartners.length > 0 ? cityPartners : partnerVenues;
+          if (toZoom.length > 0) {
+            const bounds = L.latLngBounds(toZoom.map(v => [v.latitude, v.longitude]));
+            map.fitBounds(bounds.pad(0.2));
+          }
+        }
+        showAppToast("PoIlePiwko Pass 🎟️", "Pokazano lokale partnerskie z 10% rabatem na piwo!", "💳", 3000);
+        if (window.poileHaptics) window.poileHaptics.success();
       });
     }
 
@@ -20613,6 +21220,23 @@
 
 
 
+  function ensurePartnerVenues(venuesList) {
+    if (!Array.isArray(venuesList)) return;
+    const PARTNER_VENUE_NAMES = [
+      "jabeerwocky", "same krafty", "the taps", "drugie dno", "kufle i kapsle", 
+      "beer station", "pinta", "white crow", "czeska piviarnia", "szyszka chmielu",
+      "cogito craft beer", "cuda na kiju", "piw paw", "weźże krafta", "multi qlti",
+      "kontynuacja", "alebrowar", "targowa"
+    ];
+    venuesList.forEach(v => {
+      const n = (v.name || "").toLowerCase();
+      if (PARTNER_VENUE_NAMES.some(p => n.includes(p))) {
+        v.is_partner = true;
+        v.pass_partner = true;
+      }
+    });
+  }
+
   // Load Initial Venues
   async function loadVenues() {
     // Clean up any test venues that were removed (e.g. Bog on Dickensa 27)
@@ -20639,6 +21263,7 @@
               beer_price_pln: parseFloat(v.beer_price_pln),
               shot_price_pln: v.shot_price_pln ? parseFloat(v.shot_price_pln) : null
             }));
+          ensurePartnerVenues(allVenues);
           console.log(`Loaded ${allVenues.length} venues directly from Supabase!`);
           window.allVenues = allVenues;
           applyLocalVotes();
@@ -20684,6 +21309,7 @@
       }
     });
 
+    ensurePartnerVenues(allVenues);
     applyLocalVotes();
     updateDistrictCounts();
     updateBarometerStats();
