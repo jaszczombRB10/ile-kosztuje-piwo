@@ -1070,8 +1070,8 @@
        NATIVE BOTTOM SHEETS (MODUŁ 1)
        ========================================================================= -->
 
-  <!-- 1. Map Bottom Sheet (Permanent map drawer: Ticker + Nearby Venues) -->
-  <div class="bottom-sheet map-bottom-sheet" id="map-bottom-sheet" data-state="peek">
+  <!-- 1. Map Bottom Sheet (Permanent map drawer: Hidden for clean map experience) -->
+  <div class="bottom-sheet map-bottom-sheet" id="map-bottom-sheet" data-state="peek" style="display:none !important;">
     <div class="bottom-sheet-handle-wrap" id="map-sheet-handle-wrap" title="Przeciągnij w górę, aby rozwinąć listę barów">
       <div class="bottom-sheet-handle"></div>
     </div>
@@ -1355,15 +1355,15 @@
       <span class="nav-label">Ekipa</span>
     </button>
 
-    <!-- Tab 5: Paszport (Profil, Karta Pass, Odznaki) -->
-    <button type="button" class="nav-item" id="nav-btn-profile" data-target="passport" title="Mój Paszport, Karta Pass i Profil">
+    <!-- Tab 5: Profil (Mój Profil, Paszport, Karta Pass, Odznaki) -->
+    <button type="button" class="nav-item" id="nav-btn-profile" data-target="profile" title="Mój Profil, Paszport i Karta Pass">
       <span class="nav-icon" id="nav-profile-icon-wrap">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
           <circle cx="12" cy="7" r="4"></circle>
         </svg>
       </span>
-      <span class="nav-label" id="nav-profile-label">Paszport</span>
+      <span class="nav-label" id="nav-profile-label">Profil</span>
     </button>
   </nav>
 

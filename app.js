@@ -3041,10 +3041,14 @@
 
       renderHappyHourModal();
       hhModal.classList.add("active");
+      hhModal.style.display = "flex";
     }
 
     function closeModal() {
-      if (hhModal) hhModal.classList.remove("active");
+      if (hhModal) {
+        hhModal.classList.remove("active");
+        hhModal.style.display = "none";
+      }
     }
 
     window.__openHappyHours = openModal;
@@ -3642,10 +3646,14 @@
 
       renderPassportModal();
       passportModal.classList.add("active");
+      passportModal.style.display = "flex";
     }
 
     function closeModal() {
-      if (passportModal) passportModal.classList.remove("active");
+      if (passportModal) {
+        passportModal.classList.remove("active");
+        passportModal.style.display = "none";
+      }
     }
 
     window.__openPassport = openModal;
@@ -4016,8 +4024,7 @@
       const hhModal = document.getElementById("happyhour-modal");
       if (hhModal) hhModal.classList.remove("active");
       const passModal = document.getElementById("passport-modal");
-      if (passModal) passModal.classList.remove("active");
-      closeModal();
+      if (passModal) { passModal.classList.remove("active"); passModal.style.display = "none"; }
       if (window.__closeAuth) window.__closeAuth();
 
       compassModal.classList.add("active");
@@ -4403,24 +4410,32 @@
     const baroModal = document.getElementById("barometer-modal");
     const btnCloseBaro = document.getElementById("btn-close-barometer");
 
+    function openBarometerModal() {
+      if (!baroModal) return;
+      if (typeof updateBarometerStats === "function") updateBarometerStats();
+      baroModal.classList.add("active");
+      baroModal.style.display = "flex";
+    }
+
+    function closeBarometerModal() {
+      if (!baroModal) return;
+      baroModal.classList.remove("active");
+      baroModal.style.display = "none";
+      if (window.__clearBottomNavActive) window.__clearBottomNavActive();
+    }
+
+    window.__openBarometer = openBarometerModal;
+    window.__closeBarometer = closeBarometerModal;
+
     if (btnBarometer && baroModal) {
-      btnBarometer.addEventListener("click", () => {
-        updateBarometerStats();
-        baroModal.classList.add("active");
-      });
+      btnBarometer.addEventListener("click", openBarometerModal);
     }
     if (btnCloseBaro && baroModal) {
-      btnCloseBaro.addEventListener("click", () => {
-        baroModal.classList.remove("active");
-        if (window.__clearBottomNavActive) window.__clearBottomNavActive();
-      });
+      btnCloseBaro.addEventListener("click", closeBarometerModal);
     }
     if (baroModal) {
       baroModal.addEventListener("click", (e) => {
-        if (e.target === baroModal) {
-          baroModal.classList.remove("active");
-          if (window.__clearBottomNavActive) window.__clearBottomNavActive();
-        }
+        if (e.target === baroModal) closeBarometerModal();
       });
     }
 
@@ -5762,6 +5777,50 @@
     }
     initMobileControls();
 
+    // Unified Safe Modal & Sheet Closer
+    function closeAllModalsAndSheets() {
+      if (typeof window.__closeDiscoverSheet === "function") window.__closeDiscoverSheet();
+      if (typeof window.__closeActionSheet === "function") window.__closeActionSheet();
+      if (typeof window.__closeVenueSheet === "function") window.__closeVenueSheet();
+      if (typeof window.__closeCommunity === "function") window.__closeCommunity();
+      if (typeof window.__closePassport === "function") window.__closePassport();
+      if (typeof window.__closeMyProfile === "function") window.__closeMyProfile();
+      if (typeof window.__closePubCrawl === "function") window.__closePubCrawl();
+      if (typeof window.__closeCompass === "function") window.__closeCompass();
+      if (typeof window.__closeHappyHours === "function") window.__closeHappyHours();
+      if (typeof window.__closeBarometer === "function") window.__closeBarometer();
+      if (typeof window.__closePubQuiz === "function") window.__closePubQuiz();
+      if (typeof window.__closeRoulette === "function") window.__closeRoulette();
+      if (typeof window.__closeSos === "function") window.__closeSos();
+      if (typeof window.__closeAuth === "function") window.__closeAuth();
+      if (typeof window.__closeAddModal === "function") window.__closeAddModal();
+      if (typeof window.__closeCitySwitcher === "function") window.__closeCitySwitcher();
+      if (typeof window.__closeLightbox === "function") window.__closeLightbox();
+      if (typeof window.__closeMobileSearch === "function") window.__closeMobileSearch();
+      if (typeof window.__closePublicProfile === "function") window.__closePublicProfile();
+      if (typeof window.__closeEditProfileModal === "function") window.__closeEditProfileModal();
+
+      const drawer = document.getElementById("ranking-drawer");
+      if (drawer) drawer.classList.remove("open");
+
+      const baroModal = document.getElementById("barometer-modal");
+      if (baroModal) {
+        baroModal.classList.remove("active");
+        baroModal.style.display = "none";
+      }
+
+      document.querySelectorAll(".bottom-sheet-backdrop").forEach(b => {
+        b.classList.remove("active");
+        b.style.display = "none";
+      });
+      document.querySelectorAll(".modal-backdrop.active").forEach(m => {
+        m.classList.remove("active");
+        m.style.display = "none";
+      });
+      document.body.classList.remove("modal-open");
+    }
+    window.__closeAllModalsAndSheets = closeAllModalsAndSheets;
+
     // Mobile Bottom Navigation Bar Actions (Native 5-Tab Dock)
     const bottomNavItems = document.querySelectorAll(".mobile-bottom-nav .nav-item");
     function clearBottomNavActive() {
@@ -5781,24 +5840,11 @@
         const target = item.getAttribute("data-target");
         if (window.poileHaptics) window.poileHaptics.tick();
 
-        // 1. Tab: MAPA
+        // 1. Tab: MAPA (Czysty, płynny widok mapy bez uciążliwych szuflad)
         if (target === "map") {
           clearBottomNavActive();
           item.classList.add("active");
-          if (window.__closeDiscoverSheet) window.__closeDiscoverSheet();
-          if (window.__closeActionSheet) window.__closeActionSheet();
-          if (window.__closeVenueSheet) window.__closeVenueSheet();
-          if (window.__closeCommunity) window.__closeCommunity();
-          if (window.__closePassport) window.__closePassport();
-          if (window.__closePubCrawl) window.__closePubCrawl();
-          if (window.__closeCompass) window.__closeCompass();
-          if (window.__closeHappyHours) window.__closeHappyHours();
-          if (baroModal) baroModal.classList.remove("active");
-          closeModal();
-          const mapSheet = document.getElementById("map-bottom-sheet");
-          if (mapSheet && typeof window.__setBottomSheetState === "function") {
-            window.__setBottomSheetState(mapSheet, "peek");
-          }
+          closeAllModalsAndSheets();
           return;
         }
 
@@ -5806,10 +5852,7 @@
         if (target === "discover") {
           clearBottomNavActive();
           item.classList.add("active");
-          if (window.__closeActionSheet) window.__closeActionSheet();
-          if (window.__closeVenueSheet) window.__closeVenueSheet();
-          if (window.__closeCommunity) window.__closeCommunity();
-          if (window.__closePassport) window.__closePassport();
+          closeAllModalsAndSheets();
           if (window.__openDiscoverSheet) {
             window.__openDiscoverSheet();
           } else {
@@ -5823,7 +5866,6 @@
 
         // 3. Tab: AKCJA (Central Floating Action Button)
         if (target === "action") {
-          // Do not switch active tab styling permanently away from current screen
           if (window.__openActionSheet) {
             window.__openActionSheet();
           } else {
@@ -5839,19 +5881,10 @@
         if (target === "community" || target === "friends" || target === "spolecznosc") {
           clearBottomNavActive();
           item.classList.add("active");
-          if (window.__closeDiscoverSheet) window.__closeDiscoverSheet();
-          if (window.__closeActionSheet) window.__closeActionSheet();
-          if (window.__closeVenueSheet) window.__closeVenueSheet();
-          if (window.__closePassport) window.__closePassport();
-          if (window.__closePubCrawl) window.__closePubCrawl();
-          if (window.__closeCompass) window.__closeCompass();
-          if (window.__closeHappyHours) window.__closeHappyHours();
-          if (baroModal) baroModal.classList.remove("active");
-          closeModal();
           const commModal = document.getElementById("community-modal");
           const isCommOpen = commModal && (commModal.classList.contains("active") || commModal.style.display === "flex");
+          closeAllModalsAndSheets();
           if (isCommOpen) {
-            if (window.__closeCommunity) window.__closeCommunity();
             setActiveBottomTab("map");
           } else if (window.__openCommunity) {
             window.__openCommunity(unreadNotificationsCount > 0 ? "notifications" : "friends");
@@ -5859,25 +5892,23 @@
           return;
         }
 
-        // 5. Tab: PASZPORT / PROFIL
+        // 5. Tab: PROFIL (Mój Profil piwosza, Karta Pass, Statystyki)
         if (target === "passport" || target === "profile") {
           clearBottomNavActive();
           item.classList.add("active");
-          if (window.__closeDiscoverSheet) window.__closeDiscoverSheet();
-          if (window.__closeActionSheet) window.__closeActionSheet();
-          if (window.__closeVenueSheet) window.__closeVenueSheet();
-          if (window.__closeCommunity) window.__closeCommunity();
-          if (window.__closePubCrawl) window.__closePubCrawl();
-          if (window.__closeCompass) window.__closeCompass();
-          if (window.__closeHappyHours) window.__closeHappyHours();
-          if (baroModal) baroModal.classList.remove("active");
-          closeModal();
-          if (window.__openPassport) {
-            window.__openPassport();
-          } else if (currentUser && currentProfile && window.__openMyProfile) {
-            window.__openMyProfile();
-          } else if (window.__openAuth) {
-            window.__openAuth("login");
+          closeAllModalsAndSheets();
+          if (currentUser && currentProfile) {
+            if (typeof window.__openMyProfile === "function") {
+              window.__openMyProfile();
+            } else if (typeof window.__openPassport === "function") {
+              window.__openPassport();
+            }
+          } else {
+            if (typeof window.__openAuth === "function") {
+              window.__openAuth("login");
+            } else if (typeof window.__openPassport === "function") {
+              window.__openPassport();
+            }
           }
           return;
         }
@@ -6419,15 +6450,18 @@
         const drawer = document.getElementById("ranking-drawer");
         if (drawer) drawer.classList.remove("open");
         const baroModal = document.getElementById("barometer-modal");
-        if (baroModal) baroModal.classList.remove("active");
-        closeModal();
+        if (baroModal) { baroModal.classList.remove("active"); baroModal.style.display = "none"; }
         const curCity = (typeof getCurrentCity === "function" ? getCurrentCity() : null) || (CITIES && CITIES[0]);
         if (curCity) updatePubCrawlCityUI(curCity);
         crawlModal.classList.add("active");
+        crawlModal.style.display = "flex";
       }
 
       function closeModalWindow() {
-        if (crawlModal) crawlModal.classList.remove("active");
+        if (crawlModal) {
+          crawlModal.classList.remove("active");
+          crawlModal.style.display = "none";
+        }
         if (window.__clearBottomNavActive) window.__clearBottomNavActive();
       }
 
@@ -20742,6 +20776,7 @@
         <div class="venue-sheet-price-val ${tier.tier}">${price.toFixed(2)} zł</div>
         <div class="venue-sheet-beer-name">${escapeHtml(venue.beer_name || "Piwo z kranu")}</div>
       </div>
+      <button type="button" class="sheet-close-btn venue-sheet-close-btn" id="btn-close-venue-sheet" aria-label="Zamknij kartę lokalu">✕</button>
     `;
 
     let hhHtml = "";
@@ -20929,6 +20964,14 @@
         poileHaptics.success();
         toggleVisitedVenue(venue.id);
         openVenueSheet(venue);
+      });
+    }
+
+    const btnCloseVenue = document.getElementById("btn-close-venue-sheet");
+    if (btnCloseVenue) {
+      btnCloseVenue.addEventListener("click", (e) => {
+        e.stopPropagation();
+        closeVenueSheet();
       });
     }
 
@@ -21129,7 +21172,20 @@
       });
     }
 
-    // 5. Backdrops Click to Dismiss
+    // 5. Backdrops and Sheet Close Buttons Click to Dismiss
+    const btnCloseDiscover = document.getElementById("btn-close-discover-sheet");
+    if (btnCloseDiscover) {
+      btnCloseDiscover.addEventListener("click", () => {
+        closeDiscoverSheet();
+        if (window.__setActiveBottomTab) window.__setActiveBottomTab("map");
+      });
+    }
+
+    const btnCloseAction = document.getElementById("btn-close-action-sheet");
+    if (btnCloseAction) {
+      btnCloseAction.addEventListener("click", closeActionSheet);
+    }
+
     const discoverBackdrop = document.getElementById("discover-sheet-backdrop");
     if (discoverBackdrop) {
       discoverBackdrop.addEventListener("click", () => {
@@ -21148,29 +21204,104 @@
       venueBackdrop.addEventListener("click", closeVenueSheet);
     }
 
+    const venueHandleWrap = document.getElementById("venue-sheet-handle-wrap");
+    if (venueHandleWrap) {
+      venueHandleWrap.addEventListener("click", () => {
+        closeVenueSheet();
+      });
+    }
+
     // 6. Bento Grid Cards Click Handlers
     const bentoCards = [
-      { id: "bento-compass", fn: () => window.__openCompass && window.__openCompass() },
-      { id: "bento-roulette", fn: () => window.__openRoulette && window.__openRoulette() },
-      { id: "bento-pubcrawl", fn: () => window.__openPubCrawl && window.__openPubCrawl() },
-      { id: "bento-happyhour", fn: () => window.__openHappyHours && window.__openHappyHours() },
-      { id: "bento-barometer", fn: () => {
-        const btnBaro = document.getElementById("btn-barometer");
-        if (btnBaro) btnBaro.click();
-      }},
-      { id: "bento-pubquiz", fn: () => window.__openPubQuiz && window.__openPubQuiz() },
-      { id: "bento-sos", fn: () => window.__openSos && window.__openSos() }
+      {
+        ids: ["bento-btn-compass", "bento-compass"],
+        fn: () => {
+          if (typeof window.__openCompass === "function") window.__openCompass();
+          else {
+            const m = document.getElementById("beer-compass-modal");
+            if (m) { m.classList.add("active"); m.style.display = "flex"; }
+          }
+        }
+      },
+      {
+        ids: ["bento-btn-roulette", "bento-roulette"],
+        fn: () => {
+          if (typeof window.__openRoulette === "function") window.__openRoulette();
+          else {
+            const m = document.getElementById("roulette-modal");
+            if (m) { m.classList.add("active"); m.style.display = "flex"; }
+          }
+        }
+      },
+      {
+        ids: ["bento-btn-pubcrawl", "bento-pubcrawl"],
+        fn: () => {
+          if (typeof window.__openPubCrawl === "function") window.__openPubCrawl();
+          else {
+            const m = document.getElementById("pubcrawl-modal");
+            if (m) { m.classList.add("active"); m.style.display = "flex"; }
+          }
+        }
+      },
+      {
+        ids: ["bento-btn-happyhour", "bento-happyhour"],
+        fn: () => {
+          if (typeof window.__openHappyHours === "function") window.__openHappyHours();
+          else {
+            const m = document.getElementById("happyhour-modal");
+            if (m) { m.classList.add("active"); m.style.display = "flex"; }
+          }
+        }
+      },
+      {
+        ids: ["bento-btn-barometer", "bento-barometer"],
+        fn: () => {
+          if (typeof window.__openBarometer === "function") window.__openBarometer();
+          else {
+            const btnBaro = document.getElementById("btn-barometer-toggle");
+            if (btnBaro) btnBaro.click();
+            else {
+              const m = document.getElementById("barometer-modal");
+              if (m) { m.classList.add("active"); m.style.display = "flex"; }
+            }
+          }
+        }
+      },
+      {
+        ids: ["bento-btn-pubquiz", "bento-pubquiz"],
+        fn: () => {
+          if (typeof window.__openPubQuiz === "function") window.__openPubQuiz();
+          else {
+            const m = document.getElementById("pubquiz-modal");
+            if (m) { m.classList.add("active"); m.style.display = "flex"; }
+          }
+        }
+      },
+      {
+        ids: ["bento-btn-sos", "bento-sos"],
+        fn: () => {
+          if (typeof window.__openSos === "function") window.__openSos();
+          else {
+            const m = document.getElementById("sos-modal");
+            if (m) { m.classList.add("active"); m.style.display = "flex"; }
+          }
+        }
+      }
     ];
 
-    bentoCards.forEach(({ id, fn }) => {
-      const el = document.getElementById(id);
-      if (el) {
-        el.addEventListener("click", () => {
-          poileHaptics.tick();
-          closeDiscoverSheet();
-          fn();
-        });
-      }
+    bentoCards.forEach(({ ids, fn }) => {
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener("click", () => {
+            if (window.poileHaptics) window.poileHaptics.tick();
+            closeDiscoverSheet();
+            setTimeout(() => {
+              fn();
+            }, 60);
+          });
+        }
+      });
     });
 
     // 7. Action Sheet Items Click Handlers
