@@ -1042,11 +1042,267 @@
     <span>➕ Dodaj bar</span>
   </button>
 
-  <!-- Mobile Bottom Navigation Bar (Native App Dock) -->
+  <!-- =========================================================================
+       NATIVE BOTTOM SHEETS (MODUŁ 1)
+       ========================================================================= -->
+
+  <!-- 1. Map Bottom Sheet (Permanent map drawer: Ticker + Nearby Venues) -->
+  <div class="bottom-sheet map-bottom-sheet" id="map-bottom-sheet" data-state="peek">
+    <div class="bottom-sheet-handle-wrap" id="map-sheet-handle-wrap" title="Przeciągnij w górę, aby rozwinąć listę barów">
+      <div class="bottom-sheet-handle"></div>
+    </div>
+    
+    <div class="map-sheet-header" id="map-sheet-header">
+      <div class="map-sheet-pulse-row">
+        <div class="pulse-title-wrap">
+          <span class="pulse-live-dot"></span>
+          <span class="pulse-title-text">📈 Puls Cenowy Miasta</span>
+        </div>
+        <div class="sheet-ticker-wrap">
+          <div class="sheet-ticker-track" id="sheet-ticker-track">
+            <!-- Dynamic ticker items -->
+            <span class="sheet-ticker-item">🔥 Pawilony: <strong>od 10 zł</strong> <span class="tag-down">▼</span></span>
+            <span class="sheet-ticker-item">📍 Śródmieście: Śr. <strong>15.50 zł</strong></span>
+            <span class="sheet-ticker-item">⚡ Happy Hour w Klaps: <strong>9 zł</strong></span>
+            <span class="sheet-ticker-item">💎 Kraft (Nowogrodzka): <strong>od 18 zł</strong></span>
+          </div>
+        </div>
+      </div>
+      <div class="map-sheet-summary-row">
+        <div class="sheet-venues-count" id="sheet-venues-count">
+          <span>🍺 Wczytywanie lokali...</span>
+        </div>
+        <div class="sheet-sort-controls">
+          <button type="button" class="btn-sheet-sort active" id="btn-sort-price" title="Sortuj od najtańszego">💰 Najtańsze</button>
+          <button type="button" class="btn-sheet-sort" id="btn-sort-dist" title="Sortuj wg odległości">🧭 Najbliżej</button>
+          <button type="button" class="btn-sheet-toggle" id="btn-toggle-map-sheet" aria-label="Zmień rozmiar szuflady">
+            <span class="sheet-chevron-icon">▲</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-sheet-content map-sheet-scroll" id="map-sheet-content">
+      <div class="map-sheet-venues-list" id="map-sheet-venues-list">
+        <!-- Rendered dynamically by app.js: nearby & cheapest venues -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Discover Sheet (Bento Grid View for 🔥 Odkrywaj) -->
+  <div class="bottom-sheet-backdrop" id="discover-sheet-backdrop" style="display:none;"></div>
+  <div class="bottom-sheet discover-sheet" id="discover-sheet" data-state="closed" style="display:none;">
+    <div class="bottom-sheet-handle-wrap" id="discover-sheet-handle-wrap">
+      <div class="bottom-sheet-handle"></div>
+    </div>
+    <div class="bottom-sheet-header">
+      <div class="sheet-title-group">
+        <span class="sheet-icon-badge">🔥</span>
+        <div>
+          <h2 class="sheet-title">Odkrywaj Miasto</h2>
+          <p class="sheet-sub">Narzędzia nocne, radary i zabawa barowa</p>
+        </div>
+      </div>
+      <button type="button" class="sheet-close-btn" id="btn-close-discover-sheet" aria-label="Zamknij szufladę">✕</button>
+    </div>
+    <div class="bottom-sheet-content discover-scroll">
+      <div class="bento-grid">
+        <!-- Bento 1: Piwny Kompas (Hero 2-Col) -->
+        <div class="bento-card bento-card-hero bento-compass" id="bento-btn-compass" role="button" tabindex="0">
+          <div class="bento-card-glow"></div>
+          <div class="bento-card-top">
+            <span class="bento-pill-live">🧭 RADAR GPS</span>
+            <span class="bento-arrow-icon">↗</span>
+          </div>
+          <div class="bento-card-body">
+            <h3 class="bento-title">Piwny Kompas</h3>
+            <p class="bento-desc">Wyceluj telefon i idź prosto do najbliższego kufla</p>
+          </div>
+          <div class="bento-compass-preview" id="bento-compass-preview">
+            <div class="mini-compass-dial">
+              <span class="mini-compass-arrow" id="bento-mini-arrow">▲</span>
+            </div>
+            <span class="mini-compass-text" id="bento-compass-text">Wskaż najbliższe tanie piwo</span>
+          </div>
+        </div>
+
+        <!-- Bento 2: Piwna Ruletka -->
+        <div class="bento-card bento-roulette" id="bento-btn-roulette" role="button" tabindex="0">
+          <div class="bento-card-top">
+            <span class="bento-icon-circle">🎲</span>
+            <span class="bento-pill-action">Potrząśnij</span>
+          </div>
+          <div class="bento-card-body">
+            <h3 class="bento-title">Piwna Ruletka</h3>
+            <p class="bento-desc">Brak planu? Wylosuj bar na dziś jednym potrząśnięciem</p>
+          </div>
+        </div>
+
+        <!-- Bento 3: Pub Crawl Generator -->
+        <div class="bento-card bento-pubcrawl" id="bento-btn-pubcrawl" role="button" tabindex="0">
+          <div class="bento-card-top">
+            <span class="bento-icon-circle">🍻</span>
+            <span class="bento-pill-highlight">Planer Trasy</span>
+          </div>
+          <div class="bento-card-body">
+            <h3 class="bento-title">Pub Crawl</h3>
+            <p class="bento-desc">Wygeneruj optymalny spacer po najtańszych lokalach</p>
+          </div>
+        </div>
+
+        <!-- Bento 4: Happy Hours -->
+        <div class="bento-card bento-happyhour" id="bento-btn-happyhour" role="button" tabindex="0">
+          <div class="bento-card-top">
+            <span class="bento-icon-circle">⚡</span>
+            <span class="bento-badge-live" id="bento-hh-badge">Promocje</span>
+          </div>
+          <div class="bento-card-body">
+            <h3 class="bento-title">Happy Hours</h3>
+            <p class="bento-desc">Kalendarz zniżek i trwające promocje</p>
+          </div>
+        </div>
+
+        <!-- Bento 5: Barometr Cenowy -->
+        <div class="bento-card bento-barometer" id="bento-btn-barometer" role="button" tabindex="0">
+          <div class="bento-card-top">
+            <span class="bento-icon-circle">📊</span>
+            <span class="bento-pill-action">Puls</span>
+          </div>
+          <div class="bento-card-body">
+            <h3 class="bento-title">Barometr Cen</h3>
+            <p class="bento-desc">Lewy vs Prawy Brzeg i ranking dzielnic</p>
+          </div>
+        </div>
+
+        <!-- Bento 6: Pub Quiz -->
+        <div class="bento-card bento-pubquiz" id="bento-btn-pubquiz" role="button" tabindex="0">
+          <div class="bento-card-top">
+            <span class="bento-icon-circle">🧠</span>
+            <span class="bento-pill-action">Gra</span>
+          </div>
+          <div class="bento-card-body">
+            <h3 class="bento-title">Piwny Pub Quiz</h3>
+            <p class="bento-desc">Quiz wiedzy o piwie i harmonogram w pubach</p>
+          </div>
+        </div>
+
+        <!-- Bento 7: Bezpieczny Powrót / SOS (Hero 2-Col) -->
+        <div class="bento-card bento-card-hero bento-sos" id="bento-btn-sos" role="button" tabindex="0">
+          <div class="bento-card-top">
+            <span class="bento-pill-safety">🛡️ BEZPIECZNY POWRÓT</span>
+            <span class="bento-arrow-icon">➔</span>
+          </div>
+          <div class="bento-card-body">
+            <h3 class="bento-title">Piwny Anioł Stróż (SOS)</h3>
+            <p class="bento-desc">1 klik do wysłania lokalizacji ekipie, wezwania Ubera, Bolta lub Jakdojade</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Quick Action Sheet (Triggered by central ➕ FAB) -->
+  <div class="bottom-sheet-backdrop" id="action-sheet-backdrop" style="display:none;"></div>
+  <div class="bottom-sheet action-sheet" id="action-sheet" data-state="closed" style="display:none;">
+    <div class="bottom-sheet-handle-wrap" id="action-sheet-handle-wrap">
+      <div class="bottom-sheet-handle"></div>
+    </div>
+    <div class="bottom-sheet-header">
+      <div class="sheet-title-group">
+        <span class="sheet-icon-badge">⚡</span>
+        <div>
+          <h2 class="sheet-title">Szybka Akcja</h2>
+          <p class="sheet-sub">Współtwórz nocną mapę barów</p>
+        </div>
+      </div>
+      <button type="button" class="sheet-close-btn" id="btn-close-action-sheet" aria-label="Zamknij akcje">✕</button>
+    </div>
+    <div class="bottom-sheet-content action-sheet-content">
+      <div class="action-sheet-options">
+        <button type="button" class="action-sheet-item item-checkin" id="action-btn-checkin">
+          <div class="action-item-icon">🍺</div>
+          <div class="action-item-info">
+            <strong>Potwierdź cenę / Szybki Check-in</strong>
+            <span>Jesteś w barze? Potwierdź cenę w 1 klik (+10 pkt do Paszportu)</span>
+          </div>
+          <span class="action-item-caret">→</span>
+        </button>
+
+        <button type="button" class="action-sheet-item item-bereal" id="action-btn-bereal">
+          <div class="action-item-icon">📸</div>
+          <div class="action-item-info">
+            <strong>Zrób Piwny BeReal</strong>
+            <span>Uchwyć kufel i ekipę – zdjęcie na mapie 24h</span>
+          </div>
+          <span class="action-item-caret">→</span>
+        </button>
+
+        <button type="button" class="action-sheet-item item-addbar" id="action-btn-addbar">
+          <div class="action-item-icon">➕</div>
+          <div class="action-item-info">
+            <strong>Dodaj nowy bar / Skanuj cennik</strong>
+            <span>Zgłoś nowy lokal lub zrób zdjęcie menu / paragonu</span>
+          </div>
+          <span class="action-item-caret">→</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Venue Detail Sheet (Native Mobile Bottom Sheet for Bar Details) -->
+  <div class="bottom-sheet-backdrop" id="venue-sheet-backdrop" style="display:none;"></div>
+  <div class="bottom-sheet venue-sheet" id="venue-sheet" data-state="closed" style="display:none;">
+    <div class="bottom-sheet-handle-wrap" id="venue-sheet-handle-wrap">
+      <div class="bottom-sheet-handle"></div>
+    </div>
+    <div class="venue-sheet-header" id="venue-sheet-header">
+      <!-- Injected dynamically on bar tap -->
+    </div>
+    <div class="bottom-sheet-content venue-sheet-body" id="venue-sheet-content">
+      <!-- Injected dynamically on bar tap -->
+    </div>
+  </div>
+
+  <!-- Native 5-Tab Bottom Navigation Dock (Thumb-First Mobile Dock) -->
   <nav class="mobile-bottom-nav" id="mobile-bottom-nav" aria-label="Nawigacja dolna">
-    <button type="button" class="nav-item" id="nav-btn-community" data-target="community" title="Piwni Znajomi & Aktywność">
+    <!-- Tab 1: Mapa -->
+    <button type="button" class="nav-item active" id="nav-btn-map" data-target="map" title="Widok mapy i barów">
+      <span class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon>
+          <line x1="9" y1="3" x2="9" y2="18"></line>
+          <line x1="15" y1="6" x2="15" y2="21"></line>
+        </svg>
+      </span>
+      <span class="nav-label">Mapa</span>
+    </button>
+
+    <!-- Tab 2: Odkrywaj (Bento Grid) -->
+    <button type="button" class="nav-item" id="nav-btn-discover" data-target="discover" title="Odkrywaj: Kompas, Ruletka, Pub Crawl, Quiz">
+      <span class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+        </svg>
+      </span>
+      <span class="nav-label">Odkrywaj</span>
+    </button>
+
+    <!-- Tab 3: Central Action FAB Button -->
+    <button type="button" class="nav-item nav-item-action" id="nav-btn-action" data-target="action" title="Szybka akcja: Check-in, BeReal, Dodaj bar" aria-label="Dodaj lub potwierdź cenę">
+      <div class="nav-fab-circle" id="nav-action-fab">
+        <svg class="nav-fab-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+      </div>
+      <span class="nav-label">Akcja</span>
+    </button>
+
+    <!-- Tab 4: Ekipa (Znajomi, BeReal, Live 24h) -->
+    <button type="button" class="nav-item" id="nav-btn-community" data-target="community" title="Piwni Znajomi & Aktywność 24h">
       <span class="nav-icon nav-icon-relative">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
           <circle cx="9" cy="7" r="4"></circle>
           <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
@@ -1054,43 +1310,18 @@
         </svg>
         <span class="nav-badge-dot" id="nav-community-dot" style="display:none;"></span>
       </span>
-      <span class="nav-label">Znajomi</span>
+      <span class="nav-label">Ekipa</span>
     </button>
-    <button type="button" class="nav-item" id="nav-btn-ranking" data-target="ranking" title="Ranking najtańszego piwa">
-      <span class="nav-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
-          <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
-          <path d="M4 22h16"></path>
-          <path d="M10 14.66V17c0 .55-.45 1-1 1H8v2h8v-2h-1c-.55 0-1-.45-1-1v-2.34"></path>
-          <path d="M18 4H6v7a6 6 0 0 0 12 0V4Z"></path>
-        </svg>
-      </span>
-      <span class="nav-label">Ranking</span>
-    </button>
-    <button type="button" class="nav-item nav-item-hero" id="nav-btn-hero-compass" data-target="compass" title="Piwny Kompas – Radar GPS na 1 klik">
-      <div class="hero-ring">
-        <img src="icons/syrenka-hero.png" alt="Syrenka Warszawska z piwkiem" class="hero-syrenka-icon" width="40" height="40" />
-      </div>
-    </button>
-    <button type="button" class="nav-item" id="nav-btn-pubcrawl" data-target="pubcrawl" title="Pub Crawl">
-      <span class="nav-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="6" cy="19" r="3"></circle>
-          <path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"></path>
-          <circle cx="18" cy="5" r="3"></circle>
-        </svg>
-      </span>
-      <span class="nav-label">Pub Crawl</span>
-    </button>
-    <button type="button" class="nav-item" id="nav-btn-profile" data-target="profile" title="Mój profil i konto">
+
+    <!-- Tab 5: Paszport (Profil, Karta Pass, Odznaki) -->
+    <button type="button" class="nav-item" id="nav-btn-profile" data-target="passport" title="Mój Paszport, Karta Pass i Profil">
       <span class="nav-icon" id="nav-profile-icon-wrap">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
           <circle cx="12" cy="7" r="4"></circle>
         </svg>
       </span>
-      <span class="nav-label" id="nav-profile-label">Profil</span>
+      <span class="nav-label" id="nav-profile-label">Paszport</span>
     </button>
   </nav>
 

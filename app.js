@@ -1261,6 +1261,14 @@
         });
 
       marker._venueData = venue;
+      marker.on("click", () => {
+        if (window.innerWidth <= 640 && typeof window.__openVenueSheet === "function") {
+          setTimeout(() => {
+            try { marker.closePopup(); } catch (err) {}
+            window.__openVenueSheet(venue);
+          }, 10);
+        }
+      });
       marker.on("popupopen", () => {
         const v = marker._venueData;
         if (v) {
@@ -1808,6 +1816,9 @@
   // Render Ranking Leaderboard (Feature A: Piwny Kompas or Najtańsze or Odwiedzone)
   function renderRankingList(venuesToRank) {
     const listEl = document.getElementById("ranking-list");
+    if (typeof renderMapBottomSheetVenues === "function") {
+      renderMapBottomSheetVenues(venuesToRank);
+    }
     if (!listEl) return;
 
     let sorted = [...venuesToRank].filter(v => typeof v.beer_price_pln === "number" && v.beer_price_pln > 0);
@@ -2601,7 +2612,8 @@
       toggleVisitedVenue(currentStop.venue.id);
     }
 
-    // Trigger toast & cheer sound
+    // Trigger toast & cheer sound & haptic feedback
+    if (window.poileHaptics) window.poileHaptics.success();
     if (typeof triggerCheersAnimation === "function") {
       triggerCheersAnimation(`Wypite w: ${currentStop.venue.name}! 🍻`);
     }
@@ -3763,6 +3775,19 @@
         rotation = (target.bearing - deviceHeading + 360) % 360;
       }
       needleWrap.style.transform = `rotate(${rotation.toFixed(1)}deg)`;
+
+      // Haptic Lock-on feedback when pointed directly towards venue (< 10 deg)
+      if (deviceHeading !== null && !isNaN(deviceHeading)) {
+        const isLocked = rotation <= 10 || rotation >= 350;
+        if (isLocked) {
+          if (!needleWrap._hasLockedOn) {
+            needleWrap._hasLockedOn = true;
+            if (window.poileHaptics) window.poileHaptics.lockOn();
+          }
+        } else if (rotation > 25 && rotation < 335) {
+          needleWrap._hasLockedOn = false;
+        }
+      }
     }
 
     function renderCurrentTarget() {
@@ -4168,6 +4193,7 @@
     const priceSlider = document.getElementById("filter-price-slider");
     if (priceSlider) {
       priceSlider.addEventListener("input", (e) => {
+        if (window.poileHaptics) window.poileHaptics.tick();
         const val = parseInt(e.target.value, 10);
         if (val >= 35) {
           filterState.maxPrice = null;
@@ -5687,112 +5713,138 @@
     }
     initMobileControls();
 
-    // Mobile Bottom Navigation Bar Actions (Native App Dock)
+    // Mobile Bottom Navigation Bar Actions (Native 5-Tab Dock)
     const bottomNavItems = document.querySelectorAll(".mobile-bottom-nav .nav-item");
     function clearBottomNavActive() {
       bottomNavItems.forEach(btn => btn.classList.remove("active"));
     }
     window.__clearBottomNavActive = clearBottomNavActive;
 
+    function setActiveBottomTab(target) {
+      clearBottomNavActive();
+      const activeBtn = document.querySelector(`.mobile-bottom-nav .nav-item[data-target="${target}"]`);
+      if (activeBtn) activeBtn.classList.add("active");
+    }
+    window.__setActiveBottomTab = setActiveBottomTab;
+
     bottomNavItems.forEach(item => {
       item.addEventListener("click", () => {
         const target = item.getAttribute("data-target");
-        clearBottomNavActive();
-        item.classList.add("active");
-        if (target === "community" || target === "friends" || target === "spolecznosc") {
-          if (window.__closeRankingDrawer) window.__closeRankingDrawer();
-          if (baroModal) baroModal.classList.remove("active");
-          closeModal();
+        if (window.poileHaptics) window.poileHaptics.tick();
+
+        // 1. Tab: MAPA
+        if (target === "map") {
+          clearBottomNavActive();
+          item.classList.add("active");
+          if (window.__closeDiscoverSheet) window.__closeDiscoverSheet();
+          if (window.__closeActionSheet) window.__closeActionSheet();
+          if (window.__closeVenueSheet) window.__closeVenueSheet();
+          if (window.__closeCommunity) window.__closeCommunity();
+          if (window.__closePassport) window.__closePassport();
           if (window.__closePubCrawl) window.__closePubCrawl();
           if (window.__closeCompass) window.__closeCompass();
-          if (window.__closeMobileSearch) window.__closeMobileSearch();
           if (window.__closeHappyHours) window.__closeHappyHours();
+          if (baroModal) baroModal.classList.remove("active");
+          closeModal();
+          const mapSheet = document.getElementById("map-bottom-sheet");
+          if (mapSheet && typeof window.__setBottomSheetState === "function") {
+            window.__setBottomSheetState(mapSheet, "peek");
+          }
+          return;
+        }
+
+        // 2. Tab: ODKRYWAJ (Bento Grid)
+        if (target === "discover") {
+          clearBottomNavActive();
+          item.classList.add("active");
+          if (window.__closeActionSheet) window.__closeActionSheet();
+          if (window.__closeVenueSheet) window.__closeVenueSheet();
+          if (window.__closeCommunity) window.__closeCommunity();
+          if (window.__closePassport) window.__closePassport();
+          if (window.__openDiscoverSheet) {
+            window.__openDiscoverSheet();
+          } else {
+            const discoverSheet = document.getElementById("discover-sheet");
+            if (discoverSheet && typeof window.__setBottomSheetState === "function") {
+              window.__setBottomSheetState(discoverSheet, "full");
+            }
+          }
+          return;
+        }
+
+        // 3. Tab: AKCJA (Central Floating Action Button)
+        if (target === "action") {
+          // Do not switch active tab styling permanently away from current screen
+          if (window.__openActionSheet) {
+            window.__openActionSheet();
+          } else {
+            const actionSheet = document.getElementById("action-sheet");
+            if (actionSheet && typeof window.__setBottomSheetState === "function") {
+              window.__setBottomSheetState(actionSheet, "full");
+            }
+          }
+          return;
+        }
+
+        // 4. Tab: EKIPA (Społeczność & Live Feed)
+        if (target === "community" || target === "friends" || target === "spolecznosc") {
+          clearBottomNavActive();
+          item.classList.add("active");
+          if (window.__closeDiscoverSheet) window.__closeDiscoverSheet();
+          if (window.__closeActionSheet) window.__closeActionSheet();
+          if (window.__closeVenueSheet) window.__closeVenueSheet();
+          if (window.__closePassport) window.__closePassport();
+          if (window.__closePubCrawl) window.__closePubCrawl();
+          if (window.__closeCompass) window.__closeCompass();
+          if (window.__closeHappyHours) window.__closeHappyHours();
+          if (baroModal) baroModal.classList.remove("active");
+          closeModal();
           const commModal = document.getElementById("community-modal");
           const isCommOpen = commModal && (commModal.classList.contains("active") || commModal.style.display === "flex");
           if (isCommOpen) {
             if (window.__closeCommunity) window.__closeCommunity();
+            setActiveBottomTab("map");
           } else if (window.__openCommunity) {
             window.__openCommunity(unreadNotificationsCount > 0 ? "notifications" : "friends");
           }
-        } else if (target === "promos" || target === "happyhour") {
-          if (window.__closeRankingDrawer) window.__closeRankingDrawer();
-          if (baroModal) baroModal.classList.remove("active");
-          closeModal();
+          return;
+        }
+
+        // 5. Tab: PASZPORT / PROFIL
+        if (target === "passport" || target === "profile") {
+          clearBottomNavActive();
+          item.classList.add("active");
+          if (window.__closeDiscoverSheet) window.__closeDiscoverSheet();
+          if (window.__closeActionSheet) window.__closeActionSheet();
+          if (window.__closeVenueSheet) window.__closeVenueSheet();
+          if (window.__closeCommunity) window.__closeCommunity();
           if (window.__closePubCrawl) window.__closePubCrawl();
           if (window.__closeCompass) window.__closeCompass();
-          if (window.__closeMobileSearch) window.__closeMobileSearch();
-          if (window.__openHappyHours) {
-            window.__openHappyHours();
-          } else {
-            const hhModal = document.getElementById("happyhour-modal");
-            if (hhModal) {
-              if (typeof renderHappyHourModal === "function") renderHappyHourModal();
-              hhModal.classList.add("active");
-            }
-          }
-        } else if (target === "ranking") {
-          if (baroModal) baroModal.classList.remove("active");
           if (window.__closeHappyHours) window.__closeHappyHours();
+          if (baroModal) baroModal.classList.remove("active");
           closeModal();
-          if (window.__closePubCrawl) window.__closePubCrawl();
-          if (window.__closeCompass) window.__closeCompass();
-          if (window.__closeMobileSearch) window.__closeMobileSearch();
-          if (drawer) {
-            if (drawer.classList.contains("open")) {
-              if (window.__closeRankingDrawer) window.__closeRankingDrawer();
-              item.classList.remove("active");
-            } else {
-              if (tabCheapest) tabCheapest.click();
-              if (window.__openRankingDrawer) window.__openRankingDrawer();
-            }
+          if (window.__openPassport) {
+            window.__openPassport();
+          } else if (currentUser && currentProfile && window.__openMyProfile) {
+            window.__openMyProfile();
+          } else if (window.__openAuth) {
+            window.__openAuth("login");
           }
+          return;
+        }
+
+        // Fallbacks for legacy shortcuts
+        clearBottomNavActive();
+        item.classList.add("active");
+        if (target === "ranking") {
+          if (drawer && window.__openRankingDrawer) window.__openRankingDrawer();
         } else if (target === "compass") {
-          if (window.__closeRankingDrawer) window.__closeRankingDrawer();
-          if (baroModal) baroModal.classList.remove("active");
-          if (window.__closeHappyHours) window.__closeHappyHours();
-          closeModal();
-          if (window.__closePubCrawl) window.__closePubCrawl();
-          if (window.__closeMobileSearch) window.__closeMobileSearch();
           if (window.__openCompass) window.__openCompass();
         } else if (target === "pubcrawl") {
-          if (window.__closeRankingDrawer) window.__closeRankingDrawer();
-          if (baroModal) baroModal.classList.remove("active");
-          if (window.__closeHappyHours) window.__closeHappyHours();
-          closeModal();
-          if (window.__closeCompass) window.__closeCompass();
-          if (window.__closeMobileSearch) window.__closeMobileSearch();
           if (window.__openPubCrawl) window.__openPubCrawl();
-        } else if (target === "profile") {
-          if (window.__closeRankingDrawer) window.__closeRankingDrawer();
-          if (baroModal) baroModal.classList.remove("active");
-          if (window.__closeHappyHours) window.__closeHappyHours();
-          closeModal();
-          if (window.__closePubCrawl) window.__closePubCrawl();
-          if (window.__closeCompass) window.__closeCompass();
-          if (window.__closeMobileSearch) window.__closeMobileSearch();
-          if (currentUser && currentProfile) {
-            if (window.__openMyProfile) window.__openMyProfile();
-          } else {
-            if (window.__openAuth) {
-              window.__openAuth("login");
-            } else if (window.__openMyProfile) {
-              window.__openMyProfile();
-            }
-          }
-        } else if (target === "barometer") {
-          if (window.__closeRankingDrawer) window.__closeRankingDrawer();
-          if (window.__closeHappyHours) window.__closeHappyHours();
-          if (window.__closePubCrawl) window.__closePubCrawl();
-          if (window.__closeCompass) window.__closeCompass();
-          if (window.__closeMobileSearch) window.__closeMobileSearch();
-          if (btnBarometer) btnBarometer.click();
+        } else if (target === "promos" || target === "happyhour") {
+          if (window.__openHappyHours) window.__openHappyHours();
         } else if (target === "add") {
-          if (window.__closeRankingDrawer) window.__closeRankingDrawer();
-          if (baroModal) baroModal.classList.remove("active");
-          if (window.__closeHappyHours) window.__closeHappyHours();
-          if (window.__closePubCrawl) window.__closePubCrawl();
-          if (window.__closeCompass) window.__closeCompass();
-          if (window.__closeMobileSearch) window.__closeMobileSearch();
           openAddModal();
           setTimeout(() => item.classList.remove("active"), 250);
         }
@@ -9895,6 +9947,9 @@
       if (berealModal) berealModal.style.display = "none";
     }
 
+    window.__openBerealCamera = openBerealCameraModal;
+    window.__closeBerealCamera = closeBerealCameraModal;
+
     function captureFrameFromVideo() {
       if (!berealVideo || !berealCanvas) return null;
       const vW = berealVideo.videoWidth || 960;
@@ -11058,14 +11113,16 @@
       reel.style.transition = "transform 2.4s cubic-bezier(0.12, 0.88, 0.22, 1)";
       reel.style.transform = `translateY(-${targetOffset}px)`;
 
-      // Audio ticks schedule (accelerates then decelerates)
+      // Audio & haptic ticks schedule (accelerates then decelerates)
       const tickDelays = [40, 90, 150, 220, 300, 390, 490, 600, 730, 880, 1050, 1250, 1480, 1750, 2050, 2300];
       tickDelays.forEach(d => {
         setTimeout(() => {
           if (isSpinning) {
             playRouletteTick();
-            if (navigator.vibrate) {
-              try { navigator.vibrate(20); } catch (e) {}
+            if (window.poileHaptics) {
+              window.poileHaptics.tick();
+            } else if (navigator.vibrate) {
+              try { navigator.vibrate(15); } catch (e) {}
             }
           }
         }, d);
@@ -11078,8 +11135,10 @@
         if (spinText) spinText.textContent = "🔄 ZAKRĘĆ PONOWNIE!";
 
         playFanfareChime();
-        if (navigator.vibrate) {
-          try { navigator.vibrate([60, 40, 80]); } catch (e) {}
+        if (window.poileHaptics) {
+          window.poileHaptics.success();
+        } else if (navigator.vibrate) {
+          try { navigator.vibrate([40, 80, 100]); } catch (e) {}
         }
 
         // Display Winner Card
@@ -13624,6 +13683,9 @@
       sosModal.style.display = "none";
       document.body.classList.remove("modal-open");
     }
+
+    window.__openSos = openSosModal;
+    window.__closeSos = closeSosModal;
 
     btnSosFloat.addEventListener("click", openSosModal);
     if (btnCloseSosModal) btnCloseSosModal.addEventListener("click", closeSosModal);
@@ -20401,6 +20463,644 @@
     setTimeout(checkUrlHash, 250);
   }
 
+  // ==========================================================================
+  // MODUŁ 1: Mobile Modernization & Native Feel Controller
+  // Bottom Sheets, 5-Tab Navigation, Bento Grid, Haptics & Standalone App
+  // ==========================================================================
+
+  const poileHaptics = {
+    tick() {
+      if (typeof navigator !== "undefined" && navigator.vibrate) {
+        try { navigator.vibrate(10); } catch (e) {}
+      }
+    },
+    lockOn() {
+      if (typeof navigator !== "undefined" && navigator.vibrate) {
+        try { navigator.vibrate([30, 50, 30]); } catch (e) {}
+      }
+    },
+    success() {
+      if (typeof navigator !== "undefined" && navigator.vibrate) {
+        try { navigator.vibrate([40, 80, 100]); } catch (e) {}
+      }
+    },
+    warning() {
+      if (typeof navigator !== "undefined" && navigator.vibrate) {
+        try { navigator.vibrate([60, 60, 60]); } catch (e) {}
+      }
+    }
+  };
+  window.poileHaptics = poileHaptics;
+
+  function isStandaloneApp() {
+    try {
+      const isStandaloneDisplay = window.matchMedia && window.matchMedia("(display-mode: standalone)").matches;
+      const isIosStandalone = window.navigator && window.navigator.standalone === true;
+      const isAndroidTwa = typeof document !== "undefined" && document.referrer && document.referrer.includes("android-app://");
+      return Boolean(isStandaloneDisplay || isIosStandalone || isAndroidTwa);
+    } catch (e) {
+      return false;
+    }
+  }
+  window.isStandaloneApp = isStandaloneApp;
+
+  let currentMapSheetSort = "cheap"; // "cheap" or "distance"
+  let cachedFilteredVenues = [];
+
+  function setBottomSheetState(sheetEl, state) {
+    if (!sheetEl) return;
+    sheetEl.setAttribute("data-state", state);
+    const backdropId = `${sheetEl.id}-backdrop`;
+    const backdrop = document.getElementById(backdropId);
+    if (backdrop) {
+      if (state === "closed") {
+        backdrop.style.display = "none";
+        backdrop.classList.remove("active");
+        sheetEl.style.display = "none";
+      } else {
+        backdrop.style.display = "block";
+        backdrop.classList.add("active");
+        sheetEl.style.display = "flex";
+      }
+    }
+  }
+  window.__setBottomSheetState = setBottomSheetState;
+
+  function attachBottomSheetGestures(sheetEl, options = {}) {
+    if (!sheetEl) return;
+    const handleWrap = sheetEl.querySelector(".bottom-sheet-handle-wrap");
+    if (!handleWrap) return;
+
+    let startY = 0;
+    let currentY = 0;
+    let startTime = 0;
+    let isDragging = false;
+    const isPermanent = options.isPermanent || false; // map-bottom-sheet is permanent (peek/half/full)
+
+    function onStart(e) {
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      isDragging = true;
+      startY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+      currentY = startY;
+      startTime = Date.now();
+      sheetEl.style.transition = "none";
+      if (handleWrap.setPointerCapture && e.pointerId) {
+        try { handleWrap.setPointerCapture(e.pointerId); } catch (err) {}
+      }
+    }
+
+    function onMove(e) {
+      if (!isDragging) return;
+      const clientY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+      currentY = clientY;
+      const deltaY = currentY - startY;
+
+      const currentState = sheetEl.getAttribute("data-state") || (isPermanent ? "peek" : "closed");
+      if (currentState === "peek" && deltaY > 0) {
+        sheetEl.style.transform = `translateY(calc(100% - 92px - env(safe-area-inset-bottom, 20px) + ${deltaY * 0.25}px))`;
+        return;
+      }
+
+      let baseOffset = "100% - 92px - env(safe-area-inset-bottom, 20px)";
+      if (currentState === "half") baseOffset = "100% - 50vh";
+      else if (currentState === "full") baseOffset = "100% - 90vh";
+
+      sheetEl.style.transform = `translateY(calc(${baseOffset} + ${deltaY}px))`;
+    }
+
+    function onEnd(e) {
+      if (!isDragging) return;
+      isDragging = false;
+      sheetEl.style.transition = "";
+      sheetEl.style.transform = "";
+
+      const deltaY = currentY - startY;
+      const dt = Math.max(1, Date.now() - startTime);
+      const velocity = deltaY / dt;
+      const currentState = sheetEl.getAttribute("data-state") || (isPermanent ? "peek" : "closed");
+
+      let nextState = currentState;
+
+      if (isPermanent) {
+        if (currentState === "peek") {
+          if (deltaY < -40 || velocity < -0.3) {
+            nextState = deltaY < -180 || velocity < -0.7 ? "full" : "half";
+          }
+        } else if (currentState === "half") {
+          if (deltaY > 50 || velocity > 0.3) {
+            nextState = "peek";
+          } else if (deltaY < -50 || velocity < -0.3) {
+            nextState = "full";
+          }
+        } else if (currentState === "full") {
+          if (deltaY > 160 || velocity > 0.7) {
+            nextState = "peek";
+          } else if (deltaY > 50 || velocity > 0.3) {
+            nextState = "half";
+          }
+        }
+      } else {
+        if (currentState === "half" || currentState === "full") {
+          if (deltaY > 60 || velocity > 0.25) {
+            nextState = "closed";
+          } else if (deltaY < -50 || velocity < -0.3) {
+            nextState = "full";
+          }
+        }
+      }
+
+      setBottomSheetState(sheetEl, nextState);
+      if (options.onStateChange) options.onStateChange(nextState);
+      poileHaptics.tick();
+    }
+
+    handleWrap.addEventListener("pointerdown", onStart);
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onEnd);
+    window.addEventListener("pointercancel", onEnd);
+  }
+
+  function openDiscoverSheet() {
+    const sheet = document.getElementById("discover-sheet");
+    if (!sheet) return;
+    setBottomSheetState(sheet, "full");
+    poileHaptics.tick();
+  }
+  window.__openDiscoverSheet = openDiscoverSheet;
+
+  function closeDiscoverSheet() {
+    const sheet = document.getElementById("discover-sheet");
+    if (!sheet) return;
+    setBottomSheetState(sheet, "closed");
+  }
+  window.__closeDiscoverSheet = closeDiscoverSheet;
+
+  function openActionSheet() {
+    const sheet = document.getElementById("action-sheet");
+    if (!sheet) return;
+    setBottomSheetState(sheet, "full");
+    poileHaptics.tick();
+  }
+  window.__openActionSheet = openActionSheet;
+
+  function closeActionSheet() {
+    const sheet = document.getElementById("action-sheet");
+    if (!sheet) return;
+    setBottomSheetState(sheet, "closed");
+  }
+  window.__closeActionSheet = closeActionSheet;
+
+  function openVenueSheet(venue) {
+    if (!venue) return;
+    const sheet = document.getElementById("venue-sheet");
+    const headerEl = document.getElementById("venue-sheet-header");
+    const contentEl = document.getElementById("venue-sheet-content");
+    if (!sheet || !headerEl || !contentEl) return;
+
+    const price = venue.beer_price_pln;
+    const tier = getPriceTier(price);
+    const mapsUrl = buildGoogleMapsNavigationUrl(venue);
+    const open = isVenueOpen(venue);
+    const isFav = isVenueFavorite(venue.id);
+    const isVisited = isVenueVisited(venue.id);
+    const activeHh = getActiveHappyHour(venue);
+    const hasZero = isNonAlcoholicVenue(venue);
+    const proofUrl = venue.photo_url || venue.proof_image_url;
+
+    let walkInfo = "";
+    if (userLocation) {
+      const distKm = calculateDistanceKm(userLocation[0], userLocation[1], venue.latitude, venue.longitude);
+      if (distKm <= 15) {
+        const distM = Math.round(distKm * 1000);
+        const walkMin = Math.max(1, Math.round(distKm / 4.8 * 60));
+        walkInfo = `<div class="venue-dist-tag" style="margin-top:4px;">🚶 <strong>${distM < 1000 ? distM + ' m' : distKm.toFixed(1) + ' km'}</strong> (~${walkMin} min pieszo)</div>`;
+      } else {
+        walkInfo = `<div class="venue-dist-tag distant" style="margin-top:4px;">📍 <strong>${Math.round(distKm)} km</strong> od Ciebie</div>`;
+      }
+    }
+
+    headerEl.innerHTML = `
+      <div class="venue-sheet-title-box">
+        <h2 class="venue-sheet-name">
+          ${escapeHtml(venue.name)}
+          ${venue.is_verified ? '<span class="venue-badge-verified" title="Zweryfikowany lokal">✓</span>' : ''}
+          ${venue.old_name ? `<span class="venue-old-name" style="font-size:0.75rem;font-weight:400;color:var(--text-muted);">(d. ${escapeHtml(venue.old_name)})</span>` : ''}
+        </h2>
+        <div class="venue-sheet-address">📍 ${escapeHtml(venue.district || getCurrentCity().name)} · ${escapeHtml(venue.address || '')}</div>
+        ${walkInfo}
+      </div>
+      <div class="venue-sheet-price-tag">
+        <div class="venue-sheet-price-val ${tier.tier}">${price.toFixed(2)} zł</div>
+        <div class="venue-sheet-beer-name">${escapeHtml(venue.beer_name || "Piwo z kranu")}</div>
+      </div>
+    `;
+
+    let hhHtml = "";
+    if (activeHh) {
+      hhHtml = `
+        <div class="hh-live-promo-box" style="margin-bottom:6px;">
+          <div>
+            <div class="hh-live-promo-title"><span class="pulse-dot"></span> HAPPY HOUR TRWA TERAZ!</div>
+            <div class="hh-live-promo-desc">${escapeHtml(activeHh.rule.description || "Piwo w promocji")}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div class="hh-live-promo-price">${activeHh.rule.promo_price.toFixed(2)} zł</div>
+            <div class="hh-live-promo-time">jeszcze ${formatMinutesLeft(activeHh.minutesLeft)}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Waze-style micro-verification card
+    const verifyCardHtml = `
+      <div class="waze-verify-card" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 12px 14px; display:flex; flex-direction:column; gap:8px;">
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <div style="font-size:0.8rem; font-weight:700; color:#ffffff;">
+            ⚡ Jesteś w barze? Czy lane 0.5L nadal kosztuje <span style="color:#f59e0b;">${price.toFixed(2)} zł</span>?
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+          <button type="button" class="btn-waze-confirm" id="btn-waze-yes-${venue.id}" style="background:#22c55e; color:#ffffff; font-weight:800; font-size:0.78rem; padding:8px 10px; border-radius:10px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px;">
+            👍 Tak (+10 pkt)
+          </button>
+          <button type="button" class="btn-waze-change" id="btn-waze-change-${venue.id}" style="background:rgba(255,255,255,0.1); color:#cbd5e1; font-weight:700; font-size:0.78rem; padding:8px 10px; border-radius:10px; border:1px solid rgba(255,255,255,0.15); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px;">
+            ✏️ Zmieniła się
+          </button>
+        </div>
+      </div>
+    `;
+
+    // Action buttons row
+    const actionButtonsHtml = `
+      <div class="venue-sheet-actions">
+        <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="btn-venue-sheet-action btn-venue-nav" style="text-decoration:none;">
+          <span style="font-size:1.2rem;">🚗</span>
+          <span>Nawiguj</span>
+        </a>
+        <button type="button" class="btn-venue-sheet-action" id="btn-venue-sheet-fav">
+          <span style="font-size:1.2rem;">${isFav ? '❤️' : '🤍'}</span>
+          <span>${isFav ? 'Ulubiony' : 'Do ulubionych'}</span>
+        </button>
+        <button type="button" class="btn-venue-sheet-action" id="btn-venue-sheet-visited">
+          <span style="font-size:1.2rem;">${isVisited ? '🎖️' : '🍺'}</span>
+          <span>${isVisited ? 'Odwiedzony' : 'Byłem tu!'}</span>
+        </button>
+      </div>
+    `;
+
+    // Badges & details
+    const chipsHtml = `
+      <div class="venue-chips-row" style="margin-top:2px;">
+        <span class="venue-status-badge ${open ? 'open' : 'closed'}">
+          <span class="status-dot"></span> ${open ? 'Otwarte teraz' : 'Zamknięte'}
+        </span>
+        ${venue.hours ? `<span class="venue-hours-chip">🕒 ${escapeHtml(formatDisplayHours(venue.hours))}</span>` : ''}
+        ${(venue.is_partner || venue.pass_partner) ? `<span class="venue-chip chip-pass" title="Lokal honoruje kartę poilepiwko Pass (-10%)">🎟️ Karta Pass (-10%)</span>` : ''}
+        ${venue.shot_price_pln ? `<span class="venue-chip">🥃 Shot: <strong>${venue.shot_price_pln.toFixed(2)} zł</strong></span>` : ''}
+        ${venue.is_craft ? `<span class="venue-chip craft">⭐ Kraft / Multitap</span>` : ''}
+        ${hasZero ? `<span class="venue-chip zero">🌱 Piwo 0.0%</span>` : ''}
+      </div>
+    `;
+
+    // Photo / proof badge if available
+    let proofHtml = "";
+    if (proofUrl) {
+      proofHtml = `
+        <div style="margin-top:4px;">
+          <button type="button" class="venue-proof-badge" style="width:100%; justify-content:center; padding:7px 12px; border-radius:10px;" onclick="window.__openLightbox('${escapeHtml(proofUrl)}', '${escapeHtml(venue.name)} - menu / paragon')">
+            📸 Pokaż zdjęcie karty menu / paragonu
+          </button>
+        </div>
+      `;
+    }
+
+    contentEl.innerHTML = hhHtml + verifyCardHtml + actionButtonsHtml + chipsHtml + proofHtml;
+
+    // Attach listeners for venue sheet actions
+    const btnYes = document.getElementById(`btn-waze-yes-${venue.id}`);
+    if (btnYes) {
+      btnYes.addEventListener("click", () => {
+        poileHaptics.success();
+        showAppToast("Cena potwierdzona! ✓", `Dziękujemy za potwierdzenie ceny w ${venue.name} (+10 pkt do Paszportu).`, "🍺", 4000);
+        btnYes.style.background = "#15803d";
+        btnYes.innerHTML = "✓ Potwierdzono!";
+        btnYes.disabled = true;
+      });
+    }
+
+    const btnChange = document.getElementById(`btn-waze-change-${venue.id}`);
+    if (btnChange) {
+      btnChange.addEventListener("click", () => {
+        closeVenueSheet();
+        if (typeof openAddModal === "function") {
+          openAddModal();
+          const nameInput = document.getElementById("add-venue-name");
+          if (nameInput) nameInput.value = venue.name;
+        }
+      });
+    }
+
+    const btnFav = document.getElementById("btn-venue-sheet-fav");
+    if (btnFav) {
+      btnFav.addEventListener("click", () => {
+        poileHaptics.tick();
+        toggleVenueFavorite(venue.id);
+        openVenueSheet(venue);
+      });
+    }
+
+    const btnVisited = document.getElementById("btn-venue-sheet-visited");
+    if (btnVisited) {
+      btnVisited.addEventListener("click", () => {
+        poileHaptics.success();
+        toggleVisitedVenue(venue.id);
+        openVenueSheet(venue);
+      });
+    }
+
+    setBottomSheetState(sheet, "half");
+    poileHaptics.tick();
+  }
+  window.__openVenueSheet = openVenueSheet;
+
+  function closeVenueSheet() {
+    const sheet = document.getElementById("venue-sheet");
+    if (!sheet) return;
+    setBottomSheetState(sheet, "closed");
+  }
+  window.__closeVenueSheet = closeVenueSheet;
+
+  function renderMapBottomSheetVenues(venues) {
+    cachedFilteredVenues = venues || [];
+    const listEl = document.getElementById("map-sheet-venues-list");
+    const countEl = document.getElementById("map-sheet-count");
+    if (!listEl) return;
+
+    let items = [...cachedFilteredVenues].filter(v => typeof v.beer_price_pln === "number" && v.beer_price_pln > 0);
+
+    if (currentMapSheetSort === "distance" && userLocation) {
+      items = items.map(v => {
+        const dKm = calculateDistanceKm(userLocation[0], userLocation[1], v.latitude, v.longitude);
+        const dM = Math.round(dKm * 1000);
+        const wMin = Math.max(1, Math.round(dKm / 4.8 * 60));
+        return { ...v, _dKm: dKm, _dM: dM, _wMin: wMin };
+      }).sort((a, b) => a._dKm - b._dKm);
+    } else {
+      items.sort((a, b) => a.beer_price_pln - b.beer_price_pln);
+    }
+
+    if (countEl) {
+      const curCity = getCurrentCity();
+      countEl.textContent = `${items.length} barów w: ${currentDistrict !== "all" ? currentDistrict : curCity.name}`;
+    }
+
+    // Update Sheet Ticker with real numbers
+    updateSheetTicker(items);
+
+    if (items.length === 0) {
+      listEl.innerHTML = `
+        <div style="text-align:center; padding: 24px 16px; color: #94a3b8; font-size: 0.85rem;">
+          <div style="font-size:32px; margin-bottom:8px;">🔍</div>
+          Brak barów spełniających wybrane filtry.<br/>Spróbuj zmienić parametry wyszukiwania.
+        </div>
+      `;
+      return;
+    }
+
+    const displayItems = items.slice(0, 30);
+    listEl.innerHTML = displayItems.map((v, idx) => {
+      const tier = getPriceTier(v.beer_price_pln);
+      let distText = "";
+      if (userLocation) {
+        const dKm = v._dKm !== undefined ? v._dKm : calculateDistanceKm(userLocation[0], userLocation[1], v.latitude, v.longitude);
+        const dM = v._dM !== undefined ? v._dM : Math.round(dKm * 1000);
+        const wMin = v._wMin !== undefined ? v._wMin : Math.max(1, Math.round(dKm / 4.8 * 60));
+        distText = ` · 🚶 ${dM < 1000 ? dM + 'm' : dKm.toFixed(1) + 'km'} (~${wMin}m)`;
+      }
+
+      return `
+        <div class="ranked-card sheet-card-touch" data-sheet-venue-id="${v.id}" style="cursor:pointer;">
+          <div class="ranked-pos">#${idx + 1}</div>
+          <div class="ranked-info">
+            <div class="ranked-name">
+              ${escapeHtml(v.name)}
+              ${v.is_verified ? '<span class="venue-badge-verified">✓</span>' : ''}
+              ${(v.is_partner || v.pass_partner) ? '<span title="Karta Pass (-10%)" style="font-size:11px;">🎟️</span>' : ''}
+            </div>
+            <div class="ranked-sub">
+              📍 ${escapeHtml(v.district || getCurrentCity().name)} · ${escapeHtml(v.beer_name || "Piwo z kranu")}${distText}
+            </div>
+          </div>
+          <div class="ranked-price ${tier.tier}">${v.beer_price_pln.toFixed(2)} zł</div>
+        </div>
+      `;
+    }).join("");
+
+    // Click handler for cards in sheet
+    listEl.querySelectorAll(".sheet-card-touch").forEach(card => {
+      card.addEventListener("click", () => {
+        const vid = card.getAttribute("data-sheet-venue-id");
+        const v = allVenues.find(item => item.id === vid);
+        if (v && map) {
+          poileHaptics.tick();
+          const mapSheet = document.getElementById("map-bottom-sheet");
+          if (mapSheet) setBottomSheetState(mapSheet, "peek");
+          map.flyTo([v.latitude, v.longitude], 16.5, { duration: 0.8 });
+          setTimeout(() => {
+            openVenueSheet(v);
+          }, 400);
+        }
+      });
+    });
+  }
+  window.renderMapBottomSheetVenues = renderMapBottomSheetVenues;
+
+  function updateSheetTicker(venues) {
+    const track = document.getElementById("sheet-ticker-track");
+    if (!track || !venues || venues.length === 0) return;
+
+    const curCity = getCurrentCity();
+    const cheapest = venues[0];
+    const prices = venues.map(v => v.beer_price_pln);
+    const avgPrice = (prices.reduce((a, b) => a + b, 0) / prices.length).toFixed(1);
+
+    track.innerHTML = `
+      <span class="sheet-ticker-item">🔥 Najtaniej: <strong>${escapeHtml(cheapest.name)} od ${cheapest.beer_price_pln.toFixed(2)} zł</strong> <span class="tag-down">▼</span></span>
+      <span class="sheet-ticker-item">📍 Średnia ${escapeHtml(curCity.name)}: <strong>${avgPrice} zł</strong></span>
+      <span class="sheet-ticker-item">⚡ Bary na mapie: <strong>${venues.length} lokali</strong></span>
+      <span class="sheet-ticker-item">💎 Paszport: <strong>-10% z kartą Pass</strong></span>
+      <span class="sheet-ticker-item">🔥 Najtaniej: <strong>${escapeHtml(cheapest.name)} od ${cheapest.beer_price_pln.toFixed(2)} zł</strong> <span class="tag-down">▼</span></span>
+      <span class="sheet-ticker-item">📍 Średnia ${escapeHtml(curCity.name)}: <strong>${avgPrice} zł</strong></span>
+    `;
+  }
+
+  function initMobileModernization() {
+    // 1. Standalone detection & banner cleanup
+    if (isStandaloneApp()) {
+      document.documentElement.classList.add("is-standalone-app");
+      document.body.classList.add("is-standalone-app");
+      const pwaBanner = document.getElementById("pwa-install-banner");
+      if (pwaBanner) pwaBanner.style.display = "none";
+      const iosBanner = document.getElementById("ios-install-banner");
+      if (iosBanner) iosBanner.style.display = "none";
+      const iosModal = document.getElementById("ios-install-modal");
+      if (iosModal) iosModal.style.display = "none";
+    }
+
+    // 2. Attach gestures to all bottom sheets
+    const mapSheet = document.getElementById("map-bottom-sheet");
+    if (mapSheet) {
+      attachBottomSheetGestures(mapSheet, { isPermanent: true });
+    }
+
+    const discoverSheet = document.getElementById("discover-sheet");
+    if (discoverSheet) {
+      attachBottomSheetGestures(discoverSheet, { isPermanent: false });
+    }
+
+    const actionSheet = document.getElementById("action-sheet");
+    if (actionSheet) {
+      attachBottomSheetGestures(actionSheet, { isPermanent: false });
+    }
+
+    const venueSheet = document.getElementById("venue-sheet");
+    if (venueSheet) {
+      attachBottomSheetGestures(venueSheet, { isPermanent: false });
+    }
+
+    // 3. Map Sheet Toggle Button (Chevron)
+    const btnMapSheetToggle = document.getElementById("btn-map-sheet-toggle");
+    if (btnMapSheetToggle && mapSheet) {
+      btnMapSheetToggle.addEventListener("click", () => {
+        poileHaptics.tick();
+        const cur = mapSheet.getAttribute("data-state") || "peek";
+        const next = cur === "peek" ? "half" : (cur === "half" ? "full" : "peek");
+        setBottomSheetState(mapSheet, next);
+      });
+    }
+
+    // 4. Map Sheet Sort Controls
+    const btnSortCheap = document.getElementById("btn-sheet-sort-cheap");
+    const btnSortDist = document.getElementById("btn-sheet-sort-dist");
+
+    if (btnSortCheap && btnSortDist) {
+      btnSortCheap.addEventListener("click", () => {
+        poileHaptics.tick();
+        btnSortCheap.classList.add("active");
+        btnSortDist.classList.remove("active");
+        currentMapSheetSort = "cheap";
+        renderMapBottomSheetVenues(cachedFilteredVenues);
+      });
+
+      btnSortDist.addEventListener("click", () => {
+        poileHaptics.tick();
+        btnSortDist.classList.add("active");
+        btnSortCheap.classList.remove("active");
+        currentMapSheetSort = "distance";
+
+        if (!userLocation && navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              setUserLocation([pos.coords.latitude, pos.coords.longitude], false, true);
+              renderMapBottomSheetVenues(cachedFilteredVenues);
+            },
+            () => {
+              renderMapBottomSheetVenues(cachedFilteredVenues);
+            },
+            { enableHighAccuracy: true, timeout: 5000 }
+          );
+        } else {
+          renderMapBottomSheetVenues(cachedFilteredVenues);
+        }
+      });
+    }
+
+    // 5. Backdrops Click to Dismiss
+    const discoverBackdrop = document.getElementById("discover-sheet-backdrop");
+    if (discoverBackdrop) {
+      discoverBackdrop.addEventListener("click", () => {
+        closeDiscoverSheet();
+        if (window.__setActiveBottomTab) window.__setActiveBottomTab("map");
+      });
+    }
+
+    const actionBackdrop = document.getElementById("action-sheet-backdrop");
+    if (actionBackdrop) {
+      actionBackdrop.addEventListener("click", closeActionSheet);
+    }
+
+    const venueBackdrop = document.getElementById("venue-sheet-backdrop");
+    if (venueBackdrop) {
+      venueBackdrop.addEventListener("click", closeVenueSheet);
+    }
+
+    // 6. Bento Grid Cards Click Handlers
+    const bentoCards = [
+      { id: "bento-compass", fn: () => window.__openCompass && window.__openCompass() },
+      { id: "bento-roulette", fn: () => window.__openRoulette && window.__openRoulette() },
+      { id: "bento-pubcrawl", fn: () => window.__openPubCrawl && window.__openPubCrawl() },
+      { id: "bento-happyhour", fn: () => window.__openHappyHours && window.__openHappyHours() },
+      { id: "bento-barometer", fn: () => {
+        const btnBaro = document.getElementById("btn-barometer");
+        if (btnBaro) btnBaro.click();
+      }},
+      { id: "bento-pubquiz", fn: () => window.__openPubQuiz && window.__openPubQuiz() },
+      { id: "bento-sos", fn: () => window.__openSos && window.__openSos() }
+    ];
+
+    bentoCards.forEach(({ id, fn }) => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener("click", () => {
+          poileHaptics.tick();
+          closeDiscoverSheet();
+          fn();
+        });
+      }
+    });
+
+    // 7. Action Sheet Items Click Handlers
+    const btnActionCheckin = document.getElementById("action-btn-checkin");
+    if (btnActionCheckin) {
+      btnActionCheckin.addEventListener("click", () => {
+        poileHaptics.tick();
+        closeActionSheet();
+        const btnDirect = document.getElementById("btn-open-checkin-direct");
+        if (btnDirect) {
+          btnDirect.click();
+        } else if (typeof window.__openCheckinModal === "function") {
+          window.__openCheckinModal();
+        } else {
+          showAppToast("Szybki Check-in", "Wybierz lokal na mapie, aby potwierdzić cenę w 1 klik! 🍺", "📍");
+        }
+      });
+    }
+
+    const btnActionBereal = document.getElementById("action-btn-bereal");
+    if (btnActionBereal) {
+      btnActionBereal.addEventListener("click", () => {
+        poileHaptics.tick();
+        closeActionSheet();
+        if (typeof window.__openBerealCamera === "function") {
+          window.__openBerealCamera();
+        } else {
+          const btnBereal = document.getElementById("btn-open-bereal-camera");
+          if (btnBereal) btnBereal.click();
+        }
+      });
+    }
+
+    const btnActionAddBar = document.getElementById("action-btn-addbar");
+    if (btnActionAddBar) {
+      btnActionAddBar.addEventListener("click", () => {
+        poileHaptics.tick();
+        closeActionSheet();
+        if (typeof openAddModal === "function") openAddModal();
+        else if (typeof window.__openAddModal === "function") window.__openAddModal();
+      });
+    }
+  }
+
   // Boot Application
   function boot() {
     applyTheme(getSavedThemePreference());
@@ -20409,6 +21109,7 @@
     setupEventListeners();
     loadVenues();
     initUserGeolocation();
+    initMobileModernization();
 
     // Register Service Worker for PWA with automatic update detection
     if ("serviceWorker" in navigator) {
