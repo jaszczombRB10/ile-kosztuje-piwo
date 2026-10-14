@@ -1447,9 +1447,9 @@ body.theme-light .venue-btn-edit.highlight-edit {
 
 .ranking-tabs {
   display: flex;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.38);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
   padding: 3px;
   gap: 3px;
   width: 100%;
@@ -1466,30 +1466,31 @@ body.theme-light .venue-btn-edit.highlight-edit {
   flex: 1 0 auto;
   background: none;
   border: none;
-  color: var(--text-muted);
-  padding: 6px 7px;
-  border-radius: 999px;
-  font-size: 0.72rem;
+  color: #94a3b8;
+  padding: 7px 11px;
+  border-radius: 9px;
+  font-size: 0.74rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.18s ease;
   text-align: center;
   white-space: nowrap;
 }
 
 .ranking-tab.active {
-  background: var(--primary);
-  color: #fff;
-  box-shadow: 0 0 10px var(--primary-glow);
+  background: linear-gradient(135deg, #f59e0b, #ea580c);
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(234, 88, 12, 0.35);
 }
 
 .drawer-header-top h2 {
-  font-size: 1.05rem;
+  font-size: 1.15rem;
   font-weight: 800;
   color: #fff;
   display: flex;
   align-items: center;
   gap: 8px;
+  margin: 0;
 }
 
 /* Universal Modal & Drawer Close Button (Circular Glass Pill) */
@@ -1550,33 +1551,63 @@ body.theme-light .venue-btn-edit.highlight-edit {
 
 .ranked-card {
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
   padding: 12px 14px;
   display: flex;
   align-items: center;
   gap: 12px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+  position: relative;
+  overflow: hidden;
 }
 
 .ranked-card:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(249, 115, 22, 0.3);
-  transform: translateX(-3px);
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(245, 158, 11, 0.4);
+  transform: translateY(-1px);
+}
+
+.ranked-card:active {
+  transform: scale(0.985);
+  background: rgba(255, 255, 255, 0.09);
+}
+
+/* Podium styling for top 3 bars */
+.ranked-card:nth-child(1) {
+  border-color: rgba(245, 158, 11, 0.45);
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.12), rgba(255, 255, 255, 0.03));
+}
+.ranked-card:nth-child(1) .ranked-pos {
+  color: #fbbf24;
+  text-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+}
+
+.ranked-card:nth-child(2) {
+  border-color: rgba(148, 163, 184, 0.35);
+  background: linear-gradient(90deg, rgba(148, 163, 184, 0.09), rgba(255, 255, 255, 0.03));
+}
+.ranked-card:nth-child(2) .ranked-pos {
+  color: #cbd5e1;
+}
+
+.ranked-card:nth-child(3) {
+  border-color: rgba(217, 119, 6, 0.35);
+  background: linear-gradient(90deg, rgba(217, 119, 6, 0.08), rgba(255, 255, 255, 0.03));
+}
+.ranked-card:nth-child(3) .ranked-pos {
+  color: #d97706;
 }
 
 .ranked-pos {
   font-size: 1.15rem;
   font-weight: 900;
-  color: var(--text-dim);
-  width: 24px;
+  color: #64748b;
+  width: 28px;
   text-align: center;
+  flex-shrink: 0;
 }
-
-.ranked-card:nth-child(1) .ranked-pos { color: #f59e0b; }
-.ranked-card:nth-child(2) .ranked-pos { color: #94a3b8; }
-.ranked-card:nth-child(3) .ranked-pos { color: #b45309; }
 
 .ranked-info {
   flex: 1;
@@ -1584,25 +1615,31 @@ body.theme-light .venue-btn-edit.highlight-edit {
 }
 
 .ranked-name {
-  font-size: 0.88rem;
+  font-size: 0.92rem;
   font-weight: 700;
   color: #fff;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: -0.01em;
 }
 
 .ranked-sub {
   font-size: 0.74rem;
-  color: var(--text-muted);
+  color: #94a3b8;
+  margin-top: 2px;
 }
 
 .ranked-price {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 900;
-  color: var(--price-low);
+  color: #22c55e;
   text-align: right;
   white-space: nowrap;
+  background: rgba(34, 197, 94, 0.1);
+  padding: 4px 9px;
+  border-radius: 8px;
+  border: 1px solid rgba(34, 197, 94, 0.2);
 }
 
 /* Base Banners inside Ranking List (Dark Mode) */
@@ -3379,9 +3416,9 @@ header,
     right: -100% !important;
     top: 0 !important;
     padding-top: env(safe-area-inset-top, 16px);
-    bottom: calc(49px + env(safe-area-inset-bottom, 20px)) !important;
-    height: calc(100% - 49px - env(safe-area-inset-bottom, 20px)) !important;
-    height: calc(100dvh - 49px - env(safe-area-inset-bottom, 20px)) !important;
+    bottom: calc(54px + env(safe-area-inset-bottom, 20px)) !important;
+    height: calc(100% - 54px - env(safe-area-inset-bottom, 20px)) !important;
+    height: calc(100dvh - 54px - env(safe-area-inset-bottom, 20px)) !important;
     box-sizing: border-box !important;
     z-index: 9980 !important;
     background: #0d1615 !important;
@@ -18355,6 +18392,20 @@ input, select, textarea {
   box-shadow: 0 4px 18px rgba(234, 88, 12, 0.55), 0 0 0 3px rgba(13, 22, 21, 0.9);
   transform: translateY(-8px);
   transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s ease;
+  overflow: hidden;
+  padding: 0;
+  border: 2px solid rgba(245, 158, 11, 0.7);
+}
+
+.nav-fab-syrenka {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .nav-fab-circle:active {
@@ -18363,9 +18414,8 @@ input, select, textarea {
 }
 
 .nav-fab-circle.open {
-  transform: translateY(-8px) rotate(45deg);
-  background: linear-gradient(135deg, #ef4444, #dc2626);
-  box-shadow: 0 4px 18px rgba(239, 68, 68, 0.55), 0 0 0 3px rgba(13, 22, 21, 0.9);
+  transform: translateY(-8px) scale(1.05);
+  box-shadow: 0 4px 22px rgba(245, 158, 11, 0.8), 0 0 0 3px rgba(13, 22, 21, 0.9);
 }
 
 .nav-item-action .nav-label {
@@ -18781,8 +18831,19 @@ input, select, textarea {
    1.7 Bento Grid Styles (🔥 Odkrywaj Sheet)
    ========================================================================== */
 .discover-sheet {
-  height: 88vh;
+  max-height: 88vh;
   z-index: 10040;
+}
+
+.discover-sheet[data-state="half"],
+.discover-sheet[data-state="full"],
+.discover-sheet[data-state="open"] {
+  transform: translateY(0) !important;
+}
+
+.discover-sheet[data-state="closed"] {
+  transform: translateY(105%) !important;
+  pointer-events: none !important;
 }
 
 .discover-scroll {
@@ -18968,6 +19029,17 @@ input, select, textarea {
   z-index: 10130 !important;
 }
 
+.action-sheet[data-state="half"],
+.action-sheet[data-state="full"],
+.action-sheet[data-state="open"] {
+  transform: translateY(0) !important;
+}
+
+.action-sheet[data-state="closed"] {
+  transform: translateY(105%) !important;
+  pointer-events: none !important;
+}
+
 .action-sheet-options {
   padding: 14px 18px calc(36px + env(safe-area-inset-bottom, 20px)) 18px;
   display: flex;
@@ -19049,26 +19121,29 @@ input, select, textarea {
    1.9 Venue Detail Bottom Sheet (Native Map Card)
    ========================================================================== */
 .venue-sheet {
-  max-height: 88vh;
+  max-height: 85vh;
   z-index: 10120 !important;
   display: flex;
   flex-direction: column;
 }
 
-.venue-sheet[data-state="half"] {
-  transform: translateY(calc(100% - 72vh)) !important;
+.venue-sheet[data-state="half"],
+.venue-sheet[data-state="full"],
+.venue-sheet[data-state="open"] {
+  transform: translateY(0) !important;
 }
 
-.venue-sheet[data-state="full"] {
-  transform: translateY(calc(100% - 88vh)) !important;
+.venue-sheet[data-state="closed"] {
+  transform: translateY(105%) !important;
+  pointer-events: none !important;
 }
 
 .venue-sheet-header {
-  padding: 10px 16px 12px 16px;
+  padding: 12px 18px 12px 18px;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   flex-shrink: 0;
 }
@@ -19079,14 +19154,14 @@ input, select, textarea {
 }
 
 .venue-sheet-body {
-  padding: 12px 16px calc(52px + env(safe-area-inset-bottom, 24px)) 16px;
+  padding: 14px 18px calc(76px + env(safe-area-inset-bottom, 24px)) 18px;
   display: flex;
   flex-direction: column;
   gap: 12px;
   overflow-y: auto !important;
   -webkit-overflow-scrolling: touch !important;
   overscroll-behavior-y: contain;
-  max-height: calc(88vh - 75px);
+  max-height: calc(85vh - 75px);
   box-sizing: border-box;
   flex: 1 1 auto;
 }
@@ -19572,4 +19647,196 @@ body.theme-light .mobile-bottom-nav {
   text-transform: uppercase;
   font-weight: 700;
   letter-spacing: 0.05em;
+}
+
+/* ==========================================================================
+   MODUŁ 3: Kontekstowość Czasowa (TimeContextEngine Styles)
+   ========================================================================== */
+
+/* 3.1 Happy Hour Pulsing Halo & Countdown Badge */
+.marker-happy-hour-pulse {
+  border: 2.5px solid #fbbf24 !important;
+  animation: hh-golden-pulse 1.8s infinite cubic-bezier(0.4, 0, 0.6, 1) !important;
+}
+
+@keyframes hh-golden-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.8), 0 2px 10px rgba(245, 158, 11, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 14px rgba(245, 158, 11, 0), 0 2px 14px rgba(245, 158, 11, 0.2);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0), 0 2px 10px rgba(245, 158, 11, 0.5);
+  }
+}
+
+.marker-hh-badge {
+  position: absolute;
+  top: -9px;
+  right: -9px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #ffffff;
+  font-size: 8px;
+  font-weight: 800;
+  padding: 1.5px 4.5px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  line-height: 1.2;
+  z-index: 5;
+}
+
+/* 3.2 Closing Soon Warning (45 min before closing) */
+.marker-closing-soon {
+  border: 2.5px solid #ea580c !important;
+  animation: closing-pulse 2.2s infinite ease-in-out;
+}
+
+@keyframes closing-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(234, 88, 12, 0);
+  }
+}
+
+.marker-closing-badge {
+  position: absolute;
+  bottom: -8px;
+  right: -8px;
+  background: #ea580c;
+  color: #ffffff;
+  font-size: 8px;
+  font-weight: 800;
+  padding: 1.5px 4.5px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  line-height: 1.2;
+  z-index: 5;
+}
+
+.venue-closing-warning-box {
+  background: rgba(234, 88, 12, 0.14);
+  border: 1px solid rgba(234, 88, 12, 0.4);
+  color: #fdba74;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 8px 12px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.35;
+}
+
+/* 3.3 Tryb Nocny (01:00-05:00) Floating SOS Pulsing */
+.sos-night-mode-pulse {
+  border: 2px solid #ef4444 !important;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.95), rgba(185, 28, 28, 0.95)) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7), 0 4px 18px rgba(239, 68, 68, 0.5) !important;
+  animation: sos-pulse-glow 1.6s infinite cubic-bezier(0.4, 0, 0.6, 1) !important;
+}
+
+@keyframes sos-pulse-glow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.8), 0 4px 18px rgba(239, 68, 68, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 14px rgba(239, 68, 68, 0), 0 4px 22px rgba(239, 68, 68, 0.2);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0), 0 4px 18px rgba(239, 68, 68, 0.5);
+  }
+}
+
+/* 3.4 Bento Grid Time Highlights */
+.bento-featured-time {
+  border-color: rgba(245, 158, 11, 0.55) !important;
+  box-shadow: 0 4px 24px rgba(245, 158, 11, 0.22) !important;
+}
+
+.badge-live-pulse {
+  animation: badge-pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes badge-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.05);
+  }
+}
+
+/* 3.5 Time Context Top Pill */
+.time-context-pill {
+  margin: 6px 12px 2px 12px;
+  background: rgba(15, 26, 24, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  animation: fadeInPill 0.3s ease;
+}
+
+@keyframes fadeInPill {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.context-pill-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.context-pill-badge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+body[data-time-mode="night_survival"] .context-pill-badge {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+body[data-time-mode="day_recovery"] .context-pill-badge {
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+.context-pill-tagline {
+  font-size: 0.74rem;
+  color: #cbd5e1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
 }

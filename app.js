@@ -941,6 +941,81 @@
     }
   }
 
+  // Moduł 3: Check if venue is closing within thresholdMinutes (e.g. 45 min)
+  function getVenueClosingSoon(venue, now = new Date(), thresholdMinutes = 45) {
+    if (!venue || !venue.hours) return { closingSoon: false };
+    const hStr = venue.hours.toLowerCase().trim();
+    if (hStr.includes("24/7") || hStr.includes("24h") || hStr.includes("całodobow")) return { closingSoon: false };
+
+    const match = hStr.match(/(\d{1,2}):(\d{2})\s*[-–]\s*(\d{1,2}):(\d{2})/);
+    if (!match) return { closingSoon: false };
+
+    if (!isVenueOpen(venue, now)) return { closingSoon: false };
+
+    const openHour = parseInt(match[1], 10);
+    const openMin = parseInt(match[2], 10);
+    const closeHour = parseInt(match[3], 10);
+    const closeMin = parseInt(match[4], 10);
+
+    const curMinutes = now.getHours() * 60 + now.getMinutes();
+    const openMinutes = openHour * 60 + openMin;
+    let closeMinutes = closeHour * 60 + closeMin;
+
+    let minutesLeft = 0;
+    if (closeMinutes <= openMinutes) {
+      // Crosses midnight (e.g. 16:00 - 02:00)
+      if (curMinutes < closeMinutes) {
+        minutesLeft = closeMinutes - curMinutes;
+      } else {
+        minutesLeft = (24 * 60 - curMinutes) + closeMinutes;
+      }
+    } else {
+      minutesLeft = closeMinutes - curMinutes;
+    }
+
+    if (minutesLeft > 0 && minutesLeft <= thresholdMinutes) {
+      const closeTimeStr = `${String(closeHour).padStart(2, "0")}:${String(closeMin).padStart(2, "0")}`;
+      return { closingSoon: true, minutesLeft, closeTimeStr };
+    }
+    return { closingSoon: false, minutesLeft };
+  }
+
+  // Moduł 3: Night Log & Morning Recap Helpers
+  const NIGHT_LOG_STORAGE_KEY = "poilepiwko_night_log";
+
+  function getNightLog() {
+    try {
+      const raw = localStorage.getItem(NIGHT_LOG_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveNightLog(log) {
+    try {
+      localStorage.setItem(NIGHT_LOG_STORAGE_KEY, JSON.stringify(log));
+    } catch (e) {}
+  }
+
+  function recordNightLogVisit(venue) {
+    if (!venue) return;
+    try {
+      const log = getNightLog();
+      const now = new Date();
+      // Keep only entries from the last 24h
+      const filtered = log.filter(item => (now.getTime() - new Date(item.timestamp).getTime()) < 24 * 60 * 60 * 1000);
+      filtered.push({
+        id: venue.id,
+        name: venue.name,
+        price: typeof venue.beer_price_pln === "number" ? venue.beer_price_pln : 15,
+        timestamp: now.toISOString()
+      });
+      saveNightLog(filtered);
+    } catch (e) {}
+  }
+  window.__recordNightLogVisit = recordNightLogVisit;
+
   function formatDisplayHours(raw) {
     if (!raw) return "";
     let s = raw.trim();
@@ -1005,7 +1080,8 @@
 
   // Create Custom HTML Marker Badge (Vad Kostar Ölen Style: grey ✕ circle if closed, green checkmark if visited)
   function createMarkerIcon(venue) {
-    const open = isVenueOpen(venue);
+    const now = new Date();
+    const open = isVenueOpen(venue, now);
     const price = venue.beer_price_pln;
     const tier = getPriceTier(price);
     const craftClass = venue.is_craft ? "marker-craft-halo" : "";
@@ -1027,13 +1103,25 @@
       });
     }
 
+    // Moduł 3: Happy Hour pulsing halo & countdown badge
+    const activeHh = getActiveHappyHour(venue, now);
+    const hhClass = activeHh ? "marker-happy-hour-pulse" : "";
+    const hhBadge = activeHh ? `<span class="marker-hh-badge" title="Happy Hour: jeszcze ${formatMinutesLeft(activeHh.minutesLeft)}!">⚡ ${activeHh.minutesLeft}m</span>` : "";
+
+    // Moduł 3: Closing Soon warning badge (when closing within 45 min)
+    const closingSoonInfo = getVenueClosingSoon(venue, now, 45);
+    const closingClass = (!activeHh && closingSoonInfo.closingSoon) ? "marker-closing-soon" : "";
+    const closingBadge = closingSoonInfo.closingSoon ? `<span class="marker-closing-badge" title="Zamyka się o ${closingSoonInfo.closeTimeStr} (za ${closingSoonInfo.minutesLeft} min)!">⚠️ ${closingSoonInfo.minutesLeft}m</span>` : "";
+
     const size = price <= 12.0 ? [44, 44] : [38, 38];
     return L.divIcon({
       className: "custom-price-div-icon",
-      html: `<div class="price-badge-marker ${tier.class} ${craftClass}" style="width:${size[0]}px; height:${size[1]}px;">
+      html: `<div class="price-badge-marker ${tier.class} ${craftClass} ${hhClass} ${closingClass}" style="width:${size[0]}px; height:${size[1]}px;">
               ${price.toFixed(price % 1 === 0 ? 0 : 1)}<span style="font-size:9px;margin-left:1px;">zł</span>
               ${visitedBadge}
               ${passBadge}
+              ${hhBadge}
+              ${closingBadge}
              </div>`,
       iconSize: size,
       iconAnchor: [size[0] / 2, size[1] / 2]
@@ -1086,6 +1174,17 @@
 
     const proofUrl = venue.photo_url || venue.proof_image_url;
 
+    const closingSoonInfo = getVenueClosingSoon(venue);
+    let closingWarningHtml = "";
+    if (closingSoonInfo.closingSoon) {
+      closingWarningHtml = `
+        <div class="venue-closing-warning-box" style="margin-bottom:8px;">
+          <span>⚠️</span>
+          <div><strong>Zamyka się o ${closingSoonInfo.closeTimeStr}</strong> (za ok. ${closingSoonInfo.minutesLeft} min) — zamów ostatnią kolejkę!</div>
+        </div>
+      `;
+    }
+
     let hhLivePromoHtml = "";
     if (activeHh) {
       hhLivePromoHtml = `
@@ -1131,6 +1230,7 @@
           ${venue.hours ? `<span class="venue-hours-chip">🕒 ${escapeHtml(formatDisplayHours(venue.hours))}</span>` : ''}
         </div>
 
+        ${closingWarningHtml}
         ${hhLivePromoHtml}
 
         <div class="venue-price-box">
@@ -3391,6 +3491,8 @@
     } else {
       visitedVenues.push(venueId);
       isNowVisited = true;
+      const targetV = allVenues.find(item => item.id === venueId);
+      if (targetV) recordNightLogVisit(targetV);
     }
     saveVisitedVenues(visitedVenues);
 
@@ -5813,7 +5915,7 @@
         b.classList.remove("active");
         b.style.display = "none";
       });
-      document.querySelectorAll(".modal-backdrop.active").forEach(m => {
+      document.querySelectorAll(".modal-backdrop").forEach(m => {
         m.classList.remove("active");
         m.style.display = "none";
       });
@@ -5840,10 +5942,24 @@
         const target = item.getAttribute("data-target");
         if (window.poileHaptics) window.poileHaptics.tick();
 
-        // 1. Tab: MAPA (Czysty, płynny widok mapy bez uciążliwych szuflad)
+        // 1. Tab: RANKING (Wysuwana szuflada z rankingiem barów w mieście)
+        if (target === "ranking") {
+          const isDrawerOpen = drawer && drawer.classList.contains("open");
+          closeAllModalsAndSheets();
+          if (isDrawerOpen) {
+            if (typeof window.__closeRankingDrawer === "function") window.__closeRankingDrawer();
+            clearBottomNavActive();
+          } else {
+            clearBottomNavActive();
+            item.classList.add("active");
+            if (typeof window.__openRankingDrawer === "function") window.__openRankingDrawer();
+          }
+          return;
+        }
+
+        // Fallback: MAPA (Kliknięcie mapy czyści aktywne podświetlenie)
         if (target === "map") {
           clearBottomNavActive();
-          item.classList.add("active");
           closeAllModalsAndSheets();
           return;
         }
@@ -5897,18 +6013,12 @@
           clearBottomNavActive();
           item.classList.add("active");
           closeAllModalsAndSheets();
-          if (currentUser && currentProfile) {
-            if (typeof window.__openMyProfile === "function") {
-              window.__openMyProfile();
-            } else if (typeof window.__openPassport === "function") {
-              window.__openPassport();
-            }
-          } else {
-            if (typeof window.__openAuth === "function") {
-              window.__openAuth("login");
-            } else if (typeof window.__openPassport === "function") {
-              window.__openPassport();
-            }
+          if (typeof window.__openMyProfile === "function") {
+            window.__openMyProfile();
+          } else if (typeof window.__openPassport === "function") {
+            window.__openPassport();
+          } else if (typeof window.__openAuth === "function") {
+            window.__openAuth("login");
           }
           return;
         }
@@ -6670,6 +6780,44 @@
     initStoryCardModal();
     initClubCardModal();
     initSosFeature();
+
+    // Universal Modal & Sheet Close Handler (Backdrop tap & Close buttons)
+    document.addEventListener("click", (e) => {
+      // 1. Click on modal backdrop outside card
+      if (e.target.classList && e.target.classList.contains("modal-backdrop")) {
+        if (window.poileHaptics) window.poileHaptics.tick();
+        e.target.classList.remove("active");
+        e.target.style.display = "none";
+        document.body.classList.remove("modal-open");
+      }
+
+      // 2. Click on any close button
+      const closeBtn = e.target.closest(".modal-close, .modal-close-goin, .sheet-close-btn, .btn-close-drawer, [id^='btn-close-']");
+      if (closeBtn) {
+        if (window.poileHaptics) window.poileHaptics.tick();
+        const modal = closeBtn.closest(".modal-backdrop");
+        if (modal) {
+          modal.classList.remove("active");
+          modal.style.display = "none";
+          document.body.classList.remove("modal-open");
+        }
+        const sheet = closeBtn.closest(".bottom-sheet");
+        if (sheet && typeof window.__setBottomSheetState === "function") {
+          window.__setBottomSheetState(sheet, "closed");
+        }
+        if (closeBtn.id === "btn-close-drawer" || closeBtn.classList.contains("btn-close-drawer")) {
+          const drawer = document.getElementById("ranking-drawer");
+          if (drawer && drawer.classList.contains("open")) {
+            if (typeof window.__closeRankingDrawer === "function") {
+              window.__closeRankingDrawer();
+            } else {
+              drawer.classList.remove("open");
+              document.body.classList.remove("drawer-open");
+            }
+          }
+        }
+      }
+    });
 
     // Deep linking: listen to URL hash changes
     window.addEventListener("hashchange", checkUrlHash);
@@ -20795,6 +20943,17 @@
       `;
     }
 
+    const closingSoonInfo = getVenueClosingSoon(venue);
+    let closingWarningHtml = "";
+    if (closingSoonInfo.closingSoon) {
+      closingWarningHtml = `
+        <div class="venue-closing-warning-box" style="margin-bottom:8px;">
+          <span>⚠️</span>
+          <div><strong>Zamyka się o ${closingSoonInfo.closeTimeStr}</strong> (za ok. ${closingSoonInfo.minutesLeft} min) — zamów ostatnią kolejkę!</div>
+        </div>
+      `;
+    }
+
     // Waze-style micro-verification card with quick price tiles
     const verifyCardHtml = `
       <div class="waze-verify-card" id="waze-card-${venue.id}">
@@ -20868,7 +21027,7 @@
       `;
     }
 
-    contentEl.innerHTML = hhHtml + verifyCardHtml + actionButtonsHtml + chipsHtml + proofHtml;
+    contentEl.innerHTML = closingWarningHtml + hhHtml + verifyCardHtml + actionButtonsHtml + chipsHtml + proofHtml;
 
     // Attach listeners for venue sheet actions
     const btnYes = document.getElementById(`btn-waze-yes-${venue.id}`);
@@ -20876,6 +21035,7 @@
     if (btnYes) {
       btnYes.addEventListener("click", () => {
         poileHaptics.success();
+        recordNightLogVisit(venue);
         showAppToast("Cena potwierdzona! ✓", `Dziękujemy za potwierdzenie ceny w ${venue.name} (+10 pkt do Paszportu).`, "🍺", 4000);
         btnYes.style.background = "#15803d";
         btnYes.innerHTML = "✓ Potwierdzono (+10 pkt)";
@@ -21511,6 +21671,7 @@
       proximityBtnYes.addEventListener("click", () => {
         if (!activeProximityVenue) return;
         poileHaptics.success();
+        recordNightLogVisit(activeProximityVenue);
         awardPassportPoints(10);
         showAppToast("Cena potwierdzona! ✓", `Dziękujemy za potwierdzenie ceny w ${activeProximityVenue.name} (+10 pkt).`, "🍺", 4000);
         sessionDismissedVenues.add(activeProximityVenue.id);
@@ -21548,6 +21709,195 @@
   }
   window.awardPassportPoints = awardPassportPoints;
 
+  // ==========================================================================
+  // MODUŁ 3: Kontekstowość Czasowa (TimeContextEngine)
+  // ==========================================================================
+  const TimeContextEngine = {
+    // Determine mode based on time of day
+    getMode(now = new Date()) {
+      const h = now.getHours();
+      if (h >= 15 && h < 20) return "bifor";           // 15:00 - 20:00 (Bifor & Happy Hours)
+      if (h >= 20 || h < 1) return "peak";             // 20:00 - 01:00 (Peak Night)
+      if (h >= 1 && h < 5) return "night_survival";     // 01:00 - 05:00 (Nocne Przetrwanie / SOS)
+      return "day_recovery";                            // 05:00 - 15:00 (Regeneracja / Dzienny)
+    },
+
+    getModeMeta(mode) {
+      switch (mode) {
+        case "bifor":
+          return {
+            name: "Tryb Bifor & Happy Hours",
+            badge: "⚡ Tryb Bifor",
+            icon: "⚡",
+            tagline: "Czas na bifor i Happy Hours w mieście! (15:00 - 20:00)",
+            highlightBentoId: "bento-btn-happyhour"
+          };
+        case "peak":
+          return {
+            name: "Tryb Peak Night",
+            badge: "🍻 Peak Night",
+            icon: "🍻",
+            tagline: "Miasto tętni życiem! Sprawdź Pub Crawl, Ruletkę i Puls 24h",
+            highlightBentoId: "bento-btn-pubcrawl"
+          };
+        case "night_survival":
+          return {
+            name: "Tryb Nocny / Przetrwanie",
+            badge: "🛡️ Tryb Nocny",
+            icon: "🛡️",
+            tagline: "Późna noc (01:00-05:00). Bezpieczny powrót i otwarte lokale",
+            highlightBentoId: "bento-btn-sos"
+          };
+        case "day_recovery":
+        default:
+          return {
+            name: "Tryb Dzienny / Regeneracja",
+            badge: "☀️ Dzień i Plany",
+            icon: "☀️",
+            tagline: "Dzień dobry! Zaplanuj wieczór lub zobacz wczorajsze podsumowanie",
+            highlightBentoId: "bento-btn-compass"
+          };
+      }
+    },
+
+    renderContextPill(mode, meta) {
+      const discoverScroll = document.querySelector("#discover-sheet .discover-scroll");
+      if (!discoverScroll) return;
+
+      let pill = document.getElementById("time-context-pill");
+      if (!pill) {
+        pill = document.createElement("div");
+        pill.className = "time-context-pill";
+        pill.id = "time-context-pill";
+        const bentoGrid = discoverScroll.querySelector(".bento-grid");
+        if (bentoGrid) {
+          discoverScroll.insertBefore(pill, bentoGrid);
+        } else {
+          discoverScroll.prepend(pill);
+        }
+      }
+
+      pill.innerHTML = `
+        <div class="context-pill-content">
+          <span class="context-pill-badge">${escapeHtml(meta.badge)}</span>
+          <span class="context-pill-tagline">${escapeHtml(meta.tagline)}</span>
+        </div>
+      `;
+    },
+
+    checkMorningRecap(now = new Date()) {
+      try {
+        const todayStr = now.toISOString().slice(0, 10);
+        const lastShown = localStorage.getItem("poilepiwko_recap_shown_date");
+        if (lastShown === todayStr) return;
+
+        const log = getNightLog();
+        if (!Array.isArray(log) || log.length === 0) return;
+
+        // Cutoff: visits in the last 18 hours
+        const nightCutoff = now.getTime() - (18 * 60 * 60 * 1000);
+        const nightVisits = log.filter(item => {
+          const t = new Date(item.timestamp).getTime();
+          return t >= nightCutoff;
+        });
+
+        if (nightVisits.length > 0) {
+          localStorage.setItem("poilepiwko_recap_shown_date", todayStr);
+          const count = nightVisits.length;
+          const prices = nightVisits.map(v => typeof v.price === "number" ? v.price : 15);
+          const avgPrice = (prices.reduce((a, b) => a + b, 0) / count).toFixed(1);
+          const benchmark = 18.0;
+          const saved = Math.max(0, prices.reduce((acc, p) => acc + Math.max(0, benchmark - p), 0)).toFixed(0);
+
+          setTimeout(() => {
+            showAppToast(
+              "☀️ Poranny Recap Nocy!",
+              `Wczoraj odwiedziłeś ${count} ${count === 1 ? 'bar' : (count < 5 ? 'bary' : 'barów')}. Średnia: ${avgPrice} zł.${saved > 0 ? ` Zaoszczędziłeś ok. ${saved} zł z poilepiwko!` : ' Dobra robota!'} 🍻`,
+              "☀️",
+              6500
+            );
+          }, 1500);
+        }
+      } catch (e) {
+        console.warn("Morning recap check failed", e);
+      }
+    },
+
+    apply(now = new Date(), isInitial = false) {
+      const mode = this.getMode(now);
+      const meta = this.getModeMeta(mode);
+
+      document.body.setAttribute("data-time-mode", mode);
+      this.renderContextPill(mode, meta);
+
+      // 1. Floating SOS button pulse during night survival mode
+      const btnSosFloat = document.getElementById("btn-sos-float");
+      if (btnSosFloat) {
+        if (mode === "night_survival") {
+          btnSosFloat.classList.add("sos-night-mode-pulse");
+        } else {
+          btnSosFloat.classList.remove("sos-night-mode-pulse");
+        }
+      }
+
+      // 2. Bento cards highlight
+      const bentoCardIds = [
+        "bento-btn-compass",
+        "bento-btn-roulette",
+        "bento-btn-pubcrawl",
+        "bento-btn-happyhour",
+        "bento-btn-barometer",
+        "bento-btn-pubquiz",
+        "bento-btn-sos"
+      ];
+      bentoCardIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove("bento-featured-time");
+      });
+
+      if (meta.highlightBentoId) {
+        const targetBento = document.getElementById(meta.highlightBentoId);
+        if (targetBento) targetBento.classList.add("bento-featured-time");
+        if (mode === "peak") {
+          const rouletteBento = document.getElementById("bento-btn-roulette");
+          if (rouletteBento) rouletteBento.classList.add("bento-featured-time");
+        }
+      }
+
+      // 3. Night Survival auto-suggest open now
+      if (mode === "night_survival" && isInitial) {
+        try {
+          if (!sessionStorage.getItem("poilepiwko_night_open_filtered")) {
+            sessionStorage.setItem("poilepiwko_night_open_filtered", "1");
+            filterState.openNow = true;
+            currentFilter = "open-now";
+            syncQuickChipsWithFilterState();
+            if (typeof renderMarkers === "function") renderMarkers();
+            showAppToast("🛡️ Tryb Nocny (01:00-05:00)", "Pokazujemy tylko lokale otwarte teraz oraz ostrzegamy przed zamknięciem.", "🌙", 4500);
+          }
+        } catch (e) {}
+      }
+
+      // 4. Day Recovery check morning recap
+      if (mode === "day_recovery") {
+        this.checkMorningRecap(now);
+      }
+    }
+  };
+  window.TimeContextEngine = TimeContextEngine;
+
+  function initTimeContextEngine() {
+    TimeContextEngine.apply(new Date(), true);
+    setInterval(() => {
+      TimeContextEngine.apply(new Date(), false);
+    }, 60000);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        TimeContextEngine.apply(new Date(), false);
+      }
+    });
+  }
+
   // Boot Application
   function boot() {
     applyTheme(getSavedThemePreference());
@@ -21557,6 +21907,7 @@
     loadVenues();
     initUserGeolocation();
     initMobileModernization();
+    initTimeContextEngine();
 
     // Register Service Worker for PWA with automatic update detection
     if ("serviceWorker" in navigator) {

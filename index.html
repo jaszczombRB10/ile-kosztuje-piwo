@@ -1307,16 +1307,18 @@
 
   <!-- Native 5-Tab Bottom Navigation Dock (Thumb-First Mobile Dock) -->
   <nav class="mobile-bottom-nav" id="mobile-bottom-nav" aria-label="Nawigacja dolna">
-    <!-- Tab 1: Mapa -->
-    <button type="button" class="nav-item active" id="nav-btn-map" data-target="map" title="Widok mapy i barów">
+    <!-- Tab 1: Ranking -->
+    <button type="button" class="nav-item" id="nav-btn-ranking" data-target="ranking" title="Ranking najtańszego piwa w mieście">
       <span class="nav-icon">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon>
-          <line x1="9" y1="3" x2="9" y2="18"></line>
-          <line x1="15" y1="6" x2="15" y2="21"></line>
+          <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+          <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+          <path d="M4 22h16"></path>
+          <path d="M10 14.66V17c0 .55-.45 1-1 1H8v2h8v-2h-1c-.55 0-1-.45-1-1v-2.34"></path>
+          <path d="M18 4H6v7a6 6 0 0 0 12 0V4Z"></path>
         </svg>
       </span>
-      <span class="nav-label">Mapa</span>
+      <span class="nav-label">Ranking</span>
     </button>
 
     <!-- Tab 2: Odkrywaj (Bento Grid) -->
@@ -1330,13 +1332,10 @@
       <span class="nav-label">Odkrywaj</span>
     </button>
 
-    <!-- Tab 3: Central Action FAB Button -->
-    <button type="button" class="nav-item nav-item-action" id="nav-btn-action" data-target="action" title="Szybka akcja: Check-in, BeReal, Dodaj bar" aria-label="Dodaj lub potwierdź cenę">
+    <!-- Tab 3: Central Action FAB Button (Warszawska Syrenka) -->
+    <button type="button" class="nav-item nav-item-action" id="nav-btn-action" data-target="action" title="Szybka akcja: Check-in, BeReal, Dodaj bar" aria-label="Syrenka Warszawska - szybka akcja">
       <div class="nav-fab-circle" id="nav-action-fab">
-        <svg class="nav-fab-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="12" y1="5" x2="12" y2="19"></line>
-          <line x1="5" y1="12" x2="19" y2="12"></line>
-        </svg>
+        <img src="icons/syrenka-hero.png" alt="Syrenka Warszawska z piwkiem" class="nav-fab-syrenka" width="40" height="40" />
       </div>
       <span class="nav-label">Akcja</span>
     </button>
