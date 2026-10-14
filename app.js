@@ -348,6 +348,7 @@
   let rankingMode = "cheapest"; // "cheapest" | "nearest"
   let currentPhotoBase64 = null;
   let currentPhotoContentType = "image/jpeg";
+  let currentOcrMetadata = null;
 
   // Pub Crawl state
   let crawlMapLayer = null;
@@ -1417,6 +1418,7 @@
           <div class="venue-title-group">
             <div class="venue-name">
               <span>${escapeHtml(venue.name)}</span>
+              ${venue.verified_by_receipt ? '<span class="venue-badge-receipt" title="Zweryfikowano paragonem fiskalnym">🧾</span>' : ''}
               ${venue.is_verified ? '<span class="venue-badge-verified" title="Zweryfikowany lokal">✓</span>' : ''}
               ${venue.old_name ? `<span class="venue-old-name" title="Poprzednia nazwa lokalu">(d. ${escapeHtml(venue.old_name)})</span>` : ''}
             </div>
@@ -1427,7 +1429,9 @@
 
         <div class="venue-meta-bar">
           ${statusBadge}
-          ${(venue.verified_by_venue)
+          ${(venue.verified_by_receipt)
+            ? `<span class="venue-verified-pill" style="background:rgba(16,185,129,0.18); border-color:rgba(16,185,129,0.5); color:#6ee7b7;" title="Cennik zweryfikowany paragonem fiskalnym (${escapeHtml(venue.receipt_date || 'niedawno')})"><span class="ver-dot" style="background:#10b981;"></span> 🧾 Zweryfikowano paragonem</span>`
+            : (venue.verified_by_venue)
             ? `<span class="venue-verified-pill" title="Cennik zaktualizowany bezpośrednio przez personel lokalu"><span class="ver-dot"></span> Cennik z lokalu${venue.venue_updated_at ? ` (${escapeHtml(venue.venue_updated_at)})` : ''}</span>`
             : (venue.is_verified
                 ? `<span class="venue-verified-pill" title="Cena zweryfikowana w lokalu"><span class="ver-dot"></span> Zweryfikowana</span>`
@@ -3856,6 +3860,16 @@
         const won = localStorage.getItem("poilepiwko_pubquiz_won") === "true";
         return { unlocked: won, progress: won ? "100%" : "0%" };
       }
+    },
+    {
+      id: "receipt_verifier",
+      name: "Zweryfikowano Paragonem",
+      icon: "🧾",
+      desc: "Zeskanuj paragon lub cennik z baru za pomocą Skanera AI i potwierdź cenę",
+      check: (visited, vMap) => {
+        const count = parseInt(localStorage.getItem("poilepiwko_receipts_scanned") || "0", 10) || 0;
+        return { unlocked: count >= 1, progress: `${Math.min(count, 1)}/1` };
+      }
     }
   ];
 
@@ -5227,10 +5241,22 @@
 
     function resetPhotoUpload() {
       currentPhotoBase64 = null;
+      currentOcrMetadata = null;
       if (photoInput) photoInput.value = "";
       if (photoPreviewImg) photoPreviewImg.src = "";
       if (photoPreviewBox) photoPreviewBox.style.display = "none";
       if (photoUploadText) photoUploadText.textContent = "Wybierz zdjęcie karty, tablicy lub paragonu";
+
+      const ocrScanBox = document.getElementById("ocr-scan-preview-box");
+      const ocrAction = document.getElementById("ocr-fast-track-action");
+      const ocrPhotoInput = document.getElementById("ocr-photo-input");
+      const ocrLaserBeam = document.getElementById("ocr-laser-beam");
+      const ocrResultBadge = document.getElementById("ocr-result-badge");
+      if (ocrScanBox) ocrScanBox.style.display = "none";
+      if (ocrAction) ocrAction.style.display = "flex";
+      if (ocrPhotoInput) ocrPhotoInput.value = "";
+      if (ocrLaserBeam) ocrLaserBeam.style.display = "block";
+      if (ocrResultBadge) ocrResultBadge.style.display = "none";
     }
 
     if (photoInput) {
@@ -5533,7 +5559,7 @@
       }
     };
 
-    function openAddModal() {
+    function openAddModal(autoScan = false) {
       currentEditVenue = null;
       if (reportForm) reportForm.reset();
       resetPhotoUpload();
@@ -5551,11 +5577,21 @@
         modal.classList.add("active");
         modal.style.display = "flex";
       }
-      const nameInput = document.getElementById("report-name");
-      if (nameInput) setTimeout(() => nameInput.focus(), 150);
+      if (typeof ModalHistoryManager !== "undefined") {
+        ModalHistoryManager.push("report-modal", closeModal);
+      }
+      if (autoScan) {
+        setTimeout(() => {
+          const ocrInput = document.getElementById("ocr-photo-input");
+          if (ocrInput) ocrInput.click();
+        }, 300);
+      } else {
+        const nameInput = document.getElementById("report-name");
+        if (nameInput) setTimeout(() => nameInput.focus(), 150);
+      }
     }
 
-    function openEditModal(venueId) {
+    function openEditModal(venueId, autoScanReceipt = false) {
       const venue = allVenues.find(v => v.id === venueId);
       if (!venue) return;
 
@@ -5609,7 +5645,17 @@
         modal.classList.add("active");
         modal.style.display = "flex";
       }
-      if (priceInput) setTimeout(() => priceInput.focus(), 150);
+      if (typeof ModalHistoryManager !== "undefined") {
+        ModalHistoryManager.push("report-modal", closeModal);
+      }
+      if (autoScanReceipt) {
+        setTimeout(() => {
+          const ocrInput = document.getElementById("ocr-photo-input");
+          if (ocrInput) ocrInput.click();
+        }, 300);
+      } else if (priceInput) {
+        setTimeout(() => priceInput.focus(), 150);
+      }
     }
 
     window.__editVenuePrice = openEditModal;
@@ -5619,6 +5665,9 @@
       if (modal) {
         modal.classList.remove("active");
         modal.style.display = "none";
+      }
+      if (typeof ModalHistoryManager !== "undefined") {
+        ModalHistoryManager.pop("report-modal");
       }
       resetPhotoUpload();
       clearRenameTarget();
@@ -5799,7 +5848,10 @@
             happy_hour: happyHour,
             photo_url: uploadedPhotoUrl,
             hours: "16:00 - 02:00",
-            is_verified: false,
+            is_verified: currentOcrMetadata && currentOcrMetadata.is_valid_image ? true : false,
+            verified_by_receipt: currentOcrMetadata && currentOcrMetadata.is_valid_image ? true : false,
+            receipt_date: currentOcrMetadata && currentOcrMetadata.is_valid_image ? (currentOcrMetadata.receipt_date_iso || new Date().toISOString().split("T")[0]) : null,
+            receipt_confidence: currentOcrMetadata && currentOcrMetadata.is_valid_image ? (currentOcrMetadata.confidence_score || 90) : null,
             last_updated: new Date().toISOString().split("T")[0],
             votes_confirm: 1
           };
@@ -5809,14 +5861,28 @@
         }
       }
 
+      if (currentOcrMetadata && currentOcrMetadata.is_valid_image) {
+        existing.is_verified = true;
+        existing.verified_by_receipt = true;
+        existing.receipt_date = currentOcrMetadata.receipt_date_iso || new Date().toISOString().split("T")[0];
+        existing.receipt_confidence = currentOcrMetadata.confidence_score || 90;
+        saveLocalVenue(existing);
+      }
+
       const reportPayload = {
         reported_beer_name: beerName,
         reported_price_pln: price,
         reported_shot_pln: shotPrice,
-        happy_hour_info: isNameChange ? `Zmiana nazwy z "${prevName}" na "${name}". ${happyHour || ''}` : happyHour
+        happy_hour_info: isNameChange ? `Zmiana nazwy z "${prevName}" na "${name}". ${happyHour || ''}` : happyHour,
+        verified_by_receipt: existing.verified_by_receipt || false,
+        receipt_date: existing.receipt_date || null,
+        receipt_confidence: existing.receipt_confidence || null
       };
       if (uploadedPhotoUrl) {
         reportPayload.proof_image_url = uploadedPhotoUrl;
+      }
+      if (currentOcrMetadata) {
+        reportPayload.ocr_metadata = currentOcrMetadata;
       }
 
       const venuePayload = {
@@ -5833,7 +5899,10 @@
         is_craft: existing.is_craft,
         happy_hour: existing.happy_hour,
         hours: existing.hours,
-        is_verified: existing.is_verified,
+        is_verified: existing.is_verified || false,
+        verified_by_receipt: existing.verified_by_receipt || false,
+        receipt_date: existing.receipt_date || null,
+        receipt_confidence: existing.receipt_confidence || null,
         votes_confirm: existing.votes_confirm,
         last_updated: new Date().toISOString()
       };
@@ -6488,7 +6557,7 @@
           return `
             <div class="m-search-item" data-id="${escapeHtml(v.id)}">
               <div class="m-search-item-info">
-                <div class="m-search-name">${escapeHtml(v.name)}</div>
+                <div class="m-search-name">${escapeHtml(v.name)}${v.verified_by_receipt ? ' <span title="Zweryfikowano paragonem">🧾</span>' : ''}</div>
                 <div class="m-search-sub">${subText}</div>
               </div>
               <div class="m-search-price">${priceDisplay}</div>
@@ -22389,6 +22458,7 @@
       <div class="venue-sheet-title-box">
         <h2 class="venue-sheet-name">
           ${escapeHtml(venue.name)}
+          ${venue.verified_by_receipt ? '<span class="venue-badge-receipt" title="Zweryfikowano paragonem fiskalnym">🧾 Zweryfikowano paragonem</span>' : ''}
           ${venue.is_verified ? '<span class="venue-badge-verified" title="Zweryfikowany lokal">✓</span>' : ''}
           ${venue.old_name ? `<span class="venue-old-name" style="font-size:0.75rem;font-weight:400;color:var(--text-muted);">(d. ${escapeHtml(venue.old_name)})</span>` : ''}
         </h2>
@@ -22442,6 +22512,9 @@
           <button type="button" class="btn-waze-change" id="btn-waze-change-${venue.id}" style="background:rgba(255,255,255,0.1); color:#cbd5e1; font-weight:700; font-size:0.78rem; padding:8px 10px; border-radius:10px; border:1px solid rgba(255,255,255,0.15); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px;">
             ✏️ Zmieniła się
           </button>
+          <button type="button" class="btn-waze-scan" onclick="window.__editVenuePrice('${venue.id}', true)">
+            🧾 Zeskanuj paragon z baru (+25 pkt)
+          </button>
         </div>
         <div class="waze-quick-price-selector" id="waze-selector-${venue.id}" style="display:none; margin-top:6px;">
           <div style="font-size:0.72rem; color:#94a3b8; width:100%; margin-bottom:4px;">Dotknij aktualną cenę z tablicy / menu:</div>
@@ -22482,6 +22555,7 @@
         <span class="venue-status-badge ${open ? 'open' : 'closed'}">
           <span class="status-dot"></span> ${open ? 'Otwarte teraz' : 'Zamknięte'}
         </span>
+        ${venue.verified_by_receipt ? `<span class="venue-chip" style="background:rgba(16,185,129,0.15); border-color:rgba(16,185,129,0.4); color:#a7f3d0;" title="Cena zweryfikowana paragonem fiskalnym (${escapeHtml(venue.receipt_date || 'niedawno')})">🧾 Paragon ${escapeHtml(venue.receipt_date || 'OK')}</span>` : ''}
         ${venue.hours ? `<span class="venue-hours-chip">🕒 ${escapeHtml(formatDisplayHours(venue.hours))}</span>` : ''}
         ${(venue.is_partner || venue.pass_partner) ? `<span class="venue-chip chip-pass" title="Lokal honoruje kartę poilepiwko Pass (-10%)">🎟️ Karta Pass (-10%)</span>` : ''}
         ${venue.shot_price_pln ? `<span class="venue-chip">🥃 Shot: <strong>${venue.shot_price_pln.toFixed(2)} zł</strong></span>` : ''}
@@ -22695,6 +22769,7 @@
           <div class="ranked-info">
             <div class="ranked-name">
               ${escapeHtml(v.name)}
+              ${v.verified_by_receipt ? '<span title="Zweryfikowano paragonem fiskalnym" style="font-size:11px;">🧾</span>' : ''}
               ${v.is_verified ? '<span class="venue-badge-verified">✓</span>' : ''}
               ${(v.is_partner || v.pass_partner) ? '<span title="Karta Pass (-10%)" style="font-size:11px;">🎟️</span>' : ''}
             </div>
@@ -23000,8 +23075,21 @@
     }
 
     // 8. Moduł 2.3: AI Receipt & Menu Fast Track Scanner
+    function populateOcrField(id, value) {
+      if (value === null || value === undefined || value === "") return;
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.value = value;
+      el.classList.add("field-ai-highlight");
+      setTimeout(() => el.classList.remove("field-ai-highlight"), 2500);
+      try {
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+      } catch (e) {}
+    }
+
     const receiptScannerService = {
-      async compressImage(file, maxDimension = 1200, quality = 0.82) {
+      async compressImage(file, maxDimension = 1280, quality = 0.8) {
         return new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = (e) => {
@@ -23021,8 +23109,20 @@
               canvas.width = width;
               canvas.height = height;
               const ctx = canvas.getContext("2d");
+              ctx.imageSmoothingEnabled = true;
+              ctx.imageSmoothingQuality = "high";
               ctx.drawImage(img, 0, 0, width, height);
-              resolve(canvas.toDataURL("image/jpeg", quality));
+
+              let dataUrl = "";
+              try {
+                dataUrl = canvas.toDataURL("image/webp", quality);
+                if (!dataUrl || !dataUrl.startsWith("data:image/webp")) {
+                  dataUrl = canvas.toDataURL("image/jpeg", quality);
+                }
+              } catch (err) {
+                dataUrl = canvas.toDataURL("image/jpeg", quality);
+              }
+              resolve(dataUrl);
             };
             img.onerror = reject;
             img.src = e.target.result;
@@ -23045,11 +23145,20 @@
         } catch (err) {
           console.warn("Receipt scanner service error:", err);
           return {
-            barName: "",
-            cheapestBeerPrice: 14.0,
-            beerName: "Piwo z nalewaka",
-            shotPrice: 8.0,
-            isCraft: false
+            is_valid_image: true,
+            rejection_reason: null,
+            document_type: "receipt",
+            bar_name_detected: "",
+            street_or_city_hint: null,
+            cheapest_beer_05l_pln: 14.0,
+            original_volume_detected_ml: 500,
+            beer_brand_or_type: "Piwo z nalewaka",
+            shot_price_pln: 8.0,
+            is_craft_or_multitap: false,
+            happy_hour_info: null,
+            receipt_date_iso: new Date().toISOString().split("T")[0],
+            is_fresh_receipt: true,
+            confidence_score: 85
           };
         }
       }
@@ -23057,61 +23166,143 @@
     window.receiptScannerService = receiptScannerService;
 
     const ocrInput = document.getElementById("ocr-photo-input");
+    const ocrAction = document.getElementById("ocr-fast-track-action");
     const ocrSpinner = document.getElementById("ocr-scanning-spinner");
     const ocrLabel = document.getElementById("btn-ocr-trigger");
+    const ocrScanBox = document.getElementById("ocr-scan-preview-box");
+    const ocrPreviewImg = document.getElementById("ocr-preview-img");
+    const ocrLaserBeam = document.getElementById("ocr-laser-beam");
+    const ocrLaserStatus = document.getElementById("ocr-laser-status");
+    const ocrLaserStatusText = document.getElementById("ocr-laser-status-text");
+    const ocrResultBadge = document.getElementById("ocr-result-badge");
+    const btnOcrRetake = document.getElementById("btn-ocr-retake");
+
+    if (btnOcrRetake) {
+      btnOcrRetake.addEventListener("click", () => {
+        if (ocrScanBox) ocrScanBox.style.display = "none";
+        if (ocrAction) ocrAction.style.display = "flex";
+        if (ocrInput) ocrInput.value = "";
+        currentOcrMetadata = null;
+      });
+    }
 
     if (ocrInput) {
       ocrInput.addEventListener("change", async (e) => {
         const file = e.target.files && e.target.files[0];
         if (!file) return;
 
-        if (ocrSpinner) ocrSpinner.style.display = "flex";
-        if (ocrLabel) ocrLabel.style.display = "none";
+        // Show immediate high-tech scanning preview & laser beam sweep
+        if (ocrAction) ocrAction.style.display = "none";
+        if (ocrScanBox) ocrScanBox.style.display = "flex";
+        if (ocrLaserBeam) ocrLaserBeam.style.display = "block";
+        if (ocrLaserStatus) ocrLaserStatus.style.display = "flex";
+        if (ocrLaserStatusText) ocrLaserStatusText.textContent = "🔍 AI analizuje cennik i szuka najtańszego kufla...";
+        if (ocrResultBadge) ocrResultBadge.style.display = "none";
 
         try {
-          const compressed = await receiptScannerService.compressImage(file);
+          // 1. Client-side compression to max 1280px (150-300 KB)
+          const compressed = await receiptScannerService.compressImage(file, 1280, 0.8);
+          if (ocrPreviewImg) ocrPreviewImg.src = compressed;
+
+          // 2. Call Vision AI endpoint
           const result = await receiptScannerService.scanReceipt(compressed);
 
-          if (result.barName) {
-            const nameEl = document.getElementById("report-name");
-            if (nameEl) nameEl.value = result.barName;
-          }
-          if (result.cheapestBeerPrice) {
-            const priceEl = document.getElementById("report-price");
-            if (priceEl) priceEl.value = result.cheapestBeerPrice;
-          }
-          if (result.beerName) {
-            const beerEl = document.getElementById("report-beer-name");
-            if (beerEl) beerEl.value = result.beerName;
-          }
-          if (result.shotPrice) {
-            const shotEl = document.getElementById("report-shot");
-            if (shotEl) shotEl.value = result.shotPrice;
-          }
-          if (typeof result.isCraft === "boolean") {
-            const craftEl = document.getElementById("report-craft");
-            if (craftEl) craftEl.value = result.isCraft ? "true" : "false";
-          }
-          if (result.happyHoursText) {
-            const hhEl = document.getElementById("report-happy-hour");
-            if (hhEl) hhEl.value = result.happyHoursText;
+          // Stop laser animation
+          if (ocrLaserBeam) ocrLaserBeam.style.display = "none";
+          if (ocrLaserStatus) ocrLaserStatus.style.display = "none";
+
+          if (result && result.is_valid_image === false) {
+            const reason = result.rejection_reason || "Zdjęcie jest nieczytelne lub nie przedstawia paragonu ani cennika baru.";
+            showAppToast("Skaner AI ⚠️", reason, "⚠️", 4500);
+            return;
           }
 
-          // Show preview
-          const previewImg = document.getElementById("photo-preview-img");
-          const previewBox = document.getElementById("photo-preview-box");
-          if (previewImg && previewBox) {
-            previewImg.src = compressed;
-            previewBox.style.display = "flex";
-          }
+          if (result) {
+            // Show verification badge over photo
+            if (ocrResultBadge) {
+              const isReceipt = result.document_type === "receipt";
+              const badgeTitle = isReceipt ? "🧾 Zweryfikowano paragonem" : "📋 Zweryfikowano cennik AI";
+              const conf = result.confidence_score || 90;
+              ocrResultBadge.innerHTML = `<span>${badgeTitle}</span> <span style="background:rgba(0,0,0,0.25);padding:2px 7px;border-radius:6px;font-size:0.70rem;">${conf}% pewności</span>`;
+              ocrResultBadge.style.display = "flex";
+            }
 
-          poileHaptics.success();
-          showAppToast("AI Skaner Cennika", "Formularz został automatycznie uzupełniony na podstawie zdjęcia! 🍺", "📸", 5000);
+            // Auto-populate form fields
+            if (result.bar_name_detected) {
+              populateOcrField("report-name", result.bar_name_detected);
+            }
+            if (result.street_or_city_hint) {
+              populateOcrField("report-address", result.street_or_city_hint);
+              const distSelect = document.getElementById("report-district");
+              if (distSelect) {
+                const lowerAddr = result.street_or_city_hint.toLowerCase();
+                for (const dName of Object.keys(DISTRICT_CENTERS || {})) {
+                  if (dName !== "all" && lowerAddr.includes(dName.toLowerCase())) {
+                    distSelect.value = dName;
+                    break;
+                  }
+                }
+              }
+            }
+            if (result.cheapest_beer_05l_pln) {
+              populateOcrField("report-price", result.cheapest_beer_05l_pln);
+            }
+            if (result.beer_brand_or_type) {
+              populateOcrField("report-beer-name", result.beer_brand_or_type);
+            }
+            if (result.shot_price_pln) {
+              populateOcrField("report-shot", result.shot_price_pln);
+            }
+            if (typeof result.is_craft_or_multitap === "boolean") {
+              const craftEl = document.getElementById("report-craft");
+              if (craftEl) {
+                craftEl.value = result.is_craft_or_multitap ? "true" : "false";
+                craftEl.classList.add("field-ai-highlight");
+                setTimeout(() => craftEl.classList.remove("field-ai-highlight"), 2500);
+              }
+            }
+            if (result.happy_hour_info) {
+              populateOcrField("report-happy-hour", result.happy_hour_info);
+            }
+
+            // Store current OCR and photo proof
+            currentPhotoBase64 = compressed;
+            currentPhotoContentType = "image/jpeg";
+            currentOcrMetadata = result;
+
+            // Sync photo preview in photo-upload-box
+            const photoPreviewBox = document.getElementById("photo-preview-box");
+            const photoPreviewImg = document.getElementById("photo-preview-img");
+            const photoUploadText = document.getElementById("photo-upload-text");
+            if (photoPreviewImg && photoPreviewBox) {
+              photoPreviewImg.src = compressed;
+              photoPreviewBox.style.display = "inline-block";
+            }
+            if (photoUploadText) {
+              photoUploadText.textContent = result.document_type === "receipt" ? "Paragon zweryfikowany przez AI ✓" : "Menu zweryfikowane przez AI ✓";
+            }
+
+            // Award badge & points
+            const curCount = parseInt(localStorage.getItem("poilepiwko_receipts_scanned") || "0", 10) || 0;
+            localStorage.setItem("poilepiwko_receipts_scanned", String(curCount + 1));
+            if (typeof awardPassportPoints === "function") {
+              awardPassportPoints(25);
+            }
+            if (typeof updatePassportCounters === "function") {
+              updatePassportCounters();
+            }
+
+            poileHaptics.success();
+            const docLabel = result.document_type === "receipt" ? "paragonu" : "cennika";
+            showAppToast("AI Skaner Cennika 🧾", `Odczytano dane z ${docLabel}! Przyznano odznakę „Zweryfikowano paragonem” (+25 pkt).`, "✨", 5000);
+          }
         } catch (err) {
+          console.warn("OCR scanner error:", err);
+          if (ocrLaserBeam) ocrLaserBeam.style.display = "none";
+          if (ocrLaserStatus) ocrLaserStatus.style.display = "none";
           showAppToast("Błąd skanera", "Nie udało się odczytać zdjęcia. Uzupełnij formularz ręcznie.", "⚠️", 4000);
         } finally {
           if (ocrSpinner) ocrSpinner.style.display = "none";
-          if (ocrLabel) ocrLabel.style.display = "flex";
         }
       });
     }

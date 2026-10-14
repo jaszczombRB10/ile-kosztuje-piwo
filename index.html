@@ -972,17 +972,33 @@
             <span class="ocr-fast-track-icon">📸⚡</span>
             <div class="ocr-fast-track-info">
               <strong>Szybki Skaner AI (Tablica / Paragon)</strong>
-              <span>Zrób zdjęcie tablicy z kranu lub paragonu – uzupełnimy formularz za Ciebie!</span>
+              <span>Zrób zdjęcie tablicy z kranu lub paragonu – uzupełnimy formularz w 2 sekundy!</span>
             </div>
           </div>
-          <div class="ocr-fast-track-action">
-            <input type="file" id="ocr-photo-input" accept="image/*" class="photo-file-input" />
+          <div class="ocr-fast-track-action" id="ocr-fast-track-action">
+            <input type="file" id="ocr-photo-input" accept="image/*" capture="environment" class="photo-file-input" />
             <label for="ocr-photo-input" class="btn-ocr-trigger" id="btn-ocr-trigger">
-              <span>📷 Zrób zdjęcie / Wgraj cennik</span>
+              <span>📷 Zrób zdjęcie / Wgraj paragon lub menu</span>
             </label>
             <div id="ocr-scanning-spinner" style="display:none;" class="ocr-scanning-status">
               <div class="pulse-live-dot"></div>
-              <span>Analiza cennika przez AI Vision...</span>
+              <span>🔍 AI analizuje cennik i szuka najtańszego kufla...</span>
+            </div>
+          </div>
+
+          <!-- High-Tech AI Scanning Viewport with Laser Beam & Status -->
+          <div id="ocr-scan-preview-box" class="ocr-scan-preview-box" style="display:none;">
+            <div class="ocr-preview-viewport">
+              <img id="ocr-preview-img" src="" alt="Skanowany cennik lub paragon" />
+              <div class="ocr-laser-beam" id="ocr-laser-beam"></div>
+              <div class="ocr-laser-status" id="ocr-laser-status">
+                <span class="pulse-live-dot"></span>
+                <span id="ocr-laser-status-text">🔍 AI analizuje cennik i szuka najtańszego kufla...</span>
+              </div>
+              <div class="ocr-result-badge" id="ocr-result-badge" style="display:none;"></div>
+            </div>
+            <div class="ocr-preview-actions">
+              <button type="button" id="btn-ocr-retake" class="btn-ocr-retake">🔄 Zrób inne zdjęcie</button>
             </div>
           </div>
         </div>
