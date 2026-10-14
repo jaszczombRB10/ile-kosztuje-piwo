@@ -326,6 +326,7 @@
   let activeMarkers = [];
   let clusterGroup = null;
   let cityMarkersGroup = null;
+  let districtOverviewGroup = null;
   let currentFilter = "all";
   let filterState = {
     priceTier: "all",
@@ -898,16 +899,112 @@
     });
   }
 
-  // Zoom level switch: cities view (<= 10) vs bars view (> 10)
+  // Moduł 5: Render District Average Price Pills at Intermediate Zoom (11-13)
+  function renderDistrictOverviewMarkers() {
+    if (!districtOverviewGroup) {
+      districtOverviewGroup = L.layerGroup();
+    }
+    districtOverviewGroup.clearLayers();
+
+    if (!allVenues || allVenues.length === 0) return;
+
+    const curCity = getCurrentCity();
+    const cityCenter = curCity.center || [52.2319, 21.0067];
+
+    // Filter venues belonging to or near active city (< 60 km)
+    const validVenues = allVenues.filter(v => {
+      if (typeof v.latitude !== "number" || typeof v.longitude !== "number") return false;
+      if (!v.district) return false;
+      return calculateDistanceKm(cityCenter[0], cityCenter[1], v.latitude, v.longitude) <= 60;
+    });
+
+    if (validVenues.length === 0) return;
+
+    const districtMap = {};
+    validVenues.forEach(v => {
+      const dName = v.district.trim();
+      if (!districtMap[dName]) {
+        districtMap[dName] = {
+          name: dName,
+          count: 0,
+          sumPrice: 0,
+          prices: [],
+          lats: [],
+          lngs: []
+        };
+      }
+      const p = (typeof v.beer_price_pln === "number" && v.beer_price_pln > 0) ? v.beer_price_pln : null;
+      if (p !== null) {
+        districtMap[dName].sumPrice += p;
+        districtMap[dName].prices.push(p);
+      }
+      districtMap[dName].count += 1;
+      districtMap[dName].lats.push(v.latitude);
+      districtMap[dName].lngs.push(v.longitude);
+    });
+
+    Object.values(districtMap).forEach(d => {
+      if (d.count < 1) return;
+      const avgPrice = d.prices.length > 0 ? (d.sumPrice / d.prices.length) : 15.0;
+      const tierClass = avgPrice <= 12.0 ? "district-pill-low" : (avgPrice <= 18.0 ? "district-pill-mid" : "district-pill-high");
+
+      let targetCoords = null;
+      let targetZoom = 14;
+      const target = getDistrictTarget(d.name);
+      if (target && target.coords) {
+        targetCoords = target.coords;
+        targetZoom = target.zoom || 14;
+      } else {
+        const avgLat = d.lats.reduce((a, b) => a + b, 0) / d.lats.length;
+        const avgLng = d.lngs.reduce((a, b) => a + b, 0) / d.lngs.length;
+        targetCoords = [avgLat, avgLng];
+      }
+
+      const pillHtml = `
+        <div class="district-overview-pill ${tierClass}" data-district="${escapeHtml(d.name)}" title="Kliknij, aby przybliżyć dzielnicę ${escapeHtml(d.name)}">
+          <span class="district-pill-name">${escapeHtml(d.name)}</span>
+          <span class="district-pill-price">~${avgPrice.toFixed(1)} zł</span>
+          <span class="district-pill-count">${d.count} ${d.count === 1 ? 'bar' : (d.count < 5 ? 'bary' : 'barów')}</span>
+        </div>
+      `;
+
+      const icon = L.divIcon({
+        className: "district-overview-wrap",
+        html: pillHtml,
+        iconSize: [160, 36],
+        iconAnchor: [80, 18]
+      });
+
+      const m = L.marker(targetCoords, { icon, zIndexOffset: 2500 });
+      m.on("click", () => {
+        if (typeof poileHaptics !== "undefined" && poileHaptics.tick) {
+          poileHaptics.tick();
+        }
+        if (map) {
+          map.flyTo(targetCoords, Math.max(14, targetZoom), { duration: 1.0 });
+        }
+      });
+      districtOverviewGroup.addLayer(m);
+    });
+  }
+
+  // Zoom level switch: cities view (<= 10) vs district overview pills (11-13) vs detailed bars view (>= 14)
   function updateZoomOverview() {
     if (!map) return;
     const z = map.getZoom();
     if (z <= 10) {
       if (clusterGroup && map.hasLayer(clusterGroup)) map.removeLayer(clusterGroup);
+      if (districtOverviewGroup && map.hasLayer(districtOverviewGroup)) map.removeLayer(districtOverviewGroup);
       renderCityOverviewMarkers();
       if (cityMarkersGroup && !map.hasLayer(cityMarkersGroup)) map.addLayer(cityMarkersGroup);
+    } else if (z >= 11 && z <= 13) {
+      if (cityMarkersGroup && map.hasLayer(cityMarkersGroup)) map.removeLayer(cityMarkersGroup);
+      if (clusterGroup && !map.hasLayer(clusterGroup)) map.addLayer(clusterGroup);
+      renderDistrictOverviewMarkers();
+      if (districtOverviewGroup && !map.hasLayer(districtOverviewGroup)) map.addLayer(districtOverviewGroup);
     } else {
       if (cityMarkersGroup && map.hasLayer(cityMarkersGroup)) map.removeLayer(cityMarkersGroup);
+      if (districtOverviewGroup && map.hasLayer(districtOverviewGroup)) map.removeLayer(districtOverviewGroup);
       if (clusterGroup && !map.hasLayer(clusterGroup)) map.addLayer(clusterGroup);
     }
   }
@@ -1296,12 +1393,31 @@
     `;
   }
 
-  // Confirm Price Click Handler (Real Community Confirmation)
+  // Confirm Price Click Handler (Real Community Confirmation + Offline Queue)
   window.__confirmPrice = function (venueId) {
     const venue = allVenues.find(v => v.id === venueId);
     if (!venue) return;
     venue.votes_confirm = (venue.votes_confirm || 0) + 1;
     saveLocalVotes(venueId, venue.votes_confirm);
+    saveVenuesCache(allVenues);
+
+    // If offline (subterranean cellars / Pawilony / 0 LTE), queue action for later sync
+    if (!navigator.onLine) {
+      queueOfflineAction({
+        type: "confirm_price",
+        venueId: venue.id,
+        beerName: venue.beer_name || "Piwo z kranu",
+        price: venue.beer_price_pln,
+        votes_confirm: venue.votes_confirm
+      });
+      updateBarometerStats();
+      renderMarkers();
+      if (typeof poileHaptics !== "undefined" && poileHaptics.success) {
+        poileHaptics.success();
+      }
+      showMapToast(`💾 Zapisano offline (${venue.name})! Zsynchronizujemy po wyjściu z piwnicy.`);
+      return;
+    }
 
     // Sync confirmation to Supabase in real time
     if (supabaseClient) {
@@ -1328,6 +1444,9 @@
     // Refresh UI & Barometer
     updateBarometerStats();
     renderMarkers();
+    if (typeof poileHaptics !== "undefined" && poileHaptics.success) {
+      poileHaptics.success();
+    }
     alert(`Dziękujemy! Potwierdziłeś aktualność ceny dla baru: ${venue.name}. Ten lokal ma teraz ${venue.votes_confirm} ${venue.votes_confirm === 1 ? 'potwierdzenie' : 'potwierdzenia'}.`);
   };
 
@@ -1355,7 +1474,9 @@
     filtered.forEach(venue => {
       venue._isOpen = isVenueOpen(venue);
       const icon = createMarkerIcon(venue);
-      const marker = L.marker([venue.latitude, venue.longitude], { icon })
+      // Moduł 5: Prioritize marker z-indices so open & cheap venues render on top of expensive/closed ones
+      const zIndexOffset = Math.round(1000 - (venue.beer_price_pln || 15) * 10) + (venue._isOpen ? 500 : 0) + ((venue.votes_confirm || 0) * 5);
+      const marker = L.marker([venue.latitude, venue.longitude], { icon, zIndexOffset })
         .bindPopup(() => createPopupContent(venue), {
           maxWidth: 320,
           minWidth: 280,
@@ -3791,6 +3912,15 @@
     }
     saveVisitedVenues(visitedVenues);
 
+    // Moduł 5: Queue visited venue state when in subterranean/offline mode
+    if (!navigator.onLine) {
+      queueOfflineAction({
+        type: "visited_venue",
+        venueId,
+        isVisited: isNowVisited
+      });
+    }
+
     // Check newly unlocked badges
     const vMap = {};
     allVenues.forEach(v => { vMap[v.id] = v; });
@@ -5523,31 +5653,43 @@
         last_updated: new Date().toISOString()
       };
 
-      // 1. Cloud sync via Vercel Serverless Function (Admin Service Role - always succeeds across all users)
-      fetch("/api/update-venue", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ venuePayload, reportPayload })
-      }).then(res => {
-        if (res.ok) console.log("✓ Cloud sync via /api/update-venue succeeded!");
-      }).catch(e => console.warn("API update-venue note:", e));
+      saveVenuesCache(allVenues);
 
-      // 2. Direct client-side Supabase sync
-      if (supabaseClient) {
-        supabaseClient
-          .from("venues")
-          .upsert(venuePayload)
-          .then(({ error }) => {
-            if (error) console.warn("Supabase upsert note:", error);
-            else console.log("Venue updated in Supabase cloud!");
-          });
+      // If offline in cellar/Pawilony, queue for background sync when connection restores
+      if (!navigator.onLine) {
+        queueOfflineAction({
+          type: "update_venue",
+          venueId: existing.id,
+          payload: { venuePayload, reportPayload }
+        });
+        showMapToast(`💾 Zapisano w trybie offline! Zsynchronizujemy po powrocie do sieci.`);
+      } else {
+        // 1. Cloud sync via Vercel Serverless Function (Admin Service Role - always succeeds across all users)
+        fetch("/api/update-venue", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ venuePayload, reportPayload })
+        }).then(res => {
+          if (res.ok) console.log("✓ Cloud sync via /api/update-venue succeeded!");
+        }).catch(e => console.warn("API update-venue note:", e));
 
-        supabaseClient
-          .from("price_reports")
-          .insert(reportPayload)
-          .then(({ error }) => {
-            if (error) console.warn("Supabase report log note:", error);
-          });
+        // 2. Direct client-side Supabase sync
+        if (supabaseClient) {
+          supabaseClient
+            .from("venues")
+            .upsert(venuePayload)
+            .then(({ error }) => {
+              if (error) console.warn("Supabase upsert note:", error);
+              else console.log("Venue updated in Supabase cloud!");
+            });
+
+          supabaseClient
+            .from("price_reports")
+            .insert(reportPayload)
+            .then(({ error }) => {
+              if (error) console.warn("Supabase report log note:", error);
+            });
+        }
       }
 
       const isEditMode = currentModalMode === "edit";
@@ -21237,8 +21379,242 @@
     });
   }
 
-  // Load Initial Venues
+  // ==========================================================================
+  // MODUŁ 5: Wydajność Mapy, Tryb Offline (Piwnice/Pawilony) i Detale Techniczne
+  // ==========================================================================
+  const POILE_VENUES_CACHE_KEY = "poile_cached_venues_v1";
+  const POILE_OFFLINE_QUEUE_KEY = "poile_offline_action_queue";
+
+  function loadVenuesCache() {
+    try {
+      const raw = localStorage.getItem(POILE_VENUES_CACHE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    } catch (e) {
+      console.warn("[Modul 5] Could not load venues cache:", e);
+    }
+    return null;
+  }
+
+  function saveVenuesCache(venues) {
+    try {
+      if (Array.isArray(venues) && venues.length > 0) {
+        localStorage.setItem(POILE_VENUES_CACHE_KEY, JSON.stringify(venues));
+      }
+    } catch (e) {
+      console.warn("[Modul 5] Could not save venues cache:", e);
+    }
+  }
+
+  function getOfflineActionQueue() {
+    try {
+      const raw = localStorage.getItem(POILE_OFFLINE_QUEUE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveOfflineActionQueue(queue) {
+    try {
+      localStorage.setItem(POILE_OFFLINE_QUEUE_KEY, JSON.stringify(queue));
+    } catch (e) {}
+    updateOfflineStatusBanner();
+  }
+
+  function queueOfflineAction(action) {
+    const queue = getOfflineActionQueue();
+    const item = {
+      id: "act_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5),
+      timestamp: new Date().toISOString(),
+      ...action
+    };
+    queue.push(item);
+    saveOfflineActionQueue(queue);
+    if (typeof poileHaptics !== "undefined" && poileHaptics.tick) {
+      poileHaptics.tick();
+    }
+    return item;
+  }
+
+  function updateOfflineStatusBanner() {
+    const banner = document.getElementById("offline-status-banner");
+    const textEl = document.getElementById("offline-banner-text");
+    const badgeEl = document.getElementById("offline-queue-badge");
+    if (!banner || !textEl || !badgeEl) return;
+
+    const isOffline = !navigator.onLine;
+    const queue = getOfflineActionQueue();
+
+    if (isOffline) {
+      banner.classList.remove("is-syncing", "is-synced");
+      banner.style.display = "flex";
+      requestAnimationFrame(() => banner.classList.add("is-visible"));
+
+      if (queue.length > 0) {
+        textEl.textContent = "📡 Tryb offline · Zapisano w kolejce:";
+        badgeEl.textContent = `${queue.length} ${queue.length === 1 ? 'akcja' : 'akcje'}`;
+        badgeEl.style.display = "inline-block";
+      } else {
+        textEl.textContent = "📡 Tryb offline (piwnica / brak sieci) · Zmiany lokalne";
+        badgeEl.style.display = "none";
+      }
+    } else {
+      // Online
+      if (queue.length > 0) {
+        banner.style.display = "flex";
+        banner.classList.add("is-visible", "is-syncing");
+        banner.classList.remove("is-synced");
+        textEl.textContent = "⚡ Połączono z siecią! Synchronizacja...";
+        badgeEl.textContent = `${queue.length}`;
+        badgeEl.style.display = "inline-block";
+      } else {
+        banner.classList.remove("is-visible", "is-syncing");
+        setTimeout(() => {
+          if (navigator.onLine && getOfflineActionQueue().length === 0) {
+            banner.style.display = "none";
+          }
+        }, 300);
+      }
+    }
+  }
+
+  async function syncOfflineActionQueue() {
+    if (!navigator.onLine) return;
+    const queue = getOfflineActionQueue();
+    if (!queue || queue.length === 0) {
+      updateOfflineStatusBanner();
+      return;
+    }
+
+    const banner = document.getElementById("offline-status-banner");
+    const textEl = document.getElementById("offline-banner-text");
+    if (banner) {
+      banner.classList.add("is-visible", "is-syncing");
+      banner.classList.remove("is-synced");
+      if (textEl) textEl.textContent = `🔄 Synchronizuję zaległe akcje (${queue.length})...`;
+    }
+
+    const syncedIds = [];
+    for (const item of queue) {
+      try {
+        if (item.type === "confirm_price") {
+          if (supabaseClient) {
+            await supabaseClient
+              .from("venues")
+              .update({ votes_confirm: item.votes_confirm })
+              .or(`osm_id.eq.${item.venueId},id.eq.${item.venueId}`);
+
+            await supabaseClient
+              .from("price_reports")
+              .insert({
+                reported_beer_name: item.beerName || "Piwo z kranu",
+                reported_price_pln: item.price,
+                happy_hour_info: `[Offline Sync] Potwierdzenie ceny przez użytkownika (głos #${item.votes_confirm})`
+              });
+          }
+          syncedIds.push(item.id);
+        } else if (item.type === "update_venue") {
+          if (item.payload) {
+            try {
+              await fetch("/api/update-venue", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(item.payload)
+              });
+            } catch (e) {}
+
+            if (supabaseClient) {
+              if (item.payload.venuePayload) {
+                await supabaseClient.from("venues").upsert(item.payload.venuePayload);
+              }
+              if (item.payload.reportPayload) {
+                await supabaseClient.from("price_reports").insert(item.payload.reportPayload);
+              }
+            }
+          }
+          syncedIds.push(item.id);
+        } else if (item.type === "visited_venue") {
+          syncedIds.push(item.id);
+        } else {
+          syncedIds.push(item.id);
+        }
+      } catch (err) {
+        console.warn("[Modul 5] Failed to sync item:", item, err);
+      }
+    }
+
+    if (syncedIds.length > 0) {
+      const remaining = queue.filter(q => !syncedIds.includes(q.id));
+      saveOfflineActionQueue(remaining);
+
+      if (typeof poileHaptics !== "undefined" && poileHaptics.success) {
+        poileHaptics.success();
+      }
+
+      if (banner && textEl) {
+        banner.classList.remove("is-syncing");
+        banner.classList.add("is-synced");
+        textEl.textContent = `✅ Zsynchronizowano ${syncedIds.length} ${syncedIds.length === 1 ? 'akcję' : 'akcje'}!`;
+        const badgeEl = document.getElementById("offline-queue-badge");
+        if (badgeEl) badgeEl.style.display = "none";
+
+        setTimeout(() => {
+          if (navigator.onLine && getOfflineActionQueue().length === 0) {
+            banner.classList.remove("is-visible");
+            setTimeout(() => { banner.style.display = "none"; }, 300);
+          }
+        }, 2200);
+      }
+
+      showMapToast(`✅ Wysłano zaległe dane na serwer (${syncedIds.length})!`);
+    } else {
+      updateOfflineStatusBanner();
+    }
+  }
+
+  function initOfflineEngine() {
+    window.addEventListener("online", () => {
+      updateOfflineStatusBanner();
+      syncOfflineActionQueue();
+      if (typeof loadVenues === "function") {
+        loadVenues();
+      }
+    });
+
+    window.addEventListener("offline", () => {
+      updateOfflineStatusBanner();
+      showMapToast("📡 Przełączono w tryb offline. Dane zapisujemy lokalnie!");
+    });
+
+    updateOfflineStatusBanner();
+
+    if (navigator.onLine && getOfflineActionQueue().length > 0) {
+      setTimeout(syncOfflineActionQueue, 1500);
+    }
+  }
+
+  // Load Initial Venues (Stale-While-Revalidate for subterranean cellars / offline pubs)
   async function loadVenues() {
+    // 1. Stale: Load instantly from local storage cache (< 50ms)
+    const cached = loadVenuesCache();
+    if (cached && cached.length > 0) {
+      allVenues = cached;
+      window.allVenues = allVenues;
+      ensurePartnerVenues(allVenues);
+      applyLocalVotes();
+      updateDistrictCounts();
+      updateBarometerStats();
+      updatePassportCounters();
+      updateFavoriteCounters();
+      renderMarkers();
+      if (window.__refreshCompassTargets) window.__refreshCompassTargets();
+      setTimeout(checkUrlHash, 250);
+    }
+
     // Clean up any test venues that were removed (e.g. Bog on Dickensa 27)
     try {
       const stored = loadLocalUpdates();
@@ -21248,7 +21624,8 @@
       }
     } catch (e) {}
 
-    if (supabaseClient) {
+    // 2. Revalidate: Fetch fresh cloud data from Supabase or venues.json
+    if (supabaseClient && navigator.onLine !== false) {
       try {
         const { data, error } = await supabaseClient
           .from("venues")
@@ -21264,7 +21641,8 @@
               shot_price_pln: v.shot_price_pln ? parseFloat(v.shot_price_pln) : null
             }));
           ensurePartnerVenues(allVenues);
-          console.log(`Loaded ${allVenues.length} venues directly from Supabase!`);
+          saveVenuesCache(allVenues);
+          console.log(`[Modul 5] Loaded ${allVenues.length} fresh venues directly from Supabase & cached!`);
           window.allVenues = allVenues;
           applyLocalVotes();
           updateDistrictCounts();
@@ -21272,6 +21650,7 @@
           updatePassportCounters();
           updateFavoriteCounters();
           renderMarkers();
+          if (window.__refreshCompassTargets) window.__refreshCompassTargets();
           setTimeout(checkUrlHash, 250);
           return;
         }
@@ -21280,13 +21659,18 @@
       }
     }
 
-    try {
-      const res = await fetch("data/venues.json");
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      allVenues = await res.json();
-    } catch (err) {
-      console.warn("Could not load data/venues.json, using fallback", err);
-      allVenues = JSON.parse(JSON.stringify(FALLBACK_VENUES));
+    // Fallback fetch if not already loaded from fresh Supabase
+    if (navigator.onLine !== false || !cached || cached.length === 0) {
+      try {
+        const res = await fetch("data/venues.json");
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        allVenues = await res.json();
+      } catch (err) {
+        console.warn("Could not load data/venues.json, using fallback", err);
+        if (!cached || cached.length === 0) {
+          allVenues = JSON.parse(JSON.stringify(FALLBACK_VENUES));
+        }
+      }
     }
 
     // Merge any user-added local venues
@@ -21310,6 +21694,7 @@
     });
 
     ensurePartnerVenues(allVenues);
+    saveVenuesCache(allVenues);
     applyLocalVotes();
     updateDistrictCounts();
     updateBarometerStats();
@@ -21706,19 +22091,32 @@
               localUpdates.push(venue);
             }
             saveLocalUpdates(localUpdates);
+            saveVenuesCache(allVenues);
 
-            // Send to backend
-            try {
-              fetch("/api/update-venue", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  venueId: venue.id,
-                  beerPrice: newPrice,
-                  isVerified: true
-                })
-              }).catch(() => {});
-            } catch (e) {}
+            // Send to backend or queue offline
+            if (!navigator.onLine) {
+              queueOfflineAction({
+                type: "update_venue",
+                venueId: venue.id,
+                payload: {
+                  venuePayload: { osm_id: venue.id, beer_price_pln: newPrice, is_verified: true, last_updated: new Date().toISOString() },
+                  reportPayload: { reported_beer_name: venue.beer_name || "Piwo z kranu", reported_price_pln: newPrice, happy_hour_info: "Szybka aktualizacja ceny z karty lokalu" }
+                }
+              });
+              showMapToast(`💾 Zapisano cenę offline (${venue.name})!`);
+            } else {
+              try {
+                fetch("/api/update-venue", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    venueId: venue.id,
+                    beerPrice: newPrice,
+                    isVerified: true
+                  })
+                }).catch(() => {});
+              } catch (e) {}
+            }
 
             poileHaptics.success();
             awardPassportPoints(15);
@@ -22530,6 +22928,7 @@
     initMap();
     initSupabase();
     setupEventListeners();
+    initOfflineEngine();
     loadVenues();
     initUserGeolocation();
     initMobileModernization();

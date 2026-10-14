@@ -20307,3 +20307,280 @@ body[data-time-mode="day_recovery"] .context-pill-badge {
   transform: scale(0.96);
 }
 
+/* ==========================================================================
+   MODUŁ 5: Wydajność Mapy, Tryb Offline (Piwnice/Pawilony) & Polerowanie Mobilne
+   ========================================================================== */
+
+/* 5.1 Universal Touch & Selection Polish for iOS & Android WebView */
+*, *::before, *::after {
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+/* Explicit user-select suppression on app chrome and touch controls */
+.app-header,
+.mobile-bottom-nav,
+.bottom-sheet,
+.bottom-sheet-handle-wrap,
+.bento-grid,
+.bento-card,
+.nav-item,
+.mobile-floating-top,
+.fab-locate-float,
+.fab-stack-right,
+.filter-chip,
+.quick-filter-chip,
+.badge,
+.pill,
+.city-overview-marker,
+.district-overview-pill,
+.price-badge-marker,
+.beer-cluster,
+.btn-crawl-action,
+.passport-card,
+button {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Explicitly preserve text selection on text fields and editable elements */
+input,
+textarea,
+select,
+[contenteditable="true"],
+.selectable-text,
+.legal-content,
+.about-sheet-content p {
+  -webkit-user-select: text !important;
+  user-select: text !important;
+}
+
+/* Strict iOS Safari Auto-Zoom Immunity: all inputs must be >= 16px */
+input,
+select,
+textarea,
+.form-input,
+.form-select,
+.search-input,
+#mobile-search-input,
+.input-with-prefix input {
+  font-size: 16px !important;
+}
+
+/* 5.2 Offline Mode Status Banner (Pawilony / Cellars / Subterranean Bars) */
+.offline-status-banner {
+  position: fixed;
+  top: calc(70px + env(safe-area-inset-top, 0px));
+  left: 50%;
+  transform: translateX(-50%) translateY(0);
+  z-index: 1210;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(24, 24, 27, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.65), 0 0 14px rgba(245, 158, 11, 0.25);
+  color: #fef08a;
+  padding: 7px 16px;
+  border-radius: 9999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+  pointer-events: auto;
+  max-width: 92vw;
+  box-sizing: border-box;
+  opacity: 0;
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.offline-status-banner.is-visible {
+  opacity: 1;
+}
+
+.offline-status-banner.is-syncing {
+  border-color: rgba(56, 189, 248, 0.6);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.65), 0 0 14px rgba(56, 189, 248, 0.3);
+  color: #bae6fd;
+}
+
+.offline-status-banner.is-synced {
+  border-color: rgba(34, 197, 94, 0.6);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.65), 0 0 14px rgba(34, 197, 94, 0.3);
+  color: #bbf7d0;
+}
+
+.offline-banner-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.offline-icon-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f59e0b;
+  box-shadow: 0 0 8px #f59e0b;
+  animation: offlineDotPulse 1.4s infinite ease-in-out;
+  flex-shrink: 0;
+}
+
+.offline-status-banner.is-syncing .offline-icon-dot {
+  background: #38bdf8;
+  box-shadow: 0 0 8px #38bdf8;
+}
+
+.offline-status-banner.is-synced .offline-icon-dot {
+  background: #22c55e;
+  box-shadow: 0 0 8px #22c55e;
+  animation: none;
+}
+
+@keyframes offlineDotPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(0.75);
+  }
+}
+
+.offline-banner-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.offline-queue-badge {
+  background: #f59e0b;
+  color: #18181b;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 1px 7px;
+  border-radius: 999px;
+  margin-left: 2px;
+  letter-spacing: 0.2px;
+  flex-shrink: 0;
+}
+
+body.theme-light .offline-status-banner {
+  background: rgba(254, 252, 232, 0.96) !important;
+  border-color: rgba(217, 119, 6, 0.45) !important;
+  color: #92400e !important;
+  box-shadow: 0 4px 20px rgba(180, 83, 9, 0.18) !important;
+}
+
+body.theme-light .offline-status-banner.is-syncing {
+  background: rgba(240, 249, 255, 0.96) !important;
+  border-color: rgba(2, 132, 199, 0.45) !important;
+  color: #0369a1 !important;
+}
+
+body.theme-light .offline-status-banner.is-synced {
+  background: rgba(240, 253, 244, 0.96) !important;
+  border-color: rgba(22, 163, 74, 0.45) !important;
+  color: #15803d !important;
+}
+
+/* 5.3 District Overview Pills (Intermediate Zoom 11-13 Macro Layer) */
+.district-overview-wrap {
+  background: transparent !important;
+  border: none !important;
+}
+
+.district-overview-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.55);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.18s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  pointer-events: auto;
+}
+
+.district-overview-pill:hover,
+.district-overview-pill:active {
+  transform: scale(1.08);
+}
+
+.district-overview-pill.district-pill-low {
+  background: rgba(20, 83, 45, 0.92);
+  border: 1.5px solid #22c55e;
+  color: #f0fdf4;
+  box-shadow: 0 4px 18px rgba(34, 197, 94, 0.38);
+}
+
+.district-overview-pill.district-pill-mid {
+  background: rgba(120, 53, 15, 0.92);
+  border: 1.5px solid #f59e0b;
+  color: #fffbeb;
+  box-shadow: 0 4px 18px rgba(245, 158, 11, 0.38);
+}
+
+.district-overview-pill.district-pill-high {
+  background: rgba(127, 29, 29, 0.92);
+  border: 1.5px solid #ef4444;
+  color: #fef2f2;
+  box-shadow: 0 4px 18px rgba(239, 68, 68, 0.38);
+}
+
+.district-pill-name {
+  font-weight: 800;
+  letter-spacing: -0.2px;
+}
+
+.district-pill-price {
+  background: rgba(0, 0, 0, 0.32);
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.district-pill-count {
+  font-size: 0.68rem;
+  opacity: 0.85;
+}
+
+body.theme-light .district-overview-pill.district-pill-low {
+  background: rgba(220, 252, 231, 0.96) !important;
+  border-color: #16a34a !important;
+  color: #14532d !important;
+  box-shadow: 0 4px 14px rgba(22, 163, 74, 0.25) !important;
+}
+
+body.theme-light .district-overview-pill.district-pill-mid {
+  background: rgba(254, 243, 199, 0.96) !important;
+  border-color: #d97706 !important;
+  color: #78350f !important;
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.25) !important;
+}
+
+body.theme-light .district-overview-pill.district-pill-high {
+  background: rgba(254, 226, 226, 0.96) !important;
+  border-color: #dc2626 !important;
+  color: #7f1d1d !important;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.25) !important;
+}
+
+body.theme-light .district-overview-pill .district-pill-price {
+  background: rgba(0, 0, 0, 0.08) !important;
+}
+
+
