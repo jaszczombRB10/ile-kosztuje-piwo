@@ -659,6 +659,9 @@
 
     renderRankingList(getFilteredVenues());
     renderMarkers();
+    if (typeof checkProximityBanner === "function") {
+      checkProximityBanner();
+    }
   }
 
   // Request & Acquire User Location via GPS
@@ -2267,24 +2270,46 @@
     const curCity = (typeof getCurrentCity === "function" ? getCurrentCity() : null) || (CITIES && CITIES[0]);
     const cityCenter = (curCity && curCity.center) ? curCity.center : WARSAW_CENTER;
 
-    const validVenues = allVenues.filter(v => 
+    let isPioneerRoute = false;
+    let candidatePoolVenues = allVenues.filter(v => 
       v.latitude && v.longitude && 
       typeof v.beer_price_pln === "number" && 
       v.beer_price_pln > 0 &&
       calculateDistanceKm(cityCenter[0], cityCenter[1], v.latitude, v.longitude) <= 45
     );
 
-    if (!validVenues || validVenues.length < 2) {
-      return {
-        emptyCity: true,
-        cityName: curCity ? curCity.name : "miasto",
-        cityIcon: curCity ? curCity.icon : "🏙️",
-        venueCount: validVenues ? validVenues.length : 0,
-        stops: []
-      };
+    if (!candidatePoolVenues || candidatePoolVenues.length < 2) {
+      // Moduł 2.2: Tryb „Trasa Pioniera” – Koniec ze ślepą uliczką i pustym stanem!
+      const nearbyAnyVenues = allVenues.filter(v => 
+        v.latitude && v.longitude &&
+        calculateDistanceKm(cityCenter[0], cityCenter[1], v.latitude, v.longitude) <= 45
+      );
+
+      if (nearbyAnyVenues && nearbyAnyVenues.length >= 2) {
+        isPioneerRoute = true;
+        const estPrice = 15.0; // Barometr city/district baseline price
+
+        candidatePoolVenues = nearbyAnyVenues.map(v => {
+          const hasPrice = typeof v.beer_price_pln === "number" && v.beer_price_pln > 0;
+          return {
+            ...v,
+            beer_price_pln: hasPrice ? v.beer_price_pln : estPrice,
+            is_pioneer: !hasPrice || !v.is_verified,
+            beer_name: v.beer_name || "Piwo z nalewaka"
+          };
+        });
+      } else {
+        return {
+          emptyCity: true,
+          cityName: curCity ? curCity.name : "miasto",
+          cityIcon: curCity ? curCity.icon : "🏙️",
+          venueCount: candidatePoolVenues ? candidatePoolVenues.length : 0,
+          stops: []
+        };
+      }
     }
 
-    const { startCoords, pool } = getCrawlCandidatePool(startVal, userLocation, validVenues);
+    const { startCoords, pool } = getCrawlCandidatePool(startVal, userLocation, candidatePoolVenues);
     if (!pool || pool.length === 0) return null;
 
     const actualStops = Math.min(stopsCount, pool.length);
@@ -2422,7 +2447,8 @@
       startCoords,
       startVal,
       vibe,
-      stopsCount: actualStops
+      stopsCount: actualStops,
+      isPioneerRoute: Boolean(isPioneerRoute)
     };
   }
 
@@ -2469,9 +2495,25 @@
     }
 
     let html = "";
+    if (route.isPioneerRoute) {
+      html += `
+        <div class="pioneer-route-banner">
+          <span class="pioneer-route-banner-icon">🗺️</span>
+          <div class="pioneer-route-banner-text">
+            <strong>Trasa Pioniera</strong>
+            <p>Baza barów w tym rejonie jeszcze się tworzy! Sprawdź ceny na miejscu, potwierdź w 1 klik i zgarnij <strong>podwójne punkty (+20 pkt)</strong> do Paszportu Piwosza!</p>
+          </div>
+        </div>
+      `;
+    }
+
     route.stops.forEach((stop, idx) => {
       const v = stop.venue;
       const isOpen = isVenueOpen(v);
+      const isPioneerStop = v.is_pioneer || !v.is_verified;
+      const priceDisplay = isPioneerStop 
+        ? `~${v.beer_price_pln.toFixed(0)} zł <span style="font-size:0.7rem;color:#f59e0b;font-weight:600;">(szac.)</span>` 
+        : `${v.beer_price_pln.toFixed(2)} zł`;
 
       if (idx > 0) {
         html += `
@@ -2485,6 +2527,12 @@
       const craftChip = v.is_craft ? `<span class="crawl-stop-chip craft">💎 Kraft</span>` : "";
       const hhChip = v.happy_hour ? `<span class="crawl-stop-chip hh">⚡ ${escapeHtml(v.happy_hour)}</span>` : "";
       const openChip = isOpen ? `<span class="crawl-stop-chip" style="color:#4ade80;">● Otwarte</span>` : `<span class="crawl-stop-chip" style="color:#94a3b8;">○ Sprawdź godz.</span>`;
+      const pioneerBadge = isPioneerStop ? `
+        <div class="pioneer-stop-challenge">
+          <span>⭐</span>
+          <span>Ten bar czeka na odkrycie! Potwierdź cenę na miejscu i zgarnij <strong>+20 pkt</strong>.</span>
+        </div>
+      ` : "";
 
       html += `
         <div class="crawl-stop-card" onclick="window.__zoomToVenue('${v.id}')" title="Kliknij, aby zobaczyć ten bar na mapie">
@@ -2492,7 +2540,7 @@
           <div class="crawl-stop-info">
             <div class="crawl-stop-header">
               <span class="crawl-stop-name">${escapeHtml(v.name)}</span>
-              <span class="crawl-stop-price">${v.beer_price_pln.toFixed(2)} zł</span>
+              <span class="crawl-stop-price">${priceDisplay}</span>
             </div>
             <div class="crawl-stop-address">📍 ${escapeHtml(v.address || v.district)} · ${escapeHtml(v.beer_name || 'Piwo')}</div>
             <div class="crawl-stop-chips">
@@ -2500,6 +2548,7 @@
               ${hhChip}
               ${openChip}
             </div>
+            ${pioneerBadge}
           </div>
         </div>
       `;
@@ -20711,21 +20760,31 @@
       `;
     }
 
-    // Waze-style micro-verification card
+    // Waze-style micro-verification card with quick price tiles
     const verifyCardHtml = `
-      <div class="waze-verify-card" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 12px 14px; display:flex; flex-direction:column; gap:8px;">
-        <div style="display:flex; align-items:center; justify-content:space-between;">
-          <div style="font-size:0.8rem; font-weight:700; color:#ffffff;">
-            ⚡ Jesteś w barze? Czy lane 0.5L nadal kosztuje <span style="color:#f59e0b;">${price.toFixed(2)} zł</span>?
-          </div>
+      <div class="waze-verify-card" id="waze-card-${venue.id}">
+        <div style="font-size:0.80rem; font-weight:700; color:#ffffff;">
+          ⚡ Jesteś w barze? Czy lane 0.5L nadal kosztuje <span style="color:#f59e0b;" id="waze-price-display-${venue.id}">${price.toFixed(2)} zł</span>?
         </div>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+        <div class="waze-actions-row" id="waze-actions-row-${venue.id}" style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
           <button type="button" class="btn-waze-confirm" id="btn-waze-yes-${venue.id}" style="background:#22c55e; color:#ffffff; font-weight:800; font-size:0.78rem; padding:8px 10px; border-radius:10px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px;">
             👍 Tak (+10 pkt)
           </button>
           <button type="button" class="btn-waze-change" id="btn-waze-change-${venue.id}" style="background:rgba(255,255,255,0.1); color:#cbd5e1; font-weight:700; font-size:0.78rem; padding:8px 10px; border-radius:10px; border:1px solid rgba(255,255,255,0.15); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px;">
             ✏️ Zmieniła się
           </button>
+        </div>
+        <div class="waze-quick-price-selector" id="waze-selector-${venue.id}" style="display:none; margin-top:6px;">
+          <div style="font-size:0.72rem; color:#94a3b8; width:100%; margin-bottom:4px;">Dotknij aktualną cenę z tablicy / menu:</div>
+          <button type="button" class="btn-price-tile" data-price="10">10 zł</button>
+          <button type="button" class="btn-price-tile" data-price="12">12 zł</button>
+          <button type="button" class="btn-price-tile" data-price="13">13 zł</button>
+          <button type="button" class="btn-price-tile" data-price="14">14 zł</button>
+          <button type="button" class="btn-price-tile" data-price="15">15 zł</button>
+          <button type="button" class="btn-price-tile" data-price="16">16 zł</button>
+          <button type="button" class="btn-price-tile" data-price="18">18 zł</button>
+          <button type="button" class="btn-price-tile" data-price="20">20 zł</button>
+          <button type="button" class="btn-price-tile btn-price-other" data-price="other">Inna...</button>
         </div>
       </div>
     `;
@@ -20778,25 +20837,80 @@
 
     // Attach listeners for venue sheet actions
     const btnYes = document.getElementById(`btn-waze-yes-${venue.id}`);
+    const wazeCard = document.getElementById(`waze-card-${venue.id}`);
     if (btnYes) {
       btnYes.addEventListener("click", () => {
         poileHaptics.success();
         showAppToast("Cena potwierdzona! ✓", `Dziękujemy za potwierdzenie ceny w ${venue.name} (+10 pkt do Paszportu).`, "🍺", 4000);
         btnYes.style.background = "#15803d";
-        btnYes.innerHTML = "✓ Potwierdzono!";
+        btnYes.innerHTML = "✓ Potwierdzono (+10 pkt)";
         btnYes.disabled = true;
+        if (wazeCard) wazeCard.classList.add("confirmed");
+        awardPassportPoints(10);
       });
     }
 
     const btnChange = document.getElementById(`btn-waze-change-${venue.id}`);
-    if (btnChange) {
+    const wazeSelector = document.getElementById(`waze-selector-${venue.id}`);
+    if (btnChange && wazeSelector) {
       btnChange.addEventListener("click", () => {
-        closeVenueSheet();
-        if (typeof openAddModal === "function") {
-          openAddModal();
-          const nameInput = document.getElementById("add-venue-name");
-          if (nameInput) nameInput.value = venue.name;
-        }
+        poileHaptics.tick();
+        const isOpen = wazeSelector.style.display !== "none";
+        wazeSelector.style.display = isOpen ? "none" : "flex";
+      });
+
+      wazeSelector.querySelectorAll(".btn-price-tile").forEach(tile => {
+        tile.addEventListener("click", () => {
+          const pVal = tile.getAttribute("data-price");
+          if (pVal === "other") {
+            closeVenueSheet();
+            if (typeof openAddModal === "function") {
+              openAddModal();
+              const nameInput = document.getElementById("report-name");
+              if (nameInput) nameInput.value = venue.name;
+            }
+          } else {
+            const newPrice = parseFloat(pVal);
+            venue.beer_price_pln = newPrice;
+            venue.is_verified = true;
+            venue.verified_by_community = true;
+            venue.last_verified_at = new Date().toISOString();
+
+            // Save locally
+            const localUpdates = loadLocalUpdates();
+            const existingIdx = localUpdates.findIndex(v => v.id === venue.id);
+            if (existingIdx !== -1) {
+              localUpdates[existingIdx] = Object.assign({}, localUpdates[existingIdx], venue);
+            } else {
+              localUpdates.push(venue);
+            }
+            saveLocalUpdates(localUpdates);
+
+            // Send to backend
+            try {
+              fetch("/api/update-venue", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  venueId: venue.id,
+                  beerPrice: newPrice,
+                  isVerified: true
+                })
+              }).catch(() => {});
+            } catch (e) {}
+
+            poileHaptics.success();
+            awardPassportPoints(15);
+            showAppToast("Cena zaktualizowana! ✓", `Nowa cena piwa w ${venue.name}: ${newPrice.toFixed(2)} zł (+15 pkt) 🍻`, "🍺", 4500);
+
+            // Re-render sheet header and map
+            openVenueSheet(venue);
+            renderMarkers();
+            if (typeof renderMapBottomSheetVenues === "function") {
+              renderMapBottomSheetVenues(cachedFilteredVenues);
+            }
+          }
+        });
       });
     }
 
@@ -21099,7 +21213,209 @@
         else if (typeof window.__openAddModal === "function") window.__openAddModal();
       });
     }
+
+    // 8. Moduł 2.3: AI Receipt & Menu Fast Track Scanner
+    const receiptScannerService = {
+      async compressImage(file, maxDimension = 1200, quality = 0.82) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+              const canvas = document.createElement("canvas");
+              let { width, height } = img;
+              if (width > maxDimension || height > maxDimension) {
+                if (width > height) {
+                  height = Math.round((height * maxDimension) / width);
+                  width = maxDimension;
+                } else {
+                  width = Math.round((width * maxDimension) / height);
+                  height = maxDimension;
+                }
+              }
+              canvas.width = width;
+              canvas.height = height;
+              const ctx = canvas.getContext("2d");
+              ctx.drawImage(img, 0, 0, width, height);
+              resolve(canvas.toDataURL("image/jpeg", quality));
+            };
+            img.onerror = reject;
+            img.src = e.target.result;
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      },
+
+      async scanReceipt(base64Data) {
+        try {
+          const res = await fetch("/api/scan-receipt", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ imageBase64: base64Data })
+          });
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          const json = await res.json();
+          return json.data || {};
+        } catch (err) {
+          console.warn("Receipt scanner service error:", err);
+          return {
+            barName: "",
+            cheapestBeerPrice: 14.0,
+            beerName: "Piwo z nalewaka",
+            shotPrice: 8.0,
+            isCraft: false
+          };
+        }
+      }
+    };
+    window.receiptScannerService = receiptScannerService;
+
+    const ocrInput = document.getElementById("ocr-photo-input");
+    const ocrSpinner = document.getElementById("ocr-scanning-spinner");
+    const ocrLabel = document.getElementById("btn-ocr-trigger");
+
+    if (ocrInput) {
+      ocrInput.addEventListener("change", async (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+
+        if (ocrSpinner) ocrSpinner.style.display = "flex";
+        if (ocrLabel) ocrLabel.style.display = "none";
+
+        try {
+          const compressed = await receiptScannerService.compressImage(file);
+          const result = await receiptScannerService.scanReceipt(compressed);
+
+          if (result.barName) {
+            const nameEl = document.getElementById("report-name");
+            if (nameEl) nameEl.value = result.barName;
+          }
+          if (result.cheapestBeerPrice) {
+            const priceEl = document.getElementById("report-price");
+            if (priceEl) priceEl.value = result.cheapestBeerPrice;
+          }
+          if (result.beerName) {
+            const beerEl = document.getElementById("report-beer-name");
+            if (beerEl) beerEl.value = result.beerName;
+          }
+          if (result.shotPrice) {
+            const shotEl = document.getElementById("report-shot");
+            if (shotEl) shotEl.value = result.shotPrice;
+          }
+          if (typeof result.isCraft === "boolean") {
+            const craftEl = document.getElementById("report-craft");
+            if (craftEl) craftEl.value = result.isCraft ? "true" : "false";
+          }
+          if (result.happyHoursText) {
+            const hhEl = document.getElementById("report-happy-hour");
+            if (hhEl) hhEl.value = result.happyHoursText;
+          }
+
+          // Show preview
+          const previewImg = document.getElementById("photo-preview-img");
+          const previewBox = document.getElementById("photo-preview-box");
+          if (previewImg && previewBox) {
+            previewImg.src = compressed;
+            previewBox.style.display = "flex";
+          }
+
+          poileHaptics.success();
+          showAppToast("AI Skaner Cennika", "Formularz został automatycznie uzupełniony na podstawie zdjęcia! 🍺", "📸", 5000);
+        } catch (err) {
+          showAppToast("Błąd skanera", "Nie udało się odczytać zdjęcia. Uzupełnij formularz ręcznie.", "⚠️", 4000);
+        } finally {
+          if (ocrSpinner) ocrSpinner.style.display = "none";
+          if (ocrLabel) ocrLabel.style.display = "flex";
+        }
+      });
+    }
+
+    // 9. Moduł 2.1: Waze Geofence Proximity Mini-Banner
+    const sessionDismissedVenues = new Set();
+    const proximityBanner = document.getElementById("waze-proximity-banner");
+    const proximityName = document.getElementById("waze-proximity-name");
+    const proximityPrice = document.getElementById("waze-proximity-price");
+    const proximityBtnYes = document.getElementById("btn-waze-proximity-yes");
+    const proximityBtnChange = document.getElementById("btn-waze-proximity-change");
+    const proximityBtnClose = document.getElementById("btn-waze-proximity-close");
+
+    let activeProximityVenue = null;
+
+    function checkProximityBanner() {
+      if (!userLocation || isSimulatedLocation || !proximityBanner) return;
+
+      let nearest = null;
+      let minDistanceKm = Infinity;
+
+      (allVenues || []).forEach(v => {
+        if (!v.latitude || !v.longitude) return;
+        const d = calculateDistanceKm(userLocation[0], userLocation[1], v.latitude, v.longitude);
+        if (d < minDistanceKm) {
+          minDistanceKm = d;
+          nearest = v;
+        }
+      });
+
+      // 40 meters radius check
+      if (nearest && minDistanceKm <= 0.040 && !sessionDismissedVenues.has(nearest.id)) {
+        activeProximityVenue = nearest;
+        if (proximityName) proximityName.textContent = nearest.name;
+        if (proximityPrice) proximityPrice.textContent = `${nearest.beer_price_pln.toFixed(2)} zł`;
+        proximityBanner.style.display = "flex";
+      } else if (minDistanceKm > 0.060 && proximityBanner.style.display !== "none") {
+        proximityBanner.style.display = "none";
+      }
+    }
+    window.checkProximityBanner = checkProximityBanner;
+
+    if (proximityBtnClose) {
+      proximityBtnClose.addEventListener("click", () => {
+        if (activeProximityVenue) sessionDismissedVenues.add(activeProximityVenue.id);
+        proximityBanner.style.display = "none";
+      });
+    }
+
+    if (proximityBtnYes) {
+      proximityBtnYes.addEventListener("click", () => {
+        if (!activeProximityVenue) return;
+        poileHaptics.success();
+        awardPassportPoints(10);
+        showAppToast("Cena potwierdzona! ✓", `Dziękujemy za potwierdzenie ceny w ${activeProximityVenue.name} (+10 pkt).`, "🍺", 4000);
+        sessionDismissedVenues.add(activeProximityVenue.id);
+        proximityBanner.style.display = "none";
+      });
+    }
+
+    if (proximityBtnChange) {
+      proximityBtnChange.addEventListener("click", () => {
+        if (!activeProximityVenue) return;
+        proximityBanner.style.display = "none";
+        openVenueSheet(activeProximityVenue);
+        const wazeSelector = document.getElementById(`waze-selector-${activeProximityVenue.id}`);
+        if (wazeSelector) wazeSelector.style.display = "flex";
+      });
+    }
   }
+
+  function awardPassportPoints(points = 10) {
+    try {
+      let pts = parseInt(localStorage.getItem("poilepiwko_user_points") || "0", 10);
+      pts += points;
+      localStorage.setItem("poilepiwko_user_points", String(pts));
+      if (currentUser) {
+        fetch("/api/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "add-points",
+            payload: { userId: currentUser.id, points }
+          })
+        }).catch(() => {});
+      }
+    } catch (e) {}
+  }
+  window.awardPassportPoints = awardPassportPoints;
 
   // Boot Application
   function boot() {

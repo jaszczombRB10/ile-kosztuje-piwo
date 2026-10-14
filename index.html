@@ -945,6 +945,30 @@
       </div>
       
       <form id="report-form">
+        <!-- AI Vision Fast Track: Skaner tablicy z kranu / paragonu -->
+        <div class="ocr-fast-track-box" id="ocr-fast-track-box">
+          <div class="ocr-fast-track-head">
+            <span class="ocr-fast-track-icon">📸⚡</span>
+            <div class="ocr-fast-track-info">
+              <strong>Szybki Skaner AI (Tablica / Paragon)</strong>
+              <span>Zrób zdjęcie tablicy z kranu lub paragonu – uzupełnimy formularz za Ciebie!</span>
+            </div>
+          </div>
+          <div class="ocr-fast-track-action">
+            <input type="file" id="ocr-photo-input" accept="image/*" class="photo-file-input" />
+            <label for="ocr-photo-input" class="btn-ocr-trigger" id="btn-ocr-trigger">
+              <span>📷 Zrób zdjęcie / Wgraj cennik</span>
+            </label>
+            <div id="ocr-scanning-spinner" style="display:none;" class="ocr-scanning-status">
+              <div class="pulse-live-dot"></div>
+              <span>Analiza cennika przez AI Vision...</span>
+            </div>
+          </div>
+        </div>
+        <div class="ocr-divider">
+          <span>lub wpisz dane ręcznie</span>
+        </div>
+
         <div class="form-group">
           <label class="form-label" id="report-name-label">Nazwa lokalu / baru</label>
           <div id="report-modal-desc" style="font-size:0.75rem;color:var(--text-muted);margin-bottom:6px;">Wpisz nazwę nowego baru, który chcesz dodać na mapę:</div>
@@ -1246,6 +1270,24 @@
           <span class="action-item-caret">→</span>
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- Waze Geofence Proximity Mini-Banner (Within 40m) -->
+  <div class="waze-proximity-banner" id="waze-proximity-banner" style="display:none;">
+    <div class="waze-proximity-top">
+      <div class="waze-proximity-text" id="waze-proximity-text">
+        📍 Jesteś w <strong id="waze-proximity-name">Lokal</strong>? Czy najtańsze lane nadal kosztuje <strong id="waze-proximity-price">14.00 zł</strong>?
+      </div>
+      <button type="button" class="btn-waze-quick-close" id="btn-waze-proximity-close" title="Zamknij powiadomienie">✕</button>
+    </div>
+    <div class="waze-proximity-actions">
+      <button type="button" class="btn-waze-quick-yes" id="btn-waze-proximity-yes">
+        👍 Tak, zgadza się (+10 pkt)
+      </button>
+      <button type="button" class="btn-waze-quick-change" id="btn-waze-proximity-change">
+        ✏️ Zmieniła się
+      </button>
     </div>
   </div>
 
