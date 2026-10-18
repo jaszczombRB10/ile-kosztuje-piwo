@@ -21161,6 +21161,11 @@ body.theme-light .btn-empty-vp-action.secondary {
   }
 }
 
+/* 5. Carto Dark Tile Legibility in Daylight & Sunlight */
+.leaflet-tile-pane {
+  filter: brightness(1.38) contrast(1.08) saturate(1.15);
+}
 
-
-
+body.theme-light .leaflet-tile-pane {
+  filter: none;
+}

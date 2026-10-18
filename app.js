@@ -1603,16 +1603,24 @@
 
       marker._venueData = venue;
       marker.on("click", () => {
-        if (window.innerWidth <= 640 && typeof window.__openVenueSheet === "function") {
-          setTimeout(() => {
-            try { marker.closePopup(); } catch (err) {}
-            window.__openVenueSheet(venue);
-          }, 10);
+        if (typeof window.__openVenueSheet === "function") {
+          try { marker.closePopup(); } catch (err) {}
+          window.__openVenueSheet(venue);
+          const slug = venue.slug || venue.id;
+          if (slug && window.location.hash !== `#${slug}`) {
+            try {
+              history.replaceState(null, "", `#${slug}`);
+            } catch (e) {}
+          }
         }
       });
       marker.on("popupopen", () => {
         const v = marker._venueData;
         if (v) {
+          if (typeof window.__openVenueSheet === "function") {
+            try { marker.closePopup(); } catch (err) {}
+            window.__openVenueSheet(v);
+          }
           const slug = v.slug || v.id;
           if (slug && window.location.hash !== `#${slug}`) {
             try {
@@ -7237,9 +7245,9 @@
         banner.style.display = "flex";
       }
 
-      // Listen for Chrome / Android beforeinstallprompt on mobile
+      // Listen for Chrome / Android beforeinstallprompt on mobile (store quietly without console warning)
       window.addEventListener("beforeinstallprompt", (e) => {
-        e.preventDefault();
+        if (isStandalone) return;
         deferredInstallPrompt = e;
         const isMobile = window.innerWidth <= 640 || /iphone|ipad|ipod|android/i.test(navigator.userAgent);
         if (isMobile) {
@@ -22541,6 +22549,10 @@
     const hasZero = isNonAlcoholicVenue(venue);
     const proofUrl = venue.photo_url || venue.proof_image_url;
 
+    const openMatch = (venue.hours || "").match(/(\d{1,2}:\d{2})/);
+    const openTimeLabel = openMatch ? openMatch[1] : "16:00";
+    const statusLabelText = open ? "🟢 Otwarte teraz" : `🕒 Otwiera się o ${openTimeLabel}`;
+
     let walkInfo = "";
     if (userLocation) {
       const distKm = calculateDistanceKm(userLocation[0], userLocation[1], venue.latitude, venue.longitude);
@@ -22562,11 +22574,17 @@
           ${venue.old_name ? `<span class="venue-old-name" style="font-size:0.75rem;font-weight:400;color:var(--text-muted);">(d. ${escapeHtml(venue.old_name)})</span>` : ''}
         </h2>
         <div class="venue-sheet-address">📍 ${escapeHtml(venue.district || getCurrentCity().name)} · ${escapeHtml(venue.address || '')}</div>
+        <div style="margin-top:5px; display:flex; align-items:center; flex-wrap:wrap; gap:6px;">
+          <span class="venue-status-badge ${open ? 'open' : 'closed'}" style="font-size:0.74rem; padding:3px 9px;">
+            ${statusLabelText}
+          </span>
+          ${venue.hours ? `<span class="venue-hours-chip" style="font-size:0.72rem;">${escapeHtml(formatDisplayHours(venue.hours))}</span>` : ''}
+        </div>
         ${walkInfo}
       </div>
-      <div class="venue-sheet-price-tag">
-        <div class="venue-sheet-price-val ${tier.tier}">${price.toFixed(2)} zł</div>
-        <div class="venue-sheet-beer-name">${escapeHtml(venue.beer_name || "Piwo z kranu")}</div>
+      <div class="venue-sheet-price-tag" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:14px; padding:8px 12px; align-items:flex-end;">
+        <div class="venue-sheet-price-val ${tier.tier}">${price.toFixed(2)} zł <span style="font-size:0.68rem; font-weight:700; opacity:0.85;">0.5L</span></div>
+        <div class="venue-sheet-beer-name">🍺 ${escapeHtml(venue.beer_name || "Piwo z kranu")}</div>
       </div>
       <button type="button" class="sheet-close-btn venue-sheet-close-btn" id="btn-close-venue-sheet" aria-label="Zamknij kartę lokalu">✕</button>
     `;
@@ -22602,17 +22620,17 @@
     const verifyCardHtml = `
       <div class="waze-verify-card" id="waze-card-${venue.id}">
         <div style="font-size:0.80rem; font-weight:700; color:#ffffff;">
-          ⚡ Jesteś w barze? Czy lane 0.5L nadal kosztuje <span style="color:#f59e0b;" id="waze-price-display-${venue.id}">${price.toFixed(2)} zł</span>?
+          ⚡ Szybka weryfikacja w 1 klik: czy lane (0.5L) kosztuje <span style="color:#f59e0b;" id="waze-price-display-${venue.id}">${price.toFixed(2)} zł</span>?
         </div>
         <div class="waze-actions-row" id="waze-actions-row-${venue.id}" style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
-          <button type="button" class="btn-waze-confirm" id="btn-waze-yes-${venue.id}" style="background:#22c55e; color:#ffffff; font-weight:800; font-size:0.78rem; padding:8px 10px; border-radius:10px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px;">
-            👍 Tak (+10 pkt)
+          <button type="button" class="btn-waze-confirm" id="btn-waze-yes-${venue.id}" style="background:#22c55e; color:#ffffff; font-weight:800; font-size:0.76rem; padding:9px 10px; border-radius:10px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px;">
+            👍 Cena aktualna (+10 pkt)
           </button>
-          <button type="button" class="btn-waze-change" id="btn-waze-change-${venue.id}" style="background:rgba(255,255,255,0.1); color:#cbd5e1; font-weight:700; font-size:0.78rem; padding:8px 10px; border-radius:10px; border:1px solid rgba(255,255,255,0.15); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px;">
-            ✏️ Zmieniła się
+          <button type="button" class="btn-waze-change" id="btn-waze-change-${venue.id}" style="background:rgba(255,255,255,0.1); color:#cbd5e1; font-weight:700; font-size:0.76rem; padding:9px 10px; border-radius:10px; border:1px solid rgba(255,255,255,0.15); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px;">
+            ✏️ Zmień cenę
           </button>
-          <button type="button" class="btn-waze-scan" onclick="window.__editVenuePrice('${venue.id}', true)">
-            🧾 Zeskanuj paragon z baru (+25 pkt)
+          <button type="button" class="btn-waze-scan" onclick="window.__editVenuePrice('${venue.id}', true)" style="grid-column: 1 / -1;">
+            🧾 Zeskanuj paragon / cennik AI (+25 pkt)
           </button>
         </div>
         <div class="waze-quick-price-selector" id="waze-selector-${venue.id}" style="display:none; margin-top:6px;">
@@ -22633,17 +22651,17 @@
     // Action buttons row
     const actionButtonsHtml = `
       <div class="venue-sheet-actions">
-        <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="btn-venue-sheet-action btn-venue-nav" style="text-decoration:none;">
-          <span style="font-size:1.2rem;">🚗</span>
-          <span>Nawiguj</span>
-        </a>
-        <button type="button" class="btn-venue-sheet-action" id="btn-venue-sheet-fav">
-          <span style="font-size:1.2rem;">${isFav ? '❤️' : '🤍'}</span>
-          <span>${isFav ? 'Ulubiony' : 'Do ulubionych'}</span>
-        </button>
         <button type="button" class="btn-venue-sheet-action" id="btn-venue-sheet-visited">
-          <span style="font-size:1.2rem;">${isVisited ? '🎖️' : '🍺'}</span>
-          <span>${isVisited ? 'Odwiedzony' : 'Byłem tu!'}</span>
+          <span style="font-size:1.2rem;">🎖️</span>
+          <span>${isVisited ? 'Pieczątka wbita ✓' : 'Wbij pieczątkę do Paszportu'}</span>
+        </button>
+        <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="btn-venue-sheet-action btn-venue-nav" style="text-decoration:none;">
+          <span style="font-size:1.2rem;">🧭</span>
+          <span>Prowadź (Google Maps)</span>
+        </a>
+        <button type="button" class="btn-venue-sheet-action" id="btn-venue-sheet-edit">
+          <span style="font-size:1.2rem;">✏️</span>
+          <span>Zgłoś zmianę / cennik</span>
         </button>
       </div>
     `;
@@ -22651,11 +22669,10 @@
     // Badges & details
     const chipsHtml = `
       <div class="venue-chips-row" style="margin-top:2px;">
-        <span class="venue-status-badge ${open ? 'open' : 'closed'}">
-          <span class="status-dot"></span> ${open ? 'Otwarte teraz' : 'Zamknięte'}
-        </span>
+        <button type="button" class="venue-chip" id="btn-venue-sheet-fav" style="cursor:pointer; background:rgba(255,255,255,0.06);">
+          ${isFav ? '❤️ W ulubionych' : '🤍 Dodaj do ulubionych'}
+        </button>
         ${venue.verified_by_receipt ? `<span class="venue-chip" style="background:rgba(16,185,129,0.15); border-color:rgba(16,185,129,0.4); color:#a7f3d0;" title="Cena zweryfikowana paragonem fiskalnym (${escapeHtml(venue.receipt_date || 'niedawno')})">🧾 Paragon ${escapeHtml(venue.receipt_date || 'OK')}</span>` : ''}
-        ${venue.hours ? `<span class="venue-hours-chip">🕒 ${escapeHtml(formatDisplayHours(venue.hours))}</span>` : ''}
         ${(venue.is_partner || venue.pass_partner) ? `<span class="venue-chip chip-pass" title="Lokal honoruje kartę poilepiwko Pass (-10%)">🎟️ Karta Pass (-10%)</span>` : ''}
         ${venue.shot_price_pln ? `<span class="venue-chip">🥃 Shot: <strong>${venue.shot_price_pln.toFixed(2)} zł</strong></span>` : ''}
         ${venue.is_craft ? `<span class="venue-chip craft">⭐ Kraft / Multitap</span>` : ''}
@@ -22707,7 +22724,9 @@
           const pVal = tile.getAttribute("data-price");
           if (pVal === "other") {
             closeVenueSheet();
-            if (typeof openAddModal === "function") {
+            if (typeof window.__editVenuePrice === "function") {
+              window.__editVenuePrice(venue.id);
+            } else if (typeof openAddModal === "function") {
               openAddModal();
               const nameInput = document.getElementById("report-name");
               if (nameInput) nameInput.value = venue.name;
@@ -22785,6 +22804,17 @@
         poileHaptics.success();
         toggleVisitedVenue(venue.id);
         openVenueSheet(venue);
+      });
+    }
+
+    const btnEditVenue = document.getElementById("btn-venue-sheet-edit");
+    if (btnEditVenue) {
+      btnEditVenue.addEventListener("click", () => {
+        poileHaptics.tick();
+        closeVenueSheet();
+        if (typeof window.__editVenuePrice === "function") {
+          window.__editVenuePrice(venue.id);
+        }
       });
     }
 

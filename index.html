@@ -31,6 +31,7 @@
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512.png">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="poilepiwko">
@@ -1603,12 +1604,18 @@
         </div>
 
         <div class="legal-section">
-          <h4>§ 8. Prywatność, RODO & Cookies</h4>
+          <h4>§ 8. Prywatność, RODO, Uprawnienia Urządzenia &amp; Cookies</h4>
           <p>
-            1. Serwis nie stosuje zewnętrznych ciasteczek śledzących ani reklamowych.
+            1. <strong>Lokalizacja GPS (Foreground Location):</strong> Aplikacja korzysta z uprawnienia do lokalizacji urządzenia wyłącznie w celu wyświetlenia najbliższych barów na mapie, działania radaru <em>Piwny Kompas</em> oraz funkcji ratunkowej <em>Bezpieczny Powrót (SOS)</em>. Współrzędne GPS są przetwarzane doraźnie na żądanie użytkownika i <strong>nigdy nie są śledzone w tle</strong> ani sprzedawane podmiotom trzecim.
           </p>
           <p>
-            2. Pamięć urządzenia (<code>localStorage</code>) wykorzystywana jest wyłącznie w celach technicznych: zapamiętanie weryfikacji wieku (+18), akceptacji Regulaminu oraz preferencji motywu (ciemny/jasny).
+            2. <strong>Aparat i Zdjęcia (Camera &amp; Photo Library):</strong> Dostęp do aparatu lub galerii zdjęć uruchamiany jest wyłącznie na wyraźne żądanie użytkownika w celu: zrobienia zdjęcia w funkcji <em>Piwny BeReal</em>, zeskanowania paragonu/menu przez <em>AI Beer &amp; Receipt Scanner</em> lub ustawienia własnego awatara profilowego.
+          </p>
+          <p>
+            3. <strong>Przetwarzanie danych konta (Supabase / UE) i Prawo do Usunięcia Danych (RODO / Apple Guideline 5.1.1(v)):</strong> W przypadku dobrowolnego założenia konta społecznościowego, dane profilowe (adres e-mail, nick, zaszyfrowane hasło lub token autoryzacyjny OAuth Google / Apple, historia Piwnego Paszportu oraz dodane zdjęcia) są bezpiecznie przechowywane w chmurowej bazie danych <strong>Supabase (serwery na terenie Unii Europejskiej)</strong>. Każdy użytkownik może w dowolnym momencie, <strong>w 1 sekundę bezpowrotnie usunąć swoje konto wraz ze wszystkimi danymi</strong> klikając przycisk <strong>„🗑️ Usuń konto i dane”</strong> w zakładce <em>Profil</em>.
+          </p>
+          <p>
+            4. <strong>Pamięć lokalna (<code>localStorage</code>) i brak trackerów reklamowych:</strong> Serwis nie wykorzystuje zewnętrznych ciasteczek reklamowych ani trackerów śledzących. Pamięć podręczna urządzenia służy do zapamiętania weryfikacji wieku (+18), wybranego miasta, motywu kolorystycznego oraz działania aplikacji w trybie offline.
           </p>
         </div>
 
