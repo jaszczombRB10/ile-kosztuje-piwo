@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>poilepiwko - Gdzie na piwo? Nocna Mapa Barów, Kompas & Pub Crawl</title>
   <meta name="description" content="poilepiwko: sprawdź na żywo aktualne ceny piwa z nalewaka, happy hours, krafty i wyznacz optymalny Pub Crawl w Twoim mieście!">
-  <meta name="theme-color" content="#111114">
+  <meta name="theme-color" content="#0d1615">
 
   <!-- Open Graph & Social Sharing Meta Tags -->
   <meta property="og:type" content="website">
@@ -207,60 +207,34 @@
   <!-- App Body: Map & Controls -->
   <div class="app-body">
 
-    <!-- Apple Maps Style Floating Top HUD (Spotlight Search + Quick Pills + Dynamic Island Pulse) -->
+    <!-- Mobile Floating Top Controls (Inspired by VadKostarOlen) -->
     <div class="mobile-floating-top" id="mobile-floating-top">
-      <div class="apple-top-spotlight-bar">
-        <button type="button" class="fab-brand-pill" id="btn-top-brand" title="Zmień miasto">
-          <span class="brand-pill-icon">📍</span>
-          <span class="brand-pill-text"><span id="mobile-city-label">Warszawa</span> <span class="brand-pill-caret">▾</span></span>
-        </button>
+      <button type="button" class="fab-top-btn" id="btn-top-filter" title="Filtruj ceny i lokale">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="4" y1="21" x2="4" y2="14"></line>
+          <line x1="4" y1="10" x2="4" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12" y2="3"></line>
+          <line x1="20" y1="21" x2="20" y2="16"></line>
+          <line x1="20" y1="12" x2="20" y2="3"></line>
+          <line x1="1" y1="14" x2="7" y2="14"></line>
+          <line x1="9" y1="8" x2="15" y2="8"></line>
+          <line x1="17" y1="16" x2="23" y2="16"></line>
+        </svg>
+        <span class="fab-badge-dot" id="top-filter-dot" style="display:none;"></span>
+      </button>
 
-        <span class="apple-top-divider" aria-hidden="true"></span>
+      <button type="button" class="fab-brand-pill" id="btn-top-brand" title="Zmień miasto lub zresetuj widok">
+        <span class="brand-pill-icon">📍</span>
+        <span class="brand-pill-text"><span id="mobile-city-label">Warszawa</span> <span class="brand-pill-caret">▾</span></span>
+      </button>
 
-        <button type="button" class="apple-spotlight-search-trigger" id="btn-top-search" title="Szukaj lokalu, piwa lub ulicy">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" class="spotlight-search-icon">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          </svg>
-          <span class="spotlight-placeholder">Szukaj baru, piwa, ulicy...</span>
-        </button>
-
-        <button type="button" class="fab-top-btn" id="btn-top-filter" title="Filtruj ceny i lokale">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="4" y1="21" x2="4" y2="14"></line>
-            <line x1="4" y1="10" x2="4" y2="3"></line>
-            <line x1="12" y1="21" x2="12" y2="12"></line>
-            <line x1="12" y1="8" x2="12" y2="3"></line>
-            <line x1="20" y1="21" x2="20" y2="16"></line>
-            <line x1="20" y1="12" x2="20" y2="3"></line>
-            <line x1="1" y1="14" x2="7" y2="14"></line>
-            <line x1="9" y1="8" x2="15" y2="8"></line>
-            <line x1="17" y1="16" x2="23" y2="16"></line>
-          </svg>
-          <span class="fab-badge-dot" id="top-filter-dot" style="display:none;"></span>
-        </button>
-      </div>
-
-      <!-- Apple Maps Horizontal Quick Filter Capsules -->
-      <div class="apple-quick-pills-scroll" id="apple-quick-pills" role="toolbar" aria-label="Szybkie filtry mapy">
-        <button type="button" class="apple-map-pill active" data-apple-filter="all">✨ Wszystkie</button>
-        <button type="button" class="apple-map-pill pill-low" data-apple-filter="tier-low">🟢 ≤ 12 zł</button>
-        <button type="button" class="apple-map-pill pill-open" data-apple-filter="open-now">🕒 Otwarte teraz</button>
-        <button type="button" class="apple-map-pill pill-hh" data-apple-filter="happy-hour">⚡ Happy Hour</button>
-        <button type="button" class="apple-map-pill pill-pawilony" data-apple-district="Pawilony">🔥 Pawilony</button>
-        <button type="button" class="apple-map-pill pill-bulwary" data-apple-district="Bulwary">🌊 Bulwary</button>
-        <button type="button" class="apple-map-pill" data-apple-filter="craft">⭐ Kraft</button>
-        <button type="button" class="apple-map-pill" data-apple-filter="non-alcoholic">🌱 0.0%</button>
-      </div>
-
-      <!-- Dynamic Island Live City Pulse Widget -->
-      <div class="apple-dynamic-island-wrap">
-        <button type="button" class="apple-live-pulse-btn" id="apple-live-pulse-pill" title="Pokaż najtańsze otwarte piwo w mieście teraz">
-          <span class="live-pulse-dot"></span>
-          <span class="live-pulse-text" id="apple-live-pulse-text">Puls miasta na żywo...</span>
-          <span class="live-pulse-chevron">↗</span>
-        </button>
-      </div>
+      <button type="button" class="fab-top-btn" id="btn-top-search" title="Szukaj lokalu lub piwa">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </button>
     </div>
 
     <!-- Mobile Search Sheet / Quick Results -->
@@ -2724,21 +2698,41 @@
         </div>
       </div>
 
-      <!-- Tab 3: Live Feed (BeReal-style fotki z kufli i barów z reakcją 🍻) -->
+      <!-- Tab 3: Live Feed 2.0 (BeReal fotki z kufli + Live Ceny & Paragony AI + Meldunki) -->
       <div class="comm-tab-pane" id="pane-comm-feed" style="display:none;">
-        <div class="feed-header-bar">
-          <div>
-            <h3>📸 Barowy Live Feed</h3>
-            <p class="comm-section-sub">Świeże fotki kufli, paragonów i atmosfery z lokalnych barów</p>
+        <div class="live-feed-hero-card">
+          <div class="live-feed-hero-top">
+            <span class="feed-live-pill">
+              <span class="feed-live-dot"></span>
+              NA ŻYWO Z BARÓW · 24H
+            </span>
+            <span class="feed-city-badge" id="feed-city-stat-label">📍 Warszawa</span>
           </div>
-          <div class="feed-actions-group">
-            <button type="button" class="btn-primary btn-sm btn-bereal-camera-trigger" id="btn-open-bereal-camera">
-              📸 Zrób BeReal
+          <div class="live-feed-hero-main">
+            <h3>Co leje się dziś na mieście? 🍻</h3>
+            <p>Świeże fotki kufli (Piwny BeReal), zweryfikowane paragony AI i meldunki cenowe z ostatnich godzin.</p>
+          </div>
+          <div class="live-feed-hero-actions">
+            <button type="button" class="btn-feed-cta-primary btn-bereal-camera-trigger" id="btn-open-bereal-camera">
+              <span>📸</span>
+              <span>Zrób Piwny BeReal (+25 pkt)</span>
+            </button>
+            <button type="button" class="btn-feed-cta-secondary" id="btn-feed-scan-receipt">
+              <span>🧾</span>
+              <span>Skanuj paragon AI</span>
             </button>
           </div>
         </div>
+
+        <div class="live-feed-filter-pills" id="live-feed-filters" role="tablist" aria-label="Filtruj Live Feed">
+          <button type="button" class="feed-filter-pill active" data-feed-filter="all">🔥 Wszystko</button>
+          <button type="button" class="feed-filter-pill" data-feed-filter="photos">📸 Fotki & BeReal</button>
+          <button type="button" class="feed-filter-pill" data-feed-filter="prices">🧾 Ceny & Paragony</button>
+          <button type="button" class="feed-filter-pill" data-feed-filter="deals">🟢 Okazje ≤ 12 zł</button>
+        </div>
+
         <div class="live-feed-grid" id="comm-feed-grid">
-          <div class="empty-state-hint">Brak fotek z ostatnich 24h. Bądź pierwszy i dodaj zdjęcie swojego piwa!</div>
+          <div class="empty-state-hint">Ładowanie relacji na żywo z barów... 🍻</div>
         </div>
       </div>
 

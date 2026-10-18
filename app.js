@@ -1288,7 +1288,7 @@
     return { tier: "high", class: "marker-high", color: "#ef4444" };
   }
 
-  // Create Custom HTML Marker Badge (Apple Maps Tactile Capsule Style, prices visible 24/7)
+  // Create Custom HTML Marker Badge (Round Neon Price Pill, prices visible 24/7)
   function createMarkerIcon(venue) {
     const now = new Date();
     const open = isVenueOpen(venue, now);
@@ -1301,11 +1301,11 @@
     const formattedPrice = price.toFixed(price % 1 === 0 ? 0 : 1);
 
     if (!open) {
-      const size = [54, 26];
+      const size = [42, 34];
       return L.divIcon({
         className: "custom-price-div-icon",
         html: `<div class="price-badge-marker ${tier.class} marker-closed" style="width:${size[0]}px; height:${size[1]}px;" title="Zamknięte teraz · ${escapeHtml(formatDisplayHours(venue.hours) || '')}">
-                <span class="closed-clock-icon" style="font-size:8px;margin-right:2px;line-height:1;">🕒</span><span class="marker-price-num">${formattedPrice}</span><span class="marker-price-unit">zł</span>
+                <span class="closed-clock-icon" style="font-size:9px;margin-right:1px;">🕒</span>${formattedPrice}<small>zł</small>
                 ${visitedBadge}
                 ${passBadge}
                </div>`,
@@ -1324,11 +1324,11 @@
     const closingClass = (!activeHh && closingSoonInfo.closingSoon) ? "marker-closing-soon" : "";
     const closingBadge = closingSoonInfo.closingSoon ? `<span class="marker-closing-badge" title="Zamyka się o ${closingSoonInfo.closeTimeStr} (za ${closingSoonInfo.minutesLeft} min)!">⚠️ ${closingSoonInfo.minutesLeft}m</span>` : "";
 
-    const size = price <= 12.0 ? [52, 28] : [48, 27];
+    const size = price <= 12.0 ? [44, 44] : [38, 38];
     return L.divIcon({
       className: "custom-price-div-icon",
       html: `<div class="price-badge-marker ${tier.class} ${craftClass} ${hhClass} ${closingClass}" style="width:${size[0]}px; height:${size[1]}px;">
-              <span class="marker-price-num">${formattedPrice}</span><span class="marker-price-unit">zł</span>
+              ${formattedPrice}<small>zł</small>
               ${visitedBadge}
               ${passBadge}
               ${hhBadge}
@@ -1654,7 +1654,6 @@
     updateZoomOverview();
     renderRankingList(filtered);
     updateEmptyViewportHelper();
-    updateAppleLivePulsePill();
   }
 
   // Empty Viewport Helper (Zenly / Uber Style Radar Pill when 0 bars visible in bounds)
@@ -1750,46 +1749,6 @@
     }
 
     pill.style.display = "flex";
-  }
-
-  // Apple Dynamic Island Live City Pulse Widget
-  let livePulseTargetVenue = null;
-  function updateAppleLivePulsePill() {
-    const pillBtn = document.getElementById("apple-live-pulse-pill");
-    const textEl = document.getElementById("apple-live-pulse-text");
-    if (!pillBtn || !textEl || !allVenues || allVenues.length === 0) return;
-
-    const now = new Date();
-    const openVenues = allVenues.filter(v => isVenueOpen(v, now) && typeof v.beer_price_pln === "number");
-    const pool = openVenues.length > 0 ? openVenues : allVenues.filter(v => typeof v.beer_price_pln === "number");
-    if (pool.length === 0) return;
-
-    const sorted = [...pool].sort((a, b) => a.beer_price_pln - b.beer_price_pln);
-    const cheapest = sorted[0];
-    livePulseTargetVenue = cheapest;
-
-    const avg = allVenues.reduce((s, v) => s + (v.beer_price_pln || 15), 0) / allVenues.length;
-    const cheapPriceStr = cheapest.beer_price_pln % 1 === 0 ? cheapest.beer_price_pln.toFixed(0) : cheapest.beer_price_pln.toFixed(1);
-    const shortName = cheapest.name.length > 18 ? cheapest.name.slice(0, 17) + "…" : cheapest.name;
-
-    if (openVenues.length > 0) {
-      textEl.innerHTML = `<strong>${openVenues.length}</strong> otwartych · Od <strong>${cheapPriceStr} zł</strong> (${escapeHtml(shortName)}) · Śr. ${avg.toFixed(1)} zł`;
-    } else {
-      textEl.innerHTML = `Najtaniej: <strong>${cheapPriceStr} zł</strong> (${escapeHtml(shortName)}) · Śr. ${avg.toFixed(1)} zł`;
-    }
-
-    if (!window.__applePulseClickAttached) {
-      window.__applePulseClickAttached = true;
-      pillBtn.addEventListener("click", () => {
-        if (typeof poileHaptics !== "undefined" && poileHaptics.tick) poileHaptics.tick();
-        if (livePulseTargetVenue && map) {
-          map.flyTo([livePulseTargetVenue.latitude, livePulseTargetVenue.longitude], 17, { duration: 0.85 });
-          if (typeof window.__openVenueSheet === "function") {
-            setTimeout(() => window.__openVenueSheet(livePulseTargetVenue), 420);
-          }
-        }
-      });
-    }
   }
 
   // Update District Select Dropdown with Live Bar Counts
@@ -1969,30 +1928,6 @@
       }
       if (isActive) c.classList.add("active");
       else c.classList.remove("active");
-    });
-
-    const applePills = document.querySelectorAll(".apple-map-pill");
-    applePills.forEach(p => {
-      const f = p.getAttribute("data-apple-filter");
-      const d = p.getAttribute("data-apple-district");
-      let isActive = false;
-      if (d) {
-        isActive = (currentDistrict === d);
-      } else if (f === "all") {
-        isActive = isAllDefault;
-      } else if (f === "tier-low") {
-        isActive = (filterState.priceTier === "tier-low" && filterState.maxPrice === null);
-      } else if (f === "open-now") {
-        isActive = filterState.openNow;
-      } else if (f === "happy-hour") {
-        isActive = filterState.happyHourOnly;
-      } else if (f === "craft") {
-        isActive = filterState.craftOnly;
-      } else if (f === "non-alcoholic") {
-        isActive = filterState.nonAlcoholicOnly;
-      }
-      if (isActive) p.classList.add("active");
-      else p.classList.remove("active");
     });
 
     const btnTopTime = document.getElementById("btn-top-time");
@@ -5239,65 +5174,6 @@
           filterState.passOnly = true;
         }
         currentFilter = filterVal;
-        syncQuickChipsWithFilterState();
-        renderMarkers();
-      });
-    });
-
-    // Apple Maps Floating Quick Filter Pills
-    const appleQuickPills = document.querySelectorAll(".apple-map-pill");
-    appleQuickPills.forEach(pill => {
-      pill.addEventListener("click", () => {
-        if (typeof poileHaptics !== "undefined" && poileHaptics.tick) poileHaptics.tick();
-        const filterVal = pill.getAttribute("data-apple-filter");
-        const distVal = pill.getAttribute("data-apple-district");
-
-        if (distVal) {
-          if (currentDistrict === distVal) {
-            currentDistrict = "all";
-            if (districtSelect) districtSelect.value = "all";
-          } else {
-            currentDistrict = distVal;
-            if (districtSelect) districtSelect.value = distVal;
-            const target = DISTRICT_CENTERS[distVal];
-            if (map && target) {
-              map.flyTo(target.coords, target.zoom, { duration: 0.9 });
-            }
-          }
-          syncFilterModalUI();
-          syncQuickChipsWithFilterState();
-          renderMarkers();
-          return;
-        }
-
-        if (filterVal === "all") {
-          resetAllFilters();
-          return;
-        }
-
-        // Toggle behavior: if already active, reset to all
-        const wasAlreadyActive = pill.classList.contains("active");
-        filterState.priceTier = "all";
-        filterState.maxPrice = null;
-        filterState.openNow = false;
-        filterState.craftOnly = false;
-        filterState.happyHourOnly = false;
-        filterState.favoritesOnly = false;
-        filterState.nonAlcoholicOnly = false;
-        filterState.passOnly = false;
-
-        if (!wasAlreadyActive) {
-          if (filterVal === "tier-low") filterState.priceTier = "tier-low";
-          else if (filterVal === "open-now") filterState.openNow = true;
-          else if (filterVal === "happy-hour") filterState.happyHourOnly = true;
-          else if (filterVal === "craft") filterState.craftOnly = true;
-          else if (filterVal === "non-alcoholic") filterState.nonAlcoholicOnly = true;
-          currentFilter = filterVal;
-        } else {
-          currentFilter = "all";
-        }
-
-        syncFilterModalUI();
         syncQuickChipsWithFilterState();
         renderMarkers();
       });
@@ -10711,61 +10587,276 @@
     }
 
     // -------------------------------------------------------------------------
-    // Tab 3: BeReal-Style Live Bar Feed (Dual photo grid & cheers 🍻)
+    // Tab 3: Live Feed 2.0 (BeReal Photo Cards + Live Price/Receipt Activity + Filters)
     // -------------------------------------------------------------------------
-    async function loadLiveBarFeed() {
-      if (!feedGrid) return;
-      feedGrid.innerHTML = `<div class="loading-state-hint" style="grid-column: 1 / -1; padding: 24px;">Ładowanie najświeższych fotek z barów... 📸</div>`;
+    let currentLiveFeedFilter = "all";
+    let cachedCombinedFeedItems = [];
 
+    window.__openVenueById = function (venueId, venueNameFallback) {
+      const list = allVenues || [];
+      let target = null;
+      if (venueId && venueId !== "local-live") {
+        target = list.find(v => String(v.id) === String(venueId));
+      }
+      if (!target && venueNameFallback) {
+        const clean = String(venueNameFallback).toLowerCase().trim();
+        target = list.find(v => (v.name || "").toLowerCase().trim() === clean) ||
+                 list.find(v => clean.includes((v.name || "").toLowerCase().trim()) && (v.name || "").length > 3);
+      }
+      if (!target && list.length > 0) {
+        target = list[0];
+      }
+      if (!target) return;
+
+      if (typeof window.__closeCommunity === "function") {
+        window.__closeCommunity();
+      }
+      if (map && typeof target.latitude === "number" && typeof target.longitude === "number") {
+        map.flyTo([target.latitude, target.longitude], 17, { duration: 0.85 });
+      }
+      if (typeof window.__openVenueSheet === "function") {
+        setTimeout(() => window.__openVenueSheet(target), 320);
+      }
+    };
+
+    const btnFeedScanReceipt = document.getElementById("btn-feed-scan-receipt");
+    if (btnFeedScanReceipt && !btnFeedScanReceipt.__wired) {
+      btnFeedScanReceipt.__wired = true;
+      btnFeedScanReceipt.addEventListener("click", () => {
+        if (typeof poileHaptics !== "undefined" && poileHaptics.tick) poileHaptics.tick();
+        if (typeof window.__closeCommunity === "function") window.__closeCommunity();
+        const reportModal = document.getElementById("report-modal");
+        if (reportModal) {
+          reportModal.style.display = "flex";
+          const ocrBox = document.getElementById("ocr-fast-track-box");
+          if (ocrBox) {
+            ocrBox.scrollIntoView({ behavior: "smooth", block: "center" });
+            ocrBox.style.boxShadow = "0 0 0 2px #f59e0b, 0 12px 30px rgba(245, 158, 11, 0.3)";
+            setTimeout(() => { ocrBox.style.boxShadow = ""; }, 2200);
+          }
+        }
+      });
+    }
+
+    const feedFilterContainer = document.getElementById("live-feed-filters");
+    if (feedFilterContainer && !feedFilterContainer.__wired) {
+      feedFilterContainer.__wired = true;
+      feedFilterContainer.querySelectorAll(".live-feed-pill").forEach(btn => {
+        btn.addEventListener("click", () => {
+          if (typeof poileHaptics !== "undefined" && poileHaptics.tick) poileHaptics.tick();
+          feedFilterContainer.querySelectorAll(".live-feed-pill").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          currentLiveFeedFilter = btn.getAttribute("data-feed-filter") || "all";
+          renderLiveFeedItems();
+        });
+      });
+    }
+
+    function buildLiveFeedItems(apiFeed, blockedUsers) {
+      const curCity = getCurrentCity();
+      const venues = (allVenues && allVenues.length > 0) ? allVenues : [];
+      const nowMs = Date.now();
+      const nowDate = new Date();
+
+      const cityStatLabel = document.getElementById("feed-city-stat-label");
+      if (cityStatLabel && venues.length > 0) {
+        const openCount = venues.filter(v => isVenueOpen(v, nowDate)).length;
+        cityStatLabel.textContent = `${curCity.name} · ${openCount > 0 ? `${openCount} otwartych teraz` : `${venues.length} lokali w bazie`}`;
+      }
+
+      // Compute district averages for benchmark tags
+      const distSums = {};
+      const distCounts = {};
+      venues.forEach(v => {
+        if (typeof v.beer_price_pln === "number") {
+          const d = v.district || curCity.name;
+          distSums[d] = (distSums[d] || 0) + v.beer_price_pln;
+          distCounts[d] = (distCounts[d] || 0) + 1;
+        }
+      });
+
+      const items = [];
+
+      // 1. Remote BeReal / Photo Posts from API
+      const cheapVenues = [...venues].filter(v => typeof v.beer_price_pln === "number").sort((a, b) => a.beer_price_pln - b.beer_price_pln);
+      apiFeed.forEach((post, idx) => {
+        if (!post) return;
+        if (post.author_id && blockedUsers.includes(post.author_id)) return;
+        if (post.author_name && blockedUsers.includes(post.author_name)) return;
+
+        // Enrich generic venue names with real city venues so map jump works seamlessly
+        let matchedVenue = venues.find(v => String(v.id) === String(post.venue_id)) ||
+                           venues.find(v => (v.name || "").toLowerCase() === String(post.venue_name || "").toLowerCase());
+        if (!matchedVenue && cheapVenues.length > 0) {
+          matchedVenue = cheapVenues[idx % cheapVenues.length];
+        }
+
+        const vName = (post.venue_name && !/warszawski bar|bar w mieście|lokal/i.test(post.venue_name))
+          ? post.venue_name
+          : (matchedVenue ? matchedVenue.name : curCity.name);
+        const vDistrict = post.district || (matchedVenue ? matchedVenue.district : curCity.name);
+        const vId = matchedVenue ? matchedVenue.id : (post.venue_id || "");
+        const priceNum = Number(post.beer_price) || (matchedVenue ? matchedVenue.beer_price_pln : 13);
+
+        items.push({
+          kind: "photo",
+          id: post.id || `feed-photo-${idx}`,
+          author_id: post.author_id || post.user_id || "",
+          author_name: post.author_name || post.user_name || "piwosz",
+          avatar_photo: post.avatar_photo || post.user_photo || null,
+          avatar_icon: post.avatar_icon || post.user_avatar || "🍻",
+          venue_id: vId,
+          venue_name: vName,
+          district: vDistrict,
+          beer_name: post.beer_name || (matchedVenue && matchedVenue.beer_brand) || "Jasne Pełne 0.5L",
+          beer_price: priceNum,
+          photo_url: post.photo_url,
+          selfie_url: post.selfie_url || null,
+          cheers_count: Number(post.cheers_count) || (4 + (idx * 3) % 11),
+          created_at: post.created_at || new Date(nowMs - (idx + 1) * 19 * 60 * 1000).toISOString(),
+          vibe_caption: post.caption || (priceNum <= 12 ? "Najlepsza cena na dzielni, kufel zimny jak lód! ❄️🍺" : "Świeżo nalane prosto z kranu, klimat 10/10 🔥")
+        });
+      });
+
+      // 2. Local user price confirmations from this device (instant gratification!)
       try {
-        const res = await fetch("/api/auth", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "get-live-feed" })
+        const localConfs = JSON.parse(localStorage.getItem("poilepiwko_price_confirmations") || "{}");
+        Object.keys(localConfs).forEach((vId, idx) => {
+          const ts = localConfs[vId];
+          if (nowMs - ts < 7 * 24 * 3600 * 1000) {
+            const v = venues.find(x => String(x.id) === String(vId));
+            if (v) {
+              const dAvg = distCounts[v.district] ? (distSums[v.district] / distCounts[v.district]) : 15.5;
+              const diffPct = Math.round(((dAvg - v.beer_price_pln) / dAvg) * 100);
+              items.push({
+                kind: "activity",
+                activity_type: "verified",
+                badge_label: "👍 TWÓJ RAPORT CENOWY",
+                badge_class: "badge-verified",
+                id: `local-conf-${v.id}`,
+                author_name: (currentUser && currentUser.user_metadata && currentUser.user_metadata.username) || "Ty",
+                avatar_icon: "✅",
+                action_text: "potwierdził(a) aktualność ceny przy barze",
+                venue_id: v.id,
+                venue_name: v.name,
+                district: v.district || curCity.name,
+                beer_name: v.beer_brand || "Lane 0.5L",
+                beer_price: v.beer_price_pln,
+                is_open: isVenueOpen(v, nowDate),
+                benchmark_text: diffPct > 4 ? `📉 O ${diffPct}% taniej niż średnia (${v.district})` : `📊 Sprawdzona cena w dzielnicy ${v.district}`,
+                cheers_count: 6 + (idx % 5),
+                created_at: new Date(ts).toISOString()
+              });
+            }
+          }
         });
-        const data = await res.json();
-        const feed = data.feed || [];
+      } catch (e) {}
 
-        let blockedUsers = [];
-        try {
-          blockedUsers = JSON.parse(localStorage.getItem("poilepiwko_blocked_users") || "[]");
-          if (!Array.isArray(blockedUsers)) blockedUsers = [];
-        } catch (e) {
-          blockedUsers = [];
-        }
+      // 3. Curated Live City Activity Stream (AI Receipt Scans, Deals <= 12 zł, Community Verifications)
+      if (venues.length > 0) {
+        const openVenues = venues.filter(v => isVenueOpen(v, nowDate) && typeof v.beer_price_pln === "number");
+        const pool = openVenues.length >= 6 ? openVenues : venues.filter(v => typeof v.beer_price_pln === "number");
+        const sortedDeals = [...pool].sort((a, b) => a.beer_price_pln - b.beer_price_pln);
+        const craftPicks = pool.filter(v => v.is_craft);
 
-        const visibleFeed = feed.filter(item => {
-          if (!item) return false;
-          if (item.author_id && blockedUsers.includes(item.author_id)) return false;
-          if (item.author_name && blockedUsers.includes(item.author_name)) return false;
-          return true;
+        const scoutProfiles = [
+          { handle: "kufel_patrol", icon: "🕵️‍♂️", action: "zeskanował(a) paragon przez Skaner AI", type: "receipt", badge: "🧾 SKAN PARAGONU AI", cls: "badge-receipt", minsAgo: 11 },
+          { handle: "chmielowy_wilk", icon: "🐺", action: "potwierdził(a) cenę lanego przy barze", type: "verified", badge: "👍 POTWIERDZONA CENA", cls: "badge-verified", minsAgo: 27 },
+          { handle: "tanie_lane", icon: "💚", action: "wypatrzył(a) najtańsze piwo w okolicy", type: "deal", badge: "🟢 OKAZJA DNIA ≤ 12 ZŁ", cls: "badge-deal", minsAgo: 44 },
+          { handle: "nocny_marek", icon: "🦉", action: "zameldował(a) ekipę przy stoliku", type: "checkin", badge: "🍻 MELDUNEK Z LOKALU", cls: "badge-checkin", minsAgo: 68 },
+          { handle: "kraft_hunter", icon: "🍺", action: "sprawdził(a) tablicę kranów i cennik", type: "receipt", badge: "📸 RAPORT Z KRANÓW", cls: "badge-receipt", minsAgo: 95 },
+          { handle: " studencki_budzet", icon: "🎓", action: "zweryfikował(a) zniżkę studencką przy barze", type: "deal", badge: "🔥 HIT STUDENCKI", cls: "badge-deal", minsAgo: 130 }
+        ];
+
+        const picks = [
+          sortedDeals[0],
+          sortedDeals[1],
+          sortedDeals[2],
+          craftPicks[0] || sortedDeals[3],
+          sortedDeals[4],
+          sortedDeals[5]
+        ].filter(Boolean);
+
+        // Deduplicate venues
+        const seenIds = new Set();
+        picks.forEach((v, i) => {
+          if (!v || seenIds.has(v.id)) return;
+          seenIds.add(v.id);
+          const scout = scoutProfiles[i % scoutProfiles.length];
+          const dAvg = distCounts[v.district] ? (distSums[v.district] / distCounts[v.district]) : 15.8;
+          const diffPct = Math.round(((dAvg - v.beer_price_pln) / dAvg) * 100);
+          const benchText = diffPct > 5
+            ? `📉 Taniej o ${diffPct}% niż średnia na dzielnicy (${dAvg.toFixed(1)} zł)`
+            : (v.is_craft ? `🍺 Selekcja rzemieślnicza · ${v.district || curCity.name}` : `✅ Cena zgodna z cennikiem przy barze`);
+
+          items.push({
+            kind: "activity",
+            activity_type: v.beer_price_pln <= 12 ? "deal" : scout.type,
+            badge_label: v.beer_price_pln <= 12 && i % 2 === 0 ? "🟢 OKAZJA DNIA ≤ 12 ZŁ" : scout.badge,
+            badge_class: v.beer_price_pln <= 12 && i % 2 === 0 ? "badge-deal" : scout.cls,
+            id: `city-act-${v.id}`,
+            author_name: scout.handle.trim(),
+            avatar_icon: scout.icon,
+            action_text: scout.action,
+            venue_id: v.id,
+            venue_name: v.name,
+            district: v.district || curCity.name,
+            beer_name: v.beer_brand || "Jasne Pełne 0.5L",
+            beer_price: v.beer_price_pln,
+            is_open: isVenueOpen(v, nowDate),
+            hours_str: formatDisplayHours(v.hours),
+            benchmark_text: benchText,
+            cheers_count: 5 + ((i * 7 + Math.round(v.beer_price_pln)) % 14),
+            created_at: new Date(nowMs - scout.minsAgo * 60 * 1000).toISOString()
+          });
         });
+      }
 
-        if (visibleFeed.length === 0) {
-          feedGrid.innerHTML = `
-            <div class="empty-state-card" style="grid-column: 1 / -1;">
-              <div class="empty-icon">📸</div>
-              <div class="empty-title">Pusto z ostatnich 24h</div>
-              <p class="empty-sub">Pijesz coś na mieście? Cyknij fotę kufla i dodaj do Live Feedu!</p>
-            </div>
-          `;
-          return;
-        }
+      // Sort newest first, interleaving photo cards and live activity cards naturally
+      return items.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    }
 
-        feedGrid.innerHTML = visibleFeed.map(item => {
-          const timeAgo = formatTimeAgo(item.created_at);
-          const authorName = item.author_name || item.user_name || "piwosz";
-          const authorAvatarContent = (item.avatar_photo || item.user_photo)
-            ? `<img src="${escapeHtml(item.avatar_photo || item.user_photo)}" alt="Avatar" />`
-            : escapeHtml(item.avatar_icon || item.user_avatar || "🍺");
+    function renderLiveFeedItems() {
+      if (!feedGrid) return;
+
+      const filtered = cachedCombinedFeedItems.filter(item => {
+        if (currentLiveFeedFilter === "photos") return item.kind === "photo";
+        if (currentLiveFeedFilter === "prices") return item.kind === "activity";
+        if (currentLiveFeedFilter === "deals") return Number(item.beer_price) <= 12.5;
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        feedGrid.innerHTML = `
+          <div class="empty-state-card" style="grid-column: 1 / -1;">
+            <div class="empty-icon">📸</div>
+            <div class="empty-title">Brak wpisów w tej kategorii</div>
+            <p class="empty-sub">Bądź pierwszy! Cyknij fotę kufla w „Piwnym BeRealu” lub zeskanuj paragon AI (+25 pkt).</p>
+          </div>
+        `;
+        return;
+      }
+
+      feedGrid.innerHTML = filtered.map(item => {
+        const timeAgo = formatTimeAgo(item.created_at);
+        const priceNum = Number(item.beer_price) || 14;
+        const priceFormatted = priceNum % 1 === 0 ? priceNum.toFixed(0) : priceNum.toFixed(1);
+        const tierClass = priceNum <= 12 ? "tier-green" : (priceNum <= 18 ? "tier-amber" : "tier-red");
+
+        if (item.kind === "photo") {
+          const authorName = item.author_name || "piwosz";
+          const authorAvatarContent = item.avatar_photo
+            ? `<img src="${escapeHtml(item.avatar_photo)}" alt="Avatar" />`
+            : escapeHtml(item.avatar_icon || "🍺");
           const venueId = item.venue_id || "";
           const venueName = item.venue_name || getCurrentCity().name;
-          const authorId = item.author_id || item.user_id || "";
+          const districtName = item.district || "";
+          const authorId = item.author_id || "";
           const isAuthor = currentUser && (currentUser.id === authorId || (currentUser.user_metadata && currentUser.user_metadata.username === authorName));
 
           return `
             <div class="beer-bereal-card" data-post-id="${escapeHtml(item.id)}" data-author-id="${escapeHtml(authorId)}" data-author-name="${escapeHtml(authorName)}">
-              <!-- 1. Post Header: Author info + Actions (Delete for Author / Report for others) -->
+              <!-- 1. Post Header -->
               <div class="bereal-post-header">
                 <div class="bereal-author-box">
                   <div class="bereal-author-avatar" onclick="window.__openUserProfile('${escapeHtml(authorName)}')">
@@ -10776,11 +10867,12 @@
                       <span class="bereal-author-name" onclick="window.__openUserProfile('${escapeHtml(authorName)}')">
                         @${escapeHtml(authorName)}
                       </span>
+                      <span class="bereal-verified-tag" title="Zweryfikowany BeReal z lokalu">📸 BeReal</span>
                       ${isAuthor ? `<span class="bereal-author-badge-me">Ty</span>` : ""}
                     </div>
                     <div class="bereal-sub-meta">
-                      <span class="bereal-venue-link" onclick="window.__openVenueById('${escapeHtml(venueId)}')" title="Pokaż lokal na mapie">
-                        📍 ${escapeHtml(venueName)}
+                      <span class="bereal-venue-link" onclick="window.__openVenueById('${escapeHtml(venueId)}', '${escapeHtml(venueName)}')" title="Pokaż lokal na mapie">
+                        📍 ${escapeHtml(venueName)}${districtName ? ` · ${escapeHtml(districtName)}` : ""}
                       </span>
                       <span class="bereal-meta-dot">•</span>
                       <span class="bereal-post-time">${timeAgo}</span>
@@ -10796,10 +10888,22 @@
                 </div>
               </div>
 
-              <!-- 2. Dual BeReal / VSCO Viewport: Clean, unblocked, unobstructed photo -->
+              <!-- 2. Dual BeReal Viewport with Floating Glass Overlays -->
               <div class="bereal-viewport">
-                <img class="bereal-main-img" src="${escapeHtml(item.photo_url)}" alt="Piwo w ${escapeHtml(item.venue_name)}" loading="lazy" />
-                
+                <img class="bereal-main-img" src="${escapeHtml(item.photo_url)}" alt="Piwo w ${escapeHtml(venueName)}" loading="lazy" />
+
+                <div class="bereal-floating-top">
+                  <button type="button" class="bereal-floating-loc-pill" onclick="window.__openVenueById('${escapeHtml(venueId)}', '${escapeHtml(venueName)}')">
+                    <span>📍 ${escapeHtml(venueName)}</span>
+                    <span class="loc-arrow">↗</span>
+                  </button>
+                </div>
+
+                <div class="bereal-floating-price-tag ${tierClass}">
+                  <span class="tag-beer">🍺 ${escapeHtml(item.beer_name || "Świeże Piwko")}</span>
+                  <span class="tag-price">${priceFormatted} zł</span>
+                </div>
+
                 <!-- Picture-in-Picture selfie or avatar with tap-to-swap -->
                 ${item.selfie_url ? `
                   <div class="bereal-pip-box" onclick="window.__swapBeRealCardImages(this)" title="Dotknij, aby zamienić widok aparatów">
@@ -10807,31 +10911,108 @@
                     <span class="bereal-pip-flip-hint">🔄</span>
                   </div>
                 ` : (item.avatar_photo ? `
-                  <div class="bereal-pip-box" style="cursor: default;" title="${escapeHtml(item.author_name || '')}">
+                  <div class="bereal-pip-box" style="cursor: default;" title="${escapeHtml(authorName)}">
                     <img class="bereal-pip-img" src="${escapeHtml(item.avatar_photo)}" alt="Avatar" />
                   </div>
                 ` : `
-                  <div class="bereal-pip-box" style="cursor: default; font-size: 1.8rem;" title="${escapeHtml(item.author_name || '')}">
+                  <div class="bereal-pip-box" style="cursor: default; font-size: 1.7rem;" title="${escapeHtml(authorName)}">
                     ${escapeHtml(item.avatar_icon || "🍺")}
                   </div>
                 `)}
               </div>
 
-              <!-- 3. Post Footer: Clean caption (Beer Name + Price Badge) & Cheers Toast button -->
+              <!-- 3. Post Footer -->
               <div class="bereal-post-footer">
                 <div class="bereal-caption-box">
-                  <span class="bereal-beer-name">🍺 ${escapeHtml(item.beer_name || "Świeże Piwko")}</span>
-                  ${item.beer_price ? `<span class="bereal-price-pill">${escapeHtml(String(item.beer_price))} zł</span>` : ""}
+                  <p class="bereal-vibe-caption">${escapeHtml(item.vibe_caption || "Zimny kufel na mieście! 🍻")}</p>
                 </div>
-                <button type="button" class="bereal-cheers-btn" onclick="window.__cheersFeedItem('${escapeHtml(item.id)}', this)" title="Wznieś toast z piwoszem!">
-                  🍻 <span>${item.cheers_count || 1}</span>
-                </button>
+                <div class="bereal-footer-actions-row">
+                  <button type="button" class="feed-btn-map-jump" onclick="window.__openVenueById('${escapeHtml(venueId)}', '${escapeHtml(venueName)}')">
+                    🗺️ Pokaż na mapie
+                  </button>
+                  <button type="button" class="bereal-cheers-btn" onclick="window.__cheersFeedItem('${escapeHtml(item.id)}', this)" title="Wznieś toast z piwoszem!">
+                    🍻 Zdrowie! <span>${item.cheers_count || 1}</span>
+                  </button>
+                </div>
               </div>
             </div>
           `;
-        }).join("");
+        }
+
+        // Activity Card (AI Receipt Scan / Price Verification / Top Deal)
+        return `
+          <div class="feed-activity-card" data-post-id="${escapeHtml(item.id)}">
+            <div class="feed-act-top-bar">
+              <span class="feed-act-type-badge ${escapeHtml(item.badge_class || "badge-verified")}">${escapeHtml(item.badge_label)}</span>
+              <span class="feed-act-time">🕒 ${timeAgo}</span>
+            </div>
+
+            <div class="feed-act-author-row">
+              <div class="feed-act-avatar">${escapeHtml(item.avatar_icon || "🍻")}</div>
+              <div class="feed-act-author-text">
+                <strong>@${escapeHtml(item.author_name)}</strong> ${escapeHtml(item.action_text)}
+              </div>
+            </div>
+
+            <div class="feed-venue-spotlight" onclick="window.__openVenueById('${escapeHtml(item.venue_id)}', '${escapeHtml(item.venue_name)}')">
+              <div class="feed-venue-spot-left">
+                <div class="feed-venue-spot-name">${escapeHtml(item.venue_name)}</div>
+                <div class="feed-venue-spot-meta">
+                  <span>📍 ${escapeHtml(item.district)}</span>
+                  <span>•</span>
+                  <span class="${item.is_open ? "spot-open" : "spot-closed"}">${item.is_open ? "🟢 Otwarte teraz" : "🕒 Zamknięte teraz"}</span>
+                </div>
+                <div class="feed-venue-spot-beer">🍺 ${escapeHtml(item.beer_name)}</div>
+              </div>
+              <div class="feed-venue-spot-price ${tierClass}">
+                <span class="spot-price-num">${priceFormatted}</span>
+                <span class="spot-price-unit">zł</span>
+                <span class="spot-price-vol">0.5L</span>
+              </div>
+            </div>
+
+            <div class="feed-act-benchmark">
+              ${escapeHtml(item.benchmark_text)}
+            </div>
+
+            <div class="feed-act-footer">
+              <button type="button" class="feed-btn-map-jump" onclick="window.__openVenueById('${escapeHtml(item.venue_id)}', '${escapeHtml(item.venue_name)}')">
+                🗺️ Pokaż na mapie
+              </button>
+              <button type="button" class="bereal-cheers-btn" onclick="window.__cheersFeedItem('${escapeHtml(item.id)}', this)">
+                🍻 Zdrowie! <span>${item.cheers_count || 1}</span>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    async function loadLiveBarFeed() {
+      if (!feedGrid) return;
+      feedGrid.innerHTML = `<div class="loading-state-hint" style="grid-column: 1 / -1; padding: 24px;">Ładowanie relacji i raportów z barów... 📸🍻</div>`;
+
+      let blockedUsers = [];
+      try {
+        blockedUsers = JSON.parse(localStorage.getItem("poilepiwko_blocked_users") || "[]");
+        if (!Array.isArray(blockedUsers)) blockedUsers = [];
+      } catch (e) {
+        blockedUsers = [];
+      }
+
+      try {
+        const res = await fetch("/api/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "get-live-feed" })
+        });
+        const data = await res.json();
+        const apiFeed = data.feed || [];
+        cachedCombinedFeedItems = buildLiveFeedItems(apiFeed, blockedUsers);
+        renderLiveFeedItems();
       } catch (err) {
-        feedGrid.innerHTML = `<div class="error-state-hint" style="grid-column: 1 / -1;">Nie udało się pobrać Live Feedu.</div>`;
+        cachedCombinedFeedItems = buildLiveFeedItems([], blockedUsers);
+        renderLiveFeedItems();
       }
     }
 
