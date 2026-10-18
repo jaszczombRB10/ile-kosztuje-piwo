@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>poilepiwko - Gdzie na piwo? Nocna Mapa Barów, Kompas & Pub Crawl</title>
   <meta name="description" content="poilepiwko: sprawdź na żywo aktualne ceny piwa z nalewaka, happy hours, krafty i wyznacz optymalny Pub Crawl w Twoim mieście!">
-  <meta name="theme-color" content="#0d1615">
+  <meta name="theme-color" content="#111114">
 
   <!-- Open Graph & Social Sharing Meta Tags -->
   <meta property="og:type" content="website">
@@ -207,34 +207,60 @@
   <!-- App Body: Map & Controls -->
   <div class="app-body">
 
-    <!-- Mobile Floating Top Controls (Inspired by VadKostarOlen) -->
+    <!-- Apple Maps Style Floating Top HUD (Spotlight Search + Quick Pills + Dynamic Island Pulse) -->
     <div class="mobile-floating-top" id="mobile-floating-top">
-      <button type="button" class="fab-top-btn" id="btn-top-filter" title="Filtruj ceny i lokale">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="4" y1="21" x2="4" y2="14"></line>
-          <line x1="4" y1="10" x2="4" y2="3"></line>
-          <line x1="12" y1="21" x2="12" y2="12"></line>
-          <line x1="12" y1="8" x2="12" y2="3"></line>
-          <line x1="20" y1="21" x2="20" y2="16"></line>
-          <line x1="20" y1="12" x2="20" y2="3"></line>
-          <line x1="1" y1="14" x2="7" y2="14"></line>
-          <line x1="9" y1="8" x2="15" y2="8"></line>
-          <line x1="17" y1="16" x2="23" y2="16"></line>
-        </svg>
-        <span class="fab-badge-dot" id="top-filter-dot" style="display:none;"></span>
-      </button>
+      <div class="apple-top-spotlight-bar">
+        <button type="button" class="fab-brand-pill" id="btn-top-brand" title="Zmień miasto">
+          <span class="brand-pill-icon">📍</span>
+          <span class="brand-pill-text"><span id="mobile-city-label">Warszawa</span> <span class="brand-pill-caret">▾</span></span>
+        </button>
 
-      <button type="button" class="fab-brand-pill" id="btn-top-brand" title="Zmień miasto lub zresetuj widok">
-        <span class="brand-pill-icon">📍</span>
-        <span class="brand-pill-text"><span id="mobile-city-label">Warszawa</span> <span class="brand-pill-caret">▾</span></span>
-      </button>
+        <span class="apple-top-divider" aria-hidden="true"></span>
 
-      <button type="button" class="fab-top-btn" id="btn-top-search" title="Szukaj lokalu lub piwa">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8"></circle>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-        </svg>
-      </button>
+        <button type="button" class="apple-spotlight-search-trigger" id="btn-top-search" title="Szukaj lokalu, piwa lub ulicy">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" class="spotlight-search-icon">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <span class="spotlight-placeholder">Szukaj baru, piwa, ulicy...</span>
+        </button>
+
+        <button type="button" class="fab-top-btn" id="btn-top-filter" title="Filtruj ceny i lokale">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="4" y1="21" x2="4" y2="14"></line>
+            <line x1="4" y1="10" x2="4" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12" y2="3"></line>
+            <line x1="20" y1="21" x2="20" y2="16"></line>
+            <line x1="20" y1="12" x2="20" y2="3"></line>
+            <line x1="1" y1="14" x2="7" y2="14"></line>
+            <line x1="9" y1="8" x2="15" y2="8"></line>
+            <line x1="17" y1="16" x2="23" y2="16"></line>
+          </svg>
+          <span class="fab-badge-dot" id="top-filter-dot" style="display:none;"></span>
+        </button>
+      </div>
+
+      <!-- Apple Maps Horizontal Quick Filter Capsules -->
+      <div class="apple-quick-pills-scroll" id="apple-quick-pills" role="toolbar" aria-label="Szybkie filtry mapy">
+        <button type="button" class="apple-map-pill active" data-apple-filter="all">✨ Wszystkie</button>
+        <button type="button" class="apple-map-pill pill-low" data-apple-filter="tier-low">🟢 ≤ 12 zł</button>
+        <button type="button" class="apple-map-pill pill-open" data-apple-filter="open-now">🕒 Otwarte teraz</button>
+        <button type="button" class="apple-map-pill pill-hh" data-apple-filter="happy-hour">⚡ Happy Hour</button>
+        <button type="button" class="apple-map-pill pill-pawilony" data-apple-district="Pawilony">🔥 Pawilony</button>
+        <button type="button" class="apple-map-pill pill-bulwary" data-apple-district="Bulwary">🌊 Bulwary</button>
+        <button type="button" class="apple-map-pill" data-apple-filter="craft">⭐ Kraft</button>
+        <button type="button" class="apple-map-pill" data-apple-filter="non-alcoholic">🌱 0.0%</button>
+      </div>
+
+      <!-- Dynamic Island Live City Pulse Widget -->
+      <div class="apple-dynamic-island-wrap">
+        <button type="button" class="apple-live-pulse-btn" id="apple-live-pulse-pill" title="Pokaż najtańsze otwarte piwo w mieście teraz">
+          <span class="live-pulse-dot"></span>
+          <span class="live-pulse-text" id="apple-live-pulse-text">Puls miasta na żywo...</span>
+          <span class="live-pulse-chevron">↗</span>
+        </button>
+      </div>
     </div>
 
     <!-- Mobile Search Sheet / Quick Results -->

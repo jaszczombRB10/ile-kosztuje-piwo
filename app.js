@@ -1288,7 +1288,7 @@
     return { tier: "high", class: "marker-high", color: "#ef4444" };
   }
 
-  // Create Custom HTML Marker Badge (Prices visible 24/7; subtle closed styling with 🕒 icon when closed)
+  // Create Custom HTML Marker Badge (Apple Maps Tactile Capsule Style, prices visible 24/7)
   function createMarkerIcon(venue) {
     const now = new Date();
     const open = isVenueOpen(venue, now);
@@ -1301,11 +1301,11 @@
     const formattedPrice = price.toFixed(price % 1 === 0 ? 0 : 1);
 
     if (!open) {
-      const size = [42, 34];
+      const size = [54, 26];
       return L.divIcon({
         className: "custom-price-div-icon",
         html: `<div class="price-badge-marker ${tier.class} marker-closed" style="width:${size[0]}px; height:${size[1]}px;" title="Zamknięte teraz · ${escapeHtml(formatDisplayHours(venue.hours) || '')}">
-                <span class="closed-clock-icon" style="font-size:8px;margin-right:1px;line-height:1;">🕒</span>${formattedPrice}<span style="font-size:8px;margin-left:1px;">zł</span>
+                <span class="closed-clock-icon" style="font-size:8px;margin-right:2px;line-height:1;">🕒</span><span class="marker-price-num">${formattedPrice}</span><span class="marker-price-unit">zł</span>
                 ${visitedBadge}
                 ${passBadge}
                </div>`,
@@ -1324,11 +1324,11 @@
     const closingClass = (!activeHh && closingSoonInfo.closingSoon) ? "marker-closing-soon" : "";
     const closingBadge = closingSoonInfo.closingSoon ? `<span class="marker-closing-badge" title="Zamyka się o ${closingSoonInfo.closeTimeStr} (za ${closingSoonInfo.minutesLeft} min)!">⚠️ ${closingSoonInfo.minutesLeft}m</span>` : "";
 
-    const size = price <= 12.0 ? [44, 44] : [38, 38];
+    const size = price <= 12.0 ? [52, 28] : [48, 27];
     return L.divIcon({
       className: "custom-price-div-icon",
       html: `<div class="price-badge-marker ${tier.class} ${craftClass} ${hhClass} ${closingClass}" style="width:${size[0]}px; height:${size[1]}px;">
-              ${formattedPrice}<span style="font-size:9px;margin-left:1px;">zł</span>
+              <span class="marker-price-num">${formattedPrice}</span><span class="marker-price-unit">zł</span>
               ${visitedBadge}
               ${passBadge}
               ${hhBadge}
@@ -1654,6 +1654,7 @@
     updateZoomOverview();
     renderRankingList(filtered);
     updateEmptyViewportHelper();
+    updateAppleLivePulsePill();
   }
 
   // Empty Viewport Helper (Zenly / Uber Style Radar Pill when 0 bars visible in bounds)
@@ -1749,6 +1750,46 @@
     }
 
     pill.style.display = "flex";
+  }
+
+  // Apple Dynamic Island Live City Pulse Widget
+  let livePulseTargetVenue = null;
+  function updateAppleLivePulsePill() {
+    const pillBtn = document.getElementById("apple-live-pulse-pill");
+    const textEl = document.getElementById("apple-live-pulse-text");
+    if (!pillBtn || !textEl || !allVenues || allVenues.length === 0) return;
+
+    const now = new Date();
+    const openVenues = allVenues.filter(v => isVenueOpen(v, now) && typeof v.beer_price_pln === "number");
+    const pool = openVenues.length > 0 ? openVenues : allVenues.filter(v => typeof v.beer_price_pln === "number");
+    if (pool.length === 0) return;
+
+    const sorted = [...pool].sort((a, b) => a.beer_price_pln - b.beer_price_pln);
+    const cheapest = sorted[0];
+    livePulseTargetVenue = cheapest;
+
+    const avg = allVenues.reduce((s, v) => s + (v.beer_price_pln || 15), 0) / allVenues.length;
+    const cheapPriceStr = cheapest.beer_price_pln % 1 === 0 ? cheapest.beer_price_pln.toFixed(0) : cheapest.beer_price_pln.toFixed(1);
+    const shortName = cheapest.name.length > 18 ? cheapest.name.slice(0, 17) + "…" : cheapest.name;
+
+    if (openVenues.length > 0) {
+      textEl.innerHTML = `<strong>${openVenues.length}</strong> otwartych · Od <strong>${cheapPriceStr} zł</strong> (${escapeHtml(shortName)}) · Śr. ${avg.toFixed(1)} zł`;
+    } else {
+      textEl.innerHTML = `Najtaniej: <strong>${cheapPriceStr} zł</strong> (${escapeHtml(shortName)}) · Śr. ${avg.toFixed(1)} zł`;
+    }
+
+    if (!window.__applePulseClickAttached) {
+      window.__applePulseClickAttached = true;
+      pillBtn.addEventListener("click", () => {
+        if (typeof poileHaptics !== "undefined" && poileHaptics.tick) poileHaptics.tick();
+        if (livePulseTargetVenue && map) {
+          map.flyTo([livePulseTargetVenue.latitude, livePulseTargetVenue.longitude], 17, { duration: 0.85 });
+          if (typeof window.__openVenueSheet === "function") {
+            setTimeout(() => window.__openVenueSheet(livePulseTargetVenue), 420);
+          }
+        }
+      });
+    }
   }
 
   // Update District Select Dropdown with Live Bar Counts
@@ -1900,12 +1941,13 @@
   }
 
   function syncQuickChipsWithFilterState() {
+    const isAllDefault = (filterState.priceTier === "all" && filterState.maxPrice === null && !filterState.openNow && !filterState.craftOnly && !filterState.happyHourOnly && !filterState.favoritesOnly && !filterState.nonAlcoholicOnly && !filterState.passOnly && currentDistrict === "all");
     const chips = document.querySelectorAll(".filter-chip[data-filter]");
     chips.forEach(c => {
       const f = c.getAttribute("data-filter");
       let isActive = false;
       if (f === "all") {
-        isActive = (filterState.priceTier === "all" && filterState.maxPrice === null && !filterState.openNow && !filterState.craftOnly && !filterState.happyHourOnly && !filterState.favoritesOnly && !filterState.nonAlcoholicOnly && !filterState.passOnly);
+        isActive = isAllDefault;
       } else if (f === "tier-low") {
         isActive = (filterState.priceTier === "tier-low" && filterState.maxPrice === null);
       } else if (f === "tier-mid") {
@@ -1928,6 +1970,31 @@
       if (isActive) c.classList.add("active");
       else c.classList.remove("active");
     });
+
+    const applePills = document.querySelectorAll(".apple-map-pill");
+    applePills.forEach(p => {
+      const f = p.getAttribute("data-apple-filter");
+      const d = p.getAttribute("data-apple-district");
+      let isActive = false;
+      if (d) {
+        isActive = (currentDistrict === d);
+      } else if (f === "all") {
+        isActive = isAllDefault;
+      } else if (f === "tier-low") {
+        isActive = (filterState.priceTier === "tier-low" && filterState.maxPrice === null);
+      } else if (f === "open-now") {
+        isActive = filterState.openNow;
+      } else if (f === "happy-hour") {
+        isActive = filterState.happyHourOnly;
+      } else if (f === "craft") {
+        isActive = filterState.craftOnly;
+      } else if (f === "non-alcoholic") {
+        isActive = filterState.nonAlcoholicOnly;
+      }
+      if (isActive) p.classList.add("active");
+      else p.classList.remove("active");
+    });
+
     const btnTopTime = document.getElementById("btn-top-time");
     if (btnTopTime) {
       if (filterState.openNow) btnTopTime.classList.add("active-open-now");
@@ -5172,6 +5239,65 @@
           filterState.passOnly = true;
         }
         currentFilter = filterVal;
+        syncQuickChipsWithFilterState();
+        renderMarkers();
+      });
+    });
+
+    // Apple Maps Floating Quick Filter Pills
+    const appleQuickPills = document.querySelectorAll(".apple-map-pill");
+    appleQuickPills.forEach(pill => {
+      pill.addEventListener("click", () => {
+        if (typeof poileHaptics !== "undefined" && poileHaptics.tick) poileHaptics.tick();
+        const filterVal = pill.getAttribute("data-apple-filter");
+        const distVal = pill.getAttribute("data-apple-district");
+
+        if (distVal) {
+          if (currentDistrict === distVal) {
+            currentDistrict = "all";
+            if (districtSelect) districtSelect.value = "all";
+          } else {
+            currentDistrict = distVal;
+            if (districtSelect) districtSelect.value = distVal;
+            const target = DISTRICT_CENTERS[distVal];
+            if (map && target) {
+              map.flyTo(target.coords, target.zoom, { duration: 0.9 });
+            }
+          }
+          syncFilterModalUI();
+          syncQuickChipsWithFilterState();
+          renderMarkers();
+          return;
+        }
+
+        if (filterVal === "all") {
+          resetAllFilters();
+          return;
+        }
+
+        // Toggle behavior: if already active, reset to all
+        const wasAlreadyActive = pill.classList.contains("active");
+        filterState.priceTier = "all";
+        filterState.maxPrice = null;
+        filterState.openNow = false;
+        filterState.craftOnly = false;
+        filterState.happyHourOnly = false;
+        filterState.favoritesOnly = false;
+        filterState.nonAlcoholicOnly = false;
+        filterState.passOnly = false;
+
+        if (!wasAlreadyActive) {
+          if (filterVal === "tier-low") filterState.priceTier = "tier-low";
+          else if (filterVal === "open-now") filterState.openNow = true;
+          else if (filterVal === "happy-hour") filterState.happyHourOnly = true;
+          else if (filterVal === "craft") filterState.craftOnly = true;
+          else if (filterVal === "non-alcoholic") filterState.nonAlcoholicOnly = true;
+          currentFilter = filterVal;
+        } else {
+          currentFilter = "all";
+        }
+
+        syncFilterModalUI();
         syncQuickChipsWithFilterState();
         renderMarkers();
       });
@@ -22648,7 +22774,38 @@
       </div>
     `;
 
-    // Action buttons row
+    // District Price Benchmark ("TO COŚ" Apple Maps / Flighty style insight)
+    const distName = venue.district || getCurrentCity().name;
+    const distPool = allVenues.filter(v => v.district && venue.district && v.district.toLowerCase() === venue.district.toLowerCase() && typeof v.beer_price_pln === "number");
+    const refPool = distPool.length >= 3 ? distPool : allVenues.filter(v => typeof v.beer_price_pln === "number");
+    const avgDistPrice = refPool.length > 0 ? (refPool.reduce((s, v) => s + v.beer_price_pln, 0) / refPool.length) : 15.0;
+    const diff = avgDistPrice - price;
+
+    let benchmarkHtml = "";
+    if (diff >= 0.75) {
+      benchmarkHtml = `
+        <div class="apple-venue-benchmark-pill benchmark-good">
+          <span class="benchmark-icon">🔥</span>
+          <span>Taniej o <strong>${diff.toFixed(2)} zł</strong> niż średnia w: <strong>${escapeHtml(distName)}</strong> (${avgDistPrice.toFixed(2)} zł)</span>
+        </div>
+      `;
+    } else if (Math.abs(diff) < 0.75) {
+      benchmarkHtml = `
+        <div class="apple-venue-benchmark-pill benchmark-neutral">
+          <span class="benchmark-icon">⚖️</span>
+          <span>W sam raz · Cena na poziomie średniej w: <strong>${escapeHtml(distName)}</strong> (${avgDistPrice.toFixed(2)} zł)</span>
+        </div>
+      `;
+    } else {
+      benchmarkHtml = `
+        <div class="apple-venue-benchmark-pill benchmark-craft">
+          <span class="benchmark-icon">${venue.is_craft ? '⭐' : '💎'}</span>
+          <span>${venue.is_craft ? 'Selekcja Kraft / Multitap' : 'Lokal Premium'} · Średnia w ${escapeHtml(distName)}: ${avgDistPrice.toFixed(2)} zł</span>
+        </div>
+      `;
+    }
+
+    // Apple Maps Action buttons row
     const actionButtonsHtml = `
       <div class="venue-sheet-actions">
         <button type="button" class="btn-venue-sheet-action" id="btn-venue-sheet-visited">
@@ -22666,6 +22823,28 @@
       </div>
     `;
 
+    // Apple Maps Grouped Bento Info Grid
+    const bentoSpecsHtml = `
+      <div class="apple-venue-specs-grid">
+        <div class="apple-spec-tile">
+          <span class="spec-label">🍺 Z KRANU (0.5L)</span>
+          <strong class="spec-val">${escapeHtml(venue.beer_name || "Piwo lane")}</strong>
+        </div>
+        <div class="apple-spec-tile">
+          <span class="spec-label">🥃 SHOT (40ML)</span>
+          <strong class="spec-val">${venue.shot_price_pln ? venue.shot_price_pln.toFixed(2) + ' zł' : 'W lokalu'}</strong>
+        </div>
+        <div class="apple-spec-tile">
+          <span class="spec-label">🕒 GODZINY</span>
+          <strong class="spec-val">${escapeHtml(formatDisplayHours(venue.hours) || "16:00 - 02:00")}</strong>
+        </div>
+        <div class="apple-spec-tile">
+          <span class="spec-label">🛡️ STATUS CENY</span>
+          <strong class="spec-val">${venue.verified_by_receipt ? '🧾 Paragon AI' : (venue.is_verified ? '✓ Zweryfikowana' : '📊 Szacunek')}</strong>
+        </div>
+      </div>
+    `;
+
     // Badges & details
     const chipsHtml = `
       <div class="venue-chips-row" style="margin-top:2px;">
@@ -22674,7 +22853,6 @@
         </button>
         ${venue.verified_by_receipt ? `<span class="venue-chip" style="background:rgba(16,185,129,0.15); border-color:rgba(16,185,129,0.4); color:#a7f3d0;" title="Cena zweryfikowana paragonem fiskalnym (${escapeHtml(venue.receipt_date || 'niedawno')})">🧾 Paragon ${escapeHtml(venue.receipt_date || 'OK')}</span>` : ''}
         ${(venue.is_partner || venue.pass_partner) ? `<span class="venue-chip chip-pass" title="Lokal honoruje kartę poilepiwko Pass (-10%)">🎟️ Karta Pass (-10%)</span>` : ''}
-        ${venue.shot_price_pln ? `<span class="venue-chip">🥃 Shot: <strong>${venue.shot_price_pln.toFixed(2)} zł</strong></span>` : ''}
         ${venue.is_craft ? `<span class="venue-chip craft">⭐ Kraft / Multitap</span>` : ''}
         ${hasZero ? `<span class="venue-chip zero">🌱 Piwo 0.0%</span>` : ''}
       </div>
@@ -22692,7 +22870,7 @@
       `;
     }
 
-    contentEl.innerHTML = closingWarningHtml + hhHtml + verifyCardHtml + actionButtonsHtml + chipsHtml + proofHtml;
+    contentEl.innerHTML = closingWarningHtml + hhHtml + benchmarkHtml + actionButtonsHtml + verifyCardHtml + bentoSpecsHtml + chipsHtml + proofHtml;
 
     // Attach listeners for venue sheet actions
     const btnYes = document.getElementById(`btn-waze-yes-${venue.id}`);
