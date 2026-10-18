@@ -422,13 +422,26 @@
         <span>19+ zł</span>
       </div>
       <div class="legend-item">
-        <span class="legend-dot closed">✕</span>
-        <span>Zamknięte</span>
+        <span class="legend-dot closed">🕒</span>
+        <span>Zamknięte teraz (cena widoczna)</span>
       </div>
     </div>
 
-    <!-- Top 10 Ranked Drawer (Slide-out from Right) -->
+    <!-- Empty Viewport Radar Pill (Zenly / Uber Style) -->
+    <div id="empty-viewport-pill" class="empty-viewport-pill" style="display:none;" role="status" aria-live="polite">
+      <span class="empty-vp-text" id="empty-vp-text">🔭 Brak barów w tym kadrze · Najbliższy: —</span>
+      <div class="empty-vp-actions">
+        <button type="button" class="btn-empty-vp-action primary" id="btn-empty-vp-nearest">🎯 Pokaż</button>
+        <span class="empty-vp-sep">|</span>
+        <button type="button" class="btn-empty-vp-action secondary" id="btn-empty-vp-pawilony">🔥 Pawilony</button>
+      </div>
+    </div>
+
+    <!-- Top 10 Ranked Drawer (Bottom Sheet on Mobile, Slide-out on Desktop) -->
     <div class="sidebar-drawer" id="ranking-drawer">
+      <div class="bottom-sheet-handle-wrap drawer-sheet-handle" id="ranking-drawer-handle">
+        <div class="bottom-sheet-handle"></div>
+      </div>
       <div class="drawer-header">
         <div class="drawer-header-top">
           <h2>🏆 Ranking Piwa</h2>
@@ -1073,21 +1086,6 @@
         <div class="form-group">
           <label class="form-label">Happy Hour (opcjonalnie)</label>
           <input type="text" id="report-happy-hour" class="form-input" placeholder="np. Pn-Śr 16:00-18:00 piwo 9 zł" />
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">📸 Zdjęcie menu / paragonu (opcjonalnie)</label>
-          <div class="photo-upload-container">
-            <input type="file" id="report-photo-input" accept="image/*" class="photo-file-input" />
-            <label for="report-photo-input" class="photo-upload-label" id="photo-upload-btn-label">
-              <span class="upload-icon">📷</span>
-              <span id="photo-upload-text">Wybierz zdjęcie karty, tablicy lub paragonu</span>
-            </label>
-            <div id="photo-preview-box" class="photo-preview-box" style="display:none;">
-              <img id="photo-preview-img" src="" alt="Podgląd zdjęcia" />
-              <button type="button" id="btn-remove-photo" class="btn-remove-photo" title="Usuń zdjęcie">✕</button>
-            </div>
-          </div>
         </div>
 
         <div class="modal-footer">
@@ -3471,6 +3469,8 @@
         </div>
       </div>
     </div>
+  </div>
+
   <!-- Modal: Zgłaszanie Treści & Blokowanie Użytkownika (Apple UGC Guideline 1.2) -->
   <div class="modal-backdrop" id="ugc-report-modal" style="display:none; z-index: 10250;">
     <div class="modal-card ugc-report-modal-card">

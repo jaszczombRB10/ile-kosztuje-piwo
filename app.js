@@ -908,6 +908,7 @@
     initClusters();
 
     map.on("zoomend", updateZoomOverview);
+    map.on("moveend zoomend", updateEmptyViewportHelper);
 
     // Ensure Leaflet recalculates dimensions once DOM has rendered
     setTimeout(() => { if (map) map.invalidateSize(); }, 200);
@@ -942,12 +943,13 @@
           });
 
           let clusterClass = "beer-cluster-mid";
-          if (!hasOpen) {
-            clusterClass = "beer-cluster-closed";
-          } else if (minPrice <= 12.0) {
+          if (minPrice <= 12.0) {
             clusterClass = "beer-cluster-low";
           } else if (minPrice > 18.0) {
             clusterClass = "beer-cluster-high";
+          }
+          if (!hasOpen) {
+            clusterClass += " beer-cluster-closed";
           }
 
           const priceLabel = minPrice !== Infinity ? `od ${minPrice.toFixed(minPrice % 1 === 0 ? 0 : 1)}zł` : "";
@@ -955,7 +957,7 @@
           return L.divIcon({
             html: `<div class="beer-cluster ${clusterClass}">
                     <span class="cluster-count">${count}</span>
-                    <span class="cluster-sub">${hasOpen ? priceLabel : '✕'}</span>
+                    <span class="cluster-sub">${priceLabel}</span>
                    </div>`,
             className: 'beer-cluster-wrap',
             iconSize: [44, 44],
@@ -1286,7 +1288,7 @@
     return { tier: "high", class: "marker-high", color: "#ef4444" };
   }
 
-  // Create Custom HTML Marker Badge (Vad Kostar Ölen Style: grey ✕ circle if closed, green checkmark if visited)
+  // Create Custom HTML Marker Badge (Prices visible 24/7; subtle closed styling with 🕒 icon when closed)
   function createMarkerIcon(venue) {
     const now = new Date();
     const open = isVenueOpen(venue, now);
@@ -1296,13 +1298,14 @@
     const visited = isVenueVisited(venue.id);
     const visitedBadge = visited ? `<span class="marker-visited-badge" title="Odwiedzony bar!">✓</span>` : "";
     const passBadge = (venue.is_partner || venue.pass_partner) ? `<span class="marker-pass-badge" title="Lokal honoruje kartę poilepiwko Pass (-10%)">🎟️</span>` : "";
+    const formattedPrice = price.toFixed(price % 1 === 0 ? 0 : 1);
 
     if (!open) {
-      const size = [32, 32];
+      const size = [42, 34];
       return L.divIcon({
         className: "custom-price-div-icon",
-        html: `<div class="price-badge-marker marker-closed" style="width:${size[0]}px; height:${size[1]}px;" title="Zamknięte teraz · ${escapeHtml(formatDisplayHours(venue.hours) || '')}">
-                <span class="closed-x">✕</span>
+        html: `<div class="price-badge-marker ${tier.class} marker-closed" style="width:${size[0]}px; height:${size[1]}px;" title="Zamknięte teraz · ${escapeHtml(formatDisplayHours(venue.hours) || '')}">
+                <span class="closed-clock-icon" style="font-size:8px;margin-right:1px;line-height:1;">🕒</span>${formattedPrice}<span style="font-size:8px;margin-left:1px;">zł</span>
                 ${visitedBadge}
                 ${passBadge}
                </div>`,
@@ -1325,7 +1328,7 @@
     return L.divIcon({
       className: "custom-price-div-icon",
       html: `<div class="price-badge-marker ${tier.class} ${craftClass} ${hhClass} ${closingClass}" style="width:${size[0]}px; height:${size[1]}px;">
-              ${price.toFixed(price % 1 === 0 ? 0 : 1)}<span style="font-size:9px;margin-left:1px;">zł</span>
+              ${formattedPrice}<span style="font-size:9px;margin-left:1px;">zł</span>
               ${visitedBadge}
               ${passBadge}
               ${hhBadge}
@@ -1642,6 +1645,102 @@
 
     updateZoomOverview();
     renderRankingList(filtered);
+    updateEmptyViewportHelper();
+  }
+
+  // Empty Viewport Helper (Zenly / Uber Style Radar Pill when 0 bars visible in bounds)
+  let nearestEmptyViewportVenue = null;
+
+  function updateEmptyViewportHelper() {
+    const pill = document.getElementById("empty-viewport-pill");
+    if (!pill || !map) return;
+
+    if (!window.__emptyVpHandlersAttached) {
+      window.__emptyVpHandlersAttached = true;
+      const btnNearest = document.getElementById("btn-empty-vp-nearest");
+      const btnPawilony = document.getElementById("btn-empty-vp-pawilony");
+
+      if (btnNearest) {
+        btnNearest.addEventListener("click", () => {
+          if (typeof poileHaptics !== "undefined" && poileHaptics.tick) poileHaptics.tick();
+          if (nearestEmptyViewportVenue && map) {
+            if (activeMarkers.length === 0) {
+              currentDistrict = "all";
+              currentFilter = "all";
+              resetFilterState();
+              syncQuickChipsWithFilterState();
+              renderMarkers();
+            }
+            map.flyTo([nearestEmptyViewportVenue.latitude, nearestEmptyViewportVenue.longitude], 16.5, { duration: 0.9 });
+          }
+        });
+      }
+
+      if (btnPawilony) {
+        btnPawilony.addEventListener("click", () => {
+          if (typeof poileHaptics !== "undefined" && poileHaptics.tick) poileHaptics.tick();
+          if (map) {
+            if (activeMarkers.length === 0) {
+              currentDistrict = "all";
+              currentFilter = "all";
+              resetFilterState();
+              syncQuickChipsWithFilterState();
+              renderMarkers();
+            }
+            map.flyTo([52.2330, 21.0185], 17, { duration: 0.9 });
+          }
+        });
+      }
+    }
+
+    if (!allVenues || allVenues.length === 0 || map.getZoom() <= 10) {
+      pill.style.display = "none";
+      return;
+    }
+
+    const bounds = map.getBounds();
+    const visibleCount = activeMarkers.filter(m => {
+      if (!m || !m.getLatLng) return false;
+      return bounds.contains(m.getLatLng());
+    }).length;
+
+    if (visibleCount > 0) {
+      pill.style.display = "none";
+      return;
+    }
+
+    const center = map.getCenter();
+    const refLat = center.lat;
+    const refLng = center.lng;
+
+    const pool = (activeMarkers.length > 0 ? activeMarkers.map(m => m._venueData).filter(Boolean) : allVenues);
+    let bestVenue = null;
+    let bestDistKm = Infinity;
+
+    pool.forEach(v => {
+      if (typeof v.latitude !== "number" || typeof v.longitude !== "number") return;
+      const d = calculateDistanceKm(refLat, refLng, v.latitude, v.longitude);
+      if (d < bestDistKm) {
+        bestDistKm = d;
+        bestVenue = v;
+      }
+    });
+
+    if (!bestVenue) {
+      pill.style.display = "none";
+      return;
+    }
+
+    nearestEmptyViewportVenue = bestVenue;
+    const distM = Math.round(bestDistKm * 1000);
+    const distFormatted = distM < 1000 ? `${distM} m` : `${bestDistKm.toFixed(1)} km`;
+
+    const textEl = document.getElementById("empty-vp-text");
+    if (textEl) {
+      textEl.innerHTML = `🔭 Brak barów w tym kadrze · Najbliższy: <strong>${escapeHtml(bestVenue.name)}</strong> (${distFormatted})`;
+    }
+
+    pill.style.display = "flex";
   }
 
   // Update District Select Dropdown with Live Bar Counts
@@ -22760,7 +22859,7 @@
         const dKm = v._dKm !== undefined ? v._dKm : calculateDistanceKm(userLocation[0], userLocation[1], v.latitude, v.longitude);
         const dM = v._dM !== undefined ? v._dM : Math.round(dKm * 1000);
         const wMin = v._wMin !== undefined ? v._wMin : Math.max(1, Math.round(dKm / 4.8 * 60));
-        distText = ` · 🚶 ${dM < 1000 ? dM + 'm' : dKm.toFixed(1) + 'km'} (~${wMin}m)`;
+        distText = ` · 🚶 ${dM < 1000 ? dM + 'm' : dKm.toFixed(1) + 'km'} (~${wMin} min)`;
       }
 
       return `
@@ -22852,6 +22951,49 @@
     const venueSheet = document.getElementById("venue-sheet");
     if (venueSheet) {
       attachBottomSheetGestures(venueSheet, { isPermanent: false });
+    }
+
+    // Attach swipe-down gesture to #ranking-drawer on mobile
+    const rankingDrawer = document.getElementById("ranking-drawer");
+    const rankingHandle = document.getElementById("ranking-drawer-handle");
+    if (rankingDrawer) {
+      let rStartY = 0;
+      let rCurrentY = 0;
+      let rDragging = false;
+      const dragZone = rankingHandle || rankingDrawer.querySelector(".drawer-header");
+      if (dragZone) {
+        dragZone.addEventListener("touchstart", (e) => {
+          if (window.innerWidth > 768) return;
+          rStartY = e.touches[0].clientY;
+          rCurrentY = rStartY;
+          rDragging = true;
+          rankingDrawer.style.transition = "none";
+        }, { passive: true });
+
+        dragZone.addEventListener("touchmove", (e) => {
+          if (!rDragging || window.innerWidth > 768) return;
+          rCurrentY = e.touches[0].clientY;
+          const dy = Math.max(0, rCurrentY - rStartY);
+          if (dy > 0) {
+            rankingDrawer.style.transform = `translateY(${dy}px)`;
+          }
+        }, { passive: true });
+
+        dragZone.addEventListener("touchend", () => {
+          if (!rDragging || window.innerWidth > 768) return;
+          rDragging = false;
+          rankingDrawer.style.transition = "";
+          rankingDrawer.style.transform = "";
+          if (rCurrentY - rStartY > 65) {
+            if (typeof window.__closeRankingDrawer === "function") window.__closeRankingDrawer();
+          }
+        });
+      }
+      if (rankingHandle) {
+        rankingHandle.addEventListener("click", () => {
+          if (typeof window.__closeRankingDrawer === "function") window.__closeRankingDrawer();
+        });
+      }
     }
 
     // 3. Map Sheet Toggle Button (Chevron)
@@ -23182,6 +23324,7 @@
         if (ocrScanBox) ocrScanBox.style.display = "none";
         if (ocrAction) ocrAction.style.display = "flex";
         if (ocrInput) ocrInput.value = "";
+        currentPhotoBase64 = null;
         currentOcrMetadata = null;
       });
     }
@@ -23200,9 +23343,11 @@
         if (ocrResultBadge) ocrResultBadge.style.display = "none";
 
         try {
-          // 1. Client-side compression to max 1280px (150-300 KB)
+          // 1. Client-side compression to max 1280px (150-300 KB) & bind as venue proof photo
           const compressed = await receiptScannerService.compressImage(file, 1280, 0.8);
           if (ocrPreviewImg) ocrPreviewImg.src = compressed;
+          currentPhotoBase64 = compressed;
+          currentPhotoContentType = compressed.startsWith("data:image/webp") ? "image/webp" : "image/jpeg";
 
           // 2. Call Vision AI endpoint
           const result = await receiptScannerService.scanReceipt(compressed);
