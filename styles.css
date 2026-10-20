@@ -6699,6 +6699,23 @@ header,
   user-select: all;
 }
 
+.user-club-number-badge {
+  display: inline-flex;
+  align-items: center;
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.2) 0%, rgba(249, 115, 22, 0.22) 100%);
+  border: 1px solid rgba(251, 191, 36, 0.5);
+  color: #fde047;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 6px;
+  letter-spacing: 0.03em;
+  line-height: 1.3;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
 .goin-handle-row {
   display: flex;
   align-items: center;
@@ -13055,7 +13072,8 @@ body.theme-light #prof-hero-name {
   color: #0f172a !important;
 }
 
-body.theme-light .user-num-badge {
+body.theme-light .user-num-badge,
+body.theme-light .user-club-number-badge {
   background: rgba(234, 88, 12, 0.1) !important;
   color: #ea580c !important;
   border-color: rgba(234, 88, 12, 0.25) !important;

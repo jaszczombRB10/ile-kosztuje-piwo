@@ -10062,7 +10062,7 @@
               <div class="user-search-card">
                 <div class="user-card-avatar" onclick="window.__openUserProfile('${escapeHtml(u.username)}')">${avatarHtml}</div>
                 <div class="user-card-info" onclick="window.__openUserProfile('${escapeHtml(u.username)}')">
-                  <div class="user-card-name">${escapeHtml(u.display_name || u.username)}</div>
+                  <div class="user-card-name">${escapeHtml(u.display_name || u.username)}${u.user_number ? ` <span class="user-club-number-badge">${escapeHtml(u.user_number)}</span>` : ""}</div>
                   <div class="user-card-handle">@${escapeHtml(u.username)} • <span>🎖️ ${visitedCount} lokali</span></div>
                   ${u.bio ? `<div class="user-card-bio">${escapeHtml(u.bio)}</div>` : ""}
                 </div>
@@ -10314,6 +10314,7 @@
             <div class="ig-friend-info" onclick="window.__openUserProfile('${escapeHtml(u.username)}')">
               <div class="ig-friend-name-row">
                 <span class="ig-friend-name">${escapeHtml(u.display_name || u.username)}</span>
+                ${u.user_number ? `<span class="user-club-number-badge">${escapeHtml(u.user_number)}</span>` : ""}
               </div>
               <div class="ig-friend-handle-row">
                 <span>@${escapeHtml(u.username)}</span>
@@ -10439,7 +10440,7 @@
               <div class="rec-user-left" onclick="window.__openUserProfile('${escapeHtml(u.username)}')">
                 <div class="rec-user-avatar">${avatarHtml}</div>
                 <div class="rec-user-info">
-                  <div class="rec-user-name">${escapeHtml(u.display_name || u.username)}</div>
+                  <div class="rec-user-name">${escapeHtml(u.display_name || u.username)}${u.user_number ? ` <span class="user-club-number-badge">${escapeHtml(u.user_number)}</span>` : ""}</div>
                   <div class="rec-user-meta">
                     <span>@${escapeHtml(u.username)}</span>
                     <span class="rec-user-badge">${escapeHtml(u.popular_badge || "🔥 Aktywny")}</span>
@@ -10932,6 +10933,7 @@
                   <div class="bereal-author-meta">
                     <div class="bereal-author-name-row">
                       <span class="bereal-author-name" onclick="window.__openUserProfile('${escapeHtml(authorName)}')">@${escapeHtml(authorName)}</span>
+                      ${item.user_number ? `<span class="user-club-number-badge">${escapeHtml(item.user_number)}</span>` : ""}
                       <span class="flighty-mini-route">${escapeHtml(routeCode)}</span>
                       ${isAuthor ? `<span class="bereal-author-badge-me">TY</span>` : ""}
                     </div>

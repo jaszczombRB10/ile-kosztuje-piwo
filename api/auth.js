@@ -31,6 +31,21 @@ module.exports = async (req, res) => {
     }
   }
 
+  function getUserNumber(user, allUsersList) {
+    if (!user) return "#000001";
+    const meta = user.user_metadata || {};
+    if (meta.user_number && meta.user_number !== "-" && meta.user_number !== "null" && meta.user_number !== "undefined") {
+      return meta.user_number;
+    }
+    const list = Array.isArray(allUsersList) && allUsersList.length > 0 ? allUsersList : [user];
+    const sorted = [...list].sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
+    const idx = sorted.findIndex(u => u.id === user.id);
+    if (idx !== -1) {
+      return `#${String(idx).padStart(6, "0")}`;
+    }
+    return "#000001";
+  }
+
   try {
     const { action, payload } = req.body || {};
 
@@ -140,6 +155,7 @@ module.exports = async (req, res) => {
       }
 
       // Create user via Admin API with email_confirm: true
+      const assignedNumber = `#${String(allUsers.length).padStart(6, "0")}`;
       const createRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
         method: "POST",
         headers,
@@ -154,7 +170,7 @@ module.exports = async (req, res) => {
             avatar_icon: avatarIcon || "🍺",
             birth_date: birthDate || payload?.birthDate || null,
             age_verified: true,
-            user_number: "-"
+            user_number: assignedNumber
           }
         })
       });
@@ -232,6 +248,7 @@ module.exports = async (req, res) => {
                   display_name: m.display_name || m.full_name || m.username || "Piwosz",
                   avatar_icon: m.avatar_icon || "🍺",
                   avatar_photo: m.avatar_photo || null,
+                  user_number: getUserNumber(u, allUsers),
                   bio: m.bio || "",
                   favorite_district: m.favorite_district || "",
                   visited_venues: m.visited_venues || []
@@ -262,18 +279,19 @@ module.exports = async (req, res) => {
         console.warn("DB search error:", e);
       }
 
-      // Fallback: search in Supabase Auth Admin users (strictly by username / nick)
+      // Fallback: search in Supabase Auth Admin users (strictly by username / nick or display name)
       if (users.length === 0) {
         try {
           const listRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?per_page=200`, { headers });
           if (listRes.ok) {
             const listData = await listRes.json();
             const allUsers = listData.users || (Array.isArray(listData) ? listData : []);
-            const plainQ = q.replace(/^@/, "");
+            const plainQ = q.replace(/^@/, "").toLowerCase();
             users = allUsers
               .filter(u => {
                 const uName = (u.user_metadata?.username || u.email?.split("@")[0] || "").toLowerCase();
-                return uName.includes(plainQ);
+                const dName = (u.user_metadata?.display_name || "").toLowerCase();
+                return uName.includes(plainQ) || dName.includes(plainQ);
               })
               .map(u => {
                 const m = u.user_metadata || {};
@@ -283,6 +301,7 @@ module.exports = async (req, res) => {
                   display_name: m.display_name || m.full_name || m.username || "Piwosz",
                   avatar_icon: m.avatar_icon || "🍺",
                   avatar_photo: m.avatar_photo || null,
+                  user_number: getUserNumber(u, allUsers),
                   bio: m.bio || "",
                   favorite_district: m.favorite_district || "",
                   visited_venues: m.visited_venues || []
@@ -336,6 +355,7 @@ module.exports = async (req, res) => {
               display_name: m.display_name || m.full_name || m.username || "Piwosz",
               avatar_icon: m.avatar_icon || "🍺",
               avatar_photo: m.avatar_photo || null,
+              user_number: getUserNumber(u, allUsers),
               bio: m.bio || "",
               favorite_district: m.favorite_district || "",
               visited_venues: m.visited_venues || []
@@ -366,63 +386,42 @@ module.exports = async (req, res) => {
       let followingIds = [];
 
       try {
+        const allUsers = await getAllAuthUsers();
+        let targetUser = null;
         if (userId) {
-          const userRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(userId)}`, { headers });
-          if (userRes.ok) {
-            const u = await userRes.json();
-            const meta = u.user_metadata || {};
-            followingIds = Array.isArray(meta.following_ids) ? meta.following_ids : [];
-            followersCount = Array.isArray(meta.follower_ids) ? meta.follower_ids.length : 0;
-            userNumber = meta.user_number || null;
-
-            profile = {
-              id: u.id,
-              username: meta.username || u.email?.split("@")[0] || "piwosz",
-              display_name: meta.display_name || meta.full_name || meta.username || "Piwosz",
-              avatar_icon: meta.avatar_icon || "🍺",
-              avatar_photo: meta.avatar_photo || null,
-              user_number: userNumber,
-              bio: meta.bio || "Warszawski poszukiwacz dobrego i taniego piwa 🍻",
-              favorite_beer: meta.favorite_beer || "",
-              favorite_district: meta.favorite_district || "",
-              vibe_tags: meta.vibe_tags || "",
-              visited_venues: meta.visited_venues || [],
-              favorite_venues: meta.favorite_venues || [],
-              created_at: u.created_at
-            };
+          targetUser = allUsers.find(u => u.id === userId);
+          if (!targetUser) {
+            const userRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(userId)}`, { headers });
+            if (userRes.ok) targetUser = await userRes.json();
           }
         } else if (username) {
-          const listRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?per_page=100`, { headers });
-          if (listRes.ok) {
-            const listData = await listRes.json();
-            const allUsers = listData.users || (Array.isArray(listData) ? listData : []);
-            const match = allUsers.find(u => {
-              const uName = (u.user_metadata?.username || u.email?.split("@")[0] || "").toLowerCase();
-              return uName === username;
-            });
-            if (match) {
-              const meta = match.user_metadata || {};
-              followingIds = Array.isArray(meta.following_ids) ? meta.following_ids : [];
-              followersCount = Array.isArray(meta.follower_ids) ? meta.follower_ids.length : 0;
-              userNumber = meta.user_number || null;
+          targetUser = allUsers.find(u => {
+            const uName = (u.user_metadata?.username || u.email?.split("@")[0] || "").toLowerCase();
+            return uName === username;
+          });
+        }
 
-              profile = {
-                id: match.id,
-                username: meta.username || match.email?.split("@")[0] || username,
-                display_name: meta.display_name || meta.full_name || meta.username || username,
-                avatar_icon: meta.avatar_icon || "🍺",
-                avatar_photo: meta.avatar_photo || null,
-                user_number: userNumber,
-                bio: meta.bio || "Warszawski poszukiwacz dobrego i taniego piwa 🍻",
-                favorite_beer: meta.favorite_beer || "",
-                favorite_district: meta.favorite_district || "",
-                vibe_tags: meta.vibe_tags || "",
-                visited_venues: meta.visited_venues || [],
-                favorite_venues: meta.favorite_venues || [],
-                created_at: match.created_at
-              };
-            }
-          }
+        if (targetUser) {
+          const meta = targetUser.user_metadata || {};
+          followingIds = Array.isArray(meta.following_ids) ? meta.following_ids : [];
+          followersCount = Array.isArray(meta.follower_ids) ? meta.follower_ids.length : 0;
+          userNumber = getUserNumber(targetUser, allUsers);
+
+          profile = {
+            id: targetUser.id,
+            username: meta.username || targetUser.email?.split("@")[0] || username || "piwosz",
+            display_name: meta.display_name || meta.full_name || meta.username || username || "Piwosz",
+            avatar_icon: meta.avatar_icon || "🍺",
+            avatar_photo: meta.avatar_photo || null,
+            user_number: userNumber,
+            bio: meta.bio || "Warszawski poszukiwacz dobrego i taniego piwa 🍻",
+            favorite_beer: meta.favorite_beer || "",
+            favorite_district: meta.favorite_district || "",
+            vibe_tags: meta.vibe_tags || "",
+            visited_venues: meta.visited_venues || [],
+            favorite_venues: meta.favorite_venues || [],
+            created_at: targetUser.created_at
+          };
         }
       } catch (err) {
         console.error("get-profile error:", err);
@@ -539,6 +538,7 @@ module.exports = async (req, res) => {
                 user_name: m.display_name || m.username || "Piwosz",
                 author_name: m.username || m.display_name || "Piwosz",
                 user_handle: m.username ? `@${m.username}` : "@piwosz",
+                user_number: getUserNumber(u, allU),
                 user_avatar: m.avatar_icon || "🍺",
                 avatar_icon: m.avatar_icon || "🍺",
                 user_photo: m.avatar_photo || null,
@@ -613,6 +613,7 @@ module.exports = async (req, res) => {
                 display_name: meta.display_name || meta.full_name || meta.username || "Piwosz",
                 avatar_icon: meta.avatar_icon || "🍺",
                 avatar_photo: meta.avatar_photo || checkin.selfie_url || null,
+                user_number: getUserNumber(u, allUsers),
                 venue_id: checkin.venue_id,
                 venue_name: checkin.venue_name,
                 district: checkin.district,
@@ -680,7 +681,7 @@ module.exports = async (req, res) => {
               display_name: m.display_name || m.full_name || m.username || "Piwosz",
               avatar_icon: m.avatar_icon || "🍺",
               avatar_photo: m.avatar_photo || null,
-              user_number: m.user_number || null,
+              user_number: getUserNumber(u, allUsers),
               bio: m.bio || "Warszawski poszukiwacz dobrego i taniego piwa 🍻",
               visited_count: Array.isArray(m.visited_venues) ? m.visited_venues.length : 0,
               popular_badge: "🔥 Aktywny piwosz"
@@ -1223,6 +1224,9 @@ module.exports = async (req, res) => {
         if (birthDate !== undefined) {
           newMeta.birth_date = birthDate;
           newMeta.age_verified = true;
+        }
+        if (!newMeta.user_number || newMeta.user_number === "-" || newMeta.user_number === "null") {
+          newMeta.user_number = getUserNumber({ id: userId, ...newMeta }, allUsers);
         }
 
         await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(userId)}`, {
