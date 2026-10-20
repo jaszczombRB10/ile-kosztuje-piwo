@@ -7847,6 +7847,7 @@
         myNotifications = [];
         unreadNotificationsCount = 0;
         knownNotificationIds.clear();
+        try { localStorage.removeItem("poilepiwko_user_profile"); } catch (e) {}
         updateAuthUI();
       }
     }).catch(err => {
@@ -7866,6 +7867,7 @@
         myNotifications = [];
         unreadNotificationsCount = 0;
         knownNotificationIds.clear();
+        try { localStorage.removeItem("poilepiwko_user_profile"); } catch (e) {}
         updateAuthUI();
       }
     });
@@ -7890,6 +7892,9 @@
           currentProfile = data.profile;
           if (data.userNumber) {
             currentProfile.user_number = data.userNumber;
+          }
+          if (currentUser) {
+            localStorage.setItem("poilepiwko_user_profile_" + currentUser.id, JSON.stringify(currentProfile));
           }
           const dispUserNum = (currentProfile && currentProfile.user_number) ? currentProfile.user_number : "-";
           const userNumEl = document.getElementById("prof-user-number");
@@ -9034,28 +9039,31 @@
     }
 
     function getEffectiveProfile() {
-      if (currentProfile) return currentProfile;
-      try {
-        const saved = localStorage.getItem("poilepiwko_user_profile");
-        if (saved) return JSON.parse(saved);
-      } catch (e) {}
+      if (currentUser && currentProfile) return currentProfile;
+      if (currentUser) {
+        try {
+          const saved = localStorage.getItem("poilepiwko_user_profile_" + currentUser.id);
+          if (saved) return JSON.parse(saved);
+        } catch (e) {}
+      }
       return {
-        username: "krystian",
-        display_name: "Krystian",
+        username: "gosc",
+        display_name: "Konto Gościa",
         avatar_icon: "🍺",
         avatar_photo: null,
-        caps_balance: 275,
-        bio: "Poszukiwacz dobrego i taniego piwa 🍻",
-        favorite_beer: "Wszystkie dobre!",
-        favorite_district: "Centrum",
-        vibe_tags: "Kraft, Ogródki, Pub Quiz",
+        caps_balance: 0,
+        bio: "Przeglądasz aplikację w trybie gościa. Zaloguj się lub utwórz bezpłatne konto, aby zapisywać odwiedzone lokale, zbierać kapsle i odznaki oraz odebrać swoją Kartę Klubowicza!",
+        favorite_beer: "",
+        favorite_district: "",
+        vibe_tags: "",
         user_number: null
       };
     }
 
     function renderMyProfile() {
+      const isGuest = !currentUser;
       const prof = getEffectiveProfile();
-      const rank = calculateUserRank(visitedVenues.length);
+      const rank = calculateUserRank(isGuest ? 0 : visitedVenues.length);
 
       const heroAvatar = document.getElementById("prof-hero-avatar");
       const heroName = document.getElementById("prof-hero-name");
@@ -9071,29 +9079,76 @@
       const valDistrict = document.getElementById("prof-val-district");
       const valVibe = document.getElementById("prof-val-vibe");
       const capsCountEl = document.getElementById("prof-caps-count");
+      const tagsWrap = document.querySelector(".goin-tags-list");
+
+      // Actions buttons
+      const btnToggleEdit = document.getElementById("btn-toggle-edit-profile");
+      const btnOpenClub = document.getElementById("btn-open-club-card");
+      const btnOpenStory = document.getElementById("btn-open-story-card");
+      let guestLoginBtn = document.getElementById("btn-hero-guest-login");
 
       if (capsCountEl) {
-        capsCountEl.textContent = String(prof.caps_balance || 275);
+        capsCountEl.textContent = isGuest ? "0" : String(prof.caps_balance || 275);
       }
 
       if (heroAvatar) {
-        if (prof.avatar_photo) {
+        if (!isGuest && prof.avatar_photo) {
           heroAvatar.innerHTML = `<img src="${escapeHtml(prof.avatar_photo)}" class="profile-hero-photo" alt="Zdjęcie profilowe" />`;
         } else {
-          heroAvatar.textContent = prof.avatar_icon || "🍺";
+          heroAvatar.textContent = "🍺";
         }
       }
-      if (heroName) heroName.textContent = currentUser ? (prof.display_name || prof.username) : "Gość";
-      if (heroHandle) heroHandle.textContent = currentUser ? `@${(prof.username || "piwosz").toLowerCase()}` : "@gosc";
-      if (userNumEl) userNumEl.textContent = currentUser ? (prof.user_number || "-") : "-";
-      if (rankTitle) rankTitle.textContent = rank.title;
-      if (statVisited) statVisited.textContent = visitedVenues.length;
-      if (statBadges) statBadges.textContent = loadUnlockedBadges().length;
-      if (statFavorites) statFavorites.textContent = favoriteVenues.length;
+
+      if (heroName) heroName.textContent = isGuest ? "Konto Gościa" : (prof.display_name || prof.username);
+      if (heroHandle) heroHandle.textContent = isGuest ? "Niezalogowany · Tryb gościa" : `@${(prof.username || "piwosz").toLowerCase()}`;
+
+      if (userNumEl) {
+        if (!isGuest && prof.user_number) {
+          userNumEl.textContent = prof.user_number;
+          userNumEl.style.display = "inline-flex";
+        } else {
+          userNumEl.style.display = "none";
+        }
+      }
+
+      if (rankTitle) rankTitle.textContent = isGuest ? "Tryb Gościa 🍺" : rank.title;
+      if (statVisited) statVisited.textContent = isGuest ? "0" : String(visitedVenues.length);
+      if (statBadges) statBadges.textContent = isGuest ? "0" : String(loadUnlockedBadges().length);
+      if (statFavorites) statFavorites.textContent = isGuest ? "0" : String(favoriteVenues.length);
+
+      // Hero action buttons
+      if (isGuest) {
+        if (btnToggleEdit) btnToggleEdit.style.display = "none";
+        if (btnOpenStory) btnOpenStory.style.display = "none";
+        if (btnOpenClub) btnOpenClub.style.display = "none";
+        if (tagsWrap) tagsWrap.style.display = "none";
+
+        if (!guestLoginBtn) {
+          guestLoginBtn = document.createElement("button");
+          guestLoginBtn.type = "button";
+          guestLoginBtn.id = "btn-hero-guest-login";
+          guestLoginBtn.className = "btn-hero-action btn-hero-guest-login";
+          guestLoginBtn.innerHTML = `<span>🚀 Zaloguj się / Załóż konto</span>`;
+          guestLoginBtn.addEventListener("click", () => {
+            window.__closeMyProfile();
+            if (window.__openAuth) window.__openAuth("login");
+          });
+          const actionsBar = document.getElementById("profile-hero-actions-bar");
+          if (actionsBar) actionsBar.appendChild(guestLoginBtn);
+        } else {
+          guestLoginBtn.style.display = "flex";
+        }
+      } else {
+        if (btnToggleEdit) btnToggleEdit.style.display = "inline-flex";
+        if (btnOpenStory) btnOpenStory.style.display = "inline-flex";
+        if (btnOpenClub) btnOpenClub.style.display = "inline-flex";
+        if (tagsWrap) tagsWrap.style.display = "flex";
+        if (guestLoginBtn) guestLoginBtn.style.display = "none";
+      }
 
       const logoutBtn = document.getElementById("btn-logout");
       if (logoutBtn) {
-        if (!currentUser) {
+        if (isGuest) {
           logoutBtn.innerHTML = "<span>🚀 Zaloguj się / Załóż konto</span>";
           logoutBtn.title = "Zaloguj się lub załóż darmowe konto";
         } else {
@@ -9102,8 +9157,8 @@
         }
       }
 
-      let frCount = myFollowingIds.length;
-      if (!frCount) {
+      let frCount = isGuest ? 0 : myFollowingIds.length;
+      if (!isGuest && !frCount) {
         try {
           const sf = localStorage.getItem("poilepiwko_friends");
           if (sf) frCount = JSON.parse(sf).length;
@@ -9111,7 +9166,11 @@
       }
       if (statFriends) statFriends.textContent = String(frCount);
 
-      if (bioDisplay) bioDisplay.textContent = prof.bio || "Poszukiwacz dobrego i taniego piwa 🍻";
+      if (bioDisplay) {
+        bioDisplay.textContent = isGuest
+          ? "Przeglądasz aplikację w trybie gościa. Zaloguj się lub utwórz bezpłatne konto, aby zapisywać odwiedzone lokale, zbierać kapsle i odznaki oraz odebrać swoją Kartę Klubowicza!"
+          : (prof.bio || "Poszukiwacz dobrego i taniego piwa 🍻");
+      }
       if (valBeer) valBeer.textContent = prof.favorite_beer || "Wszystkie dobre!";
       if (valDistrict) valDistrict.textContent = prof.favorite_district || "Wszystkie dzielnice";
       if (valVibe) valVibe.textContent = prof.vibe_tags || "Kraft, Ogródki, Pub Quiz";
@@ -9132,9 +9191,9 @@
           bydgoszcz: "BZG"
         };
         const hubCode = cityCodeMap[curCity.id] || (curCity.name || "WAW").slice(0, 3).toUpperCase();
-        const vCount = Array.isArray(visitedVenues) ? visitedVenues.length : 0;
+        const vCount = isGuest ? 0 : (Array.isArray(visitedVenues) ? visitedVenues.length : 0);
 
-        const visitedObjs = (allVenues || []).filter(v => visitedVenues.includes(v.id));
+        const visitedObjs = isGuest ? [] : (allVenues || []).filter(v => visitedVenues.includes(v.id));
         const uniqueDists = new Set(visitedObjs.map(v => v.district).filter(Boolean));
         const allCityDists = new Set((allVenues || []).map(v => v.district).filter(Boolean));
         const totalDists = Math.max(allCityDists.size || 18, uniqueDists.size || 1);
@@ -9149,9 +9208,11 @@
           totalSaved += (vCount - visitedObjs.length) * 4.5;
         }
 
-        const topDistStr = (prof.favorite_district && prof.favorite_district !== "Wszystkie dzielnice")
-          ? prof.favorite_district.toUpperCase()
-          : (visitedObjs[0] && visitedObjs[0].district ? visitedObjs[0].district.toUpperCase() : "ŚRÓDMIEŚCIE");
+        const topDistStr = isGuest
+          ? "—"
+          : ((prof.favorite_district && prof.favorite_district !== "Wszystkie dzielnice")
+            ? prof.favorite_district.toUpperCase()
+            : (visitedObjs[0] && visitedObjs[0].district ? visitedObjs[0].district.toUpperCase() : "ŚRÓDMIEŚCIE"));
 
         const elHub = document.getElementById("flighty-hub-code");
         const elTopDist = document.getElementById("flighty-top-dist");
@@ -9163,20 +9224,20 @@
         if (elHub) elHub.textContent = hubCode;
         if (elTopDist) elTopDist.textContent = topDistStr.length > 13 ? topDistStr.slice(0, 12) + "…" : topDistStr;
         if (elBars) elBars.textContent = String(vCount);
-        if (elDists) elDists.textContent = `${uniqueDists.size} / ${totalDists}`;
-        if (elLiters) elLiters.textContent = `${(vCount * 0.5).toFixed(1)} L`;
-        if (elSaved) elSaved.textContent = `${Math.round(totalSaved)} zł`;
+        if (elDists) elDists.textContent = isGuest ? "0 / 18" : `${uniqueDists.size} / ${totalDists}`;
+        if (elLiters) elLiters.textContent = isGuest ? "0.0 L" : `${(vCount * 0.5).toFixed(1)} L`;
+        if (elSaved) elSaved.textContent = isGuest ? "0 zł" : `${Math.round(totalSaved)} zł`;
       } catch (e) {}
 
       // Progress bar (Goin' style)
-      const rankProg = calculateRankProgress(visitedVenues.length);
+      const rankProg = isGuest ? { percent: 0, nextTitle: "Zaloguj się, aby odblokować rangi" } : calculateRankProgress(visitedVenues.length);
       const progressFill = document.getElementById("prof-progress-fill");
       const progressPercent = document.getElementById("prof-progress-percent");
       const progressTarget = document.getElementById("prof-progress-target");
 
       if (progressFill) progressFill.style.width = `${rankProg.percent}%`;
       if (progressPercent) progressPercent.textContent = `${rankProg.percent}%`;
-      if (progressTarget) progressTarget.textContent = `Następna ranga: ${rankProg.nextTitle}`;
+      if (progressTarget) progressTarget.textContent = isGuest ? "Zaloguj się, aby odblokować rangi" : `Następna ranga: ${rankProg.nextTitle}`;
 
       // Theme icon update
       const profThemeIcon = document.getElementById("prof-theme-icon");
@@ -9638,6 +9699,13 @@
           vibeTags: editVibeTags
         });
 
+        if (!currentUser) {
+          showAppToast("Wymagane logowanie", "Zaloguj się lub załóż konto, aby edytować profil!", "🔒");
+          window.__closeEditProfileModal();
+          if (window.__openAuth) window.__openAuth("login");
+          return;
+        }
+
         if (currentProfile) {
           currentProfile.display_name = editName;
           currentProfile.avatar_icon = editSelectedAvatar;
@@ -9646,33 +9714,18 @@
           currentProfile.favorite_beer = editBeer;
           currentProfile.favorite_district = editDist;
           currentProfile.vibe_tags = editVibeTags;
-          localStorage.setItem("poilepiwko_user_profile", JSON.stringify(currentProfile));
-          if (currentUser) {
-            localStorage.setItem("poilepiwko_user_avatar_photo_" + currentUser.id, editSelectedPhoto || "");
-            if (supabaseClient && supabaseClient.auth) {
-              supabaseClient.auth.updateUser({
-                data: {
-                  avatar_photo: editSelectedPhoto || "",
-                  avatar_icon: editSelectedAvatar,
-                  display_name: editName
-                }
-              }).catch(() => {});
-            }
+          localStorage.setItem("poilepiwko_user_profile_" + currentUser.id, JSON.stringify(currentProfile));
+          localStorage.removeItem("poilepiwko_user_profile");
+          localStorage.setItem("poilepiwko_user_avatar_photo_" + currentUser.id, editSelectedPhoto || "");
+          if (supabaseClient && supabaseClient.auth) {
+            supabaseClient.auth.updateUser({
+              data: {
+                avatar_photo: editSelectedPhoto || "",
+                avatar_icon: editSelectedAvatar,
+                display_name: editName
+              }
+            }).catch(() => {});
           }
-        } else {
-          currentProfile = {
-            id: "guest-user",
-            username: editUsername || "krystian",
-            display_name: editName,
-            avatar_icon: editSelectedAvatar,
-            avatar_photo: editSelectedPhoto || null,
-            bio: editBio,
-            favorite_beer: editBeer,
-            favorite_district: editDist,
-            vibe_tags: editVibeTags,
-            caps_balance: 275
-          };
-          localStorage.setItem("poilepiwko_user_profile", JSON.stringify(currentProfile));
         }
 
         renderMyProfile();
@@ -9702,6 +9755,7 @@
         myNotifications = [];
         unreadNotificationsCount = 0;
         knownNotificationIds.clear();
+        try { localStorage.removeItem("poilepiwko_user_profile"); } catch (e) {}
         updateAuthUI();
         if (modal) modal.style.display = "none";
         showAppToast("Wylogowano.", "Do zobaczenia na mieście!", "👋");
@@ -15426,9 +15480,9 @@
     }
 
     window.__openClubCard = function () {
-      if (!currentProfile) {
-        showAppToast("Karta Pass 💳", "Zaloguj się, aby wyświetlić swoją Kartę Klubu!", "⚠️");
-        if (window.__openAuth) window.__openAuth();
+      if (!currentUser) {
+        showAppToast("Karta Pass 💳", "Zaloguj się lub załóż bezpłatne konto, aby odebrać Kartę Klubu z numerem członkowskim!", "🔒", 3500);
+        if (window.__openAuth) window.__openAuth("login");
         return;
       }
       renderClubCardData();
@@ -15581,229 +15635,7 @@
       });
     }
 
-    if (btnDownload) {
-      btnDownload.addEventListener("click", async () => {
-        const passUrl = `${window.location.origin}/#pass`;
-        if (navigator.share) {
-          try {
-            const shareText = currentProfile?.user_number
-              ? `Moja wirtualna karta członkowska PoIlePiwko Pass: ${currentProfile.user_number}! Sprawdź na poilepiwko.pl`
-              : "Moja wirtualna karta członkowska PoIlePiwko Pass! Sprawdź na poilepiwko.pl";
-            await navigator.share({
-              title: "PoIlePiwko Pass - Karta Klubowa (-10%)",
-              text: shareText,
-              url: passUrl
-            });
-            return;
-          } catch (e) {}
-        }
-        const numMsg = currentProfile?.user_number ? `Twój numer klubowicza to ${currentProfile.user_number}. ` : "";
-        showAppToast("Karta Pass 💳", `${numMsg}Karta jest aktywna w Twoim profilu!`, "✅", 2800);
-      });
-    }
-
-    // -------------------------------------------------------------------------
-    // Apple Wallet (.pkpass) & Google Wallet Pass Generator (Geofencing 10 bars)
-    // -------------------------------------------------------------------------
-    const btnAppleWallet = document.getElementById("btn-add-apple-wallet");
-    const btnGoogleWallet = document.getElementById("btn-add-google-wallet");
-
-    function generateWalletPassData(platform = "apple") {
-      const memberName = (currentProfile && (currentProfile.display_name || currentProfile.username))
-        ? (currentProfile.display_name || currentProfile.username)
-        : "KLUBOWICZ";
-      const memberId = (currentProfile && currentProfile.user_number) ? currentProfile.user_number : "#000001";
-      const curCity = (typeof getCurrentCity === "function" ? getCurrentCity() : null) || (CITIES && CITIES[0]);
-
-      // Select top 10 partner bars in current city (or closest)
-      const partnerVenues = (allVenues || []).filter(v => v.is_partner || v.pass_partner || v.is_verified);
-      const cityPartners = partnerVenues.filter(v => {
-        if (!curCity || !curCity.center) return true;
-        return calculateDistanceKm(curCity.center[0], curCity.center[1], v.latitude, v.longitude) <= 40;
-      });
-      const topVenues = (cityPartners.length >= 3 ? cityPartners : (partnerVenues.length > 0 ? partnerVenues : (allVenues || []).slice(0, 10))).slice(0, 10);
-
-      const relevantLocations = topVenues.map(v => ({
-        latitude: Number(v.latitude),
-        longitude: Number(v.longitude),
-        relevantText: `🍺 Jesteś obok ${v.name}! Pokaż kartę PoIlePiwko i odbierz -10% na lane!`
-      }));
-
-      const qrPayload = `https://poilepiwko.pl/#pass=${encodeURIComponent(memberId)}`;
-
-      if (platform === "apple") {
-        return {
-          formatVersion: 1,
-          passTypeIdentifier: "pass.pl.poilepiwko.clubcard",
-          serialNumber: `PIWKO-${memberId.replace(/[^a-zA-Z0-9]/g, "") || "000001"}`,
-          teamIdentifier: "PLPOILEPIWKO",
-          organizationName: "poilepiwko.pl",
-          description: "PoIlePiwko Pass - Karta Klubowa (-10% rabat)",
-          logoText: "PoIlePiwko Pass",
-          foregroundColor: "rgb(255, 255, 255)",
-          backgroundColor: "rgb(15, 23, 42)",
-          labelColor: "rgb(251, 191, 36)",
-          storeCard: {
-            primaryFields: [
-              {
-                key: "member",
-                label: "KLUBOWICZ",
-                value: memberName.toUpperCase()
-              }
-            ],
-            secondaryFields: [
-              {
-                key: "discount",
-                label: "RABAT NA PIWO",
-                value: "-10% NA LANE"
-              },
-              {
-                key: "city",
-                label: "MIASTO",
-                value: curCity ? curCity.name : "Polska"
-              }
-            ],
-            auxiliaryFields: [
-              {
-                key: "number",
-                label: "NUMER KARTY",
-                value: memberId
-              },
-              {
-                key: "status",
-                label: "STATUS",
-                value: "AKTYWNA (VIP)"
-              }
-            ],
-            backFields: [
-              {
-                key: "terms",
-                label: "Zasady korzystania",
-                value: "Karta upoważnia do 10% rabatu na piwo z kranu w lokalach partnerskich poilepiwko.pl. Pokaż kartę barmanowi przed złożeniem zamówienia."
-              },
-              {
-                key: "website",
-                label: "Oficjalna strona",
-                value: "https://poilepiwko.pl"
-              }
-            ]
-          },
-          barcode: {
-            format: "PKBarcodeFormatQR",
-            message: qrPayload,
-            messageEncoding: "iso-8859-1",
-            altText: memberId
-          },
-          barcodes: [
-            {
-              format: "PKBarcodeFormatQR",
-              message: qrPayload,
-              messageEncoding: "iso-8859-1",
-              altText: memberId
-            }
-          ],
-          locations: relevantLocations
-        };
-      } else {
-        // Google Wallet format
-        return {
-          iss: "service-account@poilepiwko.iam.gserviceaccount.com",
-          aud: "google",
-          typ: "savetowallet",
-          origins: ["https://poilepiwko.pl"],
-          payload: {
-            genericObjects: [
-              {
-                id: `poilepiwko_pass_${memberId.replace(/[^a-zA-Z0-9]/g, "") || "000001"}`,
-                classId: "poilepiwko.clubcard.vip",
-                cardTitle: { defaultValue: { language: "pl", value: "PoIlePiwko Pass (-10%)" } },
-                header: { defaultValue: { language: "pl", value: memberName.toUpperCase() } },
-                subheader: { defaultValue: { language: "pl", value: "Klubowicz VIP" } },
-                barcode: {
-                  type: "QR_CODE",
-                  value: qrPayload,
-                  alternateText: memberId
-                },
-                hexBackgroundColor: "#0f172a",
-                locations: relevantLocations.map(l => ({
-                  latitude: l.latitude,
-                  longitude: l.longitude
-                })),
-                notifications: {
-                  expiryNotification: { enableNotification: false },
-                  upcomingNotification: { enableNotification: true }
-                },
-                textModulesData: [
-                  {
-                    id: "discount",
-                    header: "Rabat",
-                    body: "-10% na piwa lane w barach partnerskich"
-                  },
-                  {
-                    id: "notice",
-                    header: "Lokalizacja",
-                    body: "🍺 Jesteś obok baru partnerskiego PoIlePiwko! Pokaż kartę i odbierz -10% na lane!"
-                  }
-                ]
-              }
-            ]
-          }
-        };
-      }
-    }
-
-    const walletSheet = document.getElementById("apple-wallet-sheet");
-    const btnCloseWalletSheet = document.getElementById("btn-close-apple-wallet-sheet");
-    const awMemberName = document.getElementById("aw-member-name");
-    const awMemberNum = document.getElementById("aw-member-num");
-    const awPlatformLogo = document.getElementById("aw-platform-logo");
-    const walletSheetTitle = document.getElementById("wallet-sheet-title");
-    const walletSheetSub = document.getElementById("wallet-sheet-sub");
-    const walletSheetIcon = document.getElementById("wallet-sheet-icon");
-    const btnWalletSaveImage = document.getElementById("btn-wallet-save-image");
-    const btnWalletPwaShortcut = document.getElementById("btn-wallet-pwa-shortcut");
-    const btnWalletPartnerVenues = document.getElementById("btn-wallet-partner-venues");
-    const walletPwaGuide = document.getElementById("wallet-pwa-guide");
-
-    function closeWalletSheetModal() {
-      if (walletSheet) {
-        walletSheet.classList.remove("active");
-        walletSheet.style.display = "none";
-      }
-      if (typeof ModalHistoryManager !== "undefined") {
-        ModalHistoryManager.pop("apple-wallet-sheet");
-      }
-    }
-
-    if (btnCloseWalletSheet) {
-      btnCloseWalletSheet.addEventListener("click", closeWalletSheetModal);
-    }
-    if (walletSheet) {
-      walletSheet.addEventListener("click", (e) => {
-        if (e.target === walletSheet) closeWalletSheetModal();
-      });
-    }
-
-    if (btnWalletPwaShortcut && walletPwaGuide) {
-      btnWalletPwaShortcut.addEventListener("click", () => {
-        if (window.poileHaptics) window.poileHaptics.tick();
-        const isOpen = walletPwaGuide.style.display !== "none";
-        walletPwaGuide.style.display = isOpen ? "none" : "flex";
-        if (!isOpen) {
-          walletPwaGuide.scrollIntoView({ behavior: "smooth", block: "nearest" });
-        }
-      });
-    }
-
-    if (btnWalletPartnerVenues) {
-      btnWalletPartnerVenues.addEventListener("click", () => {
-        closeWalletSheetModal();
-        window.__closeClubCard();
-        if (btnFilterVenues) btnFilterVenues.click();
-      });
-    }
-
-    async function generateAndShareWalletImage(platform, memberName, memberId) {
+    async function generateAndShareClubCard(memberName, memberId) {
       const canvas = document.createElement("canvas");
       canvas.width = 960;
       canvas.height = 600;
@@ -15818,22 +15650,22 @@
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, 960, 600);
 
-      // Hairline border
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.16)";
-      ctx.lineWidth = 3;
-      ctx.strokeRect(6, 6, 948, 588);
+      // Gold hairline border
+      ctx.strokeStyle = "rgba(251, 191, 36, 0.4)";
+      ctx.lineWidth = 4;
+      ctx.strokeRect(8, 8, 944, 584);
 
       // Top brand header
       ctx.fillStyle = "#ffffff";
       ctx.font = "bold 34px -apple-system, BlinkMacSystemFont, sans-serif";
-      ctx.fillText(platform === "apple" ? " Apple Wallet · PoIlePiwko Pass" : "G Google Wallet · PoIlePiwko Pass", 50, 75);
+      ctx.fillText("PoIlePiwko Pass · Karta Klubowa", 50, 75);
 
       // Discount badge
       ctx.fillStyle = "#fbbf24";
       ctx.font = "900 28px -apple-system, BlinkMacSystemFont, sans-serif";
       ctx.fillText("-10% RABAT NA PIWO LANE", 50, 130);
 
-      // Line
+      // Divider line
       ctx.strokeStyle = "rgba(255, 255, 255, 0.12)";
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -15852,22 +15684,21 @@
       ctx.fillText(String(memberName).toUpperCase(), 50, 260);
       ctx.fillText(String(memberId), 550, 260);
 
-      // NFC & Geofence info
+      // Info
       ctx.fillStyle = "#30D158";
       ctx.font = "bold 24px -apple-system, BlinkMacSystemFont, sans-serif";
-      ctx.fillText("📶 Zbliż / Pokaż barmanowi przed zamówieniem", 50, 360);
+      ctx.fillText("📶 Pokaż barmanowi przed złożeniem zamówienia", 50, 360);
 
       ctx.fillStyle = "rgba(235, 235, 245, 0.7)";
       ctx.font = "22px -apple-system, BlinkMacSystemFont, sans-serif";
-      ctx.fillText("📍 Zaszyto geolokalizację 10 barów partnerskich (Geofencing)", 50, 410);
-      ctx.fillText("⚡ Aktywna w sieci lokali partnerskich poilepiwko.pl", 50, 450);
+      ctx.fillText("⚡ Aktywna w sieci lokali partnerskich poilepiwko.pl", 50, 420);
 
       // Bottom footer bar
       ctx.fillStyle = "rgba(255, 255, 255, 0.05)";
       ctx.fillRect(0, 520, 960, 80);
       ctx.fillStyle = "rgba(235, 235, 245, 0.65)";
       ctx.font = "bold 20px -apple-system, BlinkMacSystemFont, sans-serif";
-      ctx.fillText("poilepiwko.pl · Karta Klubowicza VIP", 50, 568);
+      ctx.fillText("poilepiwko.pl · Oficjalna Karta Klubowicza VIP", 50, 568);
 
       canvas.toBlob(async (blob) => {
         if (!blob) return;
@@ -15882,14 +15713,12 @@
               files: [file]
             });
             if (window.poileHaptics) window.poileHaptics.success();
-            showAppToast("Udostępniono kartę! ", "Zapisz obraz w Zdjęciach na telefonie!", "📸", 4000);
+            showAppToast("Karta Pass 📸", "Udostępniono lub zapisano kartę w Zdjęciach!", "✅", 4000);
             return;
-          } catch (e) {
-            console.warn("Share cancelled or failed:", e);
-          }
+          } catch (e) {}
         }
 
-        // Fallback: direct PNG download
+        // Direct PNG download fallback
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
@@ -15902,97 +15731,17 @@
       }, "image/png");
     }
 
-    if (btnWalletSaveImage) {
-      btnWalletSaveImage.addEventListener("click", () => {
-        if (window.poileHaptics) window.poileHaptics.tick();
-        const mName = awMemberName ? awMemberName.textContent : "PIWOSZ";
-        const mNum = awMemberNum ? awMemberNum.textContent : "#000001";
-        const isApple = awPlatformLogo ? awPlatformLogo.textContent.includes("") : true;
-        generateAndShareWalletImage(isApple ? "apple" : "google", mName, mNum);
+    if (btnDownload) {
+      btnDownload.addEventListener("click", () => {
+        if (!currentUser) {
+          showAppToast("Karta Pass 💳", "Zaloguj się, aby pobrać swoją imienną Kartę Klubu!", "🔒");
+          if (window.__openAuth) window.__openAuth("login");
+          return;
+        }
+        const mName = (currentProfile && (currentProfile.display_name || currentProfile.username)) || "PIWOSZ";
+        const mNum = (currentProfile && currentProfile.user_number) || "#000001";
+        generateAndShareClubCard(mName, mNum);
       });
-    }
-
-    function handleWalletExport(platform) {
-      const activeProfile = currentProfile || (currentUser ? {
-        username: (currentUser.user_metadata && currentUser.user_metadata.username) || "piwosz",
-        display_name: (currentUser.user_metadata && currentUser.user_metadata.display_name) || "Piwosz",
-        user_number: (currentUser.user_metadata && currentUser.user_metadata.user_number) || "#000001"
-      } : {
-        username: "klubowicz",
-        display_name: "Klubowicz",
-        user_number: "#000001"
-      });
-
-      const memberName = (activeProfile && (activeProfile.display_name || activeProfile.username))
-        ? (activeProfile.display_name || activeProfile.username)
-        : "KLUBOWICZ";
-      const memberId = (activeProfile && activeProfile.user_number) ? activeProfile.user_number : "#000001";
-
-      const passData = generateWalletPassData(platform);
-      try {
-        localStorage.setItem("poilepiwko_wallet_pass_active", "true");
-        localStorage.setItem("poilepiwko_wallet_platform", platform);
-        localStorage.setItem("poilepiwko_wallet_pass_payload", JSON.stringify(passData));
-      } catch (e) {}
-
-      if (window.poileHaptics) window.poileHaptics.success();
-
-      // Card front glow feedback in club modal
-      const frontCard = modal ? modal.querySelector(".club-card-front") : null;
-      if (frontCard) {
-        frontCard.style.boxShadow = "0 0 0 2px #30D158, 0 18px 42px rgba(48, 209, 88, 0.28)";
-        setTimeout(() => {
-          if (frontCard) frontCard.style.boxShadow = "";
-        }, 2600);
-      }
-
-      // Update and open Apple / Google Wallet Sheet Viewer!
-      if (awMemberName) awMemberName.textContent = memberName.toUpperCase();
-      if (awMemberNum) awMemberNum.textContent = memberId;
-
-      if (platform === "apple") {
-        if (awPlatformLogo) awPlatformLogo.textContent = "";
-        if (walletSheetIcon) walletSheetIcon.textContent = "";
-        if (walletSheetTitle) walletSheetTitle.textContent = "Portfel Apple Wallet";
-        if (walletSheetSub) walletSheetSub.textContent = `Karta ${memberId} z rabatem -10% i geolokalizacją 10 barów`;
-        if (btnAppleWallet) {
-          btnAppleWallet.innerHTML = `<span class="wallet-store-icon"></span> <span>✓ Karta w Apple Wallet · Sprawdź</span>`;
-          btnAppleWallet.style.borderColor = "rgba(48, 209, 88, 0.55)";
-          btnAppleWallet.style.color = "#30D158";
-        }
-      } else {
-        if (awPlatformLogo) awPlatformLogo.textContent = "G";
-        if (walletSheetIcon) walletSheetIcon.textContent = "G";
-        if (walletSheetTitle) walletSheetTitle.textContent = "Portfel Google Wallet";
-        if (walletSheetSub) walletSheetSub.textContent = `Karta ${memberId} z rabatem -10% i geolokalizacją 10 barów`;
-        if (btnGoogleWallet) {
-          btnGoogleWallet.innerHTML = `<span class="wallet-store-icon google-g">G</span> <span>✓ Karta w Google Wallet · Sprawdź</span>`;
-          btnGoogleWallet.style.borderColor = "rgba(48, 209, 88, 0.55)";
-          btnGoogleWallet.style.color = "#30D158";
-        }
-      }
-
-      if (walletSheet) {
-        walletSheet.classList.add("active");
-        walletSheet.style.display = "flex";
-        if (typeof ModalHistoryManager !== "undefined") {
-          ModalHistoryManager.push("apple-wallet-sheet", closeWalletSheetModal);
-        }
-      }
-
-      showAppToast(
-        platform === "apple" ? "Karta w Apple Wallet! " : "Karta w Google Wallet! 💳",
-        `Zaszyto geolokalizację 10 barów partnerskich. Karta aktywna na Twoim telefonie!`,
-        platform === "apple" ? "" : "💳",
-        4500
-      );
-    }
-
-    if (btnAppleWallet) {
-      btnAppleWallet.addEventListener("click", () => handleWalletExport("apple"));
-    }
-    if (btnGoogleWallet) {
-      btnGoogleWallet.addEventListener("click", () => handleWalletExport("google"));
     }
   }
 

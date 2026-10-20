@@ -6851,6 +6851,22 @@ header,
   box-shadow: 0 6px 20px rgba(192, 38, 211, 0.55);
 }
 
+.btn-hero-action.btn-hero-guest-login {
+  grid-column: 1 / -1;
+  background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%) !important;
+  color: #000000 !important;
+  font-weight: 800 !important;
+  font-size: 0.88rem !important;
+  padding: 12px 16px !important;
+  border: none !important;
+  box-shadow: 0 4px 18px rgba(245, 158, 11, 0.4) !important;
+}
+
+.btn-hero-action.btn-hero-guest-login:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(245, 158, 11, 0.6) !important;
+}
+
 .btn-hero-action:active {
   transform: scale(0.97);
 }
@@ -20514,6 +20530,7 @@ body[data-time-mode="day_recovery"] .context-pill-badge {
 }
 
 .btn-card-venues {
+  grid-column: 1 / -1;
   background: linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(217, 119, 6, 0.35) 100%) !important;
   border: 1px solid #f59e0b !important;
   color: #fef08a !important;
@@ -20863,75 +20880,6 @@ body.theme-light .district-overview-pill .district-pill-price {
 
 .btn-pubprof-report:active {
   transform: scale(0.96);
-}
-
-/* 3. Apple Wallet & Google Wallet Buttons for PoIlePiwko Pass */
-.club-wallet-buttons-wrap {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.btn-wallet-add {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 11px 12px;
-  border-radius: 12px;
-  font-family: inherit;
-  font-size: 0.78rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-tap-highlight-color: transparent;
-  white-space: nowrap;
-  box-sizing: border-box;
-}
-
-.btn-wallet-apple {
-  background: #000000 !important;
-  color: #ffffff !important;
-  border: 1px solid rgba(255, 255, 255, 0.25) !important;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
-}
-
-.btn-wallet-apple:hover {
-  background: #18181b !important;
-  border-color: rgba(255, 255, 255, 0.45) !important;
-  transform: translateY(-1px);
-}
-
-.btn-wallet-apple:active {
-  transform: scale(0.97);
-}
-
-.btn-wallet-google {
-  background: #18181b !important;
-  color: #ffffff !important;
-  border: 1px solid rgba(255, 255, 255, 0.22) !important;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
-}
-
-.btn-wallet-google:hover {
-  background: #27272a !important;
-  border-color: rgba(255, 255, 255, 0.38) !important;
-  transform: translateY(-1px);
-}
-
-.btn-wallet-google:active {
-  transform: scale(0.97);
-}
-
-@media (max-width: 440px) {
-  .club-wallet-buttons-wrap {
-    grid-template-columns: 1fr;
-  }
 }
 
 /* ==========================================================================
@@ -23489,228 +23437,6 @@ body.theme-light .telemetry-lbl {
   font-size: 0.7rem;
   font-weight: 800;
   cursor: pointer;
-}
-
-/* ==========================================================================
-   3.10 APPLE & GOOGLE WALLET PASS VIEWER MODAL (#apple-wallet-sheet)
-   ========================================================================== */
-#apple-wallet-sheet .modal-card-apple-wallet {
-  max-width: 440px !important;
-  background: #09090d !important;
-  border: 1px solid rgba(255, 255, 255, 0.14) !important;
-  border-radius: 24px !important;
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
-  padding: 18px 20px 22px 20px !important;
-}
-
-.apple-wallet-pass-card {
-  background: linear-gradient(155deg, #181822 0%, #0d0d14 100%);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 20px;
-  padding: 16px 18px;
-  margin: 12px 0 16px 0;
-  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.12);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.aw-pass-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.aw-pass-brand {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
-  font-size: 0.82rem;
-  font-weight: 800;
-  color: #ffffff;
-}
-
-.aw-apple-logo {
-  font-size: 1.15rem;
-}
-
-.aw-discount-badge {
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
-  font-size: 0.68rem;
-  font-weight: 900;
-  padding: 3px 9px;
-  border-radius: 999px;
-  background: rgba(251, 191, 36, 0.18);
-  border: 1px solid rgba(251, 191, 36, 0.45);
-  color: #fbbf24;
-}
-
-.aw-pass-middle {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 0;
-  border-top: 1px dashed rgba(255, 255, 255, 0.1);
-  border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
-}
-
-.aw-field {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.aw-field.align-right {
-  align-items: flex-end;
-  text-align: right;
-}
-
-.aw-field-lbl {
-  font-size: 0.56rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  color: rgba(235, 235, 245, 0.5);
-  text-transform: uppercase;
-}
-
-.aw-field-val {
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
-  font-size: 0.96rem;
-  font-weight: 900;
-  color: #ffffff;
-}
-
-.aw-pass-barcode-wrap {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.aw-barcode-box {
-  background: #ffffff;
-  padding: 4px;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  flex-shrink: 0;
-}
-
-.aw-barcode-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.aw-nfc-symbol {
-  font-size: 0.76rem;
-  font-weight: 700;
-  color: #30D158;
-}
-
-.aw-geofence-tag {
-  font-size: 0.68rem;
-  color: rgba(235, 235, 245, 0.65);
-  line-height: 1.3;
-}
-
-.wallet-sheet-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-}
-
-.btn-wallet-action {
-  -webkit-appearance: none;
-  appearance: none;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 11px 14px;
-  border-radius: 14px;
-  background: #15151e;
-  border: 1px solid rgba(255, 255, 255, 0.11);
-  color: #ffffff;
-  text-align: left;
-  cursor: pointer;
-  transition: transform 0.14s ease, border-color 0.14s ease;
-}
-
-.btn-wallet-action:active {
-  transform: scale(0.97);
-}
-
-.btn-wallet-action.primary {
-  background: linear-gradient(135deg, rgba(48, 209, 88, 0.18), rgba(16, 185, 129, 0.08));
-  border-color: rgba(48, 209, 88, 0.45);
-}
-
-.btn-wallet-action.secondary {
-  background: linear-gradient(135deg, rgba(10, 132, 255, 0.16), rgba(94, 92, 230, 0.08));
-  border-color: rgba(10, 132, 255, 0.4);
-}
-
-.btn-w-icon {
-  font-size: 1.35rem;
-  flex-shrink: 0;
-}
-
-.btn-w-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.btn-w-text strong {
-  font-size: 0.82rem;
-  font-weight: 800;
-  color: #ffffff;
-}
-
-.btn-w-text span {
-  font-size: 0.68rem;
-  color: rgba(235, 235, 245, 0.6);
-}
-
-.wallet-pwa-guide {
-  background: #111118;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 14px;
-  padding: 12px 14px;
-  margin-top: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.pwa-guide-step {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  font-size: 0.76rem;
-  color: #e2e8f0;
-  line-height: 1.35;
-}
-
-.pwa-guide-step .step-num {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #0A84FF;
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.68rem;
-  font-weight: 800;
-  flex-shrink: 0;
-}
-
-.pwa-guide-hint {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: #30D158;
-  text-align: center;
-  padding-top: 4px;
 }
 
 
