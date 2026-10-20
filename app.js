@@ -10975,7 +10975,7 @@
               <div class="ffc-venue-col">
                 <div class="ffc-venue-name">${escapeHtml(item.venue_name)}</div>
                 <div class="ffc-venue-sub">
-                  <span class="${item.is_open ? "ffc-status-open" : "ffc-status-closed"}">${item.is_open ? "● ON TIME · OTWARTE" : "○ ZAMKNIĘTE"}</span>
+                  <span class="${item.is_open ? "ffc-status-open" : "ffc-status-closed"}">${item.is_open ? "● OPEN" : "○ ZAMKNIĘTE"}</span>
                   <span class="ffc-dot">·</span>
                   <span>🍺 ${escapeHtml(item.beer_name)}</span>
                 </div>
@@ -23225,7 +23225,7 @@
           <div class="flighty-callsign-row">
             <span class="flighty-callsign-badge">${escapeHtml(cityIata)} ➔ ${escapeHtml(distIata)}</span>
             <span class="flighty-callsign-status ${open ? 'status-ontime' : 'status-scheduled'}">
-              ${open ? '● ON TIME · OTWARTE' : '🕒 START ' + escapeHtml(openTimeLabel)}
+              ${open ? '● OPEN' : '🕒 START ' + escapeHtml(openTimeLabel)}
             </span>
             ${distTelemetryPill}
           </div>
@@ -23888,11 +23888,11 @@
     // 6. Bento Grid Cards Click Handlers
     const bentoCards = [
       {
-        ids: ["bento-btn-compass", "bento-compass"],
+        ids: ["bento-btn-happyhour", "bento-happyhour"],
         fn: () => {
-          if (typeof window.__openCompass === "function") window.__openCompass();
+          if (typeof window.__openHappyHours === "function") window.__openHappyHours();
           else {
-            const m = document.getElementById("beer-compass-modal");
+            const m = document.getElementById("happyhour-modal");
             if (m) { m.classList.add("active"); m.style.display = "flex"; }
           }
         }
@@ -23918,47 +23918,31 @@
         }
       },
       {
-        ids: ["bento-btn-happyhour", "bento-happyhour"],
+        ids: ["bento-btn-cheap", "bento-cheap"],
         fn: () => {
-          if (typeof window.__openHappyHours === "function") window.__openHappyHours();
-          else {
-            const m = document.getElementById("happyhour-modal");
-            if (m) { m.classList.add("active"); m.style.display = "flex"; }
-          }
+          const chip = document.querySelector('.filter-chip[data-filter="tier-low"]');
+          if (chip) chip.click();
         }
       },
       {
-        ids: ["bento-btn-barometer", "bento-barometer"],
+        ids: ["bento-btn-craft", "bento-craft"],
         fn: () => {
-          if (typeof window.__openBarometer === "function") window.__openBarometer();
-          else {
-            const btnBaro = document.getElementById("btn-barometer-toggle");
-            if (btnBaro) btnBaro.click();
-            else {
-              const m = document.getElementById("barometer-modal");
-              if (m) { m.classList.add("active"); m.style.display = "flex"; }
-            }
-          }
+          const chip = document.querySelector('.filter-chip[data-filter="craft"]');
+          if (chip) chip.click();
         }
       },
       {
-        ids: ["bento-btn-pubquiz", "bento-pubquiz"],
+        ids: ["bento-btn-zero", "bento-zero"],
         fn: () => {
-          if (typeof window.__openPubQuiz === "function") window.__openPubQuiz();
-          else {
-            const m = document.getElementById("pubquiz-modal");
-            if (m) { m.classList.add("active"); m.style.display = "flex"; }
-          }
+          const chip = document.querySelector('.filter-chip[data-filter="non-alcoholic"]');
+          if (chip) chip.click();
         }
       },
       {
-        ids: ["bento-btn-sos", "bento-sos"],
+        ids: ["bento-btn-clubcard", "bento-clubcard"],
         fn: () => {
-          if (typeof window.__openSos === "function") window.__openSos();
-          else {
-            const m = document.getElementById("sos-modal");
-            if (m) { m.classList.add("active"); m.style.display = "flex"; }
-          }
+          const m = document.getElementById("club-card-modal");
+          if (m) { m.classList.add("active"); m.style.display = "flex"; }
         }
       }
     ];

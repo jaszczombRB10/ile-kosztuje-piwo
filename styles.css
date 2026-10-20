@@ -6657,11 +6657,13 @@ header,
 
 /* Hero Section */
 .profile-goin-hero {
-  background: linear-gradient(180deg, #0c1b26 0%, #152b3c 70%, #10212f 100%);
-  padding: 10px 18px 28px 18px;
-  border-bottom-left-radius: 28px;
-  border-bottom-right-radius: 28px;
+  background: linear-gradient(180deg, rgba(16, 24, 38, 0.95) 0%, rgba(13, 19, 32, 0.98) 100%);
+  padding: 14px 18px 24px 18px;
+  border-bottom-left-radius: 24px;
+  border-bottom-right-radius: 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   position: relative;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
 }
 
 .goin-hero-content {
@@ -6909,16 +6911,16 @@ header,
    Unified Dark Glass Stats Grid
    ========================================================================== */
 .profile-stats-unified {
-  margin: 14px 16px 14px 16px;
+  margin: 10px 16px 0 16px;
   background: rgba(255, 255, 255, 0.045);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 18px;
   padding: 10px 8px;
   display: flex;
   align-items: stretch;
   justify-content: space-around;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
 }
 
 .stat-unit {
@@ -7005,12 +7007,13 @@ header,
    Unified Achievements & Rank Card (Clean Polish UI)
    ========================================================================== */
 .profile-achievements-unified-card {
-  margin: 0 16px 18px 16px;
-  background: rgba(255, 255, 255, 0.035);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
+  margin: 10px 16px 16px 16px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 18px;
   overflow: hidden;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
 }
 
 .achievements-unified-top {
@@ -18969,44 +18972,40 @@ input, select, textarea {
   font-weight: bold;
 }
 
-/* Bento Card specific themes */
-.bento-compass {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.16), rgba(234, 88, 12, 0.08)) !important;
+/* Bento Card specific themes (Modern Apple Glassmorphic) */
+.bento-happyhour {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.18), rgba(217, 119, 6, 0.08)) !important;
   border-color: rgba(245, 158, 11, 0.35) !important;
 }
 
-.bento-compass-preview {
-  margin-top: 10px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: rgba(0, 0, 0, 0.28);
-  border-radius: 12px;
-  padding: 7px 12px;
-  border: 1px solid rgba(245, 158, 11, 0.25);
+.bento-roulette {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.16), rgba(126, 34, 206, 0.08)) !important;
+  border-color: rgba(168, 85, 247, 0.3) !important;
 }
 
-.mini-compass-dial {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  border: 1.5px solid #f59e0b;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(245, 158, 11, 0.2);
+.bento-pubcrawl {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.16), rgba(194, 65, 12, 0.08)) !important;
+  border-color: rgba(249, 115, 22, 0.3) !important;
 }
 
-.mini-compass-arrow {
-  font-size: 10px;
-  color: #f59e0b;
-  transition: transform 0.2s ease;
+.bento-cheap {
+  background: linear-gradient(135deg, rgba(48, 209, 88, 0.18), rgba(22, 163, 74, 0.08)) !important;
+  border-color: rgba(48, 209, 88, 0.35) !important;
 }
 
-.mini-compass-text {
-  font-size: 0.76rem;
-  font-weight: 700;
-  color: #fcd34d;
+.bento-craft {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.16), rgba(109, 40, 217, 0.08)) !important;
+  border-color: rgba(139, 92, 246, 0.3) !important;
+}
+
+.bento-zero {
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.16), rgba(13, 148, 136, 0.08)) !important;
+  border-color: rgba(20, 184, 166, 0.3) !important;
+}
+
+.bento-clubcard {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(234, 88, 12, 0.1)) !important;
+  border-color: rgba(245, 158, 11, 0.45) !important;
 }
 
 .bento-pill-live {
@@ -19032,8 +19031,8 @@ input, select, textarea {
 .bento-pill-highlight {
   font-size: 0.66rem;
   font-weight: 800;
-  background: rgba(168, 85, 247, 0.2);
-  color: #c084fc;
+  background: rgba(249, 115, 22, 0.22);
+  color: #fdba74;
   padding: 2px 7px;
   border-radius: 999px;
 }
@@ -19045,22 +19044,6 @@ input, select, textarea {
   color: #facc15;
   padding: 2px 7px;
   border-radius: 999px;
-}
-
-.bento-sos {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.14), rgba(225, 29, 72, 0.08)) !important;
-  border-color: rgba(239, 68, 68, 0.3) !important;
-}
-
-.bento-pill-safety {
-  font-size: 0.66rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  background: rgba(239, 68, 68, 0.22);
-  color: #f87171;
-  padding: 3px 8px;
-  border-radius: 999px;
-  border: 1px solid rgba(239, 68, 68, 0.35);
 }
 
 /* ==========================================================================
@@ -22110,13 +22093,15 @@ body.theme-light .apple-venue-benchmark-pill.benchmark-good strong {
 }
 
 /* 3.3 Flighty Passport Logbook Telemetry Card in #profile-modal */
+/* 3.3 Unified Passport Summary Card in #profile-modal */
 .flighty-passport-logbook {
-  background: linear-gradient(165deg, #16161d 0%, #0e0e13 100%);
-  border: 1px solid rgba(255, 255, 255, 0.13);
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 20px;
   padding: 14px 16px;
-  margin: 0 0 14px 0;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  margin: 14px 16px 0 16px;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
 }
 
 .flighty-log-header {
@@ -22125,7 +22110,7 @@ body.theme-light .apple-venue-benchmark-pill.benchmark-good strong {
   justify-content: space-between;
   gap: 8px;
   padding-bottom: 10px;
-  border-bottom: 1px dashed rgba(255, 255, 255, 0.12);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   margin-bottom: 12px;
 }
 
@@ -22133,91 +22118,53 @@ body.theme-light .apple-venue-benchmark-pill.benchmark-good strong {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
-  font-size: 0.66rem;
+  font-size: 0.86rem;
   font-weight: 800;
-  letter-spacing: 0.08em;
-  color: #fde68a;
-  text-transform: uppercase;
-}
-
-.flighty-log-season {
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
-  font-size: 0.62rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  padding: 2px 8px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.07);
-  color: #cbd5e1;
-}
-
-.flighty-route-strip {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 14px;
-  padding: 4px 2px;
-}
-
-.flighty-route-node {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.flighty-route-node.align-right {
-  text-align: right;
-  align-items: flex-end;
-}
-
-.route-node-lbl {
-  font-size: 0.56rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  color: rgba(235, 235, 245, 0.48);
-  text-transform: uppercase;
-}
-
-.route-node-code {
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
-  font-size: 1.25rem;
-  font-weight: 900;
-  letter-spacing: -0.02em;
   color: #ffffff;
-  line-height: 1.1;
+  letter-spacing: -0.01em;
 }
 
-.flighty-route-line {
-  flex: 1;
+.flighty-log-meta {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 0 6px;
 }
 
-.route-line-dash {
-  flex: 1;
-  height: 1px;
-  background: linear-gradient(90deg, rgba(255,255,255,0.08), rgba(245,158,11,0.5), rgba(255,255,255,0.08));
+.passport-rewir-pill {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #93c5fd;
+  background: rgba(147, 197, 253, 0.12);
+  border: 1px solid rgba(147, 197, 253, 0.25);
+  padding: 2px 7px;
+  border-radius: 6px;
 }
 
-.route-line-icon {
-  font-size: 0.95rem;
+.passport-rewir-pill strong {
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.flighty-log-season {
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
 }
 
 .flighty-telemetry-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
+  gap: 8px;
 }
 
 .flighty-telemetry-cell {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  padding: 8px 6px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  padding: 9px 6px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -22227,19 +22174,18 @@ body.theme-light .apple-venue-benchmark-pill.benchmark-good strong {
 
 .telemetry-lbl {
   font-size: 0.52rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  color: rgba(235, 235, 245, 0.52);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #94a3b8;
   text-transform: uppercase;
   white-space: nowrap;
 }
 
 .telemetry-val {
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
-  font-size: 0.86rem;
-  font-weight: 900;
+  font-size: 0.96rem;
+  font-weight: 800;
   color: #ffffff;
-  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
 }
 
 .telemetry-val.highlight-green {

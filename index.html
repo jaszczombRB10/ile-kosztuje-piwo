@@ -381,18 +381,6 @@
         <span class="roulette-float-icon">🎲</span>
         <span>Ruletka</span>
       </button>
-      <button type="button" id="btn-pubquiz-float" class="fab-pubquiz-float" title="Pub Quiz – Zagraj teraz!">
-        <span class="quiz-float-icon">🧠</span>
-        <span>Pub Quiz</span>
-      </button>
-      <button type="button" id="btn-compass-float" class="fab-compass-float" title="Uruchom Piwny Kompas (Radar)">
-        <span class="compass-icon">🧭</span>
-        <span>Kompas</span>
-      </button>
-      <button type="button" id="btn-sos-float" class="fab-sos-float" title="Piwny Anioł Stróż · SOS Ekipa i Bezpieczny Powrót" aria-label="Piwny Anioł Stróż SOS">
-        <span class="sos-float-icon">🛡️</span>
-        <span class="sos-float-label">SOS</span>
-      </button>
       <button type="button" id="btn-locate-float" class="fab-locate-float" title="Moja lokalizacja GPS – pokaż gdzie jestem" aria-label="Moja lokalizacja GPS">
         <span class="locate-icon">
           <svg class="locate-crosshair-svg" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -1167,22 +1155,16 @@
     </div>
     <div class="bottom-sheet-content discover-scroll">
       <div class="bento-grid">
-        <!-- Bento 1: Piwny Kompas (Hero 2-Col) -->
-        <div class="bento-card bento-card-hero bento-compass" id="bento-btn-compass" role="button" tabindex="0">
+        <!-- Bento 1: Happy Hours (Hero Card) -->
+        <div class="bento-card bento-card-hero bento-happyhour" id="bento-btn-happyhour" role="button" tabindex="0">
           <div class="bento-card-glow"></div>
           <div class="bento-card-top">
-            <span class="bento-pill-live">🧭 RADAR GPS</span>
+            <span class="bento-badge-live" id="bento-hh-badge">⚡ AKTYWNE TERAZ</span>
             <span class="bento-arrow-icon">↗</span>
           </div>
           <div class="bento-card-body">
-            <h3 class="bento-title">Piwny Kompas</h3>
-            <p class="bento-desc">Wyceluj telefon i idź prosto do najbliższego kufla</p>
-          </div>
-          <div class="bento-compass-preview" id="bento-compass-preview">
-            <div class="mini-compass-dial">
-              <span class="mini-compass-arrow" id="bento-mini-arrow">▲</span>
-            </div>
-            <span class="mini-compass-text" id="bento-compass-text">Wskaż najbliższe tanie piwo</span>
+            <h3 class="bento-title">Happy Hours & Zniżki</h3>
+            <p class="bento-desc">Trwające promocje, tanie lane przed 20:00 i kalendarz zniżek w warszawskich pubach</p>
           </div>
         </div>
 
@@ -1190,11 +1172,11 @@
         <div class="bento-card bento-roulette" id="bento-btn-roulette" role="button" tabindex="0">
           <div class="bento-card-top">
             <span class="bento-icon-circle">🎲</span>
-            <span class="bento-pill-action">Potrząśnij</span>
+            <span class="bento-pill-action">W 1 klik</span>
           </div>
           <div class="bento-card-body">
             <h3 class="bento-title">Piwna Ruletka</h3>
-            <p class="bento-desc">Brak planu? Wylosuj bar na dziś jednym potrząśnięciem</p>
+            <p class="bento-desc">Brak planu? Wylosuj sprawdzony bar na dzisiejszy wieczór</p>
           </div>
         </div>
 
@@ -1206,55 +1188,55 @@
           </div>
           <div class="bento-card-body">
             <h3 class="bento-title">Pub Crawl</h3>
-            <p class="bento-desc">Wygeneruj optymalny spacer po najtańszych lokalach</p>
+            <p class="bento-desc">Optymalny spacer po najtańszych lokalach w Twojej okolicy</p>
           </div>
         </div>
 
-        <!-- Bento 4: Happy Hours -->
-        <div class="bento-card bento-happyhour" id="bento-btn-happyhour" role="button" tabindex="0">
+        <!-- Bento 4: Tanie Piwo (<= 12 zł) -->
+        <div class="bento-card bento-cheap" id="bento-btn-cheap" role="button" tabindex="0">
           <div class="bento-card-top">
-            <span class="bento-icon-circle">⚡</span>
-            <span class="bento-badge-live" id="bento-hh-badge">Promocje</span>
+            <span class="bento-icon-circle">🟢</span>
+            <span class="bento-pill-action">Hit cenowy</span>
           </div>
           <div class="bento-card-body">
-            <h3 class="bento-title">Happy Hours</h3>
-            <p class="bento-desc">Kalendarz zniżek i trwające promocje</p>
+            <h3 class="bento-title">Tanie Piwo (≤ 12 zł)</h3>
+            <p class="bento-desc">Studencki portfel: lokale z najtańszym piwem w całym mieście</p>
           </div>
         </div>
 
-        <!-- Bento 5: Barometr Cenowy -->
-        <div class="bento-card bento-barometer" id="bento-btn-barometer" role="button" tabindex="0">
+        <!-- Bento 5: Kraft & Multitapy -->
+        <div class="bento-card bento-craft" id="bento-btn-craft" role="button" tabindex="0">
           <div class="bento-card-top">
-            <span class="bento-icon-circle">📊</span>
-            <span class="bento-pill-action">Puls</span>
+            <span class="bento-icon-circle">⭐</span>
+            <span class="bento-pill-action">Kraft</span>
           </div>
           <div class="bento-card-body">
-            <h3 class="bento-title">Barometr Cen</h3>
-            <p class="bento-desc">Lewy vs Prawy Brzeg i ranking dzielnic</p>
+            <h3 class="bento-title">Kraft & Multitapy</h3>
+            <p class="bento-desc">Browary rzemieślnicze, autorskie IPA i najlepsze kranopole</p>
           </div>
         </div>
 
-        <!-- Bento 6: Pub Quiz -->
-        <div class="bento-card bento-pubquiz" id="bento-btn-pubquiz" role="button" tabindex="0">
+        <!-- Bento 6: Piwa 0.0% & Bezalko -->
+        <div class="bento-card bento-zero" id="bento-btn-zero" role="button" tabindex="0">
           <div class="bento-card-top">
-            <span class="bento-icon-circle">🧠</span>
-            <span class="bento-pill-action">Gra</span>
+            <span class="bento-icon-circle">🌱</span>
+            <span class="bento-pill-action">Bezalko</span>
           </div>
           <div class="bento-card-body">
-            <h3 class="bento-title">Piwny Pub Quiz</h3>
-            <p class="bento-desc">Quiz wiedzy o piwie i harmonogram w pubach</p>
+            <h3 class="bento-title">Piwa 0.0% / Bezalko</h3>
+            <p class="bento-desc">Dla kierowców i abstynentów: bogata oferta piw bezalkoholowych</p>
           </div>
         </div>
 
-        <!-- Bento 7: Bezpieczny Powrót / SOS (Hero 2-Col) -->
-        <div class="bento-card bento-card-hero bento-sos" id="bento-btn-sos" role="button" tabindex="0">
+        <!-- Bento 7: Karta Klubu Pass (Hero 2-Col) -->
+        <div class="bento-card bento-card-hero bento-clubcard" id="bento-btn-clubcard" role="button" tabindex="0">
           <div class="bento-card-top">
-            <span class="bento-pill-safety">🛡️ BEZPIECZNY POWRÓT</span>
+            <span class="bento-pill-live">🎟️ KLUB POILEPIWKO</span>
             <span class="bento-arrow-icon">➔</span>
           </div>
           <div class="bento-card-body">
-            <h3 class="bento-title">Piwny Anioł Stróż (SOS)</h3>
-            <p class="bento-desc">1 klik do wysłania lokalizacji ekipie, wezwania Ubera, Bolta lub Jakdojade</p>
+            <h3 class="bento-title">Karta Klubu Pass (-10% rabat)</h3>
+            <p class="bento-desc">Otwórz wirtualną kartę klubową uprawniającą do zniżki na piwo w lokalach partnerskich</p>
           </div>
         </div>
       </div>
@@ -2132,24 +2114,11 @@
         <div class="flighty-log-header">
           <div class="flighty-log-brand">
             <span class="flighty-log-emblem">🛂</span>
-            <span>PASZPORT PIWOSZA · LOGBOOK</span>
+            <span>Paszport Piwosza</span>
           </div>
-          <span class="flighty-log-season" id="flighty-log-season">SEZON 2026</span>
-        </div>
-
-        <div class="flighty-route-strip">
-          <div class="flighty-route-node">
-            <span class="route-node-lbl">BAZA (HUB)</span>
-            <strong class="route-node-code" id="flighty-hub-code">WAW</strong>
-          </div>
-          <div class="flighty-route-line">
-            <span class="route-line-dash"></span>
-            <span class="route-line-icon">🍺</span>
-            <span class="route-line-dash"></span>
-          </div>
-          <div class="flighty-route-node align-right">
-            <span class="route-node-lbl">GŁÓWNY REWIR</span>
-            <strong class="route-node-code" id="flighty-top-dist">CENTRUM</strong>
+          <div class="flighty-log-meta">
+            <span class="passport-rewir-pill">📍 <strong id="flighty-top-dist">Ochota</strong> · <span id="flighty-hub-code">WAW</span></span>
+            <span class="flighty-log-season" id="flighty-log-season">Sezon 2026</span>
           </div>
         </div>
 
