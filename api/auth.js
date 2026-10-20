@@ -454,9 +454,15 @@ module.exports = async (req, res) => {
     if (action === "get-live-feed") {
       try {
         let items = [];
-        // Fetch price reports with photo proofs
+        const now = Date.now();
+        const cutoff24h = 24 * 60 * 60 * 1000;
+        // Cutoff to purge old legacy test BeReals created before Oct 20, 2026 21:30 CEST
+        const legacyPurgeTimestamp = new Date("2026-10-20T19:30:00Z").getTime();
+
+        // Fetch price reports with photo proofs from the last 24h only
+        const sinceIso = new Date(Math.max(now - cutoff24h, legacyPurgeTimestamp)).toISOString();
         const reportsRes = await fetch(
-          `${SUPABASE_URL}/rest/v1/price_reports?proof_image_url=not.is.null&order=created_at.desc&limit=30`,
+          `${SUPABASE_URL}/rest/v1/price_reports?proof_image_url=not.is.null&created_at=gte.${encodeURIComponent(sinceIso)}&order=created_at.desc&limit=20`,
           { headers }
         );
         if (reportsRes.ok) {
@@ -464,10 +470,10 @@ module.exports = async (req, res) => {
           if (Array.isArray(reports)) {
             items = reports.map(r => ({
               id: "rep_" + (r.id || Math.random().toString(36).slice(2, 8)),
-              venue_name: r.reported_beer_name ? `${r.reported_beer_name}` : "Warszawski bar",
+              venue_name: r.reported_beer_name ? `${r.reported_beer_name}` : "Lokal",
               beer_price: r.reported_price_pln,
               photo_url: r.proof_image_url,
-              user_name: "Piwosz z Warszawy",
+              user_name: "Piwosz",
               user_avatar: "🍺",
               created_at: r.created_at,
               cheers_count: 3
@@ -475,14 +481,13 @@ module.exports = async (req, res) => {
           }
         }
 
-        // Fetch recent user check-in photos / BeReals
+        // Fetch recent user check-in photos / BeReals (strictly within 24h and after legacy purge)
         const allRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?per_page=100`, { headers });
         if (allRes.ok) {
           const uData = await allRes.json();
           const allU = uData.users || [];
           for (const u of allU) {
             const m = u.user_metadata || {};
-            // Collect all BeReal posts for this user (or fallback to last_checkin)
             let userPosts = [];
             if (Array.isArray(m.bereal_posts) && m.bereal_posts.length > 0) {
               userPosts = [...m.bereal_posts];
@@ -490,32 +495,58 @@ module.exports = async (req, res) => {
               userPosts = [m.last_checkin];
             }
 
-            for (const ch of userPosts) {
-              if (ch && ch.photo_url) {
-                const postId = ch.id || ("chk_" + u.id + "_" + (ch.timestamp || ""));
-                items.push({
-                  id: postId,
-                  venue_id: ch.venue_id || "",
-                  venue_name: ch.venue_name || "Lokal w Warszawie",
-                  district: ch.district || "Warszawa",
-                  beer_name: ch.beer_name || "Piwo z nalewaka",
-                  beer_price: ch.beer_price,
-                  photo_url: ch.photo_url,
-                  selfie_url: ch.selfie_url || null,
-                  user_id: u.id,
-                  author_id: u.id,
-                  user_name: m.display_name || m.username || "Piwosz",
-                  author_name: m.username || m.display_name || "Piwosz",
-                  user_handle: m.username ? `@${m.username}` : "@piwosz",
-                  user_avatar: m.avatar_icon || "🍺",
-                  avatar_icon: m.avatar_icon || "🍺",
-                  user_photo: m.avatar_photo || null,
-                  avatar_photo: m.avatar_photo || null,
-                  created_at: new Date(ch.timestamp || Date.now()).toISOString(),
-                  timestamp: ch.timestamp || Date.now(),
-                  cheers_count: typeof ch.cheers_count === "number" ? ch.cheers_count : 5
-                });
-              }
+            // Filter out expired (>24h) or old test BeReals
+            const freshPosts = userPosts.filter(ch => {
+              if (!ch || !ch.photo_url) return false;
+              const ts = Number(ch.timestamp) || (ch.created_at ? new Date(ch.created_at).getTime() : 0);
+              if (!ts) return false;
+              if (now - ts > cutoff24h) return false;
+              if (ts < legacyPurgeTimestamp) return false;
+              return true;
+            });
+
+            // Auto-prune stale bereal_posts from user_metadata in background if needed
+            if (Array.isArray(m.bereal_posts) && freshPosts.length !== m.bereal_posts.length) {
+              const cleanedLast = (m.last_checkin && m.last_checkin.timestamp && m.last_checkin.timestamp >= legacyPurgeTimestamp && (now - m.last_checkin.timestamp <= cutoff24h))
+                ? m.last_checkin
+                : null;
+              fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(u.id)}`, {
+                method: "PUT",
+                headers,
+                body: JSON.stringify({
+                  user_metadata: {
+                    ...m,
+                    bereal_posts: freshPosts,
+                    last_checkin: cleanedLast
+                  }
+                })
+              }).catch(() => {});
+            }
+
+            for (const ch of freshPosts) {
+              const postId = ch.id || ("chk_" + u.id + "_" + (ch.timestamp || ""));
+              items.push({
+                id: postId,
+                venue_id: ch.venue_id || "",
+                venue_name: ch.venue_name || "Lokal",
+                district: ch.district || "Centrum",
+                beer_name: ch.beer_name || "Piwo z nalewaka",
+                beer_price: ch.beer_price,
+                photo_url: ch.photo_url,
+                selfie_url: ch.selfie_url || null,
+                user_id: u.id,
+                author_id: u.id,
+                user_name: m.display_name || m.username || "Piwosz",
+                author_name: m.username || m.display_name || "Piwosz",
+                user_handle: m.username ? `@${m.username}` : "@piwosz",
+                user_avatar: m.avatar_icon || "🍺",
+                avatar_icon: m.avatar_icon || "🍺",
+                user_photo: m.avatar_photo || null,
+                avatar_photo: m.avatar_photo || null,
+                created_at: new Date(ch.timestamp).toISOString(),
+                timestamp: ch.timestamp,
+                cheers_count: typeof ch.cheers_count === "number" ? ch.cheers_count : 5
+              });
             }
           }
         }

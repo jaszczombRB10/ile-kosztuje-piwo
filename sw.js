@@ -1,4 +1,4 @@
-const CACHE_NAME = "poilepiwko-v143";
+const CACHE_NAME = "poilepiwko-v144";
 
 const STATIC_ASSETS = [
   "./",
@@ -65,14 +65,21 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // 1. Navigation / HTML Document requests: Network-First to guarantee immediate UI updates on mobile & desktop
+  // 1. Navigation / HTML Document & Core App Code (CSS/JS): Network-First to guarantee immediate UI updates on mobile & desktop without CSS/HTML mismatch
   const isNavigation =
     event.request.mode === "navigate" ||
     (event.request.method === "GET" &&
       event.request.headers.get("accept") &&
       event.request.headers.get("accept").includes("text/html"));
 
-  if (isNavigation) {
+  const isCoreCodeAsset =
+    event.request.method === "GET" &&
+    !url.pathname.includes("/vendor/") &&
+    (url.pathname.endsWith(".css") ||
+      url.pathname.endsWith(".js") ||
+      url.pathname.endsWith(".json"));
+
+  if (isNavigation || isCoreCodeAsset) {
     event.respondWith(
       fetch(event.request)
         .then((networkResponse) => {
@@ -83,7 +90,10 @@ self.addEventListener("fetch", (event) => {
           return networkResponse;
         })
         .catch(() => {
-          return caches.match(event.request).then((cached) => cached || caches.match("./index.html"));
+          return caches.match(event.request, { ignoreSearch: true }).then((cached) => {
+            if (cached) return cached;
+            return isNavigation ? caches.match("./index.html", { ignoreSearch: true }) : undefined;
+          });
         })
     );
     return;

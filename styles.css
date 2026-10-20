@@ -22330,4 +22330,715 @@ body.theme-light .telemetry-lbl {
   color: #64748b !important;
 }
 
+/* ==========================================================================
+   3.5 FLIGHTY VENUE SHEET FULL-WIDTH HEADER & BENTO TELEMETRY (ZERO WASTE)
+   ========================================================================== */
+#venue-sheet-header.venue-sheet-header {
+  display: block !important;
+  padding: 6px 16px 12px 16px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.flighty-sheet-header-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.flighty-sheet-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+}
+
+.flighty-sheet-topbar .flighty-callsign-row {
+  margin-bottom: 0;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.flighty-dist-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(10, 132, 255, 0.14);
+  border: 1px solid rgba(10, 132, 255, 0.32);
+  color: #60a5fa;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.64rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.flighty-sheet-mainbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.flighty-sheet-mainbar .venue-sheet-title-box {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  padding-right: 0 !important;
+}
+
+.flighty-sheet-mainbar .venue-sheet-name {
+  font-size: 1.26rem !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+  letter-spacing: -0.02em !important;
+  color: #ffffff !important;
+  margin: 0 0 4px 0 !important;
+  word-break: break-word;
+}
+
+.flighty-sheet-mainbar .venue-old-name {
+  font-size: 0.74rem;
+  font-weight: 500;
+  color: rgba(235, 235, 245, 0.5);
+  margin-left: 4px;
+}
+
+.flighty-sheet-mainbar .venue-sheet-address {
+  font-size: 0.78rem !important;
+  color: rgba(235, 235, 245, 0.65) !important;
+  line-height: 1.3 !important;
+  margin: 0 !important;
+}
+
+.flighty-sheet-mainbar .venue-sheet-price-tag {
+  flex-shrink: 0 !important;
+  background: #15151c !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 14px !important;
+  padding: 8px 12px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-end !important;
+  justify-content: center !important;
+  min-width: 96px !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+
+.flighty-sheet-mainbar .venue-sheet-price-val {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace !important;
+  font-variant-numeric: tabular-nums !important;
+  font-size: 1.22rem !important;
+  font-weight: 900 !important;
+  line-height: 1.1 !important;
+}
+
+.flighty-sheet-mainbar .venue-sheet-price-val small {
+  font-size: 0.76rem;
+  font-weight: 800;
+  opacity: 0.85;
+}
+
+.flighty-sheet-mainbar .venue-sheet-beer-name {
+  font-size: 0.68rem !important;
+  font-weight: 600 !important;
+  color: rgba(235, 235, 245, 0.68) !important;
+  margin-top: 3px !important;
+  max-width: 125px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.flighty-sheet-topbar .venue-sheet-close-btn {
+  position: static !important;
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #cbd5e1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  font-size: 0.82rem !important;
+  padding: 0 !important;
+}
+
+/* 2x2 Bento Specs Grid & Benchmark Pill in #venue-sheet */
+.apple-venue-benchmark-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  background: #14141b;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  font-size: 0.76rem;
+  color: #e2e8f0;
+  line-height: 1.35;
+}
+
+.apple-venue-benchmark-pill.benchmark-good {
+  background: rgba(48, 209, 88, 0.1);
+  border-color: rgba(48, 209, 88, 0.3);
+  color: #bbf7d0;
+}
+
+.apple-venue-specs-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+  width: 100% !important;
+}
+
+.apple-spec-tile {
+  background: #14141a !important;
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  border-radius: 13px !important;
+  padding: 9px 11px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 3px !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+.apple-spec-tile .spec-label {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.6rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.05em !important;
+  color: rgba(235, 235, 245, 0.5) !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.apple-spec-tile .spec-val {
+  font-size: 0.84rem !important;
+  font-weight: 800 !important;
+  color: #ffffff !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.venue-sheet-actions {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+.btn-venue-sheet-action {
+  background: #15151c !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 13px !important;
+  padding: 9px 6px !important;
+  color: #f8fafc !important;
+  font-size: 0.74rem !important;
+  font-weight: 700 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 3px !important;
+  text-align: center !important;
+}
+
+.btn-venue-sheet-action.btn-venue-nav {
+  background: rgba(10, 132, 255, 0.16) !important;
+  border-color: rgba(10, 132, 255, 0.4) !important;
+  color: #60a5fa !important;
+}
+
+/* ==========================================================================
+   3.6 FLIGHTY LIVE TELEMETRY FEED (#pane-comm-feed)
+   ========================================================================== */
+.flighty-feed-console {
+  background: #121218;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 11px 12px;
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.flighty-feed-console-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.flighty-feed-telemetry-id {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.feed-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #30D158;
+  box-shadow: 0 0 8px #30D158;
+  display: inline-block;
+}
+
+.flighty-feed-radar-code {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #30D158;
+}
+
+.flighty-feed-city-tag {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+}
+
+.flighty-feed-action-strip {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.flighty-feed-action-btn {
+  -webkit-appearance: none;
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 11px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #181820;
+  color: #ffffff;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.14s ease, border-color 0.14s ease;
+}
+
+.flighty-feed-action-btn.primary {
+  background: linear-gradient(135deg, rgba(48, 209, 88, 0.18), rgba(16, 185, 129, 0.08));
+  border-color: rgba(48, 209, 88, 0.42);
+}
+
+.flighty-feed-action-btn.secondary {
+  background: linear-gradient(135deg, rgba(10, 132, 255, 0.16), rgba(94, 92, 230, 0.08));
+  border-color: rgba(10, 132, 255, 0.38);
+}
+
+.flighty-feed-action-btn:active {
+  transform: scale(0.97);
+}
+
+.ff-btn-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.ff-btn-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ff-btn-title {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ff-btn-sub {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: rgba(235, 235, 245, 0.6);
+  margin-top: 1px;
+}
+
+/* Segmented Filter Pills in Live Feed */
+.live-feed-filter-pills {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 4px !important;
+  padding: 3px !important;
+  background: #0b0b0f !important;
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  border-radius: 11px !important;
+}
+
+.feed-filter-pill {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 6px 4px !important;
+  color: rgba(235, 235, 245, 0.6) !important;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace !important;
+  font-size: 0.64rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.03em !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.feed-filter-pill.active {
+  background: #1e1e28 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Compact Flighty Feed Cards */
+#comm-feed-grid.live-feed-grid {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+}
+
+.flighty-feed-card {
+  background: #13131a;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 15px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.ffc-telemetry-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.ffc-telemetry-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ffc-route-pill,
+.flighty-mini-route {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+  white-space: nowrap;
+}
+
+.ffc-type-pill {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  padding: 2px 6px;
+  border-radius: 5px;
+  white-space: nowrap;
+}
+
+.ffc-type-pill.badge-deal {
+  background: rgba(48, 209, 88, 0.16);
+  border: 1px solid rgba(48, 209, 88, 0.38);
+  color: #30D158;
+}
+
+.ffc-type-pill.badge-receipt {
+  background: rgba(10, 132, 255, 0.16);
+  border: 1px solid rgba(10, 132, 255, 0.38);
+  color: #60a5fa;
+}
+
+.ffc-type-pill.badge-verified,
+.ffc-type-pill.badge-checkin {
+  background: rgba(255, 159, 10, 0.15);
+  border: 1px solid rgba(255, 159, 10, 0.35);
+  color: #FF9F0A;
+}
+
+.ffc-time-mono {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: rgba(235, 235, 245, 0.45);
+  white-space: nowrap;
+}
+
+.ffc-main-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.ffc-venue-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ffc-venue-name {
+  font-size: 0.96rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ffc-venue-sub {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  color: rgba(235, 235, 245, 0.72);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ffc-status-open {
+  color: #30D158;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.62rem;
+  font-weight: 800;
+}
+
+.ffc-status-closed {
+  color: #FF9F0A;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.62rem;
+  font-weight: 800;
+}
+
+.ffc-scout-line {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.68rem;
+  color: rgba(235, 235, 245, 0.5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ffc-price-capsule {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 6px 10px;
+  border-radius: 11px;
+  background: #1b1b24;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+}
+
+.ffc-price-capsule.tier-green {
+  background: rgba(48, 209, 88, 0.14);
+  border-color: rgba(48, 209, 88, 0.4);
+  color: #30D158;
+}
+
+.ffc-price-capsule.tier-amber {
+  background: rgba(255, 159, 10, 0.14);
+  border-color: rgba(255, 159, 10, 0.38);
+  color: #FF9F0A;
+}
+
+.ffc-price-capsule.tier-red {
+  background: rgba(255, 69, 58, 0.14);
+  border-color: rgba(255, 69, 58, 0.38);
+  color: #FF453A;
+}
+
+.ffc-price-val {
+  font-size: 0.98rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.ffc-price-val small {
+  font-size: 0.66rem;
+  font-weight: 800;
+}
+
+.ffc-price-vol {
+  font-size: 0.54rem;
+  font-weight: 800;
+  opacity: 0.72;
+  margin-top: 2px;
+}
+
+.ffc-bottom-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ffc-btn-map,
+.feed-btn-map-jump {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px !important;
+  border-radius: 9px !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #cbd5e1 !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  cursor: pointer;
+}
+
+.ffc-btn-cheers,
+.bereal-cheers-btn {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 11px !important;
+  border-radius: 9px !important;
+  background: rgba(255, 159, 10, 0.14) !important;
+  border: 1px solid rgba(255, 159, 10, 0.34) !important;
+  color: #fbbf24 !important;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace !important;
+  font-size: 0.72rem !important;
+  font-weight: 800 !important;
+  cursor: pointer;
+}
+
+.flighty-feed-empty-card {
+  background: #13131a;
+  border: 1px dashed rgba(255, 255, 255, 0.14);
+  border-radius: 16px;
+  padding: 22px 16px;
+  text-align: center;
+}
+
+.ff-empty-code {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #30D158;
+  margin-bottom: 6px;
+}
+
+.ff-empty-title {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.ff-empty-sub {
+  font-size: 0.76rem;
+  color: rgba(235, 235, 245, 0.58);
+  margin: 0;
+}
+
+/* ==========================================================================
+   3.7 UNIFIED FLIGHTY OBSIDIAN DESIGN ACROSS ALL APP MODALS & FEATURES
+   ========================================================================== */
+#community-modal .modal-content,
+#profile-modal .modal-content,
+#passport-modal .modal-content,
+#filter-modal .modal-content,
+#roulette-modal .modal-content,
+#pubcrawl-modal .modal-content,
+#happyhour-modal .modal-content,
+#pubquiz-modal .modal-content,
+#sos-modal .modal-content,
+#report-modal .modal-content,
+#city-switcher-modal .modal-content {
+  background: #0c0c10 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+.community-tabs-bar,
+.passport-tabs {
+  background: #131319 !important;
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  border-radius: 12px !important;
+  padding: 3px !important;
+}
+
+.comm-tab-btn,
+.passport-tab-btn {
+  border-radius: 9px !important;
+  font-size: 0.74rem !important;
+  font-weight: 700 !important;
+}
+
+.comm-tab-btn.active,
+.passport-tab-btn.active {
+  background: #22222d !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45) !important;
+}
+
+.comm-quick-hub .comm-hub-tile,
+.hotspots-quick-grid .hotspot-card,
+.friends-map-header-bar,
+.gold-referral-card,
+.roulette-machine-box,
+.pubcrawl-step-card,
+.hh-venue-card,
+.quiz-card {
+  background: #14141b !important;
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  border-radius: 15px !important;
+}
+
+
 

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>poilepiwko - Gdzie na piwo? Nocna Mapa Barów, Kompas & Pub Crawl</title>
   <meta name="description" content="poilepiwko: sprawdź na żywo aktualne ceny piwa z nalewaka, happy hours, krafty i wyznacz optymalny Pub Crawl w Twoim mieście!">
-  <meta name="theme-color" content="#0d1615">
+  <meta name="theme-color" content="#09090c">
 
   <!-- Open Graph & Social Sharing Meta Tags -->
   <meta property="og:type" content="website">
@@ -60,7 +60,7 @@
   <link rel="stylesheet" href="vendor/leaflet/MarkerCluster.Default.css" />
   
   <!-- Custom Styles -->
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=144">
 </head>
 <body>
 
@@ -2744,41 +2744,42 @@
         </div>
       </div>
 
-      <!-- Tab 3: Live Feed 2.0 (BeReal fotki z kufli + Live Ceny & Paragony AI + Meldunki) -->
+      <!-- Tab 3: Live Feed 2.0 (Flighty Telemetry Stream: BeReal + Paragony AI + Meldunki) -->
       <div class="comm-tab-pane" id="pane-comm-feed" style="display:none;">
-        <div class="live-feed-hero-card">
-          <div class="live-feed-hero-top">
-            <span class="feed-live-pill">
+        <div class="flighty-feed-console">
+          <div class="flighty-feed-console-top">
+            <div class="flighty-feed-telemetry-id">
               <span class="feed-live-dot"></span>
-              NA ŻYWO Z BARÓW · 24H
-            </span>
-            <span class="feed-city-badge" id="feed-city-stat-label">📍 Warszawa</span>
+              <span class="flighty-feed-radar-code">RADAR BAROWY · LIVE 24H</span>
+            </div>
+            <span class="flighty-feed-city-tag" id="feed-city-stat-label">WAW · WARSZAWA</span>
           </div>
-          <div class="live-feed-hero-main">
-            <h3>Co leje się dziś na mieście? 🍻</h3>
-            <p>Świeże fotki kufli (Piwny BeReal), zweryfikowane paragony AI i meldunki cenowe z ostatnich godzin.</p>
-          </div>
-          <div class="live-feed-hero-actions">
-            <button type="button" class="btn-feed-cta-primary btn-bereal-camera-trigger" id="btn-open-bereal-camera">
-              <span>📸</span>
-              <span>Zrób Piwny BeReal (+25 pkt)</span>
+          <div class="flighty-feed-action-strip">
+            <button type="button" class="flighty-feed-action-btn primary btn-bereal-camera-trigger" id="btn-open-bereal-camera">
+              <span class="ff-btn-icon">📸</span>
+              <div class="ff-btn-copy">
+                <span class="ff-btn-title">Piwny BeReal</span>
+                <span class="ff-btn-sub">Na żywo · +25 XP</span>
+              </div>
             </button>
-            <button type="button" class="btn-feed-cta-secondary" id="btn-feed-scan-receipt">
-              <span>🧾</span>
-              <span>Skanuj paragon AI</span>
+            <button type="button" class="flighty-feed-action-btn secondary" id="btn-feed-scan-receipt">
+              <span class="ff-btn-icon">🧾</span>
+              <div class="ff-btn-copy">
+                <span class="ff-btn-title">Skanuj paragon</span>
+                <span class="ff-btn-sub">Weryfikacja AI</span>
+              </div>
             </button>
           </div>
-        </div>
-
-        <div class="live-feed-filter-pills" id="live-feed-filters" role="tablist" aria-label="Filtruj Live Feed">
-          <button type="button" class="feed-filter-pill active" data-feed-filter="all">🔥 Wszystko</button>
-          <button type="button" class="feed-filter-pill" data-feed-filter="photos">📸 Fotki & BeReal</button>
-          <button type="button" class="feed-filter-pill" data-feed-filter="prices">🧾 Ceny & Paragony</button>
-          <button type="button" class="feed-filter-pill" data-feed-filter="deals">🟢 Okazje ≤ 12 zł</button>
+          <div class="live-feed-filter-pills" id="live-feed-filters" role="tablist" aria-label="Filtruj Live Feed">
+            <button type="button" class="feed-filter-pill active" data-feed-filter="all">ALL</button>
+            <button type="button" class="feed-filter-pill" data-feed-filter="photos">📸 BEREAL</button>
+            <button type="button" class="feed-filter-pill" data-feed-filter="prices">🧾 PARAGONY</button>
+            <button type="button" class="feed-filter-pill" data-feed-filter="deals">🟢 ≤12 ZŁ</button>
+          </div>
         </div>
 
         <div class="live-feed-grid" id="comm-feed-grid">
-          <div class="empty-state-hint">Ładowanie relacji na żywo z barów... 🍻</div>
+          <div class="empty-state-hint">Skanowanie aktywności w barach... 📡</div>
         </div>
       </div>
 
@@ -3615,6 +3616,6 @@
   <script src="moderation.js"></script>
 
   <!-- Main Application Logic -->
-  <script src="app.js"></script>
+  <script src="app.js?v=144"></script>
 </body>
 </html>

@@ -10735,10 +10735,10 @@
     const feedFilterContainer = document.getElementById("live-feed-filters");
     if (feedFilterContainer && !feedFilterContainer.__wired) {
       feedFilterContainer.__wired = true;
-      feedFilterContainer.querySelectorAll(".live-feed-pill").forEach(btn => {
+      feedFilterContainer.querySelectorAll(".feed-filter-pill, .live-feed-pill").forEach(btn => {
         btn.addEventListener("click", () => {
           if (typeof poileHaptics !== "undefined" && poileHaptics.tick) poileHaptics.tick();
-          feedFilterContainer.querySelectorAll(".live-feed-pill").forEach(b => b.classList.remove("active"));
+          feedFilterContainer.querySelectorAll(".feed-filter-pill, .live-feed-pill").forEach(b => b.classList.remove("active"));
           btn.classList.add("active");
           currentLiveFeedFilter = btn.getAttribute("data-feed-filter") || "all";
           renderLiveFeedItems();
@@ -10751,11 +10751,21 @@
       const venues = (allVenues && allVenues.length > 0) ? allVenues : [];
       const nowMs = Date.now();
       const nowDate = new Date();
+      const cityIataMap = { warszawa: "WAW", krakow: "KRK", wroclaw: "WRO", trojmiasto: "GDN", poznan: "POZ", lodz: "LCJ", katowice: "KTW" };
+      const cityIata = cityIataMap[curCity.id] || (curCity.name || "WAW").slice(0, 3).toUpperCase();
 
       const cityStatLabel = document.getElementById("feed-city-stat-label");
       if (cityStatLabel && venues.length > 0) {
         const openCount = venues.filter(v => isVenueOpen(v, nowDate)).length;
-        cityStatLabel.textContent = `${curCity.name} · ${openCount > 0 ? `${openCount} otwartych teraz` : `${venues.length} lokali w bazie`}`;
+        cityStatLabel.textContent = `${cityIata} · ${openCount > 0 ? `${openCount} ACTIVE` : `${venues.length} BARS`}`;
+      }
+
+      let deletedPostIds = [];
+      try {
+        deletedPostIds = JSON.parse(localStorage.getItem("poilepiwko_deleted_posts") || "[]");
+        if (!Array.isArray(deletedPostIds)) deletedPostIds = [];
+      } catch (e) {
+        deletedPostIds = [];
       }
 
       // Compute district averages for benchmark tags
@@ -10770,13 +10780,21 @@
       });
 
       const items = [];
+      const legacyCutoffMs = new Date("2026-10-20T19:30:00Z").getTime();
+      const maxAgeMs = 24 * 60 * 60 * 1000;
 
-      // 1. Remote BeReal / Photo Posts from API
+      // 1. Remote BeReal / Photo Posts from API (strictly last 24h & after legacy test purge)
       const cheapVenues = [...venues].filter(v => typeof v.beer_price_pln === "number").sort((a, b) => a.beer_price_pln - b.beer_price_pln);
       apiFeed.forEach((post, idx) => {
         if (!post) return;
+        const postIdStr = String(post.id || `feed-photo-${idx}`);
+        if (deletedPostIds.includes(postIdStr)) return;
         if (post.author_id && blockedUsers.includes(post.author_id)) return;
         if (post.author_name && blockedUsers.includes(post.author_name)) return;
+
+        const postTimeMs = post.created_at ? new Date(post.created_at).getTime() : 0;
+        if (!postTimeMs || isNaN(postTimeMs)) return;
+        if (postTimeMs < legacyCutoffMs || (nowMs - postTimeMs) > maxAgeMs) return;
 
         // Enrich generic venue names with real city venues so map jump works seamlessly
         let matchedVenue = venues.find(v => String(v.id) === String(post.venue_id)) ||
@@ -10794,7 +10812,7 @@
 
         items.push({
           kind: "photo",
-          id: post.id || `feed-photo-${idx}`,
+          id: postIdStr,
           author_id: post.author_id || post.user_id || "",
           author_name: post.author_name || post.user_name || "piwosz",
           avatar_photo: post.avatar_photo || post.user_photo || null,
@@ -10802,12 +10820,14 @@
           venue_id: vId,
           venue_name: vName,
           district: vDistrict,
+          city_iata: cityIata,
+          dist_iata: (vDistrict || "BAR").toUpperCase().replace(/[^A-ZĄĆĘŁŃÓŚŹŻ]/g, "").slice(0, 3) || "BAR",
           beer_name: post.beer_name || (matchedVenue && matchedVenue.beer_brand) || "Jasne Pełne 0.5L",
           beer_price: priceNum,
           photo_url: post.photo_url,
           selfie_url: post.selfie_url || null,
           cheers_count: Number(post.cheers_count) || (4 + (idx * 3) % 11),
-          created_at: post.created_at || new Date(nowMs - (idx + 1) * 19 * 60 * 1000).toISOString(),
+          created_at: post.created_at,
           vibe_caption: post.caption || (priceNum <= 12 ? "Najlepsza cena na dzielni, kufel zimny jak lód! ❄️🍺" : "Świeżo nalane prosto z kranu, klimat 10/10 🔥")
         });
       });
@@ -10822,22 +10842,25 @@
             if (v) {
               const dAvg = distCounts[v.district] ? (distSums[v.district] / distCounts[v.district]) : 15.5;
               const diffPct = Math.round(((dAvg - v.beer_price_pln) / dAvg) * 100);
+              const vDist = v.district || curCity.name;
               items.push({
                 kind: "activity",
                 activity_type: "verified",
-                badge_label: "👍 TWÓJ RAPORT CENOWY",
+                badge_label: "POTWIERDZONO",
                 badge_class: "badge-verified",
                 id: `local-conf-${v.id}`,
                 author_name: (currentUser && currentUser.user_metadata && currentUser.user_metadata.username) || "Ty",
                 avatar_icon: "✅",
-                action_text: "potwierdził(a) aktualność ceny przy barze",
+                action_text: "potwierdził(a) cenę",
                 venue_id: v.id,
                 venue_name: v.name,
-                district: v.district || curCity.name,
-                beer_name: v.beer_brand || "Lane 0.5L",
+                district: vDist,
+                city_iata: cityIata,
+                dist_iata: vDist.toUpperCase().replace(/[^A-ZĄĆĘŁŃÓŚŹŻ]/g, "").slice(0, 3) || "BAR",
+                beer_name: v.beer_brand || v.beer_name || "Lane 0.5L",
                 beer_price: v.beer_price_pln,
                 is_open: isVenueOpen(v, nowDate),
-                benchmark_text: diffPct > 4 ? `📉 O ${diffPct}% taniej niż średnia (${v.district})` : `📊 Sprawdzona cena w dzielnicy ${v.district}`,
+                benchmark_text: diffPct > 4 ? `-${diffPct}% vs ${vDist}` : `Zgodne z cennikiem`,
                 cheers_count: 6 + (idx % 5),
                 created_at: new Date(ts).toISOString()
               });
@@ -10846,7 +10869,7 @@
         });
       } catch (e) {}
 
-      // 3. Curated Live City Activity Stream (AI Receipt Scans, Deals <= 12 zł, Community Verifications)
+      // 3. Curated Live City Activity Stream (Flighty Telemetry Log: AI Receipt Scans, Deals <= 12 zł, Verifications)
       if (venues.length > 0) {
         const openVenues = venues.filter(v => isVenueOpen(v, nowDate) && typeof v.beer_price_pln === "number");
         const pool = openVenues.length >= 6 ? openVenues : venues.filter(v => typeof v.beer_price_pln === "number");
@@ -10854,12 +10877,12 @@
         const craftPicks = pool.filter(v => v.is_craft);
 
         const scoutProfiles = [
-          { handle: "kufel_patrol", icon: "🕵️‍♂️", action: "zeskanował(a) paragon przez Skaner AI", type: "receipt", badge: "🧾 SKAN PARAGONU AI", cls: "badge-receipt", minsAgo: 11 },
-          { handle: "chmielowy_wilk", icon: "🐺", action: "potwierdził(a) cenę lanego przy barze", type: "verified", badge: "👍 POTWIERDZONA CENA", cls: "badge-verified", minsAgo: 27 },
-          { handle: "tanie_lane", icon: "💚", action: "wypatrzył(a) najtańsze piwo w okolicy", type: "deal", badge: "🟢 OKAZJA DNIA ≤ 12 ZŁ", cls: "badge-deal", minsAgo: 44 },
-          { handle: "nocny_marek", icon: "🦉", action: "zameldował(a) ekipę przy stoliku", type: "checkin", badge: "🍻 MELDUNEK Z LOKALU", cls: "badge-checkin", minsAgo: 68 },
-          { handle: "kraft_hunter", icon: "🍺", action: "sprawdził(a) tablicę kranów i cennik", type: "receipt", badge: "📸 RAPORT Z KRANÓW", cls: "badge-receipt", minsAgo: 95 },
-          { handle: " studencki_budzet", icon: "🎓", action: "zweryfikował(a) zniżkę studencką przy barze", type: "deal", badge: "🔥 HIT STUDENCKI", cls: "badge-deal", minsAgo: 130 }
+          { handle: "kufel_patrol", icon: "🧾", action: "Skan paragonu AI", type: "receipt", badge: "PARAGON AI", cls: "badge-receipt", minsAgo: 8 },
+          { handle: "chmielowy_wilk", icon: "✓", action: "Weryfikacja przy barze", type: "verified", badge: "ZWERYFIKOWANO", cls: "badge-verified", minsAgo: 21 },
+          { handle: "tanie_lane", icon: "🟢", action: "Najtańszy kran w okolicy", type: "deal", badge: "OKAZJA ≤12 ZŁ", cls: "badge-deal", minsAgo: 37 },
+          { handle: "nocny_marek", icon: "📍", action: "Check-in przy stoliku", type: "checkin", badge: "CHECK-IN LIVE", cls: "badge-checkin", minsAgo: 54 },
+          { handle: "kraft_hunter", icon: "🍺", action: "Raport z tablicy kranów", type: "receipt", badge: "TABLICA KRANÓW", cls: "badge-receipt", minsAgo: 79 },
+          { handle: "studencki_budzet", icon: "🔥", action: "Zniżka studencka aktywna", type: "deal", badge: "HIT CENOWY", cls: "badge-deal", minsAgo: 112 }
         ];
 
         const picks = [
@@ -10871,7 +10894,6 @@
           sortedDeals[5]
         ].filter(Boolean);
 
-        // Deduplicate venues
         const seenIds = new Set();
         picks.forEach((v, i) => {
           if (!v || seenIds.has(v.id)) return;
@@ -10879,14 +10901,15 @@
           const scout = scoutProfiles[i % scoutProfiles.length];
           const dAvg = distCounts[v.district] ? (distSums[v.district] / distCounts[v.district]) : 15.8;
           const diffPct = Math.round(((dAvg - v.beer_price_pln) / dAvg) * 100);
+          const vDist = v.district || curCity.name;
           const benchText = diffPct > 5
-            ? `📉 Taniej o ${diffPct}% niż średnia na dzielnicy (${dAvg.toFixed(1)} zł)`
-            : (v.is_craft ? `🍺 Selekcja rzemieślnicza · ${v.district || curCity.name}` : `✅ Cena zgodna z cennikiem przy barze`);
+            ? `📉 -${diffPct}% vs śr. ${vDist} (${dAvg.toFixed(1)} zł)`
+            : (v.is_craft ? `🍺 Selekcja Kraft · ${vDist}` : `✓ Cena potwierdzona przy barze`);
 
           items.push({
             kind: "activity",
             activity_type: v.beer_price_pln <= 12 ? "deal" : scout.type,
-            badge_label: v.beer_price_pln <= 12 && i % 2 === 0 ? "🟢 OKAZJA DNIA ≤ 12 ZŁ" : scout.badge,
+            badge_label: v.beer_price_pln <= 12 && i % 2 === 0 ? "OKAZJA ≤12 ZŁ" : scout.badge,
             badge_class: v.beer_price_pln <= 12 && i % 2 === 0 ? "badge-deal" : scout.cls,
             id: `city-act-${v.id}`,
             author_name: scout.handle.trim(),
@@ -10894,11 +10917,12 @@
             action_text: scout.action,
             venue_id: v.id,
             venue_name: v.name,
-            district: v.district || curCity.name,
-            beer_name: v.beer_brand || "Jasne Pełne 0.5L",
+            district: vDist,
+            city_iata: cityIata,
+            dist_iata: vDist.toUpperCase().replace(/[^A-ZĄĆĘŁŃÓŚŹŻ]/g, "").slice(0, 3) || "BAR",
+            beer_name: v.beer_brand || v.beer_name || "Jasne Pełne 0.5L",
             beer_price: v.beer_price_pln,
             is_open: isVenueOpen(v, nowDate),
-            hours_str: formatDisplayHours(v.hours),
             benchmark_text: benchText,
             cheers_count: 5 + ((i * 7 + Math.round(v.beer_price_pln)) % 14),
             created_at: new Date(nowMs - scout.minsAgo * 60 * 1000).toISOString()
@@ -10906,7 +10930,6 @@
         });
       }
 
-      // Sort newest first, interleaving photo cards and live activity cards naturally
       return items.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     }
 
@@ -10922,10 +10945,10 @@
 
       if (filtered.length === 0) {
         feedGrid.innerHTML = `
-          <div class="empty-state-card" style="grid-column: 1 / -1;">
-            <div class="empty-icon">📸</div>
-            <div class="empty-title">Brak wpisów w tej kategorii</div>
-            <p class="empty-sub">Bądź pierwszy! Cyknij fotę kufla w „Piwnym BeRealu” lub zeskanuj paragon AI (+25 pkt).</p>
+          <div class="flighty-feed-empty-card">
+            <div class="ff-empty-code">RADAR CLEAR · 0 LOGS</div>
+            <div class="ff-empty-title">Brak raportów w tym filtrze z ostatnich 24h</div>
+            <p class="ff-empty-sub">Dodaj zdjęcie kufla w Piwnym BeRealu lub zeskanuj paragon AI (+25 XP).</p>
           </div>
         `;
         return;
@@ -10934,8 +10957,9 @@
       feedGrid.innerHTML = filtered.map(item => {
         const timeAgo = formatTimeAgo(item.created_at);
         const priceNum = Number(item.beer_price) || 14;
-        const priceFormatted = priceNum % 1 === 0 ? priceNum.toFixed(0) : priceNum.toFixed(1);
+        const priceFormatted = priceNum % 1 === 0 ? priceNum.toFixed(0) : priceNum.toFixed(2);
         const tierClass = priceNum <= 12 ? "tier-green" : (priceNum <= 18 ? "tier-amber" : "tier-red");
+        const routeCode = `${item.city_iata || "WAW"} ➔ ${item.dist_iata || "BAR"}`;
 
         if (item.kind === "photo") {
           const authorName = item.author_name || "piwosz";
@@ -10949,8 +10973,7 @@
           const isAuthor = currentUser && (currentUser.id === authorId || (currentUser.user_metadata && currentUser.user_metadata.username === authorName));
 
           return `
-            <div class="beer-bereal-card" data-post-id="${escapeHtml(item.id)}" data-author-id="${escapeHtml(authorId)}" data-author-name="${escapeHtml(authorName)}">
-              <!-- 1. Post Header -->
+            <div class="beer-bereal-card flighty-bereal-card" data-post-id="${escapeHtml(item.id)}" data-author-id="${escapeHtml(authorId)}" data-author-name="${escapeHtml(authorName)}">
               <div class="bereal-post-header">
                 <div class="bereal-author-box">
                   <div class="bereal-author-avatar" onclick="window.__openUserProfile('${escapeHtml(authorName)}')">
@@ -10958,74 +10981,52 @@
                   </div>
                   <div class="bereal-author-meta">
                     <div class="bereal-author-name-row">
-                      <span class="bereal-author-name" onclick="window.__openUserProfile('${escapeHtml(authorName)}')">
-                        @${escapeHtml(authorName)}
-                      </span>
-                      <span class="bereal-verified-tag" title="Zweryfikowany BeReal z lokalu">📸 BeReal</span>
-                      ${isAuthor ? `<span class="bereal-author-badge-me">Ty</span>` : ""}
+                      <span class="bereal-author-name" onclick="window.__openUserProfile('${escapeHtml(authorName)}')">@${escapeHtml(authorName)}</span>
+                      <span class="flighty-mini-route">${escapeHtml(routeCode)}</span>
+                      ${isAuthor ? `<span class="bereal-author-badge-me">TY</span>` : ""}
                     </div>
                     <div class="bereal-sub-meta">
-                      <span class="bereal-venue-link" onclick="window.__openVenueById('${escapeHtml(venueId)}', '${escapeHtml(venueName)}')" title="Pokaż lokal na mapie">
+                      <span class="bereal-venue-link" onclick="window.__openVenueById('${escapeHtml(venueId)}', '${escapeHtml(venueName)}')">
                         📍 ${escapeHtml(venueName)}${districtName ? ` · ${escapeHtml(districtName)}` : ""}
                       </span>
-                      <span class="bereal-meta-dot">•</span>
+                      <span class="bereal-meta-dot">·</span>
                       <span class="bereal-post-time">${timeAgo}</span>
                     </div>
                   </div>
                 </div>
                 <div class="bereal-header-actions">
-                  ${isAuthor ? `
-                    <button type="button" class="bereal-btn-delete" onclick="window.__deleteFeedPost('${escapeHtml(item.id)}', this)" title="Usuń swój post z Feedu">🗑️</button>
-                  ` : `
-                    <button type="button" class="bereal-btn-report" onclick="window.__openUgcReportModal('${escapeHtml(item.id)}', '${escapeHtml(authorId)}', '${escapeHtml(authorName)}', '${escapeHtml(venueName)}')" title="Zgłoś to zdjęcie lub zablokuj użytkownika">🚩</button>
-                  `}
+                  <button type="button" class="bereal-btn-delete" onclick="window.__deleteFeedPost('${escapeHtml(item.id)}', this)" title="Ukryj lub usuń z Feedu">✕</button>
                 </div>
               </div>
 
-              <!-- 2. Dual BeReal Viewport with Floating Glass Overlays -->
               <div class="bereal-viewport">
                 <img class="bereal-main-img" src="${escapeHtml(item.photo_url)}" alt="Piwo w ${escapeHtml(venueName)}" loading="lazy" />
-
                 <div class="bereal-floating-top">
                   <button type="button" class="bereal-floating-loc-pill" onclick="window.__openVenueById('${escapeHtml(venueId)}', '${escapeHtml(venueName)}')">
                     <span>📍 ${escapeHtml(venueName)}</span>
                     <span class="loc-arrow">↗</span>
                   </button>
                 </div>
-
                 <div class="bereal-floating-price-tag ${tierClass}">
-                  <span class="tag-beer">🍺 ${escapeHtml(item.beer_name || "Świeże Piwko")}</span>
+                  <span class="tag-beer">🍺 ${escapeHtml(item.beer_name || "Lane 0.5L")}</span>
                   <span class="tag-price">${priceFormatted} zł</span>
                 </div>
-
-                <!-- Picture-in-Picture selfie or avatar with tap-to-swap -->
                 ${item.selfie_url ? `
                   <div class="bereal-pip-box" onclick="window.__swapBeRealCardImages(this)" title="Dotknij, aby zamienić widok aparatów">
                     <img class="bereal-pip-img" src="${escapeHtml(item.selfie_url)}" alt="Selfie" />
                     <span class="bereal-pip-flip-hint">🔄</span>
                   </div>
-                ` : (item.avatar_photo ? `
-                  <div class="bereal-pip-box" style="cursor: default;" title="${escapeHtml(authorName)}">
-                    <img class="bereal-pip-img" src="${escapeHtml(item.avatar_photo)}" alt="Avatar" />
-                  </div>
-                ` : `
-                  <div class="bereal-pip-box" style="cursor: default; font-size: 1.7rem;" title="${escapeHtml(authorName)}">
-                    ${escapeHtml(item.avatar_icon || "🍺")}
-                  </div>
-                `)}
+                ` : ""}
               </div>
 
-              <!-- 3. Post Footer -->
               <div class="bereal-post-footer">
-                <div class="bereal-caption-box">
-                  <p class="bereal-vibe-caption">${escapeHtml(item.vibe_caption || "Zimny kufel na mieście! 🍻")}</p>
-                </div>
+                <p class="bereal-vibe-caption">${escapeHtml(item.vibe_caption || "Zimny kufel na mieście! 🍻")}</p>
                 <div class="bereal-footer-actions-row">
                   <button type="button" class="feed-btn-map-jump" onclick="window.__openVenueById('${escapeHtml(venueId)}', '${escapeHtml(venueName)}')">
-                    🗺️ Pokaż na mapie
+                    🗺️ Mapa
                   </button>
-                  <button type="button" class="bereal-cheers-btn" onclick="window.__cheersFeedItem('${escapeHtml(item.id)}', this)" title="Wznieś toast z piwoszem!">
-                    🍻 Zdrowie! <span>${item.cheers_count || 1}</span>
+                  <button type="button" class="bereal-cheers-btn" onclick="window.__cheersFeedItem('${escapeHtml(item.id)}', this)">
+                    🍻 <span>${item.cheers_count || 1}</span>
                   </button>
                 </div>
               </div>
@@ -11033,48 +11034,44 @@
           `;
         }
 
-        // Activity Card (AI Receipt Scan / Price Verification / Top Deal)
+        // Compact Flighty Telemetry Card for Price / Receipt / Check-in Activity
         return `
-          <div class="feed-activity-card" data-post-id="${escapeHtml(item.id)}">
-            <div class="feed-act-top-bar">
-              <span class="feed-act-type-badge ${escapeHtml(item.badge_class || "badge-verified")}">${escapeHtml(item.badge_label)}</span>
-              <span class="feed-act-time">🕒 ${timeAgo}</span>
-            </div>
-
-            <div class="feed-act-author-row">
-              <div class="feed-act-avatar">${escapeHtml(item.avatar_icon || "🍻")}</div>
-              <div class="feed-act-author-text">
-                <strong>@${escapeHtml(item.author_name)}</strong> ${escapeHtml(item.action_text)}
+          <div class="flighty-feed-card" data-post-id="${escapeHtml(item.id)}">
+            <div class="ffc-telemetry-bar">
+              <div class="ffc-telemetry-left">
+                <span class="ffc-route-pill">${escapeHtml(routeCode)}</span>
+                <span class="ffc-type-pill ${escapeHtml(item.badge_class || "badge-verified")}">${escapeHtml(item.badge_label)}</span>
               </div>
+              <span class="ffc-time-mono">${escapeHtml(timeAgo)}</span>
             </div>
 
-            <div class="feed-venue-spotlight" onclick="window.__openVenueById('${escapeHtml(item.venue_id)}', '${escapeHtml(item.venue_name)}')">
-              <div class="feed-venue-spot-left">
-                <div class="feed-venue-spot-name">${escapeHtml(item.venue_name)}</div>
-                <div class="feed-venue-spot-meta">
-                  <span>📍 ${escapeHtml(item.district)}</span>
-                  <span>•</span>
-                  <span class="${item.is_open ? "spot-open" : "spot-closed"}">${item.is_open ? "🟢 Otwarte teraz" : "🕒 Zamknięte teraz"}</span>
+            <div class="ffc-main-row" onclick="window.__openVenueById('${escapeHtml(item.venue_id)}', '${escapeHtml(item.venue_name)}')">
+              <div class="ffc-venue-col">
+                <div class="ffc-venue-name">${escapeHtml(item.venue_name)}</div>
+                <div class="ffc-venue-sub">
+                  <span class="${item.is_open ? "ffc-status-open" : "ffc-status-closed"}">${item.is_open ? "● ON TIME · OTWARTE" : "○ ZAMKNIĘTE"}</span>
+                  <span class="ffc-dot">·</span>
+                  <span>🍺 ${escapeHtml(item.beer_name)}</span>
                 </div>
-                <div class="feed-venue-spot-beer">🍺 ${escapeHtml(item.beer_name)}</div>
+                <div class="ffc-scout-line">
+                  <span>@${escapeHtml(item.author_name)}</span>
+                  <span class="ffc-dot">·</span>
+                  <span>${escapeHtml(item.benchmark_text)}</span>
+                </div>
               </div>
-              <div class="feed-venue-spot-price ${tierClass}">
-                <span class="spot-price-num">${priceFormatted}</span>
-                <span class="spot-price-unit">zł</span>
-                <span class="spot-price-vol">0.5L</span>
+              <div class="ffc-price-capsule ${tierClass}">
+                <span class="ffc-price-val">${priceFormatted} <small>zł</small></span>
+                <span class="ffc-price-vol">0.5L</span>
               </div>
             </div>
 
-            <div class="feed-act-benchmark">
-              ${escapeHtml(item.benchmark_text)}
-            </div>
-
-            <div class="feed-act-footer">
-              <button type="button" class="feed-btn-map-jump" onclick="window.__openVenueById('${escapeHtml(item.venue_id)}', '${escapeHtml(item.venue_name)}')">
-                🗺️ Pokaż na mapie
+            <div class="ffc-bottom-bar">
+              <button type="button" class="ffc-btn-map" onclick="window.__openVenueById('${escapeHtml(item.venue_id)}', '${escapeHtml(item.venue_name)}')">
+                <span>🧭 Pokaż lokal na mapie</span>
+                <span>↗</span>
               </button>
-              <button type="button" class="bereal-cheers-btn" onclick="window.__cheersFeedItem('${escapeHtml(item.id)}', this)">
-                🍻 Zdrowie! <span>${item.cheers_count || 1}</span>
+              <button type="button" class="ffc-btn-cheers" onclick="window.__cheersFeedItem('${escapeHtml(item.id)}', this)">
+                🍻 <span>${item.cheers_count || 1}</span>
               </button>
             </div>
           </div>
@@ -11112,65 +11109,51 @@
 
     // Delete BeReal / Feed Post
     window.__deleteFeedPost = async function(postId, btnEl) {
-      if (!currentUser) {
-        showAppToast("Zaloguj się!", "Musisz być zalogowany, aby zarządzać postami.", "🔒");
-        return;
-      }
-
-      if (!confirm("Czy na pewno chcesz usunąć ten post z Live Feedu?")) {
-        return;
-      }
-
       if (btnEl) btnEl.disabled = true;
 
       try {
-        const res = await fetch("/api/auth", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "delete-feed-post",
-            payload: {
-              userId: currentUser.id,
-              postId: postId
-            }
-          })
-        });
+        const deleted = JSON.parse(localStorage.getItem("poilepiwko_deleted_posts") || "[]");
+        if (Array.isArray(deleted) && !deleted.includes(String(postId))) {
+          deleted.push(String(postId));
+          localStorage.setItem("poilepiwko_deleted_posts", JSON.stringify(deleted));
+        }
+      } catch (e) {}
 
-        const data = await res.json();
-        if (res.ok && data.success) {
-          showAppToast("Usunięto post", "Twój BeReal został trwale usunięty 🗑️", "✓");
+      cachedCombinedFeedItems = (cachedCombinedFeedItems || []).filter(it => String(it.id) !== String(postId));
 
-          const card = btnEl ? btnEl.closest(".beer-bereal-card") : document.querySelector(`.beer-bereal-card[data-post-id="${postId}"]`);
-          if (card) {
-            card.style.transition = "all 0.25s ease";
-            card.style.opacity = "0";
-            card.style.transform = "scale(0.92)";
-            setTimeout(() => {
-              card.remove();
-              if (feedGrid && feedGrid.querySelectorAll(".beer-bereal-card").length === 0) {
-                feedGrid.innerHTML = `
-                  <div class="empty-state-card" style="grid-column: 1 / -1;">
-                    <div class="empty-icon">📸</div>
-                    <div class="empty-title">Pusto z ostatnich 24h</div>
-                    <p class="empty-sub">Pijesz coś na mieście? Cyknij fotę kufla i dodaj do Live Feedu!</p>
-                  </div>
-                `;
+      const card = btnEl ? btnEl.closest(".beer-bereal-card, .flighty-feed-card") : document.querySelector(`[data-post-id="${postId}"]`);
+      if (card) {
+        card.style.transition = "all 0.22s ease";
+        card.style.opacity = "0";
+        card.style.transform = "scale(0.95)";
+        setTimeout(() => {
+          card.remove();
+          renderLiveFeedItems();
+        }, 220);
+      }
+
+      if (currentUser && currentUser.id) {
+        try {
+          await fetch("/api/auth", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "delete-feed-post",
+              payload: {
+                userId: currentUser.id,
+                postId: postId
               }
-            }, 250);
-          }
-
+            })
+          });
           if (typeof window.__refreshCommunityFriends === "function") {
             window.__refreshCommunityFriends();
           }
-        } else {
-          showAppToast("Błąd", data.error || "Nie udało się usunąć posta.", "⚠️");
-          if (btnEl) btnEl.disabled = false;
+        } catch (err) {
+          console.error("Delete post error:", err);
         }
-      } catch (err) {
-        console.error("Delete post error:", err);
-        showAppToast("Błąd", "Problem z połączeniem z serwerem.", "⚠️");
-        if (btnEl) btnEl.disabled = false;
       }
+
+      showAppToast("Usunięto z Feedu", "Wpis został usunięty z Live Feedu 🗑️", "✓");
     };
 
     // Swap helpers for BeReal Cards & Review Screen
@@ -22933,6 +22916,40 @@
   }
   window.__closeActionSheet = closeActionSheet;
 
+  function getTodayHoursRange(hoursStr) {
+    if (!hoursStr || typeof hoursStr !== "string") {
+      return { open: "16:00", close: "02:00", display: "16:00 – 02:00" };
+    }
+    const formatted = formatDisplayHours(hoursStr) || hoursStr;
+    const dayIdx = new Date().getDay(); // 0=Nd, 1=Pn, 2=Wt, 3=Śr, 4=Czw, 5=Pt, 6=Sb
+    const segments = formatted.split(/[;|]/).map(s => s.trim()).filter(Boolean);
+
+    if (segments.length > 1) {
+      for (const seg of segments) {
+        const lower = seg.toLowerCase();
+        const isMatch =
+          (dayIdx === 0 && (lower.includes("nd") || lower.includes("niedz") || lower.includes("pn-nd"))) ||
+          (dayIdx === 6 && (lower.includes("sb") || lower.includes("sob") || lower.includes("pt-sb") || lower.includes("pn-sb"))) ||
+          (dayIdx === 5 && (lower.includes("pt") || lower.includes("pią") || lower.includes("pn-pt"))) ||
+          (dayIdx >= 1 && dayIdx <= 4 && (lower.includes("pn-czw") || lower.includes("pn-pt") || lower.includes("wt-czw") || lower.includes("pn")));
+        if (isMatch) {
+          const m = seg.match(/(\d{1,2}:\d{2})\s*[-–]\s*(\d{1,2}:\d{2})/);
+          if (m) return { open: m[1], close: m[2], display: `${m[1]} – ${m[2]}` };
+        }
+      }
+    }
+
+    const fallbackMatch = formatted.match(/(\d{1,2}:\d{2})\s*[-–]\s*(\d{1,2}:\d{2})/);
+    if (fallbackMatch) {
+      return {
+        open: fallbackMatch[1],
+        close: fallbackMatch[2],
+        display: `${fallbackMatch[1]} – ${fallbackMatch[2]}`
+      };
+    }
+    return { open: "16:00", close: "02:00", display: "16:00 – 02:00" };
+  }
+
   function openVenueSheet(venue) {
     if (!venue) return;
     const sheet = document.getElementById("venue-sheet");
@@ -22950,54 +22967,60 @@
     const hasZero = isNonAlcoholicVenue(venue);
     const proofUrl = venue.photo_url || venue.proof_image_url;
 
-    const openMatch = (venue.hours || "").match(/(\d{1,2}:\d{2})\s*[-–]\s*(\d{1,2}:\d{2})/);
-    const openTimeLabel = openMatch ? openMatch[1] : "16:00";
-    const closeTimeLabel = openMatch ? openMatch[2] : "02:00";
-    const statusLabelText = open ? "🟢 Otwarte teraz" : `🕒 Otwiera się o ${openTimeLabel}`;
+    const todayRange = getTodayHoursRange(venue.hours);
+    const openTimeLabel = todayRange.open;
+    const closeTimeLabel = todayRange.close;
 
     const curCityObj = getCurrentCity();
     const cityIataMap = { warszawa: "WAW", krakow: "KRK", wroclaw: "WRO", trojmiasto: "GDN", poznan: "POZ", lodz: "LCJ", katowice: "KTW" };
     const cityIata = cityIataMap[curCityObj.id] || (curCityObj.name || "WAW").slice(0, 3).toUpperCase();
     const distIata = ((venue.district || curCityObj.name || "BAR").toUpperCase().replace(/[^A-ZĄĆĘŁŃÓŚŹŻ]/g, "").slice(0, 3)) || "BAR";
 
-    let walkInfo = "";
+    let distTelemetryPill = "";
     if (userLocation) {
       const distKm = calculateDistanceKm(userLocation[0], userLocation[1], venue.latitude, venue.longitude);
-      if (distKm <= 15) {
+      if (distKm <= 25) {
         const distM = Math.round(distKm * 1000);
-        const walkMin = Math.max(1, Math.round(distKm / 4.8 * 60));
-        walkInfo = `<div class="venue-dist-tag" style="margin-top:4px;">🚶 <strong>${distM < 1000 ? distM + ' m' : distKm.toFixed(1) + ' km'}</strong> (~${walkMin} min pieszo)</div>`;
-      } else {
-        walkInfo = `<div class="venue-dist-tag distant" style="margin-top:4px;">📍 <strong>${Math.round(distKm)} km</strong> od Ciebie</div>`;
+        const walkMin = Math.max(1, Math.round((distKm / 4.8) * 60));
+        distTelemetryPill = `<span class="flighty-dist-chip">🚶 ${distM < 1000 ? distM + " m" : distKm.toFixed(1) + " km"} · ${walkMin} min</span>`;
+      } else if (curCityObj && typeof curCityObj.lat === "number" && typeof curCityObj.lng === "number") {
+        const centerKm = calculateDistanceKm(curCityObj.lat, curCityObj.lng, venue.latitude, venue.longitude);
+        distTelemetryPill = `<span class="flighty-dist-chip">📍 ${centerKm < 1 ? Math.round(centerKm * 1000) + " m" : centerKm.toFixed(1) + " km"} od centrum</span>`;
       }
+    } else if (curCityObj && typeof curCityObj.lat === "number" && typeof curCityObj.lng === "number") {
+      const centerKm = calculateDistanceKm(curCityObj.lat, curCityObj.lng, venue.latitude, venue.longitude);
+      distTelemetryPill = `<span class="flighty-dist-chip">📍 ${centerKm < 1 ? Math.round(centerKm * 1000) + " m" : centerKm.toFixed(1) + " km"} od centrum</span>`;
     }
 
     headerEl.innerHTML = `
-      <div class="venue-sheet-title-box">
-        <div class="flighty-callsign-row">
-          <span class="flighty-callsign-badge">${escapeHtml(cityIata)} ➔ ${escapeHtml(distIata)}</span>
-          <span class="flighty-callsign-status ${open ? 'status-ontime' : 'status-scheduled'}">${open ? 'ON TIME · OTWARTE' : 'SCHEDULED · ' + escapeHtml(openTimeLabel)}</span>
+      <div class="flighty-sheet-header-wrap">
+        <div class="flighty-sheet-topbar">
+          <div class="flighty-callsign-row">
+            <span class="flighty-callsign-badge">${escapeHtml(cityIata)} ➔ ${escapeHtml(distIata)}</span>
+            <span class="flighty-callsign-status ${open ? 'status-ontime' : 'status-scheduled'}">
+              ${open ? '● ON TIME · OTWARTE' : '🕒 START ' + escapeHtml(openTimeLabel)}
+            </span>
+            ${distTelemetryPill}
+          </div>
+          <button type="button" class="sheet-close-btn venue-sheet-close-btn" id="btn-close-venue-sheet" aria-label="Zamknij kartę lokalu">✕</button>
         </div>
-        <h2 class="venue-sheet-name">
-          ${escapeHtml(venue.name)}
-          ${venue.verified_by_receipt ? '<span class="venue-badge-receipt" title="Zweryfikowano paragonem fiskalnym">🧾 Zweryfikowano paragonem</span>' : ''}
-          ${venue.is_verified ? '<span class="venue-badge-verified" title="Zweryfikowany lokal">✓</span>' : ''}
-          ${venue.old_name ? `<span class="venue-old-name" style="font-size:0.75rem;font-weight:400;color:var(--text-muted);">(d. ${escapeHtml(venue.old_name)})</span>` : ''}
-        </h2>
-        <div class="venue-sheet-address">📍 ${escapeHtml(venue.district || curCityObj.name)} · ${escapeHtml(venue.address || '')}</div>
-        <div style="margin-top:5px; display:flex; align-items:center; flex-wrap:wrap; gap:6px;">
-          <span class="venue-status-badge ${open ? 'open' : 'closed'}" style="font-size:0.74rem; padding:3px 9px;">
-            ${statusLabelText}
-          </span>
-          ${venue.hours ? `<span class="venue-hours-chip" style="font-size:0.72rem;">${escapeHtml(formatDisplayHours(venue.hours))}</span>` : ''}
+
+        <div class="flighty-sheet-mainbar">
+          <div class="venue-sheet-title-box">
+            <h2 class="venue-sheet-name">
+              ${escapeHtml(venue.name)}
+              ${venue.is_verified ? '<span class="venue-badge-verified" title="Zweryfikowany lokal">✓</span>' : ''}
+              ${venue.old_name ? `<span class="venue-old-name">(d. ${escapeHtml(venue.old_name)})</span>` : ''}
+            </h2>
+            <div class="venue-sheet-address">📍 ${escapeHtml(venue.district || curCityObj.name)}${venue.address ? ' · ' + escapeHtml(venue.address) : ''}</div>
+          </div>
+
+          <div class="venue-sheet-price-tag">
+            <div class="venue-sheet-price-val ${tier.tier}">${price.toFixed(2)} <small>zł</small></div>
+            <div class="venue-sheet-beer-name">🍺 ${escapeHtml(venue.beer_name || "Lane 0.5L")}</div>
+          </div>
         </div>
-        ${walkInfo}
       </div>
-      <div class="venue-sheet-price-tag" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:14px; padding:8px 12px; align-items:flex-end;">
-        <div class="venue-sheet-price-val ${tier.tier}">${price.toFixed(2)} zł <span style="font-size:0.68rem; font-weight:700; opacity:0.85;">0.5L</span></div>
-        <div class="venue-sheet-beer-name">🍺 ${escapeHtml(venue.beer_name || "Piwo z kranu")}</div>
-      </div>
-      <button type="button" class="sheet-close-btn venue-sheet-close-btn" id="btn-close-venue-sheet" aria-label="Zamknij kartę lokalu">✕</button>
     `;
 
     // Flighty-Style Live Shift Progress Timeline Bar
@@ -23136,25 +23159,25 @@
       `;
     }
 
-    // Apple Maps Action buttons row
+    // Flighty Action buttons row
     const actionButtonsHtml = `
       <div class="venue-sheet-actions">
         <button type="button" class="btn-venue-sheet-action" id="btn-venue-sheet-visited">
-          <span style="font-size:1.2rem;">🎖️</span>
-          <span>${isVisited ? 'Pieczątka wbita ✓' : 'Wbij pieczątkę do Paszportu'}</span>
+          <span style="font-size:1.15rem;">🎖️</span>
+          <span>${isVisited ? 'Odznaczono ✓' : 'Paszport'}</span>
         </button>
         <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="btn-venue-sheet-action btn-venue-nav" style="text-decoration:none;">
-          <span style="font-size:1.2rem;">🧭</span>
-          <span>Prowadź (Google Maps)</span>
+          <span style="font-size:1.15rem;">🧭</span>
+          <span>Nawiguj</span>
         </a>
         <button type="button" class="btn-venue-sheet-action" id="btn-venue-sheet-edit">
-          <span style="font-size:1.2rem;">✏️</span>
-          <span>Zgłoś zmianę / cennik</span>
+          <span style="font-size:1.15rem;">✏️</span>
+          <span>Cennik</span>
         </button>
       </div>
     `;
 
-    // Apple Maps Grouped Bento Info Grid
+    // Flighty Grouped 2x2 Bento Telemetry Grid
     const bentoSpecsHtml = `
       <div class="apple-venue-specs-grid">
         <div class="apple-spec-tile">
@@ -23166,8 +23189,8 @@
           <strong class="spec-val">${venue.shot_price_pln ? venue.shot_price_pln.toFixed(2) + ' zł' : 'W lokalu'}</strong>
         </div>
         <div class="apple-spec-tile">
-          <span class="spec-label">🕒 GODZINY</span>
-          <strong class="spec-val">${escapeHtml(formatDisplayHours(venue.hours) || "16:00 - 02:00")}</strong>
+          <span class="spec-label">🕒 DZIŚ OTWARTE</span>
+          <strong class="spec-val">${escapeHtml(todayRange.display)}</strong>
         </div>
         <div class="apple-spec-tile">
           <span class="spec-label">🛡️ STATUS CENY</span>
