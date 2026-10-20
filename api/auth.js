@@ -582,36 +582,48 @@ module.exports = async (req, res) => {
         }
 
         const activeFriends = [];
-        if (followingIds.length > 0) {
-          const allRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?per_page=100`, { headers });
-          if (allRes.ok) {
-            const data = await allRes.json();
-            const allUsers = data.users || [];
-            const now = Date.now();
-            const cutoff24h = 24 * 60 * 60 * 1000;
+        const allRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?per_page=100`, { headers });
+        if (allRes.ok) {
+          const data = await allRes.json();
+          const allUsers = data.users || [];
+          const now = Date.now();
+          const cutoff24h = 24 * 60 * 60 * 1000;
+          const legacyPurgeTimestamp = new Date("2026-10-20T19:30:00Z").getTime();
 
-            for (const u of allUsers) {
-              if (!followingIds.includes(u.id)) continue;
-              const meta = u.user_metadata || {};
-              const checkin = meta.last_checkin;
-              if (checkin && !checkin.ghost_mode && (now - (checkin.timestamp || 0) <= cutoff24h)) {
-                activeFriends.push({
-                  user_id: u.id,
-                  username: meta.username || u.email?.split("@")[0] || "piwosz",
-                  display_name: meta.display_name || meta.full_name || meta.username || "Piwosz",
-                  avatar_icon: meta.avatar_icon || "🍺",
-                  avatar_photo: meta.avatar_photo || null,
-                  venue_id: checkin.venue_id,
-                  venue_name: checkin.venue_name,
-                  district: checkin.district,
-                  latitude: checkin.latitude,
-                  longitude: checkin.longitude,
-                  beer_name: checkin.beer_name,
-                  beer_price: checkin.beer_price,
-                  photo_url: checkin.photo_url,
-                  timestamp: checkin.timestamp
-                });
-              }
+          for (const u of allUsers) {
+            const isMe = userId && u.id === userId;
+            const isFriend = followingIds.includes(u.id);
+            const meta = u.user_metadata || {};
+            const checkin = meta.last_checkin;
+            const ts = checkin ? Number(checkin.timestamp || 0) : 0;
+
+            // Check-in counts when user takes a BeReal in a bar within the last 24h
+            if (
+              checkin &&
+              !checkin.ghost_mode &&
+              checkin.photo_url &&
+              ts >= legacyPurgeTimestamp &&
+              (now - ts <= cutoff24h)
+            ) {
+              activeFriends.push({
+                user_id: u.id,
+                is_me: !!isMe,
+                is_friend: !!isFriend,
+                username: meta.username || u.email?.split("@")[0] || "piwosz",
+                display_name: meta.display_name || meta.full_name || meta.username || "Piwosz",
+                avatar_icon: meta.avatar_icon || "🍺",
+                avatar_photo: meta.avatar_photo || checkin.selfie_url || null,
+                venue_id: checkin.venue_id,
+                venue_name: checkin.venue_name,
+                district: checkin.district,
+                latitude: checkin.latitude,
+                longitude: checkin.longitude,
+                beer_name: checkin.beer_name,
+                beer_price: checkin.beer_price,
+                photo_url: checkin.photo_url,
+                selfie_url: checkin.selfie_url || null,
+                timestamp: ts
+              });
             }
           }
         }
@@ -701,9 +713,10 @@ module.exports = async (req, res) => {
             if (!visited.includes(venueId)) visited.push(venueId);
 
             const curKapsle = typeof meta.kapsle_points === "number" ? meta.kapsle_points : 0;
-            const earned = photoUrl ? 15 : 10;
+            const earned = photoUrl ? 25 : 15;
             const newKapsle = curKapsle + earned;
             const now = Date.now();
+            const legacyPurgeTimestamp = new Date("2026-10-20T19:30:00Z").getTime();
             const postId = "post_" + userId.slice(0, 8) + "_" + now;
 
             const checkinData = {
@@ -721,14 +734,9 @@ module.exports = async (req, res) => {
               ghost_mode: !!ghostMode
             };
 
-            let berealPosts = Array.isArray(meta.bereal_posts) ? [...meta.bereal_posts] : [];
-            // Preserve legacy single last_checkin if it was not in bereal_posts yet
-            if (berealPosts.length === 0 && meta.last_checkin && meta.last_checkin.photo_url) {
-              berealPosts.push({
-                ...meta.last_checkin,
-                id: meta.last_checkin.id || ("post_" + userId.slice(0, 8) + "_" + (meta.last_checkin.timestamp || (now - 1000)))
-              });
-            }
+            let berealPosts = Array.isArray(meta.bereal_posts)
+              ? meta.bereal_posts.filter(p => p && Number(p.timestamp || 0) >= legacyPurgeTimestamp && (now - Number(p.timestamp || 0) <= 24 * 60 * 60 * 1000))
+              : [];
 
             if (photoUrl) {
               berealPosts.unshift(checkinData);

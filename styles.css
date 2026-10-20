@@ -23040,5 +23040,439 @@ body.theme-light .telemetry-lbl {
   border-radius: 15px !important;
 }
 
+/* ==========================================================================
+   3.8 SPACIOUS FLIGHTY RANKING CARDS (FIX SQUISHED ROWS IN #ranked-list)
+   ========================================================================== */
+#ranked-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  padding: 10px 14px 36px 14px !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+.ranked-card,
+.flighty-ranked-row {
+  flex-shrink: 0 !important;
+  min-height: 76px !important;
+  height: auto !important;
+  padding: 14px 15px !important;
+  border-radius: 18px !important;
+  margin-bottom: 2px !important;
+  overflow: visible !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 13px !important;
+  background: #15151d !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+
+.flighty-ranked-row .flighty-rank-col {
+  flex-shrink: 0 !important;
+  min-width: 48px !important;
+  min-height: 48px !important;
+  padding: 6px 8px !important;
+  border-radius: 12px !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 3px !important;
+}
+
+.flighty-ranked-row .flighty-rank-num {
+  font-size: 0.82rem !important;
+  font-weight: 900 !important;
+  color: #ffffff !important;
+}
+
+.flighty-ranked-row .flighty-dist-iata {
+  font-size: 0.62rem !important;
+  font-weight: 800 !important;
+  color: #94a3b8 !important;
+}
+
+.flighty-ranked-row .ranked-info {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  gap: 4px !important;
+}
+
+.flighty-ranked-row .ranked-name {
+  font-size: 1.02rem !important;
+  font-weight: 800 !important;
+  line-height: 1.25 !important;
+  color: #ffffff !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  display: block !important;
+}
+
+.flighty-ranked-row .ranked-sub {
+  font-size: 0.78rem !important;
+  line-height: 1.3 !important;
+  color: rgba(235, 235, 245, 0.65) !important;
+  margin-top: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 5px !important;
+}
+
+.flighty-ranked-row .flighty-price-pill {
+  flex-shrink: 0 !important;
+  font-size: 0.98rem !important;
+  font-weight: 900 !important;
+  padding: 9px 13px !important;
+  border-radius: 12px !important;
+}
+
+.btn-venue-sheet-action.btn-venue-bereal-checkin {
+  background: rgba(48, 209, 88, 0.16) !important;
+  border-color: rgba(48, 209, 88, 0.42) !important;
+  color: #30D158 !important;
+}
+
+/* ==========================================================================
+   3.9 APPLE "FIND MY" (ZNAJDŹ) LIVE BAR RADAR IN LIVE FEED & MAIN MAP
+   ========================================================================== */
+.findmy-feed-radar-card {
+  background: #0e0e14;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 15px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.findmy-radar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 11px;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.findmy-radar-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #ffffff;
+}
+
+.findmy-green-beacon {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #30D158;
+  box-shadow: 0 0 8px #30D158;
+  animation: findMyBeaconPulse 2s infinite ease-in-out;
+}
+
+@keyframes findMyBeaconPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.25); opacity: 0.7; }
+}
+
+.findmy-radar-sub {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #86efac;
+  white-space: nowrap;
+}
+
+.findmy-map-viewport {
+  position: relative;
+  width: 100%;
+  height: 205px;
+  background: #09090d;
+}
+
+.findmy-people-strip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 10px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  background: #121219;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  scrollbar-width: none;
+}
+
+.findmy-people-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.findmy-person-chip {
+  -webkit-appearance: none;
+  appearance: none;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 10px 5px 6px;
+  border-radius: 999px;
+  background: #1a1a24;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  color: #ffffff;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.14s ease, border-color 0.14s ease;
+}
+
+.findmy-person-chip:active {
+  transform: scale(0.96);
+}
+
+.findmy-person-chip.checkin-cta {
+  background: rgba(48, 209, 88, 0.15);
+  border-color: rgba(48, 209, 88, 0.42);
+}
+
+.findmy-person-chip.is-me {
+  background: rgba(10, 132, 255, 0.16);
+  border-color: rgba(10, 132, 255, 0.45);
+}
+
+.fmp-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #262633;
+  border: 1.5px solid #30D158;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.fmp-avatar.plus {
+  background: #30D158;
+  color: #052e16;
+  border-color: #86efac;
+}
+
+.fmp-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.fmp-meta {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.fmp-meta strong {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+.fmp-meta span {
+  font-size: 0.58rem;
+  font-weight: 600;
+  color: rgba(235, 235, 245, 0.62);
+  max-width: 110px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Apple Find My Map Marker Pin (.findmy-pin-wrap) */
+.findmy-leaflet-icon {
+  background: transparent !important;
+  border: none !important;
+}
+
+.findmy-pin-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 110px;
+  pointer-events: auto;
+}
+
+.findmy-pulse-ring {
+  position: absolute;
+  top: -4px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid #30D158;
+  opacity: 0.55;
+  animation: findMyHalo 2.4s infinite ease-out;
+  pointer-events: none;
+}
+
+@keyframes findMyHalo {
+  0% { transform: scale(0.88); opacity: 0.75; }
+  100% { transform: scale(1.45); opacity: 0; }
+}
+
+.findmy-avatar-bubble {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #181822;
+  border: 2.5px solid #30D158;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.75), 0 0 0 2px rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  overflow: hidden;
+  z-index: 2;
+}
+
+.findmy-avatar-bubble img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.findmy-live-badge {
+  position: absolute;
+  bottom: -1px;
+  right: -1px;
+  font-size: 0.58rem;
+  background: #0c0c12;
+  border-radius: 50%;
+  padding: 1px;
+  line-height: 1;
+}
+
+.findmy-pin-nib {
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid #30D158;
+  margin-top: -1px;
+  z-index: 1;
+}
+
+.findmy-name-pill {
+  margin-top: 2px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(12, 12, 18, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.65);
+  font-size: 0.58rem;
+  color: #e2e8f0;
+  white-space: nowrap;
+  max-width: 118px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.findmy-name-pill strong {
+  color: #ffffff;
+  font-weight: 800;
+}
+
+/* Find My Popup Card */
+.findmy-popup-card {
+  min-width: 195px;
+  max-width: 230px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: #f8fafc;
+}
+
+.findmy-popup-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.findmy-popup-tag {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.56rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: rgba(48, 209, 88, 0.18);
+  color: #30D158;
+}
+
+.findmy-popup-time {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.58rem;
+  color: #94a3b8;
+}
+
+.findmy-popup-user {
+  font-size: 0.86rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.findmy-popup-venue {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #cbd5e1;
+}
+
+.findmy-popup-beer {
+  font-size: 0.72rem;
+  color: #86efac;
+}
+
+.findmy-popup-photo-wrap {
+  width: 100%;
+  height: 110px;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.findmy-popup-photo-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.findmy-popup-btn {
+  margin-top: 4px;
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(10, 132, 255, 0.4);
+  background: rgba(10, 132, 255, 0.18);
+  color: #60a5fa;
+  font-size: 0.7rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+
 
 

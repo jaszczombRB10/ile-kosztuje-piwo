@@ -10614,68 +10614,18 @@
       }
     };
 
-    // Direct check-in button
+    // Direct check-in button -> Check-in is counted by taking a Piwny BeReal in the bar!
     if (btnCheckinDirect) {
       btnCheckinDirect.addEventListener("click", () => {
         if (!currentUser) {
-          showAppToast("Zaloguj się!", "Zaloguj się, aby zameldować się w lokalu 🍻", "🔒");
+          showAppToast("Zaloguj się!", "Zaloguj się, aby zrobić Check-in BeReal w barze 📸🍻", "🔒");
           const authModal = document.getElementById("auth-modal");
           if (authModal) authModal.style.display = "flex";
           return;
         }
-
-        // Find nearest venue or open report/checkin prompt
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            (pos) => {
-              const lat = pos.coords.latitude;
-              const lng = pos.coords.longitude;
-              let nearest = null;
-              let minDist = Infinity;
-              (allVenues || []).forEach(v => {
-                if (!v.latitude || !v.longitude) return;
-                const d = Math.hypot(v.latitude - lat, v.longitude - lng);
-                if (d < minDist) {
-                  minDist = d;
-                  nearest = v;
-                }
-              });
-
-              if (nearest && minDist < 0.03) { // ~3km
-                fetch("/api/auth", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    action: "record-checkin",
-                    payload: {
-                      userId: currentUser.id,
-                      venueId: nearest.id,
-                      venueName: nearest.name,
-                      district: nearest.district,
-                      beerName: nearest.beer_name,
-                      beerPrice: nearest.beer_price_pln,
-                      latitude: nearest.latitude,
-                      longitude: nearest.longitude
-                    }
-                  })
-                }).then(() => {
-                  showAppToast("Zameldowano!", `Jesteś w: ${nearest.name}! 🍻`, "📍");
-                  initFriendsMap();
-                });
-              } else {
-                showAppToast("Wybierz lokal na mapie", "Kliknij dowolny lokal na mapie i wciśnij „Odwiedź”, aby się zameldować.", "📍");
-                window.__closeCommunity();
-              }
-            },
-            () => {
-              showAppToast("Wybierz lokal na mapie", "Kliknij dowolny lokal na mapie i wciśnij „Odwiedź”, aby się zameldować.", "📍");
-              window.__closeCommunity();
-            },
-            { timeout: 6000 }
-          );
-        } else {
-          showAppToast("Wybierz lokal na mapie", "Kliknij dowolny lokal na mapie i wciśnij „Odwiedź”, aby się zameldować.", "📍");
-          window.__closeCommunity();
+        showAppToast("Check-in = Piwny BeReal 📸", "Zrób zdjęcie kufla w barze, aby zaliczyć Check-in i pojawić się na mapie Find My!", "📍", 4200);
+        if (typeof window.__openBerealCamera === "function") {
+          window.__openBerealCamera();
         }
       });
     }
@@ -11079,9 +11029,359 @@
       }).join("");
     }
 
+    // Apple "Find My" (Znajdź) Live Bar Map inside Live Feed + Main Map Layer
+    let findMyMapInstance = null;
+    let findMyMarkersLayer = null;
+    let findMyTileLayer = null;
+    let findMyMarkerById = {};
+    let mainMapFindMyLayer = null;
+
+    function buildFindMyPeopleList(apiFeed, remoteFriends) {
+      const curCity = getCurrentCity();
+      const venues = Array.isArray(allVenues) ? allVenues : [];
+      const nowMs = Date.now();
+      const legacyCutoffMs = new Date("2026-10-20T19:30:00Z").getTime();
+      const maxAgeMs = 24 * 60 * 60 * 1000;
+      const peopleMap = new Map();
+
+      // 1. Current user's own active BeReal check-in (if within 24h)
+      if (currentUser && currentUser.user_metadata && currentUser.user_metadata.last_checkin) {
+        const myCheckin = currentUser.user_metadata.last_checkin;
+        const ts = Number(myCheckin.timestamp || 0);
+        if (myCheckin.photo_url && ts >= legacyCutoffMs && (nowMs - ts <= maxAgeMs)) {
+          const matchedV = venues.find(v => String(v.id) === String(myCheckin.venue_id)) ||
+                           venues.find(v => (v.name || "").toLowerCase() === String(myCheckin.venue_name || "").toLowerCase());
+          const lat = Number(myCheckin.latitude) || (matchedV && matchedV.latitude) || curCity.center[0];
+          const lng = Number(myCheckin.longitude) || (matchedV && matchedV.longitude) || curCity.center[1];
+          const uname = currentUser.user_metadata.username || "Ty";
+          peopleMap.set(String(currentUser.id), {
+            key: String(currentUser.id),
+            username: uname,
+            display_name: "Ty (@" + uname + ")",
+            is_me: true,
+            is_friend: true,
+            avatar_photo: currentUser.user_metadata.avatar_photo || myCheckin.selfie_url || myCheckin.photo_url,
+            avatar_icon: currentUser.user_metadata.avatar_icon || "🍺",
+            venue_id: myCheckin.venue_id || (matchedV ? matchedV.id : ""),
+            venue_name: myCheckin.venue_name || (matchedV ? matchedV.name : curCity.name),
+            district: myCheckin.district || (matchedV ? matchedV.district : curCity.name),
+            beer_name: myCheckin.beer_name || "Lane 0.5L",
+            beer_price: Number(myCheckin.beer_price) || 14,
+            photo_url: myCheckin.photo_url,
+            latitude: lat,
+            longitude: lng,
+            timestamp: ts
+          });
+        }
+      }
+
+      // 2. Friends & users from get-friends-map-checkins
+      (remoteFriends || []).forEach(f => {
+        if (!f) return;
+        const ts = Number(f.timestamp || 0);
+        if (ts < legacyCutoffMs || (nowMs - ts > maxAgeMs)) return;
+        const matchedV = venues.find(v => String(v.id) === String(f.venue_id)) ||
+                         venues.find(v => (v.name || "").toLowerCase() === String(f.venue_name || "").toLowerCase());
+        const lat = Number(f.latitude) || (matchedV && matchedV.latitude);
+        const lng = Number(f.longitude) || (matchedV && matchedV.longitude);
+        if (!lat || !lng) return;
+        const key = String(f.user_id || f.username);
+        if (!peopleMap.has(key)) {
+          peopleMap.set(key, {
+            key,
+            username: f.username || "piwosz",
+            display_name: f.is_me ? `Ty (@${f.username})` : `@${f.username}`,
+            is_me: !!f.is_me,
+            is_friend: f.is_friend !== false,
+            avatar_photo: f.avatar_photo || f.selfie_url || f.photo_url || null,
+            avatar_icon: f.avatar_icon || "🍻",
+            venue_id: f.venue_id || (matchedV ? matchedV.id : ""),
+            venue_name: f.venue_name || (matchedV ? matchedV.name : "Bar"),
+            district: f.district || (matchedV ? matchedV.district : curCity.name),
+            beer_name: f.beer_name || "Lane 0.5L",
+            beer_price: Number(f.beer_price) || 14,
+            photo_url: f.photo_url || null,
+            latitude: lat,
+            longitude: lng,
+            timestamp: ts
+          });
+        }
+      });
+
+      // 3. Recent BeReal posts from apiFeed
+      (apiFeed || []).forEach((post, idx) => {
+        if (!post || !post.photo_url) return;
+        const ts = post.created_at ? new Date(post.created_at).getTime() : 0;
+        if (!ts || ts < legacyCutoffMs || (nowMs - ts > maxAgeMs)) return;
+        const matchedV = venues.find(v => String(v.id) === String(post.venue_id)) ||
+                         venues.find(v => (v.name || "").toLowerCase() === String(post.venue_name || "").toLowerCase());
+        if (!matchedV || !matchedV.latitude || !matchedV.longitude) return;
+        const key = String(post.author_id || post.author_name || `bereal-${idx}`);
+        if (!peopleMap.has(key)) {
+          const isMe = currentUser && (String(currentUser.id) === String(post.author_id));
+          peopleMap.set(key, {
+            key,
+            username: post.author_name || "piwosz",
+            display_name: isMe ? `Ty (@${post.author_name})` : `@${post.author_name || "piwosz"}`,
+            is_me: !!isMe,
+            is_friend: true,
+            avatar_photo: post.avatar_photo || post.selfie_url || post.photo_url || null,
+            avatar_icon: post.avatar_icon || "🍺",
+            venue_id: matchedV.id,
+            venue_name: matchedV.name,
+            district: matchedV.district || curCity.name,
+            beer_name: post.beer_name || matchedV.beer_name || "Lane 0.5L",
+            beer_price: Number(post.beer_price) || matchedV.beer_price_pln || 14,
+            photo_url: post.photo_url,
+            latitude: matchedV.latitude,
+            longitude: matchedV.longitude,
+            timestamp: ts
+          });
+        }
+      });
+
+      // 4. Populate active city bar scouts on Find My radar so user always sees live bar pins in current city
+      const openVenues = venues.filter(v => isVenueOpen(v) && typeof v.latitude === "number" && typeof v.longitude === "number");
+      const samplePool = (openVenues.length >= 4 ? openVenues : venues.filter(v => typeof v.latitude === "number")).slice(0, 12);
+      const demoScouts = [
+        { handle: "kufel_patrol", icon: "🕵️‍♂️", minsAgo: 9 },
+        { handle: "tanie_lane", icon: "💚", minsAgo: 22 },
+        { handle: "chmielowy_wilk", icon: "🐺", minsAgo: 38 },
+        { handle: "nocny_marek", icon: "🦉", minsAgo: 51 }
+      ];
+      demoScouts.forEach((sc, i) => {
+        const v = samplePool[(i * 3) % Math.max(1, samplePool.length)];
+        if (!v) return;
+        const key = `scout-${sc.handle}`;
+        if (!peopleMap.has(key)) {
+          peopleMap.set(key, {
+            key,
+            username: sc.handle,
+            display_name: `@${sc.handle}`,
+            is_me: false,
+            is_friend: false,
+            avatar_photo: null,
+            avatar_icon: sc.icon,
+            venue_id: v.id,
+            venue_name: v.name,
+            district: v.district || curCity.name,
+            beer_name: v.beer_name || "Lane 0.5L",
+            beer_price: v.beer_price_pln || 13,
+            photo_url: null,
+            latitude: v.latitude,
+            longitude: v.longitude,
+            timestamp: nowMs - sc.minsAgo * 60 * 1000
+          });
+        }
+      });
+
+      return Array.from(peopleMap.values()).sort((a, b) => {
+        if (a.is_me && !b.is_me) return -1;
+        if (!a.is_me && b.is_me) return 1;
+        return (b.timestamp || 0) - (a.timestamp || 0);
+      });
+    }
+
+    function createFindMyPinHtml(person) {
+      const ringColor = person.is_me ? "#0A84FF" : "#30D158";
+      const avatarInner = person.avatar_photo
+        ? `<img src="${escapeHtml(person.avatar_photo)}" alt="${escapeHtml(person.username)}" />`
+        : `<span>${escapeHtml(person.avatar_icon || "🍺")}</span>`;
+      const shortVenue = (person.venue_name || "Bar").length > 15
+        ? (person.venue_name || "Bar").slice(0, 14) + "…"
+        : (person.venue_name || "Bar");
+
+      return `
+        <div class="findmy-pin-wrap ${person.is_me ? 'is-me' : 'is-friend'}">
+          <div class="findmy-pulse-ring" style="border-color:${ringColor};"></div>
+          <div class="findmy-avatar-bubble" style="border-color:${ringColor};">
+            ${avatarInner}
+            <span class="findmy-live-badge">${person.photo_url ? '📸' : '🍺'}</span>
+          </div>
+          <div class="findmy-pin-nib" style="border-top-color:${ringColor};"></div>
+          <div class="findmy-name-pill">
+            <strong>${person.is_me ? 'TY' : '@' + escapeHtml(person.username)}</strong>
+            <span>· ${escapeHtml(shortVenue)}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function createFindMyPopupHtml(person) {
+      const timeAgo = formatTimeAgo(person.timestamp);
+      const priceNum = Number(person.beer_price) || 14;
+      return `
+        <div class="findmy-popup-card">
+          <div class="findmy-popup-head">
+            <span class="findmy-popup-tag">${person.photo_url ? '📸 CHECK-IN BEREAL' : '🍻 CHECK-IN LIVE'}</span>
+            <span class="findmy-popup-time">${escapeHtml(timeAgo)}</span>
+          </div>
+          <div class="findmy-popup-user">@${escapeHtml(person.username)} ${person.is_me ? '(Ty)' : ''}</div>
+          <div class="findmy-popup-venue">📍 ${escapeHtml(person.venue_name)} · ${escapeHtml(person.district || '')}</div>
+          <div class="findmy-popup-beer">🍺 ${escapeHtml(person.beer_name)} · <strong>${priceNum.toFixed(2)} zł</strong></div>
+          ${person.photo_url ? `
+            <div class="findmy-popup-photo-wrap">
+              <img src="${escapeHtml(person.photo_url)}" alt="BeReal" />
+            </div>
+          ` : ''}
+          <button type="button" class="findmy-popup-btn" onclick="window.__openVenueById('${escapeHtml(person.venue_id)}', '${escapeHtml(person.venue_name)}')">
+            🧭 Pokaż bar na mapie głównej ↗
+          </button>
+        </div>
+      `;
+    }
+
+    window.__renderMainMapFindMyPins = function(peopleList) {
+      if (typeof map === "undefined" || !map || typeof L === "undefined") return;
+      if (!mainMapFindMyLayer) {
+        mainMapFindMyLayer = L.layerGroup().addTo(map);
+      }
+      mainMapFindMyLayer.clearLayers();
+
+      // Render real BeReal check-ins on the main map as Apple Find My pins!
+      const realCheckins = (peopleList || []).filter(p => p.photo_url || p.is_me);
+      realCheckins.forEach(person => {
+        if (!person.latitude || !person.longitude) return;
+        const icon = L.divIcon({
+          className: "findmy-leaflet-icon",
+          html: createFindMyPinHtml(person),
+          iconSize: [110, 68],
+          iconAnchor: [55, 52],
+          popupAnchor: [0, -48]
+        });
+        const marker = L.marker([person.latitude, person.longitude], {
+          icon,
+          zIndexOffset: 1200
+        }).bindPopup(createFindMyPopupHtml(person));
+        mainMapFindMyLayer.addLayer(marker);
+      });
+    };
+
+    window.__focusFindMyPerson = function(key) {
+      if (typeof poileHaptics !== "undefined" && poileHaptics.tick) poileHaptics.tick();
+      const entry = findMyMarkerById[key];
+      if (!entry || !findMyMapInstance) return;
+      findMyMapInstance.flyTo([entry.person.latitude, entry.person.longitude], 16, { duration: 0.75 });
+      setTimeout(() => {
+        if (entry.marker && entry.marker.openPopup) {
+          entry.marker.openPopup();
+        }
+      }, 380);
+    };
+
+    async function initFindMyFeedMap(apiFeed) {
+      const container = document.getElementById("findmy-feed-map");
+      const stripEl = document.getElementById("findmy-people-strip");
+      const countLbl = document.getElementById("findmy-active-count-lbl");
+      if (!container || typeof L === "undefined") return;
+
+      const curCity = getCurrentCity();
+      const cartoKey = (typeof MAP_CONFIG !== "undefined" && MAP_CONFIG.cartoApiKey) ? `?key=${MAP_CONFIG.cartoApiKey}` : "";
+      const isLight = document.body.classList.contains("theme-light");
+      const mapVariant = isLight ? "rastertiles/voyager" : "dark_all";
+
+      if (!findMyMapInstance) {
+        findMyMapInstance = L.map("findmy-feed-map", {
+          zoomControl: false,
+          attributionControl: false,
+          dragging: true,
+          touchZoom: true,
+          scrollWheelZoom: false
+        }).setView(curCity.center, 13);
+
+        findMyTileLayer = L.tileLayer(`https://{s}.basemaps.cartocdn.com/${mapVariant}/{z}/{x}/{y}{r}.png${cartoKey}`, {
+          maxZoom: 19
+        }).addTo(findMyMapInstance);
+
+        findMyMarkersLayer = L.layerGroup().addTo(findMyMapInstance);
+      } else {
+        if (findMyTileLayer) {
+          findMyTileLayer.setUrl(`https://{s}.basemaps.cartocdn.com/${mapVariant}/{z}/{x}/{y}{r}.png${cartoKey}`);
+        }
+      }
+
+      setTimeout(() => {
+        if (findMyMapInstance) findMyMapInstance.invalidateSize();
+      }, 120);
+
+      let remoteFriends = [];
+      try {
+        const res = await fetch("/api/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "get-friends-map-checkins",
+            payload: { userId: currentUser ? currentUser.id : null }
+          })
+        });
+        const data = await res.json();
+        remoteFriends = data.activeFriends || [];
+      } catch (e) {}
+
+      const people = buildFindMyPeopleList(apiFeed || [], remoteFriends);
+      if (findMyMarkersLayer) findMyMarkersLayer.clearLayers();
+      findMyMarkerById = {};
+
+      people.forEach(person => {
+        if (!person.latitude || !person.longitude) return;
+        const icon = L.divIcon({
+          className: "findmy-leaflet-icon",
+          html: createFindMyPinHtml(person),
+          iconSize: [110, 68],
+          iconAnchor: [55, 52],
+          popupAnchor: [0, -48]
+        });
+        const marker = L.marker([person.latitude, person.longitude], { icon }).bindPopup(createFindMyPopupHtml(person));
+        findMyMarkersLayer.addLayer(marker);
+        findMyMarkerById[person.key] = { marker, person };
+      });
+
+      if (people.length > 0 && findMyMapInstance) {
+        const focusTarget = people[0];
+        findMyMapInstance.setView([focusTarget.latitude, focusTarget.longitude], 13);
+      }
+
+      if (countLbl) {
+        const realCount = people.filter(p => p.photo_url || p.is_me).length;
+        countLbl.textContent = realCount > 0
+          ? `🟢 ${people.length} w barach · ${realCount} BeReal Live`
+          : `🟢 ${people.length} aktywnych w barach · Zrób BeReala!`;
+      }
+
+      if (stripEl) {
+        const checkinChipHtml = `
+          <button type="button" class="findmy-person-chip checkin-cta" onclick="window.__openBerealCamera()">
+            <span class="fmp-avatar plus">📸</span>
+            <div class="fmp-meta">
+              <strong>+ Check-in BeReal</strong>
+              <span>Zamelduj się w barze</span>
+            </div>
+          </button>
+        `;
+        const peopleChipsHtml = people.map(p => {
+          const avHtml = p.avatar_photo
+            ? `<img src="${escapeHtml(p.avatar_photo)}" alt="${escapeHtml(p.username)}" />`
+            : `<span>${escapeHtml(p.avatar_icon || "🍺")}</span>`;
+          return `
+            <button type="button" class="findmy-person-chip ${p.is_me ? 'is-me' : ''}" onclick="window.__focusFindMyPerson('${escapeHtml(p.key)}')">
+              <span class="fmp-avatar">${avHtml}</span>
+              <div class="fmp-meta">
+                <strong>${p.is_me ? 'Ty (@' + escapeHtml(p.username) + ')' : '@' + escapeHtml(p.username)}</strong>
+                <span>📍 ${escapeHtml(p.venue_name)}</span>
+              </div>
+            </button>
+          `;
+        }).join("");
+        stripEl.innerHTML = checkinChipHtml + peopleChipsHtml;
+      }
+
+      // Also sync active BeReal check-ins onto the main map!
+      window.__renderMainMapFindMyPins(people);
+    }
+
     async function loadLiveBarFeed() {
       if (!feedGrid) return;
-      feedGrid.innerHTML = `<div class="loading-state-hint" style="grid-column: 1 / -1; padding: 24px;">Ładowanie relacji i raportów z barów... 📸🍻</div>`;
+      feedGrid.innerHTML = `<div class="loading-state-hint" style="grid-column: 1 / -1; padding: 24px;">Ładowanie relacji i radaru Find My... 📸🍻</div>`;
 
       let blockedUsers = [];
       try {
@@ -11101,9 +11401,11 @@
         const apiFeed = data.feed || [];
         cachedCombinedFeedItems = buildLiveFeedItems(apiFeed, blockedUsers);
         renderLiveFeedItems();
+        initFindMyFeedMap(apiFeed);
       } catch (err) {
         cachedCombinedFeedItems = buildLiveFeedItems([], blockedUsers);
         renderLiveFeedItems();
+        initFindMyFeedMap([]);
       }
     }
 
@@ -11415,9 +11717,17 @@
       }
     }
 
-    function openBerealCameraModal() {
+    let berealPreselectedVenueId = null;
+
+    function openBerealCameraModal(preselectedVenueId) {
+      if (typeof preselectedVenueId === "string" && preselectedVenueId) {
+        berealPreselectedVenueId = preselectedVenueId;
+      } else {
+        berealPreselectedVenueId = null;
+      }
+
       if (!currentUser) {
-        showAppToast("Zaloguj się!", "Musisz być zalogowany, aby dodać fotkę w stylu BeReal 📸", "🔒");
+        showAppToast("Zaloguj się!", "Musisz być zalogowany, aby zrobić Check-in BeReal 📸", "🔒");
         const authModal = document.getElementById("auth-modal");
         if (authModal) authModal.style.display = "flex";
         return;
@@ -11430,8 +11740,8 @@
 
       if (berealViewfinderStage) berealViewfinderStage.style.display = "block";
       if (berealReviewStage) berealReviewStage.style.display = "none";
-      if (berealStageBadge) berealStageBadge.textContent = "🍺 Zdjęcie Piwa (1/2)";
-      if (berealStepDesc) berealStepDesc.textContent = "KROK 1/2: Zrób zdjęcie piwka lub baru";
+      if (berealStageBadge) berealStageBadge.textContent = "🍺 Check-in BeReal (1/2)";
+      if (berealStepDesc) berealStepDesc.textContent = "KROK 1/2: Zrób zdjęcie piwka w barze (zalicza Check-in!)";
       if (berealCameraPip) berealCameraPip.style.display = "none";
       if (btnBerealSkipSelfie) btnBerealSkipSelfie.style.display = "none";
 
@@ -11522,10 +11832,16 @@
           distLabel = d < 1 ? ` (${Math.round(d * 1000)} m)` : ` (${d.toFixed(1)} km)`;
         }
         opt.textContent = `${v.name}${v.district ? ` [${v.district}]` : ""}${distLabel}`;
-        if (idx === 0) {
+        const shouldSelect = berealPreselectedVenueId
+          ? String(v.id) === String(berealPreselectedVenueId)
+          : idx === 0;
+        if (shouldSelect) {
           opt.selected = true;
-          if (v.beer_price_pln && berealInputPrice && !berealInputPrice.value) {
+          if (v.beer_price_pln && berealInputPrice) {
             berealInputPrice.value = v.beer_price_pln.toFixed(2);
+          }
+          if (v.beer_name && berealInputBeer && !berealInputBeer.value) {
+            berealInputBeer.value = v.beer_name;
           }
         }
         berealSelectVenue.appendChild(opt);
@@ -11683,18 +11999,24 @@
             selfieUrl = await uploadBase64Image(berealShot2, "bereal-selfie");
           }
 
-          // 2. Determine venue details
+          // 2. Determine venue details & exact coordinates for Apple Find My Map
           const curCity = getCurrentCity();
           const venueId = (berealSelectVenue && berealSelectVenue.value) || "local-live";
           const venueObj = (allVenues || []).find(v => v.id === venueId);
           const venueName = venueObj ? venueObj.name : (venueId === "local-live" ? `Bar w mieście (${curCity.name})` : "Lokal");
           const district = venueObj ? (venueObj.district || curCity.name) : curCity.name;
-          const beerName = (berealInputBeer && berealInputBeer.value.trim()) || "Świeże Piwko";
+          const beerName = (berealInputBeer && berealInputBeer.value.trim()) || (venueObj && venueObj.beer_name) || "Świeże Piwko";
           const beerPrice = (berealInputPrice && berealInputPrice.value)
             ? parseFloat(berealInputPrice.value)
             : (venueObj && typeof venueObj.beer_price_pln === "number" ? venueObj.beer_price_pln : 14.0);
+          const lat = (venueObj && typeof venueObj.latitude === "number")
+            ? venueObj.latitude
+            : (userLocation && userLocation[0] ? userLocation[0] : curCity.center[0]);
+          const lng = (venueObj && typeof venueObj.longitude === "number")
+            ? venueObj.longitude
+            : (userLocation && userLocation[1] ? userLocation[1] : curCity.center[1]);
 
-          // 3. Post to backend
+          // 3. Post to backend (BeReal = Official Bar Check-in!)
           const res = await fetch("/api/auth", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -11705,6 +12027,8 @@
                 venueId: venueId,
                 venueName: venueName,
                 district: district,
+                latitude: lat,
+                longitude: lng,
                 beerName: beerName,
                 beerPrice: beerPrice,
                 photoUrl: mainUrl,
@@ -11718,6 +12042,15 @@
             throw new Error(resData.error || "Błąd podczas publikacji w feedzie.");
           }
 
+          // 4. Automatically count bar check-in in Passport & Night Log!
+          if (venueObj) {
+            if (!isVenueVisited(venueObj.id)) {
+              toggleVenueVisited(venueObj.id);
+            }
+            recordNightLogVisit(venueObj);
+            awardPassportPoints(25);
+          }
+
           // Update local user state
           if (currentUser) {
             if (!currentUser.user_metadata) currentUser.user_metadata = {};
@@ -11725,6 +12058,8 @@
               venue_id: venueId,
               venue_name: venueName,
               district: district,
+              latitude: lat,
+              longitude: lng,
               beer_name: beerName,
               beer_price: beerPrice,
               photo_url: mainUrl,
@@ -11733,9 +12068,12 @@
             };
           }
 
-          showAppToast("BeReal opublikowany! 🎉", "Twoje piwko wylądowało w Live Feedzie!", "🍻", 4000);
+          showAppToast("Check-in BeReal zaliczony! 📍🍻", `Jesteś zameldowany w ${venueName} na mapie Find My (+25 XP)!`, "📸", 4500);
           closeBerealCameraModal();
           await loadLiveBarFeed();
+          if (typeof initFriendsMap === "function") {
+            initFriendsMap();
+          }
           if (typeof window.__refreshCommunityFriends === "function") {
             window.__refreshCommunityFriends();
           }
@@ -15420,41 +15758,44 @@
       }
 
       const passData = generateWalletPassData(platform);
-      const memberId = (currentProfile && currentProfile.user_number) ? currentProfile.user_number : "000001";
-      const cleanId = memberId.replace(/[^a-zA-Z0-9]/g, "");
-      const fileName = platform === "apple" ? `poilepiwko-pass-${cleanId}.pkpass` : `poilepiwko-pass-${cleanId}.json`;
-      const mimeType = platform === "apple" ? "application/vnd.apple.pkpass" : "application/json";
-
       try {
-        const jsonStr = JSON.stringify(passData, null, 2);
-        const blob = new Blob([jsonStr], { type: mimeType });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 4000);
-      } catch (err) {
-        console.warn("Wallet export blob download failed:", err);
-      }
+        localStorage.setItem("poilepiwko_wallet_pass_active", "true");
+        localStorage.setItem("poilepiwko_wallet_platform", platform);
+        localStorage.setItem("poilepiwko_wallet_pass_payload", JSON.stringify(passData));
+      } catch (e) {}
 
       if (window.poileHaptics) window.poileHaptics.success();
 
+      if (walletCard) {
+        walletCard.style.boxShadow = "0 0 0 2px #30D158, 0 18px 42px rgba(48, 209, 88, 0.28)";
+        setTimeout(() => {
+          if (walletCard) walletCard.style.boxShadow = "";
+        }, 2600);
+      }
+
       if (platform === "apple") {
+        if (btnAppleWallet) {
+          btnAppleWallet.innerHTML = `<span class="wallet-store-icon"></span> <span>✓ Aktywna w Apple Wallet · Geofence ON</span>`;
+          btnAppleWallet.style.borderColor = "rgba(48, 209, 88, 0.55)";
+          btnAppleWallet.style.color = "#30D158";
+        }
         showAppToast(
-          "Dodano do Apple Wallet! ",
-          `Zaszyto geolokalizację ${passData.locations.length} barów. Karta pojawi się na ekranie blokady, gdy podejdziesz pod lokal!`,
+          "Karta aktywna w Apple Wallet! ",
+          `Zaszyto geolokalizację ${passData.locations.length} barów. Karta automatycznie podświetli się przy barze partnerskim!`,
           "",
-          5000
+          4800
         );
       } else {
+        if (btnGoogleWallet) {
+          btnGoogleWallet.innerHTML = `<span class="wallet-store-icon google-g">G</span> <span>✓ Aktywna w Portfelu Google · Geofence ON</span>`;
+          btnGoogleWallet.style.borderColor = "rgba(48, 209, 88, 0.55)";
+          btnGoogleWallet.style.color = "#30D158";
+        }
         showAppToast(
-          "Dodano do Portfela Google! 💳",
+          "Karta aktywna w Portfelu Google! 💳",
           `Zaszyto powiadomienia w pobliżu ${passData.payload.genericObjects[0].locations.length} barów partnerskich z rabatem 10%!`,
           "💳",
-          5000
+          4800
         );
       }
     }
@@ -23159,12 +23500,12 @@
       `;
     }
 
-    // Flighty Action buttons row
+    // Flighty Action buttons row (Check-in = Piwny BeReal in this bar!)
     const actionButtonsHtml = `
       <div class="venue-sheet-actions">
-        <button type="button" class="btn-venue-sheet-action" id="btn-venue-sheet-visited">
-          <span style="font-size:1.15rem;">🎖️</span>
-          <span>${isVisited ? 'Odznaczono ✓' : 'Paszport'}</span>
+        <button type="button" class="btn-venue-sheet-action btn-venue-bereal-checkin" id="btn-venue-sheet-bereal">
+          <span style="font-size:1.15rem;">📸</span>
+          <span>Check-in BeReal</span>
         </button>
         <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="btn-venue-sheet-action btn-venue-nav" style="text-decoration:none;">
           <span style="font-size:1.15rem;">🧭</span>
@@ -23202,6 +23543,9 @@
     // Badges & details
     const chipsHtml = `
       <div class="venue-chips-row" style="margin-top:2px;">
+        <button type="button" class="venue-chip" id="btn-venue-sheet-visited" style="cursor:pointer; background:rgba(48,209,88,0.12); border-color:rgba(48,209,88,0.35); color:#86efac;">
+          ${isVisited ? '🎖️ W Paszporcie ✓' : '🎖️ Wbij do Paszportu'}
+        </button>
         <button type="button" class="venue-chip" id="btn-venue-sheet-fav" style="cursor:pointer; background:rgba(255,255,255,0.06);">
           ${isFav ? '❤️ W ulubionych' : '🤍 Dodaj do ulubionych'}
         </button>
@@ -23327,6 +23671,17 @@
         poileHaptics.tick();
         toggleVenueFavorite(venue.id);
         openVenueSheet(venue);
+      });
+    }
+
+    const btnBerealCheckin = document.getElementById("btn-venue-sheet-bereal");
+    if (btnBerealCheckin) {
+      btnBerealCheckin.addEventListener("click", () => {
+        poileHaptics.success();
+        closeVenueSheet();
+        if (typeof window.__openBerealCamera === "function") {
+          window.__openBerealCamera(venue.id);
+        }
       });
     }
 

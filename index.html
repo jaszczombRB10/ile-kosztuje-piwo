@@ -60,7 +60,7 @@
   <link rel="stylesheet" href="vendor/leaflet/MarkerCluster.Default.css" />
   
   <!-- Custom Styles -->
-  <link rel="stylesheet" href="styles.css?v=144">
+  <link rel="stylesheet" href="styles.css?v=145">
 </head>
 <body>
 
@@ -2744,22 +2744,40 @@
         </div>
       </div>
 
-      <!-- Tab 3: Live Feed 2.0 (Flighty Telemetry Stream: BeReal + Paragony AI + Meldunki) -->
+      <!-- Tab 3: Live Feed 2.0 (Apple Find My Radar + Flighty Telemetry Stream: BeReal Check-in + Paragony AI) -->
       <div class="comm-tab-pane" id="pane-comm-feed" style="display:none;">
         <div class="flighty-feed-console">
           <div class="flighty-feed-console-top">
             <div class="flighty-feed-telemetry-id">
               <span class="feed-live-dot"></span>
-              <span class="flighty-feed-radar-code">RADAR BAROWY · LIVE 24H</span>
+              <span class="flighty-feed-radar-code">FIND MY · RADAR BAROWY 24H</span>
             </div>
             <span class="flighty-feed-city-tag" id="feed-city-stat-label">WAW · WARSZAWA</span>
           </div>
+
+          <!-- Apple Find My (Znajdź) Live Bar Map inside Live Feed -->
+          <div class="findmy-feed-radar-card" id="findmy-feed-map-box">
+            <div class="findmy-radar-header">
+              <div class="findmy-radar-title">
+                <span class="findmy-green-beacon"></span>
+                <span>ZNAJDŹ EKIPĘ W BARACH</span>
+              </div>
+              <span class="findmy-radar-sub" id="findmy-active-count-lbl">BeReal w barze = Check-in</span>
+            </div>
+            <div class="findmy-map-viewport">
+              <div id="findmy-feed-map" style="width: 100%; height: 205px;"></div>
+            </div>
+            <div class="findmy-people-strip" id="findmy-people-strip">
+              <!-- Active Find My BeReal check-in pills injected via JS -->
+            </div>
+          </div>
+
           <div class="flighty-feed-action-strip">
             <button type="button" class="flighty-feed-action-btn primary btn-bereal-camera-trigger" id="btn-open-bereal-camera">
               <span class="ff-btn-icon">📸</span>
               <div class="ff-btn-copy">
-                <span class="ff-btn-title">Piwny BeReal</span>
-                <span class="ff-btn-sub">Na żywo · +25 XP</span>
+                <span class="ff-btn-title">Check-in BeReal</span>
+                <span class="ff-btn-sub">Zamelduj się w barze · +25 XP</span>
               </div>
             </button>
             <button type="button" class="flighty-feed-action-btn secondary" id="btn-feed-scan-receipt">
@@ -2772,7 +2790,7 @@
           </div>
           <div class="live-feed-filter-pills" id="live-feed-filters" role="tablist" aria-label="Filtruj Live Feed">
             <button type="button" class="feed-filter-pill active" data-feed-filter="all">ALL</button>
-            <button type="button" class="feed-filter-pill" data-feed-filter="photos">📸 BEREAL</button>
+            <button type="button" class="feed-filter-pill" data-feed-filter="photos">📸 CHECK-IN BEREAL</button>
             <button type="button" class="feed-filter-pill" data-feed-filter="prices">🧾 PARAGONY</button>
             <button type="button" class="feed-filter-pill" data-feed-filter="deals">🟢 ≤12 ZŁ</button>
           </div>
@@ -3616,6 +3634,6 @@
   <script src="moderation.js"></script>
 
   <!-- Main Application Logic -->
-  <script src="app.js?v=144"></script>
+  <script src="app.js?v=145"></script>
 </body>
 </html>
