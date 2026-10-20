@@ -629,14 +629,22 @@ header {
   align-items: center;
   justify-content: center;
   color: #fff;
-  font-weight: 800;
-  font-size: 0.78rem;
-  letter-spacing: -0.01em;
+  font-weight: 900;
+  font-size: 0.88rem;
+  letter-spacing: -0.02em;
   border-radius: 999px;
-  border: 2px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.65), 0 0 12px currentColor;
-  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6), 0 0 10px currentColor;
+  transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
   cursor: pointer;
+  user-select: none;
+}
+
+.price-badge-marker small {
+  font-size: 0.65rem;
+  font-weight: 800;
+  margin-left: 1px;
+  opacity: 0.92;
 }
 
 .price-badge-marker:hover {
@@ -22064,11 +22072,23 @@ body.theme-light .apple-venue-benchmark-pill.benchmark-good strong {
 .flighty-price-pill {
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace !important;
   font-variant-numeric: tabular-nums !important;
-  font-size: 0.88rem !important;
+  font-size: 1.05rem !important;
   font-weight: 900 !important;
-  padding: 6px 10px !important;
-  border-radius: 10px !important;
+  padding: 8px 14px !important;
+  border-radius: 14px !important;
   white-space: nowrap !important;
+  letter-spacing: -0.01em !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
+}
+
+.flighty-price-pill small {
+  font-size: 0.72rem !important;
+  font-weight: 800 !important;
+  margin-left: 2px !important;
+  opacity: 0.88 !important;
 }
 
 .flighty-price-pill.tier-low {
@@ -23096,10 +23116,12 @@ body.theme-light .telemetry-lbl {
 
 .flighty-ranked-row .flighty-price-pill {
   flex-shrink: 0 !important;
-  font-size: 0.98rem !important;
+  font-size: 1.08rem !important;
   font-weight: 900 !important;
-  padding: 9px 13px !important;
-  border-radius: 12px !important;
+  padding: 10px 16px !important;
+  border-radius: 14px !important;
+  min-width: 82px !important;
+  text-align: center !important;
 }
 
 .btn-venue-sheet-action.btn-venue-bereal-checkin {
@@ -23166,7 +23188,7 @@ body.theme-light .telemetry-lbl {
 .findmy-map-viewport {
   position: relative;
   width: 100%;
-  height: 205px;
+  height: 240px;
   background: #09090d;
 }
 
@@ -23361,13 +23383,67 @@ body.theme-light .telemetry-lbl {
   font-weight: 800;
 }
 
+/* Custom Apple Find My Glassmorphic Popup Bubble */
+.findmy-apple-popup.leaflet-popup {
+  margin-bottom: 20px;
+}
+
+.findmy-apple-popup .leaflet-popup-content-wrapper {
+  background: rgba(14, 18, 28, 0.95) !important;
+  backdrop-filter: blur(24px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(190%) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+.findmy-apple-popup .leaflet-popup-content {
+  margin: 0 !important;
+  line-height: 1.35 !important;
+}
+
+.findmy-apple-popup .leaflet-popup-tip {
+  background: rgba(14, 18, 28, 0.95) !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+}
+
+.findmy-apple-popup a.leaflet-popup-close-button {
+  width: 22px !important;
+  height: 22px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #94a3b8 !important;
+  top: 8px !important;
+  right: 8px !important;
+  font-size: 14px !important;
+  line-height: 20px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: none !important;
+  padding: 0 !important;
+  transition: all 0.15s ease !important;
+  z-index: 10 !important;
+}
+
+.findmy-apple-popup a.leaflet-popup-close-button:hover {
+  background: rgba(255, 255, 255, 0.22) !important;
+  color: #ffffff !important;
+}
+
 /* Find My Popup Card */
 .findmy-popup-card {
-  min-width: 195px;
-  max-width: 230px;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  min-width: 205px;
+  max-width: 235px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   color: #f8fafc;
 }
 
@@ -23375,17 +23451,20 @@ body.theme-light .telemetry-lbl {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
+  gap: 8px;
+  padding-right: 20px; /* Leave room for close button */
 }
 
 .findmy-popup-tag {
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
-  font-size: 0.56rem;
+  font-size: 0.58rem;
   font-weight: 800;
-  padding: 2px 6px;
-  border-radius: 5px;
+  padding: 2.5px 7px;
+  border-radius: 6px;
   background: rgba(48, 209, 88, 0.18);
+  border: 1px solid rgba(48, 209, 88, 0.35);
   color: #30D158;
+  letter-spacing: 0.02em;
 }
 
 .findmy-popup-time {
@@ -23394,30 +23473,105 @@ body.theme-light .telemetry-lbl {
   color: #94a3b8;
 }
 
+.findmy-popup-user-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.findmy-popup-avatar-bubble {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #181822;
+  border: 1.5px solid #30D158;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.findmy-popup-avatar-bubble img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.findmy-popup-user-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
 .findmy-popup-user {
-  font-size: 0.86rem;
+  font-size: 0.88rem;
   font-weight: 800;
   color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.findmy-tag-me {
+  font-size: 0.6rem;
+  font-weight: 800;
+  background: #0A84FF;
+  color: #ffffff;
+  padding: 1px 5px;
+  border-radius: 4px;
 }
 
 .findmy-popup-venue {
-  font-size: 0.74rem;
-  font-weight: 700;
+  font-size: 0.73rem;
+  font-weight: 600;
   color: #cbd5e1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.findmy-popup-beer {
-  font-size: 0.72rem;
-  color: #86efac;
+.findmy-popup-beer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 4px 8px;
+}
+
+.findmy-popup-beer-name {
+  font-size: 0.73rem;
+  color: #cbd5e1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.findmy-popup-beer-pill {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.78rem;
+  font-weight: 900;
+  color: #30D158;
+  flex-shrink: 0;
 }
 
 .findmy-popup-photo-wrap {
   width: 100%;
-  height: 110px;
+  height: 94px;
   border-radius: 10px;
   overflow: hidden;
-  margin-top: 3px;
+  margin-top: 2px;
   border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
 }
 
 .findmy-popup-photo-wrap img {
@@ -23427,16 +23581,26 @@ body.theme-light .telemetry-lbl {
 }
 
 .findmy-popup-btn {
-  margin-top: 4px;
+  margin-top: 3px;
   width: 100%;
-  padding: 6px 10px;
-  border-radius: 8px;
-  border: 1px solid rgba(10, 132, 255, 0.4);
-  background: rgba(10, 132, 255, 0.18);
+  padding: 7px 10px;
+  border-radius: 9px;
+  border: 1px solid rgba(10, 132, 255, 0.45);
+  background: rgba(10, 132, 255, 0.2);
   color: #60a5fa;
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   font-weight: 800;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: all 0.14s ease;
+}
+
+.findmy-popup-btn:active {
+  transform: scale(0.97);
+  background: rgba(10, 132, 255, 0.35);
 }
 
 

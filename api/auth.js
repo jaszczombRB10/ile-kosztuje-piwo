@@ -458,28 +458,6 @@ module.exports = async (req, res) => {
         // Cutoff to purge old legacy test BeReals created before Oct 20, 2026 21:30 CEST
         const legacyPurgeTimestamp = new Date("2026-10-20T19:30:00Z").getTime();
 
-        // Fetch price reports with photo proofs from the last 24h only
-        const sinceIso = new Date(Math.max(now - cutoff24h, legacyPurgeTimestamp)).toISOString();
-        const reportsRes = await fetch(
-          `${SUPABASE_URL}/rest/v1/price_reports?proof_image_url=not.is.null&created_at=gte.${encodeURIComponent(sinceIso)}&order=created_at.desc&limit=20`,
-          { headers }
-        );
-        if (reportsRes.ok) {
-          const reports = await reportsRes.json();
-          if (Array.isArray(reports)) {
-            items = reports.map(r => ({
-              id: "rep_" + (r.id || Math.random().toString(36).slice(2, 8)),
-              venue_name: r.reported_beer_name ? `${r.reported_beer_name}` : "Lokal",
-              beer_price: r.reported_price_pln,
-              photo_url: r.proof_image_url,
-              user_name: "Piwosz",
-              user_avatar: "🍺",
-              created_at: r.created_at,
-              cheers_count: 3
-            }));
-          }
-        }
-
         // Fetch recent user check-in photos / BeReals (strictly within 24h and after legacy purge)
         const allRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?per_page=100`, { headers });
         if (allRes.ok) {

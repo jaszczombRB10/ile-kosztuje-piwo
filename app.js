@@ -1301,7 +1301,7 @@
     const formattedPrice = price.toFixed(price % 1 === 0 ? 0 : 1);
 
     if (!open) {
-      const size = [42, 34];
+      const size = [46, 36];
       return L.divIcon({
         className: "custom-price-div-icon",
         html: `<div class="price-badge-marker ${tier.class} marker-closed" style="width:${size[0]}px; height:${size[1]}px;" title="Zamknięte teraz · ${escapeHtml(formatDisplayHours(venue.hours) || '')}">
@@ -1324,7 +1324,7 @@
     const closingClass = (!activeHh && closingSoonInfo.closingSoon) ? "marker-closing-soon" : "";
     const closingBadge = closingSoonInfo.closingSoon ? `<span class="marker-closing-badge" title="Zamyka się o ${closingSoonInfo.closeTimeStr} (za ${closingSoonInfo.minutesLeft} min)!">⚠️ ${closingSoonInfo.minutesLeft}m</span>` : "";
 
-    const size = price <= 12.0 ? [44, 44] : [38, 38];
+    const size = price <= 12.0 ? [50, 44] : [46, 40];
     return L.divIcon({
       className: "custom-price-div-icon",
       html: `<div class="price-badge-marker ${tier.class} ${craftClass} ${hhClass} ${closingClass}" style="width:${size[0]}px; height:${size[1]}px;">
@@ -10718,25 +10718,6 @@
       }
     };
 
-    const btnFeedScanReceipt = document.getElementById("btn-feed-scan-receipt");
-    if (btnFeedScanReceipt && !btnFeedScanReceipt.__wired) {
-      btnFeedScanReceipt.__wired = true;
-      btnFeedScanReceipt.addEventListener("click", () => {
-        if (typeof poileHaptics !== "undefined" && poileHaptics.tick) poileHaptics.tick();
-        if (typeof window.__closeCommunity === "function") window.__closeCommunity();
-        const reportModal = document.getElementById("report-modal");
-        if (reportModal) {
-          reportModal.style.display = "flex";
-          const ocrBox = document.getElementById("ocr-fast-track-box");
-          if (ocrBox) {
-            ocrBox.scrollIntoView({ behavior: "smooth", block: "center" });
-            ocrBox.style.boxShadow = "0 0 0 2px #f59e0b, 0 12px 30px rgba(245, 158, 11, 0.3)";
-            setTimeout(() => { ocrBox.style.boxShadow = ""; }, 2200);
-          }
-        }
-      });
-    }
-
     const feedFilterContainer = document.getElementById("live-feed-filters");
     if (feedFilterContainer && !feedFilterContainer.__wired) {
       feedFilterContainer.__wired = true;
@@ -10873,67 +10854,6 @@
           }
         });
       } catch (e) {}
-
-      // 3. Curated Live City Activity Stream (Flighty Telemetry Log: AI Receipt Scans, Deals <= 12 zł, Verifications)
-      if (venues.length > 0) {
-        const openVenues = venues.filter(v => isVenueOpen(v, nowDate) && typeof v.beer_price_pln === "number");
-        const pool = openVenues.length >= 6 ? openVenues : venues.filter(v => typeof v.beer_price_pln === "number");
-        const sortedDeals = [...pool].sort((a, b) => a.beer_price_pln - b.beer_price_pln);
-        const craftPicks = pool.filter(v => v.is_craft);
-
-        const scoutProfiles = [
-          { handle: "kufel_patrol", icon: "🧾", action: "Skan paragonu AI", type: "receipt", badge: "PARAGON AI", cls: "badge-receipt", minsAgo: 8 },
-          { handle: "chmielowy_wilk", icon: "✓", action: "Weryfikacja przy barze", type: "verified", badge: "ZWERYFIKOWANO", cls: "badge-verified", minsAgo: 21 },
-          { handle: "tanie_lane", icon: "🟢", action: "Najtańszy kran w okolicy", type: "deal", badge: "OKAZJA ≤12 ZŁ", cls: "badge-deal", minsAgo: 37 },
-          { handle: "nocny_marek", icon: "📍", action: "Check-in przy stoliku", type: "checkin", badge: "CHECK-IN LIVE", cls: "badge-checkin", minsAgo: 54 },
-          { handle: "kraft_hunter", icon: "🍺", action: "Raport z tablicy kranów", type: "receipt", badge: "TABLICA KRANÓW", cls: "badge-receipt", minsAgo: 79 },
-          { handle: "studencki_budzet", icon: "🔥", action: "Zniżka studencka aktywna", type: "deal", badge: "HIT CENOWY", cls: "badge-deal", minsAgo: 112 }
-        ];
-
-        const picks = [
-          sortedDeals[0],
-          sortedDeals[1],
-          sortedDeals[2],
-          craftPicks[0] || sortedDeals[3],
-          sortedDeals[4],
-          sortedDeals[5]
-        ].filter(Boolean);
-
-        const seenIds = new Set();
-        picks.forEach((v, i) => {
-          if (!v || seenIds.has(v.id)) return;
-          seenIds.add(v.id);
-          const scout = scoutProfiles[i % scoutProfiles.length];
-          const dAvg = distCounts[v.district] ? (distSums[v.district] / distCounts[v.district]) : 15.8;
-          const diffPct = Math.round(((dAvg - v.beer_price_pln) / dAvg) * 100);
-          const vDist = v.district || curCity.name;
-          const benchText = diffPct > 5
-            ? `📉 -${diffPct}% vs śr. ${vDist} (${dAvg.toFixed(1)} zł)`
-            : (v.is_craft ? `🍺 Selekcja Kraft · ${vDist}` : `✓ Cena potwierdzona przy barze`);
-
-          items.push({
-            kind: "activity",
-            activity_type: v.beer_price_pln <= 12 ? "deal" : scout.type,
-            badge_label: v.beer_price_pln <= 12 && i % 2 === 0 ? "OKAZJA ≤12 ZŁ" : scout.badge,
-            badge_class: v.beer_price_pln <= 12 && i % 2 === 0 ? "badge-deal" : scout.cls,
-            id: `city-act-${v.id}`,
-            author_name: scout.handle.trim(),
-            avatar_icon: scout.icon,
-            action_text: scout.action,
-            venue_id: v.id,
-            venue_name: v.name,
-            district: vDist,
-            city_iata: cityIata,
-            dist_iata: vDist.toUpperCase().replace(/[^A-ZĄĆĘŁŃÓŚŹŻ]/g, "").slice(0, 3) || "BAR",
-            beer_name: v.beer_brand || v.beer_name || "Jasne Pełne 0.5L",
-            beer_price: v.beer_price_pln,
-            is_open: isVenueOpen(v, nowDate),
-            benchmark_text: benchText,
-            cheers_count: 5 + ((i * 7 + Math.round(v.beer_price_pln)) % 14),
-            created_at: new Date(nowMs - scout.minsAgo * 60 * 1000).toISOString()
-          });
-        });
-      }
 
       return items.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     }
@@ -11266,22 +11186,36 @@
     function createFindMyPopupHtml(person) {
       const timeAgo = formatTimeAgo(person.timestamp);
       const priceNum = Number(person.beer_price) || 14;
+      const avatarHtml = person.avatar_photo
+        ? `<img src="${escapeHtml(person.avatar_photo)}" alt="${escapeHtml(person.username)}" />`
+        : `<span>${escapeHtml(person.avatar_icon || "🍺")}</span>`;
+
       return `
         <div class="findmy-popup-card">
           <div class="findmy-popup-head">
-            <span class="findmy-popup-tag">${person.photo_url ? '📸 CHECK-IN BEREAL' : '🍻 CHECK-IN LIVE'}</span>
+            <span class="findmy-popup-tag">${person.photo_url ? '📸 CHECK-IN BEREAL' : '🟢 CHECK-IN LIVE'}</span>
             <span class="findmy-popup-time">${escapeHtml(timeAgo)}</span>
           </div>
-          <div class="findmy-popup-user">@${escapeHtml(person.username)} ${person.is_me ? '(Ty)' : ''}</div>
-          <div class="findmy-popup-venue">📍 ${escapeHtml(person.venue_name)} · ${escapeHtml(person.district || '')}</div>
-          <div class="findmy-popup-beer">🍺 ${escapeHtml(person.beer_name)} · <strong>${priceNum.toFixed(2)} zł</strong></div>
+          <div class="findmy-popup-user-row">
+            <div class="findmy-popup-avatar-bubble">
+              ${avatarHtml}
+            </div>
+            <div class="findmy-popup-user-meta">
+              <div class="findmy-popup-user">@${escapeHtml(person.username)} ${person.is_me ? '<span class="findmy-tag-me">TY</span>' : ''}</div>
+              <div class="findmy-popup-venue">📍 ${escapeHtml(person.venue_name)}${person.district ? ' · ' + escapeHtml(person.district) : ''}</div>
+            </div>
+          </div>
+          <div class="findmy-popup-beer-row">
+            <span class="findmy-popup-beer-name">🍺 ${escapeHtml(person.beer_name || "Piwo z nalewaka")}</span>
+            <span class="findmy-popup-beer-pill">${priceNum.toFixed(2)} zł</span>
+          </div>
           ${person.photo_url ? `
             <div class="findmy-popup-photo-wrap">
-              <img src="${escapeHtml(person.photo_url)}" alt="BeReal" />
+              <img src="${escapeHtml(person.photo_url)}" alt="BeReal" loading="lazy" />
             </div>
           ` : ''}
           <button type="button" class="findmy-popup-btn" onclick="window.__openVenueById('${escapeHtml(person.venue_id)}', '${escapeHtml(person.venue_name)}')">
-            🧭 Pokaż bar na mapie głównej ↗
+            🧭 Pokaż bar na mapie ↗
           </button>
         </div>
       `;
@@ -11308,7 +11242,13 @@
         const marker = L.marker([person.latitude, person.longitude], {
           icon,
           zIndexOffset: 1200
-        }).bindPopup(createFindMyPopupHtml(person));
+        }).bindPopup(createFindMyPopupHtml(person), {
+          className: "findmy-apple-popup",
+          closeButton: true,
+          autoPan: true,
+          maxWidth: 240,
+          offset: [0, -32]
+        });
         mainMapFindMyLayer.addLayer(marker);
       });
     };
@@ -11387,7 +11327,16 @@
           iconAnchor: [55, 52],
           popupAnchor: [0, -48]
         });
-        const marker = L.marker([person.latitude, person.longitude], { icon }).bindPopup(createFindMyPopupHtml(person));
+        const marker = L.marker([person.latitude, person.longitude], { icon }).bindPopup(
+          createFindMyPopupHtml(person),
+          {
+            className: "findmy-apple-popup",
+            closeButton: true,
+            autoPan: true,
+            maxWidth: 230,
+            offset: [0, -28]
+          }
+        );
         findMyMarkersLayer.addLayer(marker);
         findMyMarkerById[person.key] = { marker, person };
       });
