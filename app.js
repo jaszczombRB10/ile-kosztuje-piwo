@@ -23888,11 +23888,11 @@
     // 6. Bento Grid Cards Click Handlers
     const bentoCards = [
       {
-        ids: ["bento-btn-happyhour", "bento-happyhour"],
+        ids: ["bento-btn-compass", "bento-compass"],
         fn: () => {
-          if (typeof window.__openHappyHours === "function") window.__openHappyHours();
+          if (typeof window.__openCompass === "function") window.__openCompass();
           else {
-            const m = document.getElementById("happyhour-modal");
+            const m = document.getElementById("beer-compass-modal");
             if (m) { m.classList.add("active"); m.style.display = "flex"; }
           }
         }
@@ -23918,31 +23918,47 @@
         }
       },
       {
-        ids: ["bento-btn-cheap", "bento-cheap"],
+        ids: ["bento-btn-happyhour", "bento-happyhour"],
         fn: () => {
-          const chip = document.querySelector('.filter-chip[data-filter="tier-low"]');
-          if (chip) chip.click();
+          if (typeof window.__openHappyHours === "function") window.__openHappyHours();
+          else {
+            const m = document.getElementById("happyhour-modal");
+            if (m) { m.classList.add("active"); m.style.display = "flex"; }
+          }
         }
       },
       {
-        ids: ["bento-btn-craft", "bento-craft"],
+        ids: ["bento-btn-barometer", "bento-barometer"],
         fn: () => {
-          const chip = document.querySelector('.filter-chip[data-filter="craft"]');
-          if (chip) chip.click();
+          if (typeof window.__openBarometer === "function") window.__openBarometer();
+          else {
+            const btnBaro = document.getElementById("btn-barometer-toggle");
+            if (btnBaro) btnBaro.click();
+            else {
+              const m = document.getElementById("barometer-modal");
+              if (m) { m.classList.add("active"); m.style.display = "flex"; }
+            }
+          }
         }
       },
       {
-        ids: ["bento-btn-zero", "bento-zero"],
+        ids: ["bento-btn-pubquiz", "bento-pubquiz"],
         fn: () => {
-          const chip = document.querySelector('.filter-chip[data-filter="non-alcoholic"]');
-          if (chip) chip.click();
+          if (typeof window.__openPubQuiz === "function") window.__openPubQuiz();
+          else {
+            const m = document.getElementById("pubquiz-modal");
+            if (m) { m.classList.add("active"); m.style.display = "flex"; }
+          }
         }
       },
       {
-        ids: ["bento-btn-clubcard", "bento-clubcard"],
+        ids: ["bento-btn-sos", "bento-sos"],
         fn: () => {
-          const m = document.getElementById("club-card-modal");
-          if (m) { m.classList.add("active"); m.style.display = "flex"; }
+          if (typeof window.__openSos === "function") window.__openSos();
+          else {
+            const m = document.getElementById("sos-modal");
+            if (m) { m.classList.add("active"); m.style.display = "flex"; }
+          }
         }
       }
     ];
