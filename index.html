@@ -60,7 +60,7 @@
   <link rel="stylesheet" href="vendor/leaflet/MarkerCluster.Default.css" />
   
   <!-- Custom Styles -->
-  <link rel="stylesheet" href="styles.css?v=145">
+  <link rel="stylesheet" href="styles.css?v=146">
 </head>
 <body>
 
@@ -3125,6 +3125,97 @@
     </div>
   </div>
 
+  <!-- Modal: Apple & Google Wallet Pass Viewer -->
+  <div class="modal-backdrop" id="apple-wallet-sheet" style="display:none; z-index: 10300;">
+    <div class="modal-card modal-card-apple-wallet">
+      <div class="modal-head">
+        <div class="modal-head-title">
+          <div class="modal-icon-badge" id="wallet-sheet-icon" style="background:#000; border:1px solid rgba(255,255,255,0.2); font-size:1.3rem;"></div>
+          <div>
+            <h2 id="wallet-sheet-title">Portfel Apple Wallet</h2>
+            <p class="modal-head-sub" id="wallet-sheet-sub">Karta klubowa z rabatem -10% i geolokalizacją 10 barów</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close" id="btn-close-apple-wallet-sheet" aria-label="Zamknij">✕</button>
+      </div>
+
+      <div class="wallet-sheet-body">
+        <!-- Native Wallet Card Preview -->
+        <div class="apple-wallet-pass-card">
+          <div class="aw-pass-top">
+            <div class="aw-pass-brand">
+              <span class="aw-apple-logo" id="aw-platform-logo"></span>
+              <span class="aw-brand-text">PoIlePiwko Pass</span>
+            </div>
+            <span class="aw-discount-badge">-10% RABAT</span>
+          </div>
+          <div class="aw-pass-middle">
+            <div class="aw-field">
+              <span class="aw-field-lbl">CZŁONEK KLUBU</span>
+              <strong class="aw-field-val" id="aw-member-name">PIWOSZ</strong>
+            </div>
+            <div class="aw-field align-right">
+              <span class="aw-field-lbl">NUMER KARTY</span>
+              <strong class="aw-field-val" id="aw-member-num">#000001</strong>
+            </div>
+          </div>
+          <div class="aw-pass-barcode-wrap">
+            <div class="aw-barcode-box" id="aw-barcode-box">
+              <svg viewBox="0 0 100 100" width="76" height="76" class="card-qr-svg">
+                <rect width="100" height="100" fill="#ffffff" rx="8"/>
+                <path d="M10 10h30v30h-30z M16 16h18v18h-18z M22 22h6v6h-6z M60 10h30v30h-30z M66 16h18v18h-18z M72 22h6v6h-6z M10 60h30v30h-30z M16 66h18v18h-18z M22 72h6v6h-6z M46 12h6v6h-6z M46 24h6v12h-6z M52 30h6v6h-6z M46 60h6v18h-6z M60 60h12v6h-12z M78 60h12v12h-12z M60 72h6v18h-6z M72 78h18v12h-18z M46 84h12v6h-12z" fill="#0f172a"/>
+              </svg>
+            </div>
+            <div class="aw-barcode-meta">
+              <span class="aw-nfc-symbol">📶 Zbliż / Pokaż przy kasie</span>
+              <span class="aw-geofence-tag">📍 Zaszyto 10 barów partnerskich</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Wallet Actions -->
+        <div class="wallet-sheet-actions">
+          <button type="button" class="btn-wallet-action primary" id="btn-wallet-save-image">
+            <span class="btn-w-icon">📸</span>
+            <div class="btn-w-text">
+              <strong>Zapisz kartę w Zdjęciach (Apple Photos)</strong>
+              <span>Zapisz w telefonie / dodaj do widżetów</span>
+            </div>
+          </button>
+
+          <button type="button" class="btn-wallet-action secondary" id="btn-wallet-pwa-shortcut">
+            <span class="btn-w-icon">📲</span>
+            <div class="btn-w-text">
+              <strong>Dodaj ikonę karty na Ekran Początkowy</strong>
+              <span>Dostęp 1 kliknięciem tuż obok Portfela</span>
+            </div>
+          </button>
+
+          <button type="button" class="btn-wallet-action tertiary" id="btn-wallet-partner-venues">
+            <span class="btn-w-icon">🗺️</span>
+            <div class="btn-w-text">
+              <strong>Pokaż lokale partnerskie z rabatem (-10%)</strong>
+              <span>10 sprawdzonych barów na mapie</span>
+            </div>
+          </button>
+        </div>
+
+        <!-- PWA / Home Screen instruction box (toggled on click) -->
+        <div class="wallet-pwa-guide" id="wallet-pwa-guide" style="display:none;">
+          <div class="pwa-guide-step">
+            <span class="step-num">1</span>
+            <span>Dotknij przycisku <strong>Udostępnij</strong> (kwadrat ze strzałką w górę u dołu Safari)</span>
+          </div>
+          <div class="pwa-guide-step">
+            <span class="step-num">2</span>
+            <span>Przewiń w dół i wybierz <strong>„Do ekranu początkowego”</strong> (Add to Home Screen)</span>
+          </div>
+          <div class="pwa-guide-hint">🎉 Karta klubowa będzie zawsze pod ręką na Twoim iPhone!</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal: Piwna Ruletka ("Wylosuj bar na dziś") -->
   <div class="modal-backdrop" id="roulette-modal" style="display:none; z-index: 10250;">
     <div class="modal-card modal-card-roulette">
@@ -3634,6 +3725,6 @@
   <script src="moderation.js"></script>
 
   <!-- Main Application Logic -->
-  <script src="app.js?v=145"></script>
+  <script src="app.js?v=146"></script>
 </body>
 </html>

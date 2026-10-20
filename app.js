@@ -15750,12 +15750,181 @@
       }
     }
 
-    function handleWalletExport(platform) {
-      if (!currentProfile) {
-        showAppToast("Karta Pass 💳", "Zaloguj się, aby dodać swoją imienną kartę do Portfela!", "🔒");
-        if (window.__openAuth) window.__openAuth();
-        return;
+    const walletSheet = document.getElementById("apple-wallet-sheet");
+    const btnCloseWalletSheet = document.getElementById("btn-close-apple-wallet-sheet");
+    const awMemberName = document.getElementById("aw-member-name");
+    const awMemberNum = document.getElementById("aw-member-num");
+    const awPlatformLogo = document.getElementById("aw-platform-logo");
+    const walletSheetTitle = document.getElementById("wallet-sheet-title");
+    const walletSheetSub = document.getElementById("wallet-sheet-sub");
+    const walletSheetIcon = document.getElementById("wallet-sheet-icon");
+    const btnWalletSaveImage = document.getElementById("btn-wallet-save-image");
+    const btnWalletPwaShortcut = document.getElementById("btn-wallet-pwa-shortcut");
+    const btnWalletPartnerVenues = document.getElementById("btn-wallet-partner-venues");
+    const walletPwaGuide = document.getElementById("wallet-pwa-guide");
+
+    function closeWalletSheetModal() {
+      if (walletSheet) {
+        walletSheet.classList.remove("active");
+        walletSheet.style.display = "none";
       }
+      if (typeof ModalHistoryManager !== "undefined") {
+        ModalHistoryManager.pop("apple-wallet-sheet");
+      }
+    }
+
+    if (btnCloseWalletSheet) {
+      btnCloseWalletSheet.addEventListener("click", closeWalletSheetModal);
+    }
+    if (walletSheet) {
+      walletSheet.addEventListener("click", (e) => {
+        if (e.target === walletSheet) closeWalletSheetModal();
+      });
+    }
+
+    if (btnWalletPwaShortcut && walletPwaGuide) {
+      btnWalletPwaShortcut.addEventListener("click", () => {
+        if (window.poileHaptics) window.poileHaptics.tick();
+        const isOpen = walletPwaGuide.style.display !== "none";
+        walletPwaGuide.style.display = isOpen ? "none" : "flex";
+        if (!isOpen) {
+          walletPwaGuide.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+      });
+    }
+
+    if (btnWalletPartnerVenues) {
+      btnWalletPartnerVenues.addEventListener("click", () => {
+        closeWalletSheetModal();
+        window.__closeClubCard();
+        if (btnFilterVenues) btnFilterVenues.click();
+      });
+    }
+
+    async function generateAndShareWalletImage(platform, memberName, memberId) {
+      const canvas = document.createElement("canvas");
+      canvas.width = 960;
+      canvas.height = 600;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      // Dark Obsidian Pass background
+      const grad = ctx.createLinearGradient(0, 0, 960, 600);
+      grad.addColorStop(0, "#1c1c28");
+      grad.addColorStop(0.5, "#12121a");
+      grad.addColorStop(1, "#09090e");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 960, 600);
+
+      // Hairline border
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.16)";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(6, 6, 948, 588);
+
+      // Top brand header
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 34px -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.fillText(platform === "apple" ? " Apple Wallet · PoIlePiwko Pass" : "G Google Wallet · PoIlePiwko Pass", 50, 75);
+
+      // Discount badge
+      ctx.fillStyle = "#fbbf24";
+      ctx.font = "900 28px -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.fillText("-10% RABAT NA PIWO LANE", 50, 130);
+
+      // Line
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.12)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(50, 160);
+      ctx.lineTo(910, 160);
+      ctx.stroke();
+
+      // Member name & number
+      ctx.fillStyle = "rgba(235, 235, 245, 0.6)";
+      ctx.font = "bold 20px -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.fillText("CZŁONEK KLUBU", 50, 210);
+      ctx.fillText("NUMER KARTY", 550, 210);
+
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "900 36px ui-monospace, Menlo, Consolas, monospace";
+      ctx.fillText(String(memberName).toUpperCase(), 50, 260);
+      ctx.fillText(String(memberId), 550, 260);
+
+      // NFC & Geofence info
+      ctx.fillStyle = "#30D158";
+      ctx.font = "bold 24px -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.fillText("📶 Zbliż / Pokaż barmanowi przed zamówieniem", 50, 360);
+
+      ctx.fillStyle = "rgba(235, 235, 245, 0.7)";
+      ctx.font = "22px -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.fillText("📍 Zaszyto geolokalizację 10 barów partnerskich (Geofencing)", 50, 410);
+      ctx.fillText("⚡ Aktywna w sieci lokali partnerskich poilepiwko.pl", 50, 450);
+
+      // Bottom footer bar
+      ctx.fillStyle = "rgba(255, 255, 255, 0.05)";
+      ctx.fillRect(0, 520, 960, 80);
+      ctx.fillStyle = "rgba(235, 235, 245, 0.65)";
+      ctx.font = "bold 20px -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.fillText("poilepiwko.pl · Karta Klubowicza VIP", 50, 568);
+
+      canvas.toBlob(async (blob) => {
+        if (!blob) return;
+        const cleanNum = String(memberId).replace(/[^a-zA-Z0-9]/g, "") || "000001";
+        const file = new File([blob], `poilepiwko-pass-${cleanNum}.png`, { type: "image/png" });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              title: "PoIlePiwko Pass",
+              text: `Moja Karta Klubowa PoIlePiwko Pass (-10% na lane)!`,
+              files: [file]
+            });
+            if (window.poileHaptics) window.poileHaptics.success();
+            showAppToast("Udostępniono kartę! ", "Zapisz obraz w Zdjęciach na telefonie!", "📸", 4000);
+            return;
+          } catch (e) {
+            console.warn("Share cancelled or failed:", e);
+          }
+        }
+
+        // Fallback: direct PNG download
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `poilepiwko-pass-${cleanNum}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 4000);
+        showAppToast("Pobrano kartę Pass! 📸", "Zapisano kartę w pobranych plikach / Zdjęciach!", "📥", 4000);
+      }, "image/png");
+    }
+
+    if (btnWalletSaveImage) {
+      btnWalletSaveImage.addEventListener("click", () => {
+        if (window.poileHaptics) window.poileHaptics.tick();
+        const mName = awMemberName ? awMemberName.textContent : "PIWOSZ";
+        const mNum = awMemberNum ? awMemberNum.textContent : "#000001";
+        const isApple = awPlatformLogo ? awPlatformLogo.textContent.includes("") : true;
+        generateAndShareWalletImage(isApple ? "apple" : "google", mName, mNum);
+      });
+    }
+
+    function handleWalletExport(platform) {
+      const activeProfile = currentProfile || (currentUser ? {
+        username: (currentUser.user_metadata && currentUser.user_metadata.username) || "piwosz",
+        display_name: (currentUser.user_metadata && currentUser.user_metadata.display_name) || "Piwosz",
+        user_number: (currentUser.user_metadata && currentUser.user_metadata.user_number) || "#000001"
+      } : {
+        username: "klubowicz",
+        display_name: "Klubowicz",
+        user_number: "#000001"
+      });
+
+      const memberName = (activeProfile && (activeProfile.display_name || activeProfile.username))
+        ? (activeProfile.display_name || activeProfile.username)
+        : "KLUBOWICZ";
+      const memberId = (activeProfile && activeProfile.user_number) ? activeProfile.user_number : "#000001";
 
       const passData = generateWalletPassData(platform);
       try {
@@ -15766,38 +15935,55 @@
 
       if (window.poileHaptics) window.poileHaptics.success();
 
-      if (walletCard) {
-        walletCard.style.boxShadow = "0 0 0 2px #30D158, 0 18px 42px rgba(48, 209, 88, 0.28)";
+      // Card front glow feedback in club modal
+      const frontCard = modal ? modal.querySelector(".club-card-front") : null;
+      if (frontCard) {
+        frontCard.style.boxShadow = "0 0 0 2px #30D158, 0 18px 42px rgba(48, 209, 88, 0.28)";
         setTimeout(() => {
-          if (walletCard) walletCard.style.boxShadow = "";
+          if (frontCard) frontCard.style.boxShadow = "";
         }, 2600);
       }
 
+      // Update and open Apple / Google Wallet Sheet Viewer!
+      if (awMemberName) awMemberName.textContent = memberName.toUpperCase();
+      if (awMemberNum) awMemberNum.textContent = memberId;
+
       if (platform === "apple") {
+        if (awPlatformLogo) awPlatformLogo.textContent = "";
+        if (walletSheetIcon) walletSheetIcon.textContent = "";
+        if (walletSheetTitle) walletSheetTitle.textContent = "Portfel Apple Wallet";
+        if (walletSheetSub) walletSheetSub.textContent = `Karta ${memberId} z rabatem -10% i geolokalizacją 10 barów`;
         if (btnAppleWallet) {
-          btnAppleWallet.innerHTML = `<span class="wallet-store-icon"></span> <span>✓ Aktywna w Apple Wallet · Geofence ON</span>`;
+          btnAppleWallet.innerHTML = `<span class="wallet-store-icon"></span> <span>✓ Karta w Apple Wallet · Sprawdź</span>`;
           btnAppleWallet.style.borderColor = "rgba(48, 209, 88, 0.55)";
           btnAppleWallet.style.color = "#30D158";
         }
-        showAppToast(
-          "Karta aktywna w Apple Wallet! ",
-          `Zaszyto geolokalizację ${passData.locations.length} barów. Karta automatycznie podświetli się przy barze partnerskim!`,
-          "",
-          4800
-        );
       } else {
+        if (awPlatformLogo) awPlatformLogo.textContent = "G";
+        if (walletSheetIcon) walletSheetIcon.textContent = "G";
+        if (walletSheetTitle) walletSheetTitle.textContent = "Portfel Google Wallet";
+        if (walletSheetSub) walletSheetSub.textContent = `Karta ${memberId} z rabatem -10% i geolokalizacją 10 barów`;
         if (btnGoogleWallet) {
-          btnGoogleWallet.innerHTML = `<span class="wallet-store-icon google-g">G</span> <span>✓ Aktywna w Portfelu Google · Geofence ON</span>`;
+          btnGoogleWallet.innerHTML = `<span class="wallet-store-icon google-g">G</span> <span>✓ Karta w Google Wallet · Sprawdź</span>`;
           btnGoogleWallet.style.borderColor = "rgba(48, 209, 88, 0.55)";
           btnGoogleWallet.style.color = "#30D158";
         }
-        showAppToast(
-          "Karta aktywna w Portfelu Google! 💳",
-          `Zaszyto powiadomienia w pobliżu ${passData.payload.genericObjects[0].locations.length} barów partnerskich z rabatem 10%!`,
-          "💳",
-          4800
-        );
       }
+
+      if (walletSheet) {
+        walletSheet.classList.add("active");
+        walletSheet.style.display = "flex";
+        if (typeof ModalHistoryManager !== "undefined") {
+          ModalHistoryManager.push("apple-wallet-sheet", closeWalletSheetModal);
+        }
+      }
+
+      showAppToast(
+        platform === "apple" ? "Karta w Apple Wallet! " : "Karta w Google Wallet! 💳",
+        `Zaszyto geolokalizację 10 barów partnerskich. Karta aktywna na Twoim telefonie!`,
+        platform === "apple" ? "" : "💳",
+        4500
+      );
     }
 
     if (btnAppleWallet) {
