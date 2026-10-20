@@ -21800,3 +21800,534 @@ body.theme-light .apple-venue-benchmark-pill.benchmark-good strong {
   padding-top: 4px;
 }
 
+/* ==========================================================================
+   3. FLIGHTY MOBILE UI/UX DESIGN SYSTEM (iOS / ANDROID TWA / PWA)
+   - Obsidian Dark Glass Materials (#0B0B0E / #14141A) & 1px Hairline Borders
+   - Flighty Live Shift Progress Timeline Bar in #venue-sheet
+   - Flighty Departure-Board Telemetry & IATA District Rows in #ranking-drawer
+   - Flighty Passport Logbook Telemetry Card in #profile-modal
+   - Flighty Instrument Bento Grid in #discover-sheet
+   ========================================================================== */
+
+/* 3.1 Flighty Callsign Header & Live Shift Timeline in #venue-sheet */
+.flighty-callsign-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+  flex-wrap: wrap;
+}
+
+.flighty-callsign-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #f8fafc;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.flighty-callsign-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+.flighty-callsign-status.status-ontime {
+  background: rgba(48, 209, 88, 0.16);
+  border: 1px solid rgba(48, 209, 88, 0.4);
+  color: #30D158;
+}
+
+.flighty-callsign-status.status-scheduled {
+  background: rgba(255, 159, 10, 0.15);
+  border: 1px solid rgba(255, 159, 10, 0.38);
+  color: #FF9F0A;
+}
+
+.flighty-timeline-card {
+  background: #141419;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 12px 14px 14px 14px;
+  margin-bottom: 8px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.flighty-tl-endpoints {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.flighty-tl-node {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.flighty-tl-node.align-right {
+  text-align: right;
+  align-items: flex-end;
+}
+
+.tl-node-lbl {
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: rgba(235, 235, 245, 0.5);
+  text-transform: uppercase;
+}
+
+.tl-node-time {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+}
+
+.flighty-tl-status-pill {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 58%;
+}
+
+.flighty-tl-status-pill.tl-active {
+  background: rgba(48, 209, 88, 0.14);
+  border: 1px solid rgba(48, 209, 88, 0.35);
+  color: #86efac;
+}
+
+.flighty-tl-status-pill.tl-idle {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+}
+
+.flighty-tl-track {
+  position: relative;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 4px 6px 2px 6px;
+}
+
+.flighty-tl-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.flighty-tl-fill.fill-open {
+  background: linear-gradient(90deg, #30D158 0%, #34d399 100%);
+  box-shadow: 0 0 10px rgba(48, 209, 88, 0.45);
+}
+
+.flighty-tl-fill.fill-closed {
+  background: rgba(255, 159, 10, 0.5);
+}
+
+.flighty-tl-puck {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #18181f;
+  border: 1.5px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  line-height: 1;
+}
+
+/* 3.2 Flighty City Telemetry Bar & Boarding Rows in #ranking-drawer */
+.flighty-city-telemetry-bar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  padding: 8px 10px;
+  margin: 4px 10px 8px 10px;
+  background: #141419;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+}
+
+.flighty-tele-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+  padding: 2px 4px;
+}
+
+.flighty-tele-item:not(:last-child) {
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.flighty-tele-lbl {
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  color: rgba(235, 235, 245, 0.5);
+  text-transform: uppercase;
+}
+
+.flighty-tele-val {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.flighty-tele-val.tele-green {
+  color: #30D158;
+}
+
+.tele-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #30D158;
+  box-shadow: 0 0 6px #30D158;
+}
+
+.flighty-ranked-row {
+  background: #141419 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 15px !important;
+  padding: 11px 12px !important;
+  margin-bottom: 7px !important;
+  transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease !important;
+}
+
+.flighty-ranked-row:active {
+  transform: scale(0.985) !important;
+  background: #1c1c24 !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.flighty-rank-col {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 3px !important;
+  min-width: 42px !important;
+  padding: 4px 6px !important;
+  border-radius: 10px !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.flighty-rank-num {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #f8fafc;
+  line-height: 1;
+}
+
+.flighty-dist-iata {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+  line-height: 1;
+}
+
+.flighty-status-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+
+.flighty-status-dot.is-open {
+  background: #30D158;
+  box-shadow: 0 0 6px rgba(48, 209, 88, 0.7);
+}
+
+.flighty-status-dot.is-closed {
+  background: #FF9F0A;
+  opacity: 0.75;
+}
+
+.flighty-row-walk {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: rgba(10, 132, 255, 0.12);
+  color: #60a5fa;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.67rem;
+  font-weight: 700;
+}
+
+.flighty-price-pill {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace !important;
+  font-variant-numeric: tabular-nums !important;
+  font-size: 0.88rem !important;
+  font-weight: 900 !important;
+  padding: 6px 10px !important;
+  border-radius: 10px !important;
+  white-space: nowrap !important;
+}
+
+.flighty-price-pill.tier-low {
+  background: rgba(48, 209, 88, 0.16) !important;
+  border: 1px solid rgba(48, 209, 88, 0.42) !important;
+  color: #30D158 !important;
+}
+
+.flighty-price-pill.tier-mid {
+  background: rgba(255, 159, 10, 0.16) !important;
+  border: 1px solid rgba(255, 159, 10, 0.42) !important;
+  color: #FF9F0A !important;
+}
+
+.flighty-price-pill.tier-high {
+  background: rgba(255, 69, 58, 0.16) !important;
+  border: 1px solid rgba(255, 69, 58, 0.42) !important;
+  color: #FF453A !important;
+}
+
+/* 3.3 Flighty Passport Logbook Telemetry Card in #profile-modal */
+.flighty-passport-logbook {
+  background: linear-gradient(165deg, #16161d 0%, #0e0e13 100%);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 20px;
+  padding: 14px 16px;
+  margin: 0 0 14px 0;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.flighty-log-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.12);
+  margin-bottom: 12px;
+}
+
+.flighty-log-brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #fde68a;
+  text-transform: uppercase;
+}
+
+.flighty-log-season {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.07);
+  color: #cbd5e1;
+}
+
+.flighty-route-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 4px 2px;
+}
+
+.flighty-route-node {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.flighty-route-node.align-right {
+  text-align: right;
+  align-items: flex-end;
+}
+
+.route-node-lbl {
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: rgba(235, 235, 245, 0.48);
+  text-transform: uppercase;
+}
+
+.route-node-code {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 1.25rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  line-height: 1.1;
+}
+
+.flighty-route-line {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 6px;
+}
+
+.route-line-dash {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.08), rgba(245,158,11,0.5), rgba(255,255,255,0.08));
+}
+
+.route-line-icon {
+  font-size: 0.95rem;
+}
+
+.flighty-telemetry-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.flighty-telemetry-cell {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 8px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 3px;
+}
+
+.telemetry-lbl {
+  font-size: 0.52rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: rgba(235, 235, 245, 0.52);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.telemetry-val {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.86rem;
+  font-weight: 900;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+}
+
+.telemetry-val.highlight-green {
+  color: #30D158;
+}
+
+/* 3.4 Flighty Obsidian Mobile Sheets, Instrument Bento & TWA Touch Ergonomics */
+@media (max-width: 768px) {
+  .bottom-sheet,
+  #ranking-drawer.sidebar-drawer,
+  .mobile-search-sheet {
+    background: rgba(12, 12, 16, 0.95) !important;
+    backdrop-filter: blur(44px) saturate(190%) !important;
+    -webkit-backdrop-filter: blur(44px) saturate(190%) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.14) !important;
+    box-shadow: 0 -18px 50px rgba(0, 0, 0, 0.72), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  }
+
+  .bento-grid .bento-card {
+    background: #14141a !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.07) !important;
+  }
+
+  .bento-grid .bento-card:active {
+    transform: scale(0.97) !important;
+    border-color: rgba(255, 255, 255, 0.24) !important;
+  }
+
+  .ranking-tabs {
+    background: #141419 !important;
+    padding: 3px !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  }
+
+  .ranking-tab {
+    border-radius: 9px !important;
+    font-size: 0.74rem !important;
+    font-weight: 700 !important;
+    border: none !important;
+  }
+
+  .ranking-tab.active {
+    background: rgba(255, 255, 255, 0.14) !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+  }
+}
+
+/* Light Mode Fallbacks for Flighty Components */
+body.theme-light .flighty-timeline-card,
+body.theme-light .flighty-city-telemetry-bar,
+body.theme-light .flighty-ranked-row,
+body.theme-light .flighty-passport-logbook {
+  background: #ffffff !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06) !important;
+}
+
+body.theme-light .tl-node-time,
+body.theme-light .flighty-tele-val,
+body.theme-light .route-node-code,
+body.theme-light .telemetry-val,
+body.theme-light .flighty-rank-num {
+  color: #0f172a !important;
+}
+
+body.theme-light .tl-node-lbl,
+body.theme-light .flighty-tele-lbl,
+body.theme-light .route-node-lbl,
+body.theme-light .telemetry-lbl {
+  color: #64748b !important;
+}
+
+

@@ -2419,43 +2419,77 @@
       `;
     }
 
-    listEl.innerHTML = bannerHtml + sorted.map((venue, idx) => {
+    const nowRender = new Date();
+    const openInCityCount = (allVenues || []).filter(v => isVenueOpen(v, nowRender)).length;
+    const validPrices = (allVenues || []).map(v => v.beer_price_pln).filter(p => typeof p === "number" && p > 0);
+    const minCityPrice = validPrices.length > 0 ? Math.min(...validPrices) : 10;
+    const avgCityPrice = validPrices.length > 0 ? (validPrices.reduce((s, p) => s + p, 0) / validPrices.length) : 15;
+
+    const telemetryBarHtml = `
+      <div class="flighty-city-telemetry-bar">
+        <div class="flighty-tele-item">
+          <span class="flighty-tele-lbl">OTWARTE TERAZ</span>
+          <strong class="flighty-tele-val tele-green"><span class="tele-live-dot"></span>${openInCityCount}</strong>
+        </div>
+        <div class="flighty-tele-item">
+          <span class="flighty-tele-lbl">NAJTANIEJ OD</span>
+          <strong class="flighty-tele-val">${minCityPrice.toFixed(2)} zł</strong>
+        </div>
+        <div class="flighty-tele-item">
+          <span class="flighty-tele-lbl">ŚREDNIA MIASTA</span>
+          <strong class="flighty-tele-val">${avgCityPrice.toFixed(2)} zł</strong>
+        </div>
+      </div>
+    `;
+
+    listEl.innerHTML = telemetryBarHtml + bannerHtml + sorted.map((venue, idx) => {
       let distanceBadge = "";
       if (userLocation) {
         const distKm = venue._distKm !== undefined ? venue._distKm : calculateDistanceKm(userLocation[0], userLocation[1], venue.latitude, venue.longitude);
         const distM = venue._distM !== undefined ? venue._distM : Math.round(distKm * 1000);
         const walkMin = venue._walkMin !== undefined ? venue._walkMin : Math.max(1, Math.round(distKm / 4.8 * 60));
         const formattedDist = distM < 1000 ? `${distM}m` : `${distKm.toFixed(1)}km`;
-        distanceBadge = `<span style="color:#38bdf8;font-weight:600;"> · 🚶 ${formattedDist} (~${walkMin} min)</span>`;
+        distanceBadge = `<span class="flighty-row-walk">🚶 ${formattedDist} · ${walkMin} min</span>`;
       }
+
+      const openNow = isVenueOpen(venue, nowRender);
+      const distRaw = (venue.district || getCurrentCity().name || "BAR").toUpperCase();
+      const distCode = distRaw.replace(/[^A-ZĄĆĘŁŃÓŚŹŻ]/g, "").slice(0, 3) || "BAR";
+      const priceNum = venue.beer_price_pln || 14;
+      const tierCls = priceNum <= 12 ? "tier-low" : (priceNum <= 18 ? "tier-mid" : "tier-high");
 
       const hasProof = !!(venue.photo_url || venue.proof_image_url);
       const isVisited = isVenueVisited(venue.id);
       const isFav = isVenueFavorite(venue.id);
-      const visitedChip = isVisited ? `<span style="color:#4ade80;font-size:0.7rem;font-weight:700;margin-left:4px;">✓ Byłem</span>` : "";
+      const visitedChip = isVisited ? `<span style="color:#30D158;font-size:0.68rem;font-weight:800;margin-left:4px;">✓ LOG</span>` : "";
       const favChip = isFav ? `<span style="color:#fb7185;font-size:0.75rem;margin-left:4px;" title="W Twoich ulubionych">❤️</span>` : "";
       const passChip = (venue.is_partner || venue.pass_partner) ? `<span title="Lokal honoruje kartę poilepiwko Pass (-10%)" style="font-size:12px;margin-left:4px;">🎟️</span>` : "";
-      const venueUpdatedChip = (venue.verified_by_venue) ? `<span title="Cennik zaktualizowany bezpośrednio przez personel lokalu" style="color:#22c55e;font-size:11px;font-weight:700;margin-left:4px;">✓</span>` : "";
+      const venueUpdatedChip = (venue.verified_by_venue) ? `<span title="Cennik zaktualizowany bezpośrednio przez personel lokalu" style="color:#30D158;font-size:11px;font-weight:700;margin-left:4px;">✓</span>` : "";
 
       return `
-        <div class="ranked-card" onclick="window.__zoomToVenue('${venue.id}')">
-          <div class="ranked-pos">#${idx + 1}</div>
+        <div class="ranked-card flighty-ranked-row" onclick="window.__zoomToVenue('${venue.id}')">
+          <div class="ranked-pos flighty-rank-col">
+            <span class="flighty-rank-num">#${String(idx + 1).padStart(2, "0")}</span>
+            <span class="flighty-dist-iata">${escapeHtml(distCode)}</span>
+          </div>
           <div class="ranked-info">
             <div class="ranked-name">
+              <span class="flighty-status-dot ${openNow ? 'is-open' : 'is-closed'}" title="${openNow ? 'Otwarte teraz' : 'Zamknięte teraz'}"></span>
               ${escapeHtml(venue.name)}
-              ${venue.old_name ? `<span style="font-size:0.75rem;font-weight:400;color:var(--text-muted);margin-left:4px;">(d. ${escapeHtml(venue.old_name)})</span>` : ''}
-              ${hasProof ? '<span title="Posiada zdjęcie menu/paragonu" style="font-size:12px;margin-left:4px;">📸</span>' : ''}
+              ${venue.old_name ? `<span style="font-size:0.73rem;font-weight:400;color:var(--text-muted);margin-left:4px;">(d. ${escapeHtml(venue.old_name)})</span>` : ''}
+              ${hasProof ? '<span title="Posiada zdjęcie menu/paragonu" style="font-size:11px;margin-left:4px;">📸</span>' : ''}
               ${passChip}
               ${venueUpdatedChip}
               ${favChip}
               ${visitedChip}
             </div>
             <div class="ranked-sub">
-              ${escapeHtml(venue.beer_name || "Piwo z kija")} · ${escapeHtml(venue.district)}
+              <span>🍺 ${escapeHtml(venue.beer_name || "Piwo z kija")}</span>
+              <span>· ${escapeHtml(venue.district)}</span>
               ${distanceBadge}
             </div>
           </div>
-          <div class="ranked-price">${venue.beer_price_pln.toFixed(2)} zł</div>
+          <div class="ranked-price flighty-price-pill ${tierCls}">${priceNum.toFixed(2)} <small>zł</small></div>
         </div>
       `;
     }).join("");
@@ -2515,6 +2549,14 @@
     // If venue is hidden by current district or filter chip, reset to show all so marker exists
     if (!activeMarkers.some(m => m._venueData && m._venueData.id === venue.id)) {
       resetAllFilters();
+    }
+
+    if (typeof window.__openVenueSheet === "function") {
+      map.flyTo([venue.latitude, venue.longitude], 17, { duration: 0.9 });
+      setTimeout(() => {
+        window.__openVenueSheet(venue);
+      }, 280);
+      return;
     }
 
     const targetMarker = activeMarkers.find(m => {
@@ -9073,6 +9115,58 @@
       if (valBeer) valBeer.textContent = prof.favorite_beer || "Wszystkie dobre!";
       if (valDistrict) valDistrict.textContent = prof.favorite_district || "Wszystkie dzielnice";
       if (valVibe) valVibe.textContent = prof.vibe_tags || "Kraft, Ogródki, Pub Quiz";
+
+      // Flighty Passport Logbook Telemetry Calculation
+      try {
+        const curCity = getCurrentCity();
+        const cityCodeMap = {
+          warszawa: "WAW",
+          krakow: "KRK",
+          wroclaw: "WRO",
+          trojmiasto: "GDN",
+          poznan: "POZ",
+          lodz: "LCJ",
+          katowice: "KTW",
+          lublin: "LUZ",
+          szczecin: "SZZ",
+          bydgoszcz: "BZG"
+        };
+        const hubCode = cityCodeMap[curCity.id] || (curCity.name || "WAW").slice(0, 3).toUpperCase();
+        const vCount = Array.isArray(visitedVenues) ? visitedVenues.length : 0;
+
+        const visitedObjs = (allVenues || []).filter(v => visitedVenues.includes(v.id));
+        const uniqueDists = new Set(visitedObjs.map(v => v.district).filter(Boolean));
+        const allCityDists = new Set((allVenues || []).map(v => v.district).filter(Boolean));
+        const totalDists = Math.max(allCityDists.size || 18, uniqueDists.size || 1);
+
+        // Calculate estimated savings vs 17.50 PLN pub benchmark
+        let totalSaved = 0;
+        visitedObjs.forEach(v => {
+          const p = typeof v.beer_price_pln === "number" ? v.beer_price_pln : 14;
+          totalSaved += Math.max(2.5, 18.0 - p);
+        });
+        if (vCount > visitedObjs.length) {
+          totalSaved += (vCount - visitedObjs.length) * 4.5;
+        }
+
+        const topDistStr = (prof.favorite_district && prof.favorite_district !== "Wszystkie dzielnice")
+          ? prof.favorite_district.toUpperCase()
+          : (visitedObjs[0] && visitedObjs[0].district ? visitedObjs[0].district.toUpperCase() : "ŚRÓDMIEŚCIE");
+
+        const elHub = document.getElementById("flighty-hub-code");
+        const elTopDist = document.getElementById("flighty-top-dist");
+        const elBars = document.getElementById("flighty-stat-bars");
+        const elDists = document.getElementById("flighty-stat-districts");
+        const elLiters = document.getElementById("flighty-stat-liters");
+        const elSaved = document.getElementById("flighty-stat-saved");
+
+        if (elHub) elHub.textContent = hubCode;
+        if (elTopDist) elTopDist.textContent = topDistStr.length > 13 ? topDistStr.slice(0, 12) + "…" : topDistStr;
+        if (elBars) elBars.textContent = String(vCount);
+        if (elDists) elDists.textContent = `${uniqueDists.size} / ${totalDists}`;
+        if (elLiters) elLiters.textContent = `${(vCount * 0.5).toFixed(1)} L`;
+        if (elSaved) elSaved.textContent = `${Math.round(totalSaved)} zł`;
+      } catch (e) {}
 
       // Progress bar (Goin' style)
       const rankProg = calculateRankProgress(visitedVenues.length);
@@ -22856,9 +22950,15 @@
     const hasZero = isNonAlcoholicVenue(venue);
     const proofUrl = venue.photo_url || venue.proof_image_url;
 
-    const openMatch = (venue.hours || "").match(/(\d{1,2}:\d{2})/);
+    const openMatch = (venue.hours || "").match(/(\d{1,2}:\d{2})\s*[-–]\s*(\d{1,2}:\d{2})/);
     const openTimeLabel = openMatch ? openMatch[1] : "16:00";
+    const closeTimeLabel = openMatch ? openMatch[2] : "02:00";
     const statusLabelText = open ? "🟢 Otwarte teraz" : `🕒 Otwiera się o ${openTimeLabel}`;
+
+    const curCityObj = getCurrentCity();
+    const cityIataMap = { warszawa: "WAW", krakow: "KRK", wroclaw: "WRO", trojmiasto: "GDN", poznan: "POZ", lodz: "LCJ", katowice: "KTW" };
+    const cityIata = cityIataMap[curCityObj.id] || (curCityObj.name || "WAW").slice(0, 3).toUpperCase();
+    const distIata = ((venue.district || curCityObj.name || "BAR").toUpperCase().replace(/[^A-ZĄĆĘŁŃÓŚŹŻ]/g, "").slice(0, 3)) || "BAR";
 
     let walkInfo = "";
     if (userLocation) {
@@ -22874,13 +22974,17 @@
 
     headerEl.innerHTML = `
       <div class="venue-sheet-title-box">
+        <div class="flighty-callsign-row">
+          <span class="flighty-callsign-badge">${escapeHtml(cityIata)} ➔ ${escapeHtml(distIata)}</span>
+          <span class="flighty-callsign-status ${open ? 'status-ontime' : 'status-scheduled'}">${open ? 'ON TIME · OTWARTE' : 'SCHEDULED · ' + escapeHtml(openTimeLabel)}</span>
+        </div>
         <h2 class="venue-sheet-name">
           ${escapeHtml(venue.name)}
           ${venue.verified_by_receipt ? '<span class="venue-badge-receipt" title="Zweryfikowano paragonem fiskalnym">🧾 Zweryfikowano paragonem</span>' : ''}
           ${venue.is_verified ? '<span class="venue-badge-verified" title="Zweryfikowany lokal">✓</span>' : ''}
           ${venue.old_name ? `<span class="venue-old-name" style="font-size:0.75rem;font-weight:400;color:var(--text-muted);">(d. ${escapeHtml(venue.old_name)})</span>` : ''}
         </h2>
-        <div class="venue-sheet-address">📍 ${escapeHtml(venue.district || getCurrentCity().name)} · ${escapeHtml(venue.address || '')}</div>
+        <div class="venue-sheet-address">📍 ${escapeHtml(venue.district || curCityObj.name)} · ${escapeHtml(venue.address || '')}</div>
         <div style="margin-top:5px; display:flex; align-items:center; flex-wrap:wrap; gap:6px;">
           <span class="venue-status-badge ${open ? 'open' : 'closed'}" style="font-size:0.74rem; padding:3px 9px;">
             ${statusLabelText}
@@ -22894,6 +22998,52 @@
         <div class="venue-sheet-beer-name">🍺 ${escapeHtml(venue.beer_name || "Piwo z kranu")}</div>
       </div>
       <button type="button" class="sheet-close-btn venue-sheet-close-btn" id="btn-close-venue-sheet" aria-label="Zamknij kartę lokalu">✕</button>
+    `;
+
+    // Flighty-Style Live Shift Progress Timeline Bar
+    let shiftProgressPct = open ? 58 : 0;
+    let shiftStatusSub = open ? "Lokal obsługuje gości · Kurek otwarty" : `Oczekiwanie na otwarcie o ${openTimeLabel}`;
+    try {
+      const nowD = new Date();
+      const curMins = nowD.getHours() * 60 + nowD.getMinutes();
+      const [oH, oM] = openTimeLabel.split(":").map(Number);
+      const [cH, cM] = closeTimeLabel.split(":").map(Number);
+      if (!isNaN(oH) && !isNaN(cH)) {
+        const startM = oH * 60 + (oM || 0);
+        let endM = cH * 60 + (cM || 0);
+        if (endM <= startM) endM += 24 * 60;
+        let adjCur = curMins;
+        if (adjCur < startM && curMins <= (cH * 60 + (cM || 0))) adjCur += 24 * 60;
+        if (open && adjCur >= startM && adjCur <= endM) {
+          shiftProgressPct = Math.min(96, Math.max(6, Math.round(((adjCur - startM) / Math.max(60, endM - startM)) * 100)));
+          const remMins = Math.max(1, endM - adjCur);
+          const rH = Math.floor(remMins / 60);
+          const rM = remMins % 60;
+          shiftStatusSub = `Pozostało do zamknięcia: ${rH > 0 ? rH + 'h ' : ''}${rM}m`;
+        }
+      }
+    } catch (e) {}
+
+    const flightyTimelineHtml = `
+      <div class="flighty-timeline-card">
+        <div class="flighty-tl-endpoints">
+          <div class="flighty-tl-node">
+            <span class="tl-node-lbl">OTWARCIE</span>
+            <strong class="tl-node-time">${escapeHtml(openTimeLabel)}</strong>
+          </div>
+          <div class="flighty-tl-status-pill ${open ? 'tl-active' : 'tl-idle'}">
+            ${escapeHtml(shiftStatusSub)}
+          </div>
+          <div class="flighty-tl-node align-right">
+            <span class="tl-node-lbl">ZAMKNIĘCIE</span>
+            <strong class="tl-node-time">${escapeHtml(closeTimeLabel)}</strong>
+          </div>
+        </div>
+        <div class="flighty-tl-track">
+          <div class="flighty-tl-fill ${open ? 'fill-open' : 'fill-closed'}" style="width: ${shiftProgressPct}%;"></div>
+          <div class="flighty-tl-puck" style="left: ${shiftProgressPct}%;">${open ? '🍺' : '🕒'}</div>
+        </div>
+      </div>
     `;
 
     let hhHtml = "";
@@ -23051,7 +23201,7 @@
       `;
     }
 
-    contentEl.innerHTML = closingWarningHtml + hhHtml + benchmarkHtml + actionButtonsHtml + verifyCardHtml + bentoSpecsHtml + chipsHtml + proofHtml;
+    contentEl.innerHTML = closingWarningHtml + hhHtml + flightyTimelineHtml + benchmarkHtml + actionButtonsHtml + verifyCardHtml + bentoSpecsHtml + chipsHtml + proofHtml;
 
     // Attach listeners for venue sheet actions
     const btnYes = document.getElementById(`btn-waze-yes-${venue.id}`);
