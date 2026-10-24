@@ -59,8 +59,28 @@
   <link rel="stylesheet" href="vendor/leaflet/MarkerCluster.css" />
   <link rel="stylesheet" href="vendor/leaflet/MarkerCluster.Default.css" />
   
+  <!-- Privacy-First Cookieless Analytics (GDPR / RODO Compliant) -->
+  <script>
+    window.poileAnalytics = {
+      track: function(eventName, eventData) {
+        try {
+          if (window.umami && typeof window.umami.track === "function") {
+            window.umami.track(eventName, eventData);
+          } else if (window.plausible && typeof window.plausible === "function") {
+            window.plausible(eventName, { props: eventData });
+          }
+          var key = "poile_stat_" + eventName;
+          var cur = parseInt(sessionStorage.getItem(key) || "0", 10);
+          sessionStorage.setItem(key, (cur + 1).toString());
+        } catch (e) {}
+      }
+    };
+  </script>
+  <!-- Umami Cloud Tracker: podmień data-website-id na swoje ID z panelu cloud.umami.is -->
+  <script defer src="https://cloud.umami.is/script.js" data-website-id="auto" id="umami-analytics-script"></script>
+
   <!-- Custom Styles -->
-  <link rel="stylesheet" href="styles.css?v=146">
+  <link rel="stylesheet" href="styles.css?v=147">
 </head>
 <body>
 

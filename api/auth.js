@@ -1,6 +1,6 @@
 // Vercel Serverless Function: Poilepiwko Social & Auth API
 const SUPABASE_URL = process.env.SUPABASE_URL || "https://agsodpzkytdgicpmphxz.supabase.co";
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFnc29kcHpreXRkZ2ljcG1waHh6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4ODcxODI3MywiZXhwIjoyMTA0Mjk0MjczfQ.nXVSigEdTUqxVcIOAic59j47lUNn_qI61NQRxs3Deho";
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const { isOffensive, validateUsername, validateDisplayName, validateBio } = require("./moderation");
 
 module.exports = async (req, res) => {
@@ -10,6 +10,10 @@ module.exports = async (req, res) => {
 
   if (req.method === "OPTIONS") {
     return res.status(200).end();
+  }
+
+  if (!SUPABASE_SERVICE_ROLE_KEY) {
+    return res.status(500).json({ error: "Server configuration error: SUPABASE_SERVICE_ROLE_KEY is missing." });
   }
 
   const headers = {

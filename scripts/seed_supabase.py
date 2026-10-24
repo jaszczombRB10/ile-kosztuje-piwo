@@ -7,8 +7,8 @@ import urllib.error
 
 # Usage: python3 scripts/seed_supabase.py <SUPABASE_URL> <SUPABASE_SERVICE_ROLE_KEY>
 
-DEFAULT_URL = "https://agsodpzkytdgicpmphxz.supabase.co"
-DEFAULT_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFnc29kcHpreXRkZ2ljcG1waHh6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4ODcxODI3MywiZXhwIjoyMTA0Mjk0MjczfQ.nXVSigEdTUqxVcIOAic59j47lUNn_qI61NQRxs3Deho"
+DEFAULT_URL = os.environ.get("SUPABASE_URL", "https://agsodpzkytdgicpmphxz.supabase.co")
+DEFAULT_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
 
 def main():
     supabase_url = sys.argv[1].rstrip("/") if len(sys.argv) > 1 else DEFAULT_URL

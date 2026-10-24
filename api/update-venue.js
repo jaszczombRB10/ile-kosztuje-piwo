@@ -1,6 +1,6 @@
 // Vercel Serverless Function: Update or insert venue in Supabase with admin privileges
 const SUPABASE_URL = process.env.SUPABASE_URL || "https://agsodpzkytdgicpmphxz.supabase.co";
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFnc29kcHpreXRkZ2ljcG1waHh6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4ODcxODI3MywiZXhwIjoyMTA0Mjk0MjczfQ.nXVSigEdTUqxVcIOAic59j47lUNn_qI61NQRxs3Deho";
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -13,6 +13,10 @@ module.exports = async (req, res) => {
 
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed. Use POST." });
+  }
+
+  if (!SUPABASE_SERVICE_ROLE_KEY) {
+    return res.status(500).json({ error: "Server configuration error: SUPABASE_SERVICE_ROLE_KEY is missing." });
   }
 
   try {

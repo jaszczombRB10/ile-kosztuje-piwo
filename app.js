@@ -4389,9 +4389,20 @@
   }
 
   function checkUrlHash() {
-    const raw = decodeURIComponent(window.location.hash.replace(/^#/, "").trim());
+    let raw = decodeURIComponent((window.location.hash || "").replace(/^#/, "").trim());
+    if (!raw) {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        raw = urlParams.get("bar") || urlParams.get("venue") || urlParams.get("id") || "";
+      } catch (e) {}
+    }
     if (!raw) return;
-    const lower = raw.toLowerCase();
+
+    if (raw.startsWith("bar=")) raw = raw.replace(/^bar=/, "");
+    if (raw.startsWith("venue=")) raw = raw.replace(/^venue=/, "");
+
+    const lower = raw.toLowerCase().trim();
+    if (!lower) return;
 
     // Secret Admin / Moderator hash access
     if (lower === "admin" || lower === "moderator" || lower === "panel") {
@@ -4427,7 +4438,8 @@
     }
     const target = allVenues.find(v => 
       (v.slug && v.slug.toLowerCase() === lower) || 
-      (v.id && v.id.toLowerCase() === lower)
+      (v.id && String(v.id).toLowerCase() === lower) ||
+      (v.name && v.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") === lower)
     );
     if (target) {
       window.__zoomToVenue(target.id);
@@ -23184,6 +23196,17 @@
     const contentEl = document.getElementById("venue-sheet-content");
     if (!sheet || !headerEl || !contentEl) return;
 
+    // Deep linking: update URL hash to current venue slug or id
+    const venueSlug = venue.slug || venue.id;
+    if (venueSlug && window.location.hash !== `#${venueSlug}`) {
+      try {
+        history.replaceState(null, "", `#${venueSlug}`);
+      } catch (e) {}
+    }
+    if (window.poileAnalytics && typeof window.poileAnalytics.track === "function") {
+      window.poileAnalytics.track("venue_view", { id: venue.id, name: venue.name, price: venue.beer_price_pln, district: venue.district });
+    }
+
     const price = venue.beer_price_pln;
     const tier = getPriceTier(price);
     const mapsUrl = buildGoogleMapsNavigationUrl(venue);
@@ -23229,7 +23252,10 @@
             </span>
             ${distTelemetryPill}
           </div>
-          <button type="button" class="sheet-close-btn venue-sheet-close-btn" id="btn-close-venue-sheet" aria-label="Zamknij kartę lokalu">✕</button>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <button type="button" class="venue-sheet-share-btn" id="btn-share-venue-top" aria-label="Kopiuj bezpośredni link do lokalu" title="Kopiuj bezpośredni link">🔗</button>
+            <button type="button" class="sheet-close-btn venue-sheet-close-btn" id="btn-close-venue-sheet" aria-label="Zamknij kartę lokalu">✕</button>
+          </div>
         </div>
 
         <div class="flighty-sheet-mainbar">
@@ -23400,6 +23426,10 @@
         <button type="button" class="btn-venue-sheet-action" id="btn-venue-sheet-edit">
           <span style="font-size:1.15rem;">✏️</span>
           <span>Cennik</span>
+        </button>
+        <button type="button" class="btn-venue-sheet-action" id="btn-venue-sheet-share-action">
+          <span style="font-size:1.15rem;">🔗</span>
+          <span>Udostępnij</span>
         </button>
       </div>
     `;
@@ -23591,6 +23621,40 @@
       });
     }
 
+    function handleShareVenue(e) {
+      if (e) e.stopPropagation();
+      poileHaptics.tick();
+      const slug = venue.slug || venue.id;
+      const origin = window.location.origin || "https://www.poilepiwko.pl";
+      const pathname = window.location.pathname || "/";
+      const shareUrl = `${origin}${pathname}#${slug}`;
+      const shareTitle = `${venue.name} — poilepiwko.pl`;
+      const shareText = `${venue.name}: piwo od ${venue.beer_price_pln.toFixed(2)} zł (${venue.district || "Warszawa"}). Sprawdź na żywo:`;
+
+      if (navigator.share && /mobile|android|iphone|ipad/i.test(navigator.userAgent)) {
+        navigator.share({ title: shareTitle, text: shareText, url: shareUrl }).catch(() => {});
+      } else {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(shareUrl).then(() => {
+            showAppToast("Skopiowano bezpośredni link! 🔗", venue.name, "📋", 3000);
+          }).catch(() => {
+            prompt("Skopiuj bezpośredni link do lokalu:", shareUrl);
+          });
+        } else {
+          prompt("Skopiuj bezpośredni link do lokalu:", shareUrl);
+        }
+      }
+      if (window.poileAnalytics && typeof window.poileAnalytics.track === "function") {
+        window.poileAnalytics.track("venue_share", { id: venue.id, name: venue.name });
+      }
+    }
+
+    const btnShareTop = document.getElementById("btn-share-venue-top");
+    if (btnShareTop) btnShareTop.addEventListener("click", handleShareVenue);
+
+    const btnShareAct = document.getElementById("btn-venue-sheet-share-action");
+    if (btnShareAct) btnShareAct.addEventListener("click", handleShareVenue);
+
     const btnCloseVenue = document.getElementById("btn-close-venue-sheet");
     if (btnCloseVenue) {
       btnCloseVenue.addEventListener("click", (e) => {
@@ -23613,6 +23677,13 @@
     setBottomSheetState(sheet, "closed");
     if (typeof ModalHistoryManager !== "undefined") {
       ModalHistoryManager.pop("venue-sheet");
+    }
+    // Cleanly reset URL hash if it was pointing to a venue
+    const currentHash = (window.location.hash || "").replace(/^#/, "");
+    if (currentHash && !currentHash.startsWith("@") && currentHash !== "pass" && currentHash !== "regulamin" && currentHash !== "terms" && currentHash !== "zasady") {
+      try {
+        history.replaceState(null, "", window.location.pathname + window.location.search);
+      } catch (e) {}
     }
   }
   window.__closeVenueSheet = closeVenueSheet;

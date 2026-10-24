@@ -19252,7 +19252,7 @@ input, select, textarea {
 
 .venue-sheet-actions {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
 }
 
@@ -22444,7 +22444,8 @@ body.theme-light .telemetry-lbl {
   text-overflow: ellipsis;
 }
 
-.flighty-sheet-topbar .venue-sheet-close-btn {
+.flighty-sheet-topbar .venue-sheet-close-btn,
+.flighty-sheet-topbar .venue-sheet-share-btn {
   position: static !important;
   width: 30px !important;
   height: 30px !important;
@@ -22458,6 +22459,13 @@ body.theme-light .telemetry-lbl {
   flex-shrink: 0 !important;
   font-size: 0.82rem !important;
   padding: 0 !important;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.flighty-sheet-topbar .venue-sheet-share-btn:hover {
+  background: rgba(255, 255, 255, 0.16) !important;
+  color: #ffffff !important;
 }
 
 /* 2x2 Bento Specs Grid & Benchmark Pill in #venue-sheet */
@@ -22522,7 +22530,7 @@ body.theme-light .telemetry-lbl {
 
 .venue-sheet-actions {
   display: grid !important;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
   gap: 8px !important;
 }
 
