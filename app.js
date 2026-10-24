@@ -2987,7 +2987,7 @@
           <span class="pioneer-route-banner-icon">🗺️</span>
           <div class="pioneer-route-banner-text">
             <strong>Trasa Pioniera</strong>
-            <p>Baza barów w tym rejonie jeszcze się tworzy! Sprawdź ceny na miejscu, potwierdź w 1 klik i zgarnij <strong>podwójne punkty (+20 pkt)</strong> do Paszportu Piwosza!</p>
+            <p>Baza barów w tym rejonie jeszcze się tworzy! Sprawdź ceny na miejscu i pomóż innym, potwierdzając je w 1 klik.</p>
           </div>
         </div>
       `;
@@ -3016,7 +3016,7 @@
       const pioneerBadge = isPioneerStop ? `
         <div class="pioneer-stop-challenge">
           <span>⭐</span>
-          <span>Ten bar czeka na odkrycie! Potwierdź cenę na miejscu i zgarnij <strong>+20 pkt</strong>.</span>
+          <span>Ten bar czeka na weryfikację! Sprawdź i potwierdź cenę na miejscu.</span>
         </div>
       ` : "";
 
@@ -10885,7 +10885,7 @@
           <div class="flighty-feed-empty-card">
             <div class="ff-empty-code">RADAR CLEAR · 0 LOGS</div>
             <div class="ff-empty-title">Brak raportów w tym filtrze z ostatnich 24h</div>
-            <p class="ff-empty-sub">Dodaj zdjęcie kufla w Piwnym BeRealu lub zeskanuj paragon AI (+25 XP).</p>
+            <p class="ff-empty-sub">Dodaj zdjęcie kufla w Piwnym BeRealu lub zeskanuj paragon AI.</p>
           </div>
         `;
         return;
@@ -12085,7 +12085,7 @@
             };
           }
 
-          showAppToast("Check-in BeReal zaliczony! 📍🍻", `Jesteś zameldowany w ${venueName} na mapie Find My (+25 XP)!`, "📸", 4500);
+          showAppToast("Check-in BeReal zaliczony! 📍🍻", `Jesteś zameldowany w ${venueName} na mapie Find My!`, "📸", 4500);
           closeBerealCameraModal();
           await loadLiveBarFeed();
           if (typeof initFriendsMap === "function") {
@@ -14682,7 +14682,7 @@
           if (!unlockedBadges.includes("pubquiz_master")) {
             unlockedBadges.push("pubquiz_master");
             saveUnlockedBadges(unlockedBadges);
-            showAppToast("Odblokowano Odznakę Paszportu!", `Mistrz Pub Quizu 🧠 (${currentScore}/${totalCount} pkt)`, "👑", 5000);
+            showAppToast("Odblokowano Odznakę Paszportu!", `Mistrz Pub Quizu 🧠 (${currentScore}/${totalCount} poprawnych)`, "👑", 5000);
           }
           updatePassportCounters();
         } else {
@@ -23357,13 +23357,13 @@
         </div>
         <div class="waze-actions-row" id="waze-actions-row-${venue.id}" style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
           <button type="button" class="btn-waze-confirm" id="btn-waze-yes-${venue.id}" style="background:#22c55e; color:#ffffff; font-weight:800; font-size:0.76rem; padding:9px 10px; border-radius:10px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px;">
-            👍 Cena aktualna (+10 pkt)
+            👍 Cena aktualna
           </button>
           <button type="button" class="btn-waze-change" id="btn-waze-change-${venue.id}" style="background:rgba(255,255,255,0.1); color:#cbd5e1; font-weight:700; font-size:0.76rem; padding:9px 10px; border-radius:10px; border:1px solid rgba(255,255,255,0.15); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px;">
             ✏️ Zmień cenę
           </button>
           <button type="button" class="btn-waze-scan" onclick="window.__editVenuePrice('${venue.id}', true)" style="grid-column: 1 / -1;">
-            🧾 Zeskanuj paragon / cennik AI (+25 pkt)
+            🧾 Zeskanuj paragon / cennik AI
           </button>
         </div>
         <div class="waze-quick-price-selector" id="waze-selector-${venue.id}" style="display:none; margin-top:6px;">
@@ -23493,9 +23493,9 @@
       btnYes.addEventListener("click", () => {
         poileHaptics.success();
         recordNightLogVisit(venue);
-        showAppToast("Cena potwierdzona! ✓", `Dziękujemy za potwierdzenie ceny w ${venue.name} (+10 pkt do Paszportu).`, "🍺", 4000);
+        showAppToast("Cena potwierdzona! ✓", `Dziękujemy za potwierdzenie ceny w ${venue.name}.`, "🍺", 4000);
         btnYes.style.background = "#15803d";
-        btnYes.innerHTML = "✓ Potwierdzono (+10 pkt)";
+        btnYes.innerHTML = "✓ Potwierdzono";
         btnYes.disabled = true;
         if (wazeCard) wazeCard.classList.add("confirmed");
         awardPassportPoints(10);
@@ -23568,7 +23568,7 @@
 
             poileHaptics.success();
             awardPassportPoints(15);
-            showAppToast("Cena zaktualizowana! ✓", `Nowa cena piwa w ${venue.name}: ${newPrice.toFixed(2)} zł (+15 pkt) 🍻`, "🍺", 4500);
+            showAppToast("Cena zaktualizowana! ✓", `Nowa cena piwa w ${venue.name}: ${newPrice.toFixed(2)} zł 🍻`, "🍺", 4500);
 
             // Re-render sheet header and map
             openVenueSheet(venue);
@@ -24313,7 +24313,7 @@
 
             poileHaptics.success();
             const docLabel = result.document_type === "receipt" ? "paragonu" : "cennika";
-            showAppToast("AI Skaner Cennika 🧾", `Odczytano dane z ${docLabel}! Przyznano odznakę „Zweryfikowano paragonem” (+25 pkt).`, "✨", 5000);
+            showAppToast("AI Skaner Cennika 🧾", `Odczytano dane z ${docLabel}! Ceny lokalu zostały zaktualizowane.`, "✨", 5000);
           }
         } catch (err) {
           console.warn("OCR scanner error:", err);
@@ -24377,7 +24377,7 @@
         poileHaptics.success();
         recordNightLogVisit(activeProximityVenue);
         awardPassportPoints(10);
-        showAppToast("Cena potwierdzona! ✓", `Dziękujemy za potwierdzenie ceny w ${activeProximityVenue.name} (+10 pkt).`, "🍺", 4000);
+        showAppToast("Cena potwierdzona! ✓", `Dziękujemy za potwierdzenie ceny w ${activeProximityVenue.name}.`, "🍺", 4000);
         sessionDismissedVenues.add(activeProximityVenue.id);
         proximityBanner.style.display = "none";
       });
