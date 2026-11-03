@@ -1567,6 +1567,12 @@
     alert(`Dziękujemy! Potwierdziłeś aktualność ceny dla baru: ${venue.name}. Ten lokal ma teraz ${venue.votes_confirm} ${venue.votes_confirm === 1 ? 'potwierdzenie' : 'potwierdzenia'}.`);
   };
 
+  // Sync & Suppression State for Venue Sheet & Map Popups
+  let isClosingVenueSheet = false;
+  let suppressHashCheckUntil = 0;
+  let activeOpenVenueId = null;
+  let zoomToVenueTimer = null;
+
   // Render Markers on Map based on filters (Clustered for 60 FPS performance)
   function renderMarkers() {
     if (clusterGroup) {
@@ -1593,40 +1599,15 @@
       const icon = createMarkerIcon(venue);
       // Moduł 5: Prioritize marker z-indices so open & cheap venues render on top of expensive/closed ones
       const zIndexOffset = Math.round(1000 - (venue.beer_price_pln || 15) * 10) + (venue._isOpen ? 500 : 0) + ((venue.votes_confirm || 0) * 5);
-      const marker = L.marker([venue.latitude, venue.longitude], { icon, zIndexOffset })
-        .bindPopup(() => createPopupContent(venue), {
-          maxWidth: 320,
-          minWidth: 280,
-          className: "custom-leaflet-popup",
-          autoPanPadding: [16, 16]
-        });
+      const marker = L.marker([venue.latitude, venue.longitude], { icon, zIndexOffset });
 
       marker._venueData = venue;
-      marker.on("click", () => {
-        if (typeof window.__openVenueSheet === "function") {
-          try { marker.closePopup(); } catch (err) {}
-          window.__openVenueSheet(venue);
-          const slug = venue.slug || venue.id;
-          if (slug && window.location.hash !== `#${slug}`) {
-            try {
-              history.replaceState(null, "", `#${slug}`);
-            } catch (e) {}
-          }
+      marker.on("click", (e) => {
+        if (e && e.originalEvent) {
+          try { e.originalEvent.stopPropagation(); } catch (err) {}
         }
-      });
-      marker.on("popupopen", () => {
-        const v = marker._venueData;
-        if (v) {
-          if (typeof window.__openVenueSheet === "function") {
-            try { marker.closePopup(); } catch (err) {}
-            window.__openVenueSheet(v);
-          }
-          const slug = v.slug || v.id;
-          if (slug && window.location.hash !== `#${slug}`) {
-            try {
-              history.replaceState(null, "", `#${slug}`);
-            } catch (e) {}
-          }
+        if (typeof window.__openVenueSheet === "function") {
+          window.__openVenueSheet(venue);
         }
       });
       newMarkers.push(marker);
@@ -1643,10 +1624,17 @@
     if (!window.__mapPopupCloseAttached && map) {
       window.__mapPopupCloseAttached = true;
       map.on("popupclose", () => {
+        suppressHashCheckUntil = Date.now() + 600;
         if (window.location.hash) {
           try {
             history.replaceState(null, "", window.location.pathname + window.location.search);
           } catch (e) {}
+        }
+      });
+      map.on("click", () => {
+        const sheet = document.getElementById("venue-sheet");
+        if (sheet && sheet.getAttribute("data-state") !== "closed") {
+          closeVenueSheet();
         }
       });
     }
@@ -2514,6 +2502,11 @@
     const venue = allVenues.find(v => v.id === venueId || (v.slug && v.slug.toLowerCase() === venueId.toLowerCase()));
     if (!venue) return;
 
+    if (zoomToVenueTimer) {
+      clearTimeout(zoomToVenueTimer);
+      zoomToVenueTimer = null;
+    }
+
     // Update URL hash for deep linking
     const slug = venue.slug || venue.id;
     if (slug && window.location.hash !== `#${slug}`) {
@@ -2553,8 +2546,10 @@
 
     if (typeof window.__openVenueSheet === "function") {
       map.flyTo([venue.latitude, venue.longitude], 17, { duration: 0.9 });
-      setTimeout(() => {
-        window.__openVenueSheet(venue);
+      zoomToVenueTimer = setTimeout(() => {
+        if (!isClosingVenueSheet && (!suppressHashCheckUntil || Date.now() >= suppressHashCheckUntil)) {
+          window.__openVenueSheet(venue);
+        }
       }, 280);
       return;
     }
@@ -2566,12 +2561,14 @@
 
     if (clusterGroup && targetMarker) {
       clusterGroup.zoomToShowLayer(targetMarker, () => {
-        targetMarker.openPopup();
+        if (targetMarker && typeof targetMarker.openPopup === "function" && targetMarker.getPopup && targetMarker.getPopup()) {
+          targetMarker.openPopup();
+        }
       });
     } else {
       map.flyTo([venue.latitude, venue.longitude], 17, { duration: 1.2 });
-      setTimeout(() => {
-        if (targetMarker) {
+      zoomToVenueTimer = setTimeout(() => {
+        if (targetMarker && typeof targetMarker.openPopup === "function" && targetMarker.getPopup && targetMarker.getPopup()) {
           targetMarker.openPopup();
         }
       }, 1300);
@@ -4389,6 +4386,9 @@
   }
 
   function checkUrlHash() {
+    if (isClosingVenueSheet || (suppressHashCheckUntil && Date.now() < suppressHashCheckUntil)) {
+      return;
+    }
     let raw = decodeURIComponent((window.location.hash || "").replace(/^#/, "").trim());
     if (!raw) {
       try {
@@ -4442,6 +4442,11 @@
       (v.name && v.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") === lower)
     );
     if (target) {
+      const sheet = document.getElementById("venue-sheet");
+      const isSheetOpen = sheet && sheet.getAttribute("data-state") !== "closed" && sheet.style.display !== "none";
+      if (isSheetOpen && activeOpenVenueId === target.id) {
+        return;
+      }
       window.__zoomToVenue(target.id);
     }
   }
@@ -5373,6 +5378,7 @@
     // Close Modals on ESC Key
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
+        if (window.__closeVenueSheet) window.__closeVenueSheet();
         window.__closeLightbox();
         if (baroModal) baroModal.classList.remove("active");
         if (window.__closePubCrawl) window.__closePubCrawl();
@@ -23191,6 +23197,18 @@
 
   function openVenueSheet(venue) {
     if (!venue) return;
+    if (zoomToVenueTimer) {
+      clearTimeout(zoomToVenueTimer);
+      zoomToVenueTimer = null;
+    }
+    isClosingVenueSheet = false;
+    activeOpenVenueId = venue.id;
+
+    // Close any Leaflet map popup so no ghost bubbles stay on map
+    if (map && typeof map.closePopup === "function") {
+      try { map.closePopup(); } catch (e) {}
+    }
+
     const sheet = document.getElementById("venue-sheet");
     const headerEl = document.getElementById("venue-sheet-header");
     const contentEl = document.getElementById("venue-sheet-content");
@@ -23672,12 +23690,29 @@
   window.__openVenueSheet = openVenueSheet;
 
   function closeVenueSheet() {
+    isClosingVenueSheet = true;
+    suppressHashCheckUntil = Date.now() + 1200;
+    activeOpenVenueId = null;
+
+    if (zoomToVenueTimer) {
+      clearTimeout(zoomToVenueTimer);
+      zoomToVenueTimer = null;
+    }
+
     const sheet = document.getElementById("venue-sheet");
-    if (!sheet) return;
-    setBottomSheetState(sheet, "closed");
+    if (sheet) {
+      setBottomSheetState(sheet, "closed");
+    }
+
+    // Close any open Leaflet popup
+    if (map && typeof map.closePopup === "function") {
+      try { map.closePopup(); } catch (e) {}
+    }
+
     if (typeof ModalHistoryManager !== "undefined") {
       ModalHistoryManager.pop("venue-sheet");
     }
+
     // Cleanly reset URL hash if it was pointing to a venue
     const currentHash = (window.location.hash || "").replace(/^#/, "");
     if (currentHash && !currentHash.startsWith("@") && currentHash !== "pass" && currentHash !== "regulamin" && currentHash !== "terms" && currentHash !== "zasady") {
@@ -23685,8 +23720,27 @@
         history.replaceState(null, "", window.location.pathname + window.location.search);
       } catch (e) {}
     }
+
+    setTimeout(() => {
+      if (window.location.hash && !window.location.hash.startsWith("#@") && window.location.hash !== "#pass" && window.location.hash !== "#regulamin" && window.location.hash !== "#terms" && window.location.hash !== "#zasady") {
+        try {
+          history.replaceState(null, "", window.location.pathname + window.location.search);
+        } catch (e) {}
+      }
+      isClosingVenueSheet = false;
+    }, 1250);
   }
   window.__closeVenueSheet = closeVenueSheet;
+
+  window.addEventListener("popstate", () => {
+    if (isClosingVenueSheet || (suppressHashCheckUntil && Date.now() < suppressHashCheckUntil)) {
+      if (window.location.hash && !window.location.hash.startsWith("#@") && window.location.hash !== "#pass" && window.location.hash !== "#regulamin" && window.location.hash !== "#terms" && window.location.hash !== "#zasady") {
+        try {
+          history.replaceState(null, "", window.location.pathname + window.location.search);
+        } catch (e) {}
+      }
+    }
+  });
 
   function renderMapBottomSheetVenues(venues) {
     cachedFilteredVenues = venues || [];
