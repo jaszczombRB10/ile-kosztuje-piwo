@@ -10755,13 +10755,12 @@
       const venues = (allVenues && allVenues.length > 0) ? allVenues : [];
       const nowMs = Date.now();
       const nowDate = new Date();
-      const cityIataMap = { warszawa: "WAW", krakow: "KRK", wroclaw: "WRO", trojmiasto: "GDN", poznan: "POZ", lodz: "LCJ", katowice: "KTW" };
-      const cityIata = cityIataMap[curCity.id] || (curCity.name || "WAW").slice(0, 3).toUpperCase();
+      const cityUpper = (curCity.name || "WARSZAWA").toUpperCase();
 
       const cityStatLabel = document.getElementById("feed-city-stat-label");
       if (cityStatLabel && venues.length > 0) {
         const openCount = venues.filter(v => isVenueOpen(v, nowDate)).length;
-        cityStatLabel.textContent = `${cityIata} · ${openCount > 0 ? `${openCount} ACTIVE` : `${venues.length} BARS`}`;
+        cityStatLabel.textContent = `${cityUpper} · ${openCount > 0 ? `${openCount} OPEN` : `${venues.length} BARÓW`}`;
       }
 
       let deletedPostIds = [];
@@ -10813,6 +10812,9 @@
         const vDistrict = post.district || (matchedVenue ? matchedVenue.district : curCity.name);
         const vId = matchedVenue ? matchedVenue.id : (post.venue_id || "");
         const priceNum = Number(post.beer_price) || (matchedVenue ? matchedVenue.beer_price_pln : 13);
+        const isOpenNow = matchedVenue ? isVenueOpen(matchedVenue, nowDate) : true;
+        const lat = matchedVenue && typeof matchedVenue.latitude === "number" ? matchedVenue.latitude : null;
+        const lng = matchedVenue && typeof matchedVenue.longitude === "number" ? matchedVenue.longitude : null;
 
         items.push({
           kind: "photo",
@@ -10824,9 +10826,10 @@
           venue_id: vId,
           venue_name: vName,
           district: vDistrict,
-          city_iata: cityIata,
-          dist_iata: (vDistrict || "BAR").toUpperCase().replace(/[^A-ZĄĆĘŁŃÓŚŹŻ]/g, "").slice(0, 3) || "BAR",
-          beer_name: post.beer_name || (matchedVenue && matchedVenue.beer_brand) || "Jasne Pełne 0.5L",
+          is_open: isOpenNow,
+          latitude: lat,
+          longitude: lng,
+          beer_name: post.beer_name || (matchedVenue && (matchedVenue.beer_brand || matchedVenue.beer_name)) || "Jasne Pełne 0.5L",
           beer_price: priceNum,
           photo_url: post.photo_url,
           selfie_url: post.selfie_url || null,
@@ -10850,7 +10853,7 @@
               items.push({
                 kind: "activity",
                 activity_type: "verified",
-                badge_label: "POTWIERDZONO",
+                badge_label: "POTWIERDZONO CENĘ",
                 badge_class: "badge-verified",
                 id: `local-conf-${v.id}`,
                 author_name: (currentUser && currentUser.user_metadata && currentUser.user_metadata.username) || "Ty",
@@ -10859,12 +10862,12 @@
                 venue_id: v.id,
                 venue_name: v.name,
                 district: vDist,
-                city_iata: cityIata,
-                dist_iata: vDist.toUpperCase().replace(/[^A-ZĄĆĘŁŃÓŚŹŻ]/g, "").slice(0, 3) || "BAR",
+                latitude: v.latitude,
+                longitude: v.longitude,
                 beer_name: v.beer_brand || v.beer_name || "Lane 0.5L",
                 beer_price: v.beer_price_pln,
                 is_open: isVenueOpen(v, nowDate),
-                benchmark_text: diffPct > 4 ? `-${diffPct}% vs ${vDist}` : `Zgodne z cennikiem`,
+                benchmark_text: diffPct > 4 ? `-${diffPct}% taniej niż średnia (${vDist})` : `Zgodne z cennikiem baru`,
                 cheers_count: 6 + (idx % 5),
                 created_at: new Date(ts).toISOString()
               });
@@ -10872,6 +10875,45 @@
           }
         });
       } catch (e) {}
+
+      // 3. Active city check-in / radar pulses from open bars so the feed complements the Find My pins above
+      const openVenues = venues.filter(v => isVenueOpen(v, nowDate) && typeof v.beer_price_pln === "number");
+      const feedSamplePool = (openVenues.length >= 4 ? openVenues : cheapVenues).slice(0, 12);
+      const liveActivitySeeds = [
+        { handle: "kufel_patrol", icon: "🕵️‍♂️", minsAgo: 9, badge: "MELDUNEK LIVE", bClass: "badge-deal" },
+        { handle: "tanie_lane", icon: "💚", minsAgo: 22, badge: "SPRAWDZONA CENA", bClass: "badge-verified" },
+        { handle: "chmielowy_wilk", icon: "🐺", minsAgo: 38, badge: "MELDUNEK W BARZE", bClass: "badge-deal" },
+        { handle: "nocny_marek", icon: "🦉", minsAgo: 51, badge: "AKTYWNY TERAZ", bClass: "badge-receipt" }
+      ];
+      liveActivitySeeds.forEach((sc, i) => {
+        const v = feedSamplePool[(i * 3) % Math.max(1, feedSamplePool.length)];
+        if (!v) return;
+        const postId = `live-radar-${curCity.id}-${v.id}`;
+        if (deletedPostIds.includes(postId)) return;
+        const vDist = v.district || curCity.name;
+        const dAvg = distCounts[vDist] ? (distSums[vDist] / distCounts[vDist]) : 16;
+        const diffPct = Math.round(((dAvg - v.beer_price_pln) / dAvg) * 100);
+        items.push({
+          kind: "activity",
+          activity_type: "checkin",
+          badge_label: sc.badge,
+          badge_class: sc.bClass,
+          id: postId,
+          author_name: sc.handle,
+          avatar_icon: sc.icon,
+          venue_id: v.id,
+          venue_name: v.name,
+          district: vDist,
+          latitude: v.latitude,
+          longitude: v.longitude,
+          beer_name: v.beer_brand || v.beer_name || "Jasne Pełne 0.5L",
+          beer_price: v.beer_price_pln,
+          is_open: isVenueOpen(v, nowDate),
+          benchmark_text: diffPct > 4 ? `-${diffPct}% taniej niż średnia (${vDist})` : `Świeży meldunek przy barze`,
+          cheers_count: 3 + ((i * 4) % 9),
+          created_at: new Date(nowMs - sc.minsAgo * 60 * 1000).toISOString()
+        });
+      });
 
       return items.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     }
@@ -10889,9 +10931,9 @@
       if (filtered.length === 0) {
         feedGrid.innerHTML = `
           <div class="flighty-feed-empty-card">
-            <div class="ff-empty-code">RADAR CLEAR · 0 LOGS</div>
-            <div class="ff-empty-title">Brak raportów w tym filtrze z ostatnich 24h</div>
-            <p class="ff-empty-sub">Dodaj zdjęcie kufla w Piwnym BeRealu lub zeskanuj paragon AI.</p>
+            <div class="ff-empty-code">● BRAK MELDUNKÓW · 24H</div>
+            <div class="ff-empty-title">Brak relacji w wybranym filtrze z ostatnich 24h</div>
+            <p class="ff-empty-sub">Zrób zdjęcie kufla w barze (BeReal), aby pojawić się na mapie Find My.</p>
           </div>
         `;
         return;
@@ -10902,7 +10944,8 @@
         const priceNum = Number(item.beer_price) || 14;
         const priceFormatted = priceNum % 1 === 0 ? priceNum.toFixed(0) : priceNum.toFixed(2);
         const tierClass = priceNum <= 12 ? "tier-green" : (priceNum <= 18 ? "tier-amber" : "tier-red");
-        const routeCode = `${item.city_iata || "WAW"} ➔ ${item.dist_iata || "BAR"}`;
+        const districtLabel = (item.district || getCurrentCity().name || "CENTRUM").toUpperCase();
+        const isOpen = item.is_open !== false;
 
         if (item.kind === "photo") {
           const authorName = item.author_name || "piwosz";
@@ -10911,7 +10954,6 @@
             : escapeHtml(item.avatar_icon || "🍺");
           const venueId = item.venue_id || "";
           const venueName = item.venue_name || getCurrentCity().name;
-          const districtName = item.district || "";
           const authorId = item.author_id || "";
           const isAuthor = currentUser && (currentUser.id === authorId || (currentUser.user_metadata && currentUser.user_metadata.username === authorName));
 
@@ -10919,26 +10961,26 @@
             <div class="beer-bereal-card flighty-bereal-card" data-post-id="${escapeHtml(item.id)}" data-author-id="${escapeHtml(authorId)}" data-author-name="${escapeHtml(authorName)}">
               <div class="bereal-post-header">
                 <div class="bereal-author-box">
-                  <div class="bereal-author-avatar" onclick="window.__openUserProfile('${escapeHtml(authorName)}')">
+                  <div class="bereal-author-avatar ${isAuthor ? 'is-me' : ''}" onclick="window.__openUserProfile('${escapeHtml(authorName)}')">
                     ${authorAvatarContent}
                   </div>
                   <div class="bereal-author-meta">
                     <div class="bereal-author-name-row">
                       <span class="bereal-author-name" onclick="window.__openUserProfile('${escapeHtml(authorName)}')">@${escapeHtml(authorName)}</span>
-                      ${item.user_number ? `<span class="user-club-number-badge">${escapeHtml(item.user_number)}</span>` : ""}
-                      <span class="flighty-mini-route">${escapeHtml(routeCode)}</span>
                       ${isAuthor ? `<span class="bereal-author-badge-me">TY</span>` : ""}
+                      <span class="flighty-mini-route">📍 ${escapeHtml(districtLabel)}</span>
                     </div>
                     <div class="bereal-sub-meta">
-                      <span class="bereal-venue-link" onclick="window.__openVenueById('${escapeHtml(venueId)}', '${escapeHtml(venueName)}')">
-                        📍 ${escapeHtml(venueName)}${districtName ? ` · ${escapeHtml(districtName)}` : ""}
-                      </span>
+                      <span class="${isOpen ? 'ffc-status-open' : 'ffc-status-closed'}">${isOpen ? '● OPEN' : '○ ZAMKNIĘTE'}</span>
                       <span class="bereal-meta-dot">·</span>
-                      <span class="bereal-post-time">${timeAgo}</span>
+                      <span class="bereal-venue-link" onclick="window.__openVenueById('${escapeHtml(venueId)}', '${escapeHtml(venueName)}')">
+                        ${escapeHtml(venueName)}
+                      </span>
                     </div>
                   </div>
                 </div>
                 <div class="bereal-header-actions">
+                  <span class="ffc-time-mono">${escapeHtml(timeAgo)}</span>
                   <button type="button" class="bereal-btn-delete" onclick="window.__deleteFeedPost('${escapeHtml(item.id)}', this)" title="Ukryj lub usuń z Feedu">✕</button>
                 </div>
               </div>
@@ -10966,8 +11008,11 @@
               <div class="bereal-post-footer">
                 <p class="bereal-vibe-caption">${escapeHtml(item.vibe_caption || "Zimny kufel na mieście! 🍻")}</p>
                 <div class="bereal-footer-actions-row">
-                  <button type="button" class="feed-btn-map-jump" onclick="window.__openVenueById('${escapeHtml(venueId)}', '${escapeHtml(venueName)}')">
-                    🗺️ Mapa
+                  <button type="button" class="feed-btn-map-jump" onclick="window.__focusFindMyByVenue('${escapeHtml(venueId)}', '${escapeHtml(venueName)}', '${escapeHtml(authorName)}')">
+                    🎯 Pokaż w Find My
+                  </button>
+                  <button type="button" class="feed-btn-map-jump secondary" onclick="window.__openVenueById('${escapeHtml(venueId)}', '${escapeHtml(venueName)}')">
+                    🧭 Karta baru ↗
                   </button>
                   <button type="button" class="bereal-cheers-btn" onclick="window.__cheersFeedItem('${escapeHtml(item.id)}', this)">
                     🍻 <span>${item.cheers_count || 1}</span>
@@ -10978,12 +11023,12 @@
           `;
         }
 
-        // Compact Flighty Telemetry Card for Price / Receipt / Check-in Activity
+        // Compact Flighty Card for Live Check-in / Price Confirmation
         return `
           <div class="flighty-feed-card" data-post-id="${escapeHtml(item.id)}">
             <div class="ffc-telemetry-bar">
               <div class="ffc-telemetry-left">
-                <span class="ffc-route-pill">${escapeHtml(routeCode)}</span>
+                <span class="ffc-route-pill">📍 ${escapeHtml(districtLabel)}</span>
                 <span class="ffc-type-pill ${escapeHtml(item.badge_class || "badge-verified")}">${escapeHtml(item.badge_label)}</span>
               </div>
               <span class="ffc-time-mono">${escapeHtml(timeAgo)}</span>
@@ -10993,12 +11038,12 @@
               <div class="ffc-venue-col">
                 <div class="ffc-venue-name">${escapeHtml(item.venue_name)}</div>
                 <div class="ffc-venue-sub">
-                  <span class="${item.is_open ? "ffc-status-open" : "ffc-status-closed"}">${item.is_open ? "● OPEN" : "○ ZAMKNIĘTE"}</span>
+                  <span class="${isOpen ? "ffc-status-open" : "ffc-status-closed"}">${isOpen ? "● OPEN" : "○ ZAMKNIĘTE"}</span>
                   <span class="ffc-dot">·</span>
                   <span>🍺 ${escapeHtml(item.beer_name)}</span>
                 </div>
                 <div class="ffc-scout-line">
-                  <span>@${escapeHtml(item.author_name)}</span>
+                  <span class="ffc-author-tag">@${escapeHtml(item.author_name)}</span>
                   <span class="ffc-dot">·</span>
                   <span>${escapeHtml(item.benchmark_text)}</span>
                 </div>
@@ -11010,8 +11055,11 @@
             </div>
 
             <div class="ffc-bottom-bar">
+              <button type="button" class="ffc-btn-map" onclick="window.__focusFindMyByVenue('${escapeHtml(item.venue_id)}', '${escapeHtml(item.venue_name)}', '${escapeHtml(item.author_name)}')">
+                <span>🎯 Namierz w Find My</span>
+              </button>
               <button type="button" class="ffc-btn-map" onclick="window.__openVenueById('${escapeHtml(item.venue_id)}', '${escapeHtml(item.venue_name)}')">
-                <span>🧭 Pokaż lokal na mapie</span>
+                <span>🧭 Otwórz bar</span>
                 <span>↗</span>
               </button>
               <button type="button" class="ffc-btn-cheers" onclick="window.__cheersFeedItem('${escapeHtml(item.id)}', this)">
@@ -11029,6 +11077,7 @@
     let findMyTileLayer = null;
     let findMyMarkerById = {};
     let mainMapFindMyLayer = null;
+    let lastFindMyPeopleList = [];
 
     function buildFindMyPeopleList(apiFeed, remoteFriends) {
       const curCity = getCurrentCity();
@@ -11184,6 +11233,8 @@
       const shortVenue = (person.venue_name || "Bar").length > 15
         ? (person.venue_name || "Bar").slice(0, 14) + "…"
         : (person.venue_name || "Bar");
+      const priceNum = Number(person.beer_price) || 14;
+      const priceTag = priceNum % 1 === 0 ? `${priceNum} zł` : `${priceNum.toFixed(1)} zł`;
 
       return `
         <div class="findmy-pin-wrap ${person.is_me ? 'is-me' : 'is-friend'}">
@@ -11196,6 +11247,7 @@
           <div class="findmy-name-pill">
             <strong>${person.is_me ? 'TY' : '@' + escapeHtml(person.username)}</strong>
             <span>· ${escapeHtml(shortVenue)}</span>
+            <em class="findmy-pin-price">${escapeHtml(priceTag)}</em>
           </div>
         </div>
       `;
@@ -11211,7 +11263,7 @@
       return `
         <div class="findmy-popup-card">
           <div class="findmy-popup-head">
-            <span class="findmy-popup-tag">${person.photo_url ? '📸 CHECK-IN BEREAL' : '🟢 CHECK-IN LIVE'}</span>
+            <span class="findmy-popup-tag">${person.photo_url ? '📸 BEREAL LIVE' : '● AKTYWNY TERAZ'}</span>
             <span class="findmy-popup-time">${escapeHtml(timeAgo)}</span>
           </div>
           <div class="findmy-popup-user-row">
@@ -11233,7 +11285,7 @@
             </div>
           ` : ''}
           <button type="button" class="findmy-popup-btn" onclick="window.__openVenueById('${escapeHtml(person.venue_id)}', '${escapeHtml(person.venue_name)}')">
-            🧭 Pokaż bar na mapie ↗
+            🧭 Otwórz kartę baru ↗
           </button>
         </div>
       `;
@@ -11253,8 +11305,8 @@
         const icon = L.divIcon({
           className: "findmy-leaflet-icon",
           html: createFindMyPinHtml(person),
-          iconSize: [110, 68],
-          iconAnchor: [55, 52],
+          iconSize: [124, 70],
+          iconAnchor: [62, 52],
           popupAnchor: [0, -48]
         });
         const marker = L.marker([person.latitude, person.longitude], {
@@ -11271,8 +11323,15 @@
       });
     };
 
-    window.__focusFindMyPerson = function(key) {
+    window.__focusFindMyPerson = function(key, btnEl) {
       if (typeof poileHaptics !== "undefined" && poileHaptics.tick) poileHaptics.tick();
+      const stripEl = document.getElementById("findmy-people-strip");
+      if (stripEl) {
+        stripEl.querySelectorAll(".findmy-person-chip").forEach(b => b.classList.remove("active-focus"));
+      }
+      if (btnEl && btnEl.classList) {
+        btnEl.classList.add("active-focus");
+      }
       const entry = findMyMarkerById[key];
       if (!entry || !findMyMapInstance) return;
       findMyMapInstance.flyTo([entry.person.latitude, entry.person.longitude], 16, { duration: 0.75 });
@@ -11282,6 +11341,60 @@
         }
       }, 380);
     };
+
+    window.__focusFindMyByVenue = function(venueId, venueName, authorName) {
+      if (typeof poileHaptics !== "undefined" && poileHaptics.tick) poileHaptics.tick();
+      const mapBox = document.getElementById("findmy-feed-map-box");
+      if (mapBox && typeof mapBox.scrollIntoView === "function") {
+        mapBox.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      if (!findMyMapInstance) return;
+
+      // 1. Check if there is an existing Find My pin matching author or venue
+      const keys = Object.keys(findMyMarkerById || {});
+      for (let i = 0; i < keys.length; i++) {
+        const entry = findMyMarkerById[keys[i]];
+        if (!entry || !entry.person) continue;
+        if (
+          (venueId && String(entry.person.venue_id) === String(venueId)) ||
+          (authorName && String(entry.person.username).toLowerCase() === String(authorName).toLowerCase()) ||
+          (venueName && String(entry.person.venue_name).toLowerCase() === String(venueName).toLowerCase())
+        ) {
+          window.__focusFindMyPerson(keys[i]);
+          return;
+        }
+      }
+
+      // 2. Otherwise fly directly to the venue coordinates on the Find My map
+      const list = allVenues || [];
+      const target = list.find(v => String(v.id) === String(venueId)) ||
+                     list.find(v => String(v.name || "").toLowerCase() === String(venueName || "").toLowerCase());
+      if (target && typeof target.latitude === "number" && typeof target.longitude === "number") {
+        findMyMapInstance.flyTo([target.latitude, target.longitude], 16, { duration: 0.75 });
+      }
+    };
+
+    function fitAllFindMyPins() {
+      if (!findMyMapInstance) return;
+      if (typeof poileHaptics !== "undefined" && poileHaptics.tick) poileHaptics.tick();
+      const coords = (lastFindMyPeopleList || [])
+        .filter(p => typeof p.latitude === "number" && typeof p.longitude === "number")
+        .map(p => [p.latitude, p.longitude]);
+      if (coords.length >= 2 && typeof L !== "undefined" && L.latLngBounds) {
+        findMyMapInstance.flyToBounds(L.latLngBounds(coords), { padding: [42, 42], maxZoom: 15, duration: 0.75 });
+      } else if (coords.length === 1) {
+        findMyMapInstance.flyTo(coords[0], 14, { duration: 0.75 });
+      } else {
+        const curCity = getCurrentCity();
+        findMyMapInstance.flyTo(curCity.center, 13, { duration: 0.75 });
+      }
+    }
+
+    const btnFindMyFitAll = document.getElementById("btn-findmy-fit-all");
+    if (btnFindMyFitAll && !btnFindMyFitAll.__wired) {
+      btnFindMyFitAll.__wired = true;
+      btnFindMyFitAll.addEventListener("click", fitAllFindMyPins);
+    }
 
     async function initFindMyFeedMap(apiFeed) {
       const container = document.getElementById("findmy-feed-map");
@@ -11314,9 +11427,11 @@
         }
       }
 
-      setTimeout(() => {
-        if (findMyMapInstance) findMyMapInstance.invalidateSize();
-      }, 120);
+      [60, 180, 380].forEach(delay => {
+        setTimeout(() => {
+          if (findMyMapInstance) findMyMapInstance.invalidateSize();
+        }, delay);
+      });
 
       let remoteFriends = [];
       try {
@@ -11333,6 +11448,7 @@
       } catch (e) {}
 
       const people = buildFindMyPeopleList(apiFeed || [], remoteFriends);
+      lastFindMyPeopleList = people;
       if (findMyMarkersLayer) findMyMarkersLayer.clearLayers();
       findMyMarkerById = {};
 
@@ -11341,8 +11457,8 @@
         const icon = L.divIcon({
           className: "findmy-leaflet-icon",
           html: createFindMyPinHtml(person),
-          iconSize: [110, 68],
-          iconAnchor: [55, 52],
+          iconSize: [124, 70],
+          iconAnchor: [62, 52],
           popupAnchor: [0, -48]
         });
         const marker = L.marker([person.latitude, person.longitude], { icon }).bindPopup(
@@ -11351,7 +11467,7 @@
             className: "findmy-apple-popup",
             closeButton: true,
             autoPan: true,
-            maxWidth: 230,
+            maxWidth: 235,
             offset: [0, -28]
           }
         );
@@ -11359,16 +11475,20 @@
         findMyMarkerById[person.key] = { marker, person };
       });
 
-      if (people.length > 0 && findMyMapInstance) {
-        const focusTarget = people[0];
-        findMyMapInstance.setView([focusTarget.latitude, focusTarget.longitude], 13);
+      if (people.length >= 2 && findMyMapInstance && L.latLngBounds) {
+        const coords = people.filter(p => p.latitude && p.longitude).map(p => [p.latitude, p.longitude]);
+        if (coords.length >= 2) {
+          findMyMapInstance.fitBounds(L.latLngBounds(coords), { padding: [38, 38], maxZoom: 14 });
+        }
+      } else if (people.length === 1 && findMyMapInstance) {
+        findMyMapInstance.setView([people[0].latitude, people[0].longitude], 14);
       }
 
       if (countLbl) {
         const realCount = people.filter(p => p.photo_url || p.is_me).length;
         countLbl.textContent = realCount > 0
-          ? `🟢 ${people.length} w barach · ${realCount} BeReal Live`
-          : `🟢 ${people.length} aktywnych w barach · Zrób BeReala!`;
+          ? `ZNAJDŹ · ${people.length} W BARACH (${realCount} BEREAL)`
+          : `ZNAJDŹ · ${people.length} AKTYWNYCH W BARACH`;
       }
 
       if (stripEl) {
@@ -11376,8 +11496,11 @@
           <button type="button" class="findmy-person-chip checkin-cta" onclick="window.__openBerealCamera()">
             <span class="fmp-avatar plus">📸</span>
             <div class="fmp-meta">
-              <strong>+ Check-in BeReal</strong>
-              <span>Zamelduj się w barze</span>
+              <div class="fmp-top-line">
+                <strong>+ Zamelduj się</strong>
+                <span class="fmp-live-tag">24H</span>
+              </div>
+              <span>Dodaj BeReal z baru</span>
             </div>
           </button>
         `;
@@ -11385,12 +11508,21 @@
           const avHtml = p.avatar_photo
             ? `<img src="${escapeHtml(p.avatar_photo)}" alt="${escapeHtml(p.username)}" />`
             : `<span>${escapeHtml(p.avatar_icon || "🍺")}</span>`;
+          const timeStr = formatTimeAgo(p.timestamp);
+          const priceVal = Number(p.beer_price) || 14;
+          const priceStr = priceVal % 1 === 0 ? `${priceVal} zł` : `${priceVal.toFixed(1)} zł`;
           return `
-            <button type="button" class="findmy-person-chip ${p.is_me ? 'is-me' : ''}" onclick="window.__focusFindMyPerson('${escapeHtml(p.key)}')">
+            <button type="button" class="findmy-person-chip ${p.is_me ? 'is-me' : ''}" onclick="window.__focusFindMyPerson('${escapeHtml(p.key)}', this)">
               <span class="fmp-avatar">${avHtml}</span>
               <div class="fmp-meta">
-                <strong>${p.is_me ? 'Ty (@' + escapeHtml(p.username) + ')' : '@' + escapeHtml(p.username)}</strong>
-                <span>📍 ${escapeHtml(p.venue_name)}</span>
+                <div class="fmp-top-line">
+                  <strong>${p.is_me ? 'Ty (@' + escapeHtml(p.username) + ')' : '@' + escapeHtml(p.username)}</strong>
+                  <em class="fmp-time">${escapeHtml(timeStr)}</em>
+                </div>
+                <div class="fmp-sub-line">
+                  <span>📍 ${escapeHtml(p.venue_name)}</span>
+                  <b class="fmp-price-pill">${escapeHtml(priceStr)}</b>
+                </div>
               </div>
             </button>
           `;

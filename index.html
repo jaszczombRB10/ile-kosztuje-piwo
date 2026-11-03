@@ -80,7 +80,7 @@
   <script defer src="https://cloud.umami.is/script.js" data-website-id="auto" id="umami-analytics-script"></script>
 
   <!-- Custom Styles -->
-  <link rel="stylesheet" href="styles.css?v=147">
+  <link rel="stylesheet" href="styles.css?v=149">
 </head>
 <body>
 
@@ -2764,52 +2764,73 @@
         </div>
       </div>
 
-      <!-- Tab 3: Live Feed 2.0 (Apple Find My Radar + Flighty Telemetry Stream: BeReal Check-in + Paragony AI) -->
+      <!-- Tab 3: Live Feed 2.0 (Apple Find My Hero Map + Flighty UI/UX Stream) -->
       <div class="comm-tab-pane" id="pane-comm-feed" style="display:none;">
         <div class="flighty-feed-console">
-          <div class="flighty-feed-console-top">
-            <div class="flighty-feed-telemetry-id">
-              <span class="feed-live-dot"></span>
-              <span class="flighty-feed-radar-code">FIND MY · RADAR BAROWY 24H</span>
-            </div>
-            <span class="flighty-feed-city-tag" id="feed-city-stat-label">WAW · WARSZAWA</span>
-          </div>
-
-          <!-- Apple Find My (Znajdź) Live Bar Map inside Live Feed -->
+          <!-- Apple Find My (Znajdź) Hero Live Map inside Live Feed -->
           <div class="findmy-feed-radar-card" id="findmy-feed-map-box">
-            <div class="findmy-radar-header">
-              <div class="findmy-radar-title">
-                <span class="findmy-green-beacon"></span>
-                <span>ZNAJDŹ EKIPĘ W BARACH</span>
-              </div>
-              <span class="findmy-radar-sub" id="findmy-active-count-lbl">BeReal w barze = Check-in</span>
-            </div>
             <div class="findmy-map-viewport">
-              <div id="findmy-feed-map" style="width: 100%; height: 205px;"></div>
+              <div id="findmy-feed-map"></div>
+
+              <!-- Floating Top HUD Bar over Map (Apple Find My + Flighty style) -->
+              <div class="findmy-map-hud-top">
+                <div class="findmy-hud-pill live-beacon-pill">
+                  <span class="findmy-green-beacon"></span>
+                  <span class="findmy-hud-code" id="findmy-active-count-lbl">ZNAJDŹ W BARACH · LIVE</span>
+                </div>
+                <span class="findmy-hud-pill city-stat-pill" id="feed-city-stat-label">WARSZAWA · OPEN</span>
+              </div>
+
+              <!-- Floating Bottom Map Controls (Recenter & Quick Check-in) -->
+              <div class="findmy-map-hud-bottom">
+                <button type="button" class="findmy-map-ctrl-btn" id="btn-findmy-fit-all" title="Pokaż wszystkich na mapie">
+                  <span>🎯</span>
+                  <span>Całe miasto</span>
+                </button>
+                <button type="button" class="findmy-map-ctrl-btn checkin-accent" onclick="window.__openBerealCamera()">
+                  <span>📸</span>
+                  <span>+ Zamelduj się</span>
+                </button>
+              </div>
             </div>
-            <div class="findmy-people-strip" id="findmy-people-strip">
-              <!-- Active Find My BeReal check-in pills injected via JS -->
+
+            <!-- Apple Find My "Osoby w barach" Interactive Sheet Strip -->
+            <div class="findmy-sheet-dock">
+              <div class="findmy-sheet-dock-head">
+                <div class="findmy-dock-title-wrap">
+                  <span class="findmy-dock-eyebrow">OSOBY & MELDUNKI 24H</span>
+                </div>
+                <span class="findmy-dock-hint">Dotknij osoby, aby namierzyć ↗</span>
+              </div>
+              <div class="findmy-people-strip" id="findmy-people-strip">
+                <!-- Active Find My check-in cards injected via JS -->
+              </div>
             </div>
           </div>
 
+          <!-- Flighty Action & Filter Console -->
           <div class="flighty-feed-action-strip">
-            <button type="button" class="flighty-feed-action-btn primary btn-bereal-camera-trigger" id="btn-open-bereal-camera" style="width: 100%;">
-              <span class="ff-btn-icon">📸</span>
-              <div class="ff-btn-copy">
-                <span class="ff-btn-title">Zrób Check-in BeReal w barze</span>
-                <span class="ff-btn-sub">Zamelduj się na mapie ekipy 24h</span>
+            <button type="button" class="flighty-feed-action-btn primary btn-bereal-camera-trigger" id="btn-open-bereal-camera">
+              <div class="ff-btn-left">
+                <span class="ff-btn-icon">📸</span>
+                <div class="ff-btn-copy">
+                  <span class="ff-btn-title">Zrób Check-in BeReal w barze</span>
+                  <span class="ff-btn-sub">Pokaż kufel i oznacz się na mapie Find My 24h</span>
+                </div>
               </div>
+              <span class="ff-btn-live-tag">● LIVE</span>
             </button>
           </div>
+
           <div class="live-feed-filter-pills" id="live-feed-filters" role="tablist" aria-label="Filtruj Live Feed">
-            <button type="button" class="feed-filter-pill active" data-feed-filter="all">Wszystkie meldunki</button>
-            <button type="button" class="feed-filter-pill" data-feed-filter="photos">📸 Tylko z BeReal</button>
-            <button type="button" class="feed-filter-pill" data-feed-filter="deals">🟢 Tanie piwo (≤12 zł)</button>
+            <button type="button" class="feed-filter-pill active" data-feed-filter="all">Wszystkie</button>
+            <button type="button" class="feed-filter-pill" data-feed-filter="photos">📸 Zdjęcia BeReal</button>
+            <button type="button" class="feed-filter-pill" data-feed-filter="deals">🟢 Tanie ≤12 zł</button>
           </div>
         </div>
 
         <div class="live-feed-grid" id="comm-feed-grid">
-          <div class="empty-state-hint">Skanowanie aktywności w barach... 📡</div>
+          <div class="empty-state-hint">Ładowanie aktywności w barach...</div>
         </div>
       </div>
 
@@ -3627,6 +3648,6 @@
   <script src="moderation.js"></script>
 
   <!-- Main Application Logic -->
-  <script src="app.js?v=148"></script>
+  <script src="app.js?v=149"></script>
 </body>
 </html>

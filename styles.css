@@ -22560,96 +22560,66 @@ body.theme-light .telemetry-lbl {
    3.6 FLIGHTY LIVE TELEMETRY FEED (#pane-comm-feed)
    ========================================================================== */
 .flighty-feed-console {
-  background: #121218;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  padding: 11px 12px;
-  margin-bottom: 10px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin-bottom: 12px;
   display: flex;
   flex-direction: column;
-  gap: 9px;
-}
-
-.flighty-feed-console-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.flighty-feed-telemetry-id {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-}
-
-.feed-live-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #30D158;
-  box-shadow: 0 0 8px #30D158;
-  display: inline-block;
-}
-
-.flighty-feed-radar-code {
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
-  font-size: 0.65rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  color: #30D158;
-}
-
-.flighty-feed-city-tag {
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
-  font-size: 0.64rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  padding: 2px 8px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #cbd5e1;
+  gap: 10px;
 }
 
 .flighty-feed-action-strip {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 8px;
 }
 
 .flighty-feed-action-btn {
   -webkit-appearance: none;
   appearance: none;
+  width: 100%;
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 9px 11px;
-  border-radius: 12px;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 11px 14px;
+  border-radius: 15px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  background: #181820;
+  background: #13131b;
   color: #ffffff;
   text-align: left;
   cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.08);
   transition: transform 0.14s ease, border-color 0.14s ease;
 }
 
 .flighty-feed-action-btn.primary {
-  background: linear-gradient(135deg, rgba(48, 209, 88, 0.18), rgba(16, 185, 129, 0.08));
+  background: linear-gradient(135deg, rgba(48, 209, 88, 0.18), rgba(18, 18, 26, 0.96));
   border-color: rgba(48, 209, 88, 0.42);
 }
 
-.flighty-feed-action-btn.secondary {
-  background: linear-gradient(135deg, rgba(10, 132, 255, 0.16), rgba(94, 92, 230, 0.08));
-  border-color: rgba(10, 132, 255, 0.38);
+.flighty-feed-action-btn:active {
+  transform: scale(0.98);
 }
 
-.flighty-feed-action-btn:active {
-  transform: scale(0.97);
+.ff-btn-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
 }
 
 .ff-btn-icon {
-  font-size: 1.2rem;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(48, 209, 88, 0.18);
+  border: 1px solid rgba(48, 209, 88, 0.38);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
   flex-shrink: 0;
 }
 
@@ -22660,10 +22630,10 @@ body.theme-light .telemetry-lbl {
 }
 
 .ff-btn-title {
-  font-size: 0.78rem;
+  font-size: 0.84rem;
   font-weight: 800;
   color: #ffffff;
-  line-height: 1.15;
+  line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -22671,21 +22641,37 @@ body.theme-light .telemetry-lbl {
 
 .ff-btn-sub {
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
-  font-size: 0.6rem;
+  font-size: 0.62rem;
   font-weight: 700;
-  color: rgba(235, 235, 245, 0.6);
-  margin-top: 1px;
+  color: rgba(235, 235, 245, 0.62);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* Segmented Filter Pills in Live Feed */
+.ff-btn-live-tag {
+  flex-shrink: 0;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: rgba(48, 209, 88, 0.2);
+  border: 1px solid rgba(48, 209, 88, 0.45);
+  color: #30D158;
+}
+
+/* Segmented Filter Pills in Live Feed (3 symmetric columns) */
 .live-feed-filter-pills {
   display: grid !important;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   gap: 4px !important;
-  padding: 3px !important;
-  background: #0b0b0f !important;
-  border: 1px solid rgba(255, 255, 255, 0.09) !important;
-  border-radius: 11px !important;
+  padding: 3.5px !important;
+  background: #0c0c11 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 13px !important;
 }
 
 .feed-filter-pill {
@@ -22693,13 +22679,13 @@ body.theme-light .telemetry-lbl {
   appearance: none !important;
   background: transparent !important;
   border: none !important;
-  border-radius: 8px !important;
-  padding: 6px 4px !important;
-  color: rgba(235, 235, 245, 0.6) !important;
+  border-radius: 9px !important;
+  padding: 7px 6px !important;
+  color: rgba(235, 235, 245, 0.58) !important;
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace !important;
-  font-size: 0.64rem !important;
+  font-size: 0.66rem !important;
   font-weight: 800 !important;
-  letter-spacing: 0.03em !important;
+  letter-spacing: 0.02em !important;
   text-align: center !important;
   white-space: nowrap !important;
   overflow: hidden !important;
@@ -22709,27 +22695,47 @@ body.theme-light .telemetry-lbl {
 }
 
 .feed-filter-pill.active {
-  background: #1e1e28 !important;
+  background: #1f1f2b !important;
   color: #ffffff !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
 }
 
-/* Compact Flighty Feed Cards */
+/* Flighty Feed Cards & BeReal Cards */
 #comm-feed-grid.live-feed-grid {
   display: flex !important;
   flex-direction: column !important;
-  gap: 8px !important;
+  gap: 10px !important;
+}
+
+.flighty-feed-card,
+.beer-bereal-card.flighty-bereal-card {
+  background: #121219 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
 }
 
 .flighty-feed-card {
-  background: #13131a;
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 15px;
-  padding: 10px 12px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  gap: 9px;
+}
+
+.beer-bereal-card.flighty-bereal-card .bereal-author-avatar {
+  border-color: #30D158 !important;
+  background: #1b1b26 !important;
+}
+
+.beer-bereal-card.flighty-bereal-card .bereal-author-avatar.is-me {
+  border-color: #0A84FF !important;
+}
+
+.beer-bereal-card.flighty-bereal-card .bereal-pip-box {
+  left: auto !important;
+  right: 12px !important;
+  top: 12px !important;
+  border: 2px solid rgba(255, 255, 255, 0.85) !important;
 }
 
 .ffc-telemetry-bar {
@@ -22912,7 +22918,7 @@ body.theme-light .telemetry-lbl {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 6px;
   padding-top: 6px;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
@@ -22924,15 +22930,22 @@ body.theme-light .telemetry-lbl {
   flex: 1;
   display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 6px 10px !important;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px 9px !important;
   border-radius: 9px !important;
   background: rgba(255, 255, 255, 0.05) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   color: #cbd5e1 !important;
-  font-size: 0.72rem !important;
+  font-size: 0.7rem !important;
   font-weight: 700 !important;
+  white-space: nowrap !important;
   cursor: pointer;
+}
+
+.ffc-author-tag {
+  color: #e2e8f0;
+  font-weight: 700;
 }
 
 .ffc-btn-cheers,
@@ -23145,33 +23158,70 @@ body.theme-light .telemetry-lbl {
    3.9 APPLE "FIND MY" (ZNAJDŹ) LIVE BAR RADAR IN LIVE FEED & MAIN MAP
    ========================================================================== */
 .findmy-feed-radar-card {
-  background: #0e0e14;
-  border: 1px solid rgba(255, 255, 255, 0.11);
-  border-radius: 15px;
+  background: #0c0c12;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
-.findmy-radar-header {
+.findmy-map-viewport {
+  position: relative;
+  width: 100%;
+  height: 340px;
+  background: #08080c;
+}
+
+#findmy-feed-map {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+@media (min-width: 640px) {
+  .findmy-map-viewport {
+    height: 390px;
+  }
+}
+
+/* Floating Glass HUD Overlays on Find My Map */
+.findmy-map-hud-top {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  z-index: 500;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 8px 11px;
-  background: rgba(255, 255, 255, 0.03);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  pointer-events: none;
 }
 
-.findmy-radar-title {
+.findmy-hud-pill {
+  pointer-events: auto;
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(12, 12, 18, 0.84);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55);
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
-  font-size: 0.64rem;
+  font-size: 0.62rem;
   font-weight: 800;
-  letter-spacing: 0.06em;
-  color: #ffffff;
+  letter-spacing: 0.05em;
+  color: #f8fafc;
+  white-space: nowrap;
+}
+
+.findmy-hud-pill.city-stat-pill {
+  color: #30D158;
+  border-color: rgba(48, 209, 88, 0.35);
 }
 
 .findmy-green-beacon {
@@ -23181,6 +23231,7 @@ body.theme-light .telemetry-lbl {
   background: #30D158;
   box-shadow: 0 0 8px #30D158;
   animation: findMyBeaconPulse 2s infinite ease-in-out;
+  flex-shrink: 0;
 }
 
 @keyframes findMyBeaconPulse {
@@ -23188,30 +23239,87 @@ body.theme-light .telemetry-lbl {
   50% { transform: scale(1.25); opacity: 0.7; }
 }
 
-.findmy-radar-sub {
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
-  font-size: 0.6rem;
-  font-weight: 700;
-  color: #86efac;
-  white-space: nowrap;
+.findmy-map-hud-bottom {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  right: 10px;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  pointer-events: none;
 }
 
-.findmy-map-viewport {
-  position: relative;
-  width: 100%;
-  height: 240px;
-  background: #09090d;
+.findmy-map-ctrl-btn {
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 11px;
+  border-radius: 999px;
+  background: rgba(14, 14, 22, 0.88);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.14s ease, border-color 0.14s ease;
+}
+
+.findmy-map-ctrl-btn:active {
+  transform: scale(0.95);
+}
+
+.findmy-map-ctrl-btn.checkin-accent {
+  background: rgba(48, 209, 88, 0.22);
+  border-color: rgba(48, 209, 88, 0.5);
+  color: #86efac;
+}
+
+/* Apple Find My "Osoby w barach" Bottom Dock inside Map Card */
+.findmy-sheet-dock {
+  background: #12121a;
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
+  display: flex;
+  flex-direction: column;
+}
+
+.findmy-sheet-dock-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 12px 2px 12px;
+}
+
+.findmy-dock-eyebrow {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: rgba(235, 235, 245, 0.55);
+}
+
+.findmy-dock-hint {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: #60a5fa;
 }
 
 .findmy-people-strip {
   display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 8px 10px;
+  align-items: stretch;
+  gap: 8px;
+  padding: 7px 11px 10px 11px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  background: #121219;
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
   scrollbar-width: none;
 }
 
@@ -23225,23 +23333,29 @@ body.theme-light .telemetry-lbl {
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 5px 10px 5px 6px;
-  border-radius: 999px;
-  background: #1a1a24;
-  border: 1px solid rgba(255, 255, 255, 0.11);
+  gap: 9px;
+  padding: 7px 11px 7px 8px;
+  border-radius: 14px;
+  background: #191924;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   color: #ffffff;
   text-align: left;
   cursor: pointer;
-  transition: transform 0.14s ease, border-color 0.14s ease;
+  transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease;
 }
 
 .findmy-person-chip:active {
   transform: scale(0.96);
 }
 
-.findmy-person-chip.checkin-cta {
+.findmy-person-chip.active-focus {
   background: rgba(48, 209, 88, 0.15);
+  border-color: #30D158;
+  box-shadow: 0 0 0 1px rgba(48, 209, 88, 0.35);
+}
+
+.findmy-person-chip.checkin-cta {
+  background: rgba(48, 209, 88, 0.14);
   border-color: rgba(48, 209, 88, 0.42);
 }
 
@@ -23251,17 +23365,21 @@ body.theme-light .telemetry-lbl {
 }
 
 .fmp-avatar {
-  width: 28px;
-  height: 28px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  background: #262633;
-  border: 1.5px solid #30D158;
+  background: #242432;
+  border: 2px solid #30D158;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   overflow: hidden;
   flex-shrink: 0;
+}
+
+.findmy-person-chip.is-me .fmp-avatar {
+  border-color: #0A84FF;
 }
 
 .fmp-avatar.plus {
@@ -23279,24 +23397,66 @@ body.theme-light .telemetry-lbl {
 .fmp-meta {
   display: flex;
   flex-direction: column;
+  gap: 2px;
   line-height: 1.15;
 }
 
+.fmp-top-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
 .fmp-meta strong {
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 800;
   color: #ffffff;
   white-space: nowrap;
 }
 
+.fmp-time,
+.fmp-live-tag {
+  font-style: normal;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.56rem;
+  font-weight: 700;
+  color: rgba(235, 235, 245, 0.5);
+}
+
+.fmp-live-tag {
+  color: #30D158;
+  background: rgba(48, 209, 88, 0.18);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.fmp-sub-line {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
 .fmp-meta span {
-  font-size: 0.58rem;
+  font-size: 0.62rem;
   font-weight: 600;
-  color: rgba(235, 235, 245, 0.62);
-  max-width: 110px;
+  color: rgba(235, 235, 245, 0.68);
+  max-width: 112px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.fmp-price-pill {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.58rem;
+  font-weight: 900;
+  color: #30D158;
+  background: rgba(48, 209, 88, 0.14);
+  border: 1px solid rgba(48, 209, 88, 0.32);
+  padding: 1px 5px;
+  border-radius: 5px;
+  flex-shrink: 0;
 }
 
 /* Apple Find My Map Marker Pin (.findmy-pin-wrap) */
@@ -23310,7 +23470,7 @@ body.theme-light .telemetry-lbl {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 110px;
+  width: 124px;
   pointer-events: auto;
 }
 
@@ -23378,20 +23538,31 @@ body.theme-light .telemetry-lbl {
   margin-top: 2px;
   padding: 2px 7px;
   border-radius: 999px;
-  background: rgba(12, 12, 18, 0.92);
+  background: rgba(12, 12, 18, 0.94);
   border: 1px solid rgba(255, 255, 255, 0.16);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.65);
   font-size: 0.58rem;
   color: #e2e8f0;
   white-space: nowrap;
-  max-width: 118px;
+  max-width: 124px;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
 }
 
 .findmy-name-pill strong {
   color: #ffffff;
   font-weight: 800;
+}
+
+.findmy-pin-price {
+  font-style: normal;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-weight: 900;
+  color: #30D158;
+  margin-left: 2px;
 }
 
 /* Custom Apple Find My Glassmorphic Popup Bubble */
@@ -23613,6 +23784,7 @@ body.theme-light .telemetry-lbl {
   transform: scale(0.97);
   background: rgba(10, 132, 255, 0.35);
 }
+
 
 
 
