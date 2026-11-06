@@ -6767,14 +6767,17 @@
 
         // 2. Tab: ODKRYWAJ (Bento Grid)
         if (target === "discover") {
-          clearBottomNavActive();
-          item.classList.add("active");
+          const discoverSheet = document.getElementById("discover-sheet");
+          const isDiscoverOpen = discoverSheet && discoverSheet.getAttribute("data-state") !== "closed" && discoverSheet.style.display !== "none";
           closeAllModalsAndSheets();
-          if (window.__openDiscoverSheet) {
-            window.__openDiscoverSheet();
+          if (isDiscoverOpen) {
+            clearBottomNavActive();
           } else {
-            const discoverSheet = document.getElementById("discover-sheet");
-            if (discoverSheet && typeof window.__setBottomSheetState === "function") {
+            clearBottomNavActive();
+            item.classList.add("active");
+            if (window.__openDiscoverSheet) {
+              window.__openDiscoverSheet();
+            } else if (discoverSheet && typeof window.__setBottomSheetState === "function") {
               window.__setBottomSheetState(discoverSheet, "full");
             }
           }
@@ -6783,13 +6786,14 @@
 
         // 3. Tab: AKCJA (Central Floating Action Button)
         if (target === "action") {
-          if (window.__openActionSheet) {
+          const actionSheet = document.getElementById("action-sheet");
+          const isActionOpen = actionSheet && actionSheet.getAttribute("data-state") !== "closed" && actionSheet.style.display !== "none";
+          if (isActionOpen) {
+            if (window.__closeActionSheet) window.__closeActionSheet();
+          } else if (window.__openActionSheet) {
             window.__openActionSheet();
-          } else {
-            const actionSheet = document.getElementById("action-sheet");
-            if (actionSheet && typeof window.__setBottomSheetState === "function") {
-              window.__setBottomSheetState(actionSheet, "full");
-            }
+          } else if (actionSheet && typeof window.__setBottomSheetState === "function") {
+            window.__setBottomSheetState(actionSheet, "full");
           }
           return;
         }
@@ -6811,15 +6815,21 @@
 
         // 5. Tab: PROFIL (Mój Profil piwosza, Karta Pass, Statystyki)
         if (target === "passport" || target === "profile") {
-          clearBottomNavActive();
-          item.classList.add("active");
+          const profModal = document.getElementById("profile-modal");
+          const isProfOpen = profModal && (profModal.classList.contains("active") || profModal.style.display === "flex");
           closeAllModalsAndSheets();
-          if (typeof window.__openMyProfile === "function") {
-            window.__openMyProfile();
-          } else if (typeof window.__openPassport === "function") {
-            window.__openPassport();
-          } else if (typeof window.__openAuth === "function") {
-            window.__openAuth("login");
+          if (isProfOpen) {
+            clearBottomNavActive();
+          } else {
+            clearBottomNavActive();
+            item.classList.add("active");
+            if (typeof window.__openMyProfile === "function") {
+              window.__openMyProfile();
+            } else if (typeof window.__openPassport === "function") {
+              window.__openPassport();
+            } else if (typeof window.__openAuth === "function") {
+              window.__openAuth("login");
+            }
           }
           return;
         }
@@ -23345,7 +23355,13 @@
       currentY = clientY;
       const deltaY = currentY - startY;
 
-      const currentState = sheetEl.getAttribute("data-state") || (isPermanent ? "peek" : "closed");
+      if (!isPermanent) {
+        const dy = Math.max(0, deltaY);
+        sheetEl.style.setProperty("transform", `translateY(${dy}px)`, "important");
+        return;
+      }
+
+      const currentState = sheetEl.getAttribute("data-state") || "peek";
       if (currentState === "peek" && deltaY > 0) {
         sheetEl.style.transform = `translateY(calc(100% - 92px - env(safe-area-inset-bottom, 20px) + ${deltaY * 0.25}px))`;
         return;
@@ -23362,7 +23378,7 @@
       if (!isDragging) return;
       isDragging = false;
       sheetEl.style.transition = "";
-      sheetEl.style.transform = "";
+      sheetEl.style.removeProperty("transform");
 
       const deltaY = currentY - startY;
       const dt = Math.max(1, Date.now() - startTime);
@@ -23390,16 +23406,29 @@
           }
         }
       } else {
-        if (currentState === "half" || currentState === "full") {
-          if (deltaY > 60 || velocity > 0.25) {
+        if (currentState === "half" || currentState === "full" || currentState === "open") {
+          if (deltaY > 65 || velocity > 0.25) {
             nextState = "closed";
-          } else if (deltaY < -50 || velocity < -0.3) {
+          } else {
             nextState = "full";
           }
         }
       }
 
-      setBottomSheetState(sheetEl, nextState);
+      if (!isPermanent && nextState === "closed") {
+        if (sheetEl.id === "venue-sheet" && typeof closeVenueSheet === "function") {
+          closeVenueSheet();
+        } else if (sheetEl.id === "discover-sheet" && typeof closeDiscoverSheet === "function") {
+          closeDiscoverSheet();
+          if (window.__clearBottomNavActive) window.__clearBottomNavActive();
+        } else if (sheetEl.id === "action-sheet" && typeof closeActionSheet === "function") {
+          closeActionSheet();
+        } else {
+          setBottomSheetState(sheetEl, "closed");
+        }
+      } else {
+        setBottomSheetState(sheetEl, nextState);
+      }
       if (options.onStateChange) options.onStateChange(nextState);
       poileHaptics.tick();
     }
@@ -23537,6 +23566,14 @@
     }
 
     headerEl.innerHTML = `
+      <div class="flighty-edit-topbar venue-sheet-topbar">
+        <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-venue-sheet" aria-label="Zamknij kartę lokalu">← Mapa</button>
+        <div class="flighty-edit-topbar-title">
+          <span class="flighty-edit-eyebrow">📍 ${escapeHtml(venue.district || curCityObj.name)} · ${open ? 'OTWARTE' : 'OD ' + escapeHtml(openTimeLabel)}</span>
+          <h2>${escapeHtml(venue.name)}</h2>
+        </div>
+        <button type="button" class="flighty-edit-nav-btn save" id="btn-share-venue-top" aria-label="Kopiuj bezpośredni link do lokalu" title="Kopiuj bezpośredni link">🔗 Link</button>
+      </div>
       <div class="flighty-sheet-header-wrap">
         <div class="flighty-sheet-topbar">
           <div class="flighty-callsign-row">
@@ -23545,10 +23582,6 @@
               ${open ? '● OTWARTE' : '🕒 OD ' + escapeHtml(openTimeLabel)}
             </span>
             ${distTelemetryPill}
-          </div>
-          <div style="display:flex; align-items:center; gap:6px;">
-            <button type="button" class="venue-sheet-share-btn" id="btn-share-venue-top" aria-label="Kopiuj bezpośredni link do lokalu" title="Kopiuj bezpośredni link">🔗</button>
-            <button type="button" class="sheet-close-btn venue-sheet-close-btn" id="btn-close-venue-sheet" aria-label="Zamknij kartę lokalu">✕</button>
           </div>
         </div>
 
@@ -23958,7 +23991,8 @@
       });
     }
 
-    setBottomSheetState(sheet, "half");
+    setBottomSheetState(sheet, "full");
+    if (contentEl) contentEl.scrollTop = 0;
     if (typeof ModalHistoryManager !== "undefined") {
       ModalHistoryManager.push("venue-sheet", closeVenueSheet);
     }

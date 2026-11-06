@@ -80,7 +80,7 @@
   <script defer src="https://cloud.umami.is/script.js" data-website-id="auto" id="umami-analytics-script"></script>
 
   <!-- Custom Styles -->
-  <link rel="stylesheet" href="styles.css?v=156">
+  <link rel="stylesheet" href="styles.css?v=157">
 </head>
 <body>
 
@@ -465,12 +465,12 @@
       </div>
       <div class="drawer-header">
         <div class="flighty-edit-topbar drawer-flighty-topbar">
-          <span class="flighty-log-season" style="font-size:0.62rem;">TOP 10</span>
+          <button type="button" id="btn-close-drawer" class="flighty-edit-nav-btn cancel">← Mapa</button>
           <div class="flighty-edit-topbar-title">
             <span class="flighty-edit-eyebrow">RANKING MIASTA · CENNIK</span>
             <h2>🏆 Ranking Piwa</h2>
           </div>
-          <button type="button" id="btn-close-drawer" class="flighty-edit-nav-btn cancel">Zamknij</button>
+          <span class="flighty-log-season" style="font-size:0.62rem;">TOP 10</span>
         </div>
         <div class="ranking-tabs">
           <button type="button" class="ranking-tab active" id="tab-rank-cheapest">💰 Najtańsze</button>
@@ -1238,13 +1238,13 @@
     <div class="bottom-sheet-handle-wrap" id="discover-sheet-handle-wrap">
       <div class="bottom-sheet-handle"></div>
     </div>
-    <div class="flighty-edit-topbar" style="padding-top:4px;">
-      <span class="flighty-log-season" style="font-size:0.62rem;">MIASTO</span>
+    <div class="flighty-edit-topbar">
+      <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-discover-sheet" aria-label="Zamknij szufladę">← Mapa</button>
       <div class="flighty-edit-topbar-title">
         <span class="flighty-edit-eyebrow">NARZĘDZIA & ATRAKCJE</span>
         <h2 class="sheet-title">🔥 Odkrywaj Miasto</h2>
       </div>
-      <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-discover-sheet" aria-label="Zamknij szufladę">Zamknij</button>
+      <span class="flighty-log-season" style="font-size:0.62rem;">MIASTO</span>
     </div>
     <div class="bottom-sheet-content discover-scroll">
       <div class="bento-grid">
@@ -1348,13 +1348,13 @@
     <div class="bottom-sheet-handle-wrap" id="action-sheet-handle-wrap">
       <div class="bottom-sheet-handle"></div>
     </div>
-    <div class="flighty-edit-topbar" style="padding-top:4px;">
-      <span class="flighty-log-season" style="font-size:0.62rem;">NA ŻYWO</span>
+    <div class="flighty-edit-topbar">
+      <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-action-sheet" aria-label="Zamknij akcje">← Mapa</button>
       <div class="flighty-edit-topbar-title">
         <span class="flighty-edit-eyebrow">CO ROBIMY DZIŚ?</span>
         <h2 class="sheet-title">⚡ Szybka Akcja</h2>
       </div>
-      <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-action-sheet" aria-label="Zamknij akcje">Zamknij</button>
+      <span class="flighty-log-season" style="font-size:0.62rem;">NA ŻYWO</span>
     </div>
     <div class="bottom-sheet-content action-sheet-content">
       <div class="flighty-edit-sec-header" style="margin-bottom:8px;">
@@ -3855,6 +3855,6 @@
   <script src="moderation.js"></script>
 
   <!-- Main Application Logic -->
-  <script src="app.js?v=156"></script>
+  <script src="app.js?v=157"></script>
 </body>
 </html>
