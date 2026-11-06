@@ -5913,8 +5913,7 @@ header,
   box-sizing: border-box;
 }
 
-.auth-form label,
-.profile-edit-form label {
+.auth-form label {
   display: block !important;
   font-size: 0.8rem !important;
   font-weight: 700 !important;
@@ -5924,11 +5923,9 @@ header,
   text-align: left !important;
 }
 
-.auth-form input[type="text"],
+.auth-form input[type="text"]:not(#reg-username):not(#onboarding-username),
 .auth-form input[type="email"],
-.auth-form input[type="password"],
-.profile-edit-form input[type="text"],
-.profile-edit-form textarea {
+.auth-form input[type="password"] {
   display: block !important;
   width: 100% !important;
   box-sizing: border-box !important;
@@ -5949,18 +5946,14 @@ header,
 
 .auth-form input[type="text"]::placeholder,
 .auth-form input[type="email"]::placeholder,
-.auth-form input[type="password"]::placeholder,
-.profile-edit-form input[type="text"]::placeholder,
-.profile-edit-form textarea::placeholder {
+.auth-form input[type="password"]::placeholder {
   color: #64748b !important;
   font-size: 0.88rem !important;
 }
 
-.auth-form input[type="text"]:focus,
+.auth-form input[type="text"]:not(#reg-username):not(#onboarding-username):focus,
 .auth-form input[type="email"]:focus,
-.auth-form input[type="password"]:focus,
-.profile-edit-form input[type="text"]:focus,
-.profile-edit-form textarea:focus {
+.auth-form input[type="password"]:focus {
   background: rgba(255, 255, 255, 0.11) !important;
   border-color: #f97316 !important;
   box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.28), inset 0 1px 2px rgba(0, 0, 0, 0.2) !important;
@@ -24015,6 +24008,395 @@ body.theme-light .telemetry-lbl {
   cursor: pointer;
   text-align: center;
 }
+
+/* ==========================================================================
+   3.11 FLIGHTY + iOS NATIVE DARK CARBON EDIT PROFILE SHEET (#edit-profile-modal)
+   ========================================================================== */
+.modal-card-edit-profile.flighty-edit-profile-sheet {
+  max-width: 460px !important;
+  width: 94% !important;
+  max-height: 90vh !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  background: #0b0b10 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 26px !important;
+  padding: 0 !important;
+  box-shadow: 0 28px 64px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+}
+
+/* Sticky Top Navigation Bar (iOS Sheet Style) */
+.flighty-edit-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 16px;
+  background: rgba(11, 11, 16, 0.88);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.flighty-edit-topbar-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+.fet-eyebrow {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #30D158;
+}
+
+.flighty-edit-topbar-title h2 {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.015em;
+}
+
+.flighty-edit-nav-btn {
+  -webkit-appearance: none;
+  appearance: none;
+  border: none;
+  background: transparent;
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 999px;
+  transition: all 0.15s ease;
+}
+
+.flighty-edit-nav-btn.cancel {
+  color: rgba(235, 235, 245, 0.68);
+}
+
+.flighty-edit-nav-btn.cancel:active {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.flighty-edit-nav-btn.save {
+  background: #30D158;
+  color: #042f14;
+  font-weight: 800;
+  padding: 6px 14px;
+  box-shadow: 0 2px 10px rgba(48, 209, 88, 0.35);
+}
+
+.flighty-edit-nav-btn.save:active {
+  transform: scale(0.95);
+}
+
+/* Form Container */
+.profile-edit-form.flighty-edit-form {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 16px 16px 22px 16px !important;
+  margin: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 18px !important;
+}
+
+/* Centered Avatar Stage */
+.flighty-avatar-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 11px;
+  padding: 14px 12px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.015) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+}
+
+.flighty-avatar-stage .photo-preview-wrap {
+  width: 82px;
+  height: 82px;
+  cursor: pointer;
+}
+
+.flighty-avatar-stage .photo-preview-frame {
+  width: 82px;
+  height: 82px;
+  border-radius: 50%;
+  border: 2.5px solid #30D158;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 0 4px rgba(48, 209, 88, 0.14);
+  background: #14141d;
+}
+
+.flighty-avatar-stage .btn-change-photo-badge {
+  width: 28px;
+  height: 28px;
+  background: #1c1c28;
+  color: #ffffff;
+  border: 2px solid rgba(255, 255, 255, 0.22);
+  font-size: 0.82rem;
+}
+
+.flighty-photo-btns-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.flighty-btn-photo-upload {
+  -webkit-appearance: none;
+  appearance: none;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.14s ease, background 0.14s ease;
+}
+
+.flighty-btn-photo-upload:active {
+  transform: scale(0.96);
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.flighty-btn-photo-remove {
+  -webkit-appearance: none;
+  appearance: none;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(239, 68, 68, 0.14);
+  border: 1px solid rgba(239, 68, 68, 0.32);
+  color: #fca5a5;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.flighty-avatar-grid-wrap {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  margin-top: 2px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.flighty-avatar-grid-lbl {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: rgba(235, 235, 245, 0.45);
+}
+
+.avatar-picker.flighty-avatar-grid {
+  display: grid !important;
+  grid-template-columns: repeat(6, 1fr) !important;
+  gap: 7px !important;
+  width: 100% !important;
+  overflow: visible !important;
+  padding: 2px 0 !important;
+  justify-items: center;
+}
+
+.flighty-avatar-grid .avatar-option {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 12px !important;
+  background: #161621 !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.09) !important;
+  font-size: 1.2rem !important;
+}
+
+.flighty-avatar-grid .avatar-option.selected {
+  background: rgba(48, 209, 88, 0.2) !important;
+  border-color: #30D158 !important;
+  box-shadow: 0 0 12px rgba(48, 209, 88, 0.35) !important;
+  transform: scale(1.06) !important;
+}
+
+/* Grouped iOS / Flighty Carbon Settings Tables */
+.flighty-edit-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.flighty-edit-sec-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 6px;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  color: rgba(235, 235, 245, 0.48);
+}
+
+.flighty-edit-table {
+  background: #14141d;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.flighty-edit-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  min-height: 46px;
+  box-sizing: border-box;
+}
+
+.flighty-edit-row:last-child {
+  border-bottom: none;
+}
+
+.flighty-edit-row.bio-row {
+  align-items: flex-start;
+  padding-top: 11px;
+  padding-bottom: 11px;
+}
+
+.flighty-row-label {
+  width: 98px;
+  flex-shrink: 0;
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  color: rgba(235, 235, 245, 0.72) !important;
+  margin: 0 !important;
+}
+
+.flighty-edit-row.bio-row .flighty-row-label {
+  padding-top: 2px;
+}
+
+.flighty-row-input,
+.flighty-row-textarea {
+  flex: 1 !important;
+  min-width: 0 !important;
+  width: auto !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  color: #ffffff !important;
+  font-size: 0.9rem !important;
+  font-weight: 600 !important;
+  font-family: inherit !important;
+  outline: none !important;
+}
+
+.flighty-row-input::placeholder,
+.flighty-row-textarea::placeholder {
+  color: rgba(235, 235, 245, 0.3) !important;
+  font-weight: 500 !important;
+}
+
+.flighty-row-textarea {
+  resize: none !important;
+  line-height: 1.4 !important;
+}
+
+.flighty-handle-input-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.flighty-at-sign {
+  color: #30D158;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.92rem;
+  font-weight: 900;
+  user-select: none;
+}
+
+/* 1-Tap Quick District Preset Chips */
+.flighty-preset-chips-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px 2px 0 2px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.flighty-preset-chips-row::-webkit-scrollbar {
+  display: none;
+}
+
+.flighty-preset-chip {
+  -webkit-appearance: none;
+  appearance: none;
+  flex-shrink: 0;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #14141d;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(235, 235, 245, 0.8);
+  font-size: 0.68rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+
+.flighty-preset-chip:active {
+  transform: scale(0.95);
+  background: rgba(48, 209, 88, 0.18);
+  border-color: #30D158;
+  color: #ffffff;
+}
+
+/* Bottom Primary Save CTA */
+.flighty-edit-submit-btn {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  padding: 13px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(48, 209, 88, 0.5);
+  background: linear-gradient(135deg, #30D158 0%, #10b981 100%);
+  color: #03220e;
+  font-size: 0.9rem;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  box-shadow: 0 8px 22px rgba(48, 209, 88, 0.28);
+  transition: transform 0.14s ease;
+}
+
+.flighty-edit-submit-btn:active {
+  transform: scale(0.98);
+}
+
 
 
 

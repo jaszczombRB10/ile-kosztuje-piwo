@@ -9046,7 +9046,7 @@
         if (!isGuest && prof.avatar_photo) {
           heroAvatar.innerHTML = `<img src="${escapeHtml(prof.avatar_photo)}" class="profile-hero-photo" alt="Zdjęcie profilowe" />`;
         } else {
-          heroAvatar.textContent = "🍺";
+          heroAvatar.textContent = isGuest ? "🍺" : (prof.avatar_icon || "🍺");
         }
       }
 
@@ -10772,8 +10772,14 @@
       }
       if (type === "roulette") {
         if (typeof window.__closeCommunity === "function") window.__closeCommunity();
-        const roulBtn = document.getElementById("btn-roulette");
+        const roulBtn = document.getElementById("btn-roulette") || document.getElementById("bento-btn-roulette");
         if (roulBtn) roulBtn.click();
+        return;
+      }
+      if (type === "compass") {
+        if (typeof window.__closeCommunity === "function") window.__closeCommunity();
+        const compBtn = document.getElementById("bento-btn-compass") || document.getElementById("btn-compass");
+        if (compBtn) compBtn.click();
         return;
       }
       if (type === "happy-hours") {
@@ -24358,13 +24364,29 @@
       btnActionCheckin.addEventListener("click", () => {
         poileHaptics.tick();
         closeActionSheet();
-        const btnDirect = document.getElementById("btn-open-checkin-direct");
-        if (btnDirect) {
-          btnDirect.click();
-        } else if (typeof window.__openCheckinModal === "function") {
-          window.__openCheckinModal();
+        const venues = Array.isArray(allVenues) ? allVenues : [];
+        const refCoords = (Array.isArray(userLocation) && userLocation.length === 2)
+          ? userLocation
+          : (typeof map !== "undefined" && map && map.getCenter ? [map.getCenter().lat, map.getCenter().lng] : getCurrentCity().center);
+        let nearest = null;
+        let minDist = Infinity;
+        venues.forEach(v => {
+          if (typeof v.latitude === "number" && typeof v.longitude === "number") {
+            const d = Math.hypot(v.latitude - refCoords[0], v.longitude - refCoords[1]);
+            if (d < minDist) {
+              minDist = d;
+              nearest = v;
+            }
+          }
+        });
+        if (nearest && typeof window.__openVenueSheet === "function") {
+          if (typeof map !== "undefined" && map) {
+            map.flyTo([nearest.latitude, nearest.longitude], 17, { duration: 0.7 });
+          }
+          setTimeout(() => window.__openVenueSheet(nearest), 180);
+          showAppToast("Potwierdź cenę 🍺", `Otwieram najbliższy lokal: ${nearest.name}`, "📍", 2800);
         } else {
-          showAppToast("Szybki Check-in", "Wybierz lokal na mapie, aby potwierdzić cenę w 1 klik! 🍺", "📍");
+          showAppToast("Potwierdź cenę", "Dotknij dowolnego baru na mapie, aby potwierdzić lub zmienić cenę w 1 klik! 🍺", "📍");
         }
       });
     }
