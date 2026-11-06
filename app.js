@@ -10529,10 +10529,14 @@
     let friendsMapTileLayer = null;
 
     window.__updateFriendsMapTheme = function(isLight) {
+      const cartoKey = (typeof MAP_CONFIG !== "undefined" && MAP_CONFIG.cartoApiKey) ? `?key=${MAP_CONFIG.cartoApiKey}` : "";
+      const variant = isLight ? "rastertiles/voyager" : "dark_all";
+      const tileUrl = `https://{s}.basemaps.cartocdn.com/${variant}/{z}/{x}/{y}{r}.png${cartoKey}`;
       if (friendsMapTileLayer) {
-        const cartoKey = (typeof MAP_CONFIG !== "undefined" && MAP_CONFIG.cartoApiKey) ? `?key=${MAP_CONFIG.cartoApiKey}` : "";
-        const variant = isLight ? "rastertiles/voyager" : "dark_all";
-        friendsMapTileLayer.setUrl(`https://{s}.basemaps.cartocdn.com/${variant}/{z}/{x}/{y}{r}.png${cartoKey}`);
+        friendsMapTileLayer.setUrl(tileUrl);
+      }
+      if (typeof findMyTileLayer !== "undefined" && findMyTileLayer) {
+        findMyTileLayer.setUrl(tileUrl);
       }
     };
 
@@ -10681,9 +10685,9 @@
           const hotspotIcon = L.divIcon({
             className: "hotspot-live-pin",
             html: `
-              <div style="background:rgba(15,17,22,0.92);backdrop-filter:blur(8px);color:#ffffff;font-size:11px;font-weight:800;padding:5px 10px;border-radius:999px;border:1.5px solid rgba(255,107,0,0.75);box-shadow:0 4px 14px rgba(0,0,0,0.65);display:inline-flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap;">
+              <div class="flighty-zone-map-pill">
                 <span>🔥 ${escapeHtml(shortZone)}</span>
-                <span style="color:#4ade80;font-family:ui-monospace,monospace;font-weight:900;">od ${escapeHtml(h.minPrice)}</span>
+                <span class="flighty-zone-map-price">od ${escapeHtml(h.minPrice)}</span>
               </div>
             `,
             iconSize: [130, 28],
