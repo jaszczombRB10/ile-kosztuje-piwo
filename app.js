@@ -4131,6 +4131,9 @@
     updatePassportCounters();
     return isNowVisited;
   }
+  const toggleVenueVisited = toggleVisitedVenue;
+  window.toggleVenueVisited = toggleVisitedVenue;
+  window.toggleVisitedVenue = toggleVisitedVenue;
 
   window.__toggleVisited = function (venueId) {
     const venue = allVenues.find(v => v.id === venueId);
@@ -12653,11 +12656,24 @@
 
           // 4. Automatically count bar check-in in Passport & Night Log!
           if (venueObj) {
-            if (!isVenueVisited(venueObj.id)) {
-              toggleVenueVisited(venueObj.id);
+            try {
+              if (typeof isVenueVisited === "function" && typeof toggleVisitedVenue === "function") {
+                if (!isVenueVisited(venueObj.id)) {
+                  toggleVisitedVenue(venueObj.id);
+                }
+              } else if (Array.isArray(visitedVenues) && !visitedVenues.includes(venueObj.id)) {
+                visitedVenues.push(venueObj.id);
+                if (typeof saveVisitedVenues === "function") saveVisitedVenues(visitedVenues);
+              }
+              if (typeof recordNightLogVisit === "function") {
+                recordNightLogVisit(venueObj);
+              }
+              if (typeof awardPassportPoints === "function") {
+                awardPassportPoints(25);
+              }
+            } catch (errPassport) {
+              console.warn("Passport visit count warning:", errPassport);
             }
-            recordNightLogVisit(venueObj);
-            awardPassportPoints(25);
           }
 
           // Update local user state immediately
