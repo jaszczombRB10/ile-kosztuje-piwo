@@ -80,7 +80,7 @@
   <script defer src="https://cloud.umami.is/script.js" data-website-id="auto" id="umami-analytics-script"></script>
 
   <!-- Custom Styles -->
-  <link rel="stylesheet" href="styles.css?v=151">
+  <link rel="stylesheet" href="styles.css?v=152">
 </head>
 <body>
 
@@ -2409,11 +2409,11 @@
           <div class="flighty-edit-table">
             <div class="flighty-edit-row">
               <label for="edit-fav-beer" class="flighty-row-label">🍺 Ulubione</label>
-              <input type="text" id="edit-fav-beer" class="flighty-row-input" placeholder="np. Łomża, Hazy IPA, Kozel" maxlength="40" />
+              <input type="text" id="edit-fav-beer" class="flighty-row-input" placeholder="np. Jasne Pełne, Hazy IPA, Porter" maxlength="40" />
             </div>
             <div class="flighty-edit-row">
               <label for="edit-fav-district" class="flighty-row-label">📍 Rewir</label>
-              <input type="text" id="edit-fav-district" class="flighty-row-input" placeholder="np. Śródmieście, Pawilony" maxlength="40" />
+              <input type="text" id="edit-fav-district" class="flighty-row-input" placeholder="np. Centrum, Stare Miasto" maxlength="40" />
             </div>
             <div class="flighty-edit-row">
               <label for="edit-vibe-tags" class="flighty-row-label">⚡ Klimat</label>
@@ -2421,14 +2421,14 @@
             </div>
           </div>
 
-          <!-- 1-Tap Quick Preset Chips for District & Vibe -->
-          <div class="flighty-preset-chips-row">
-            <button type="button" class="flighty-preset-chip" onclick="document.getElementById('edit-fav-district').value='Pawilony Nowy Świat'">🔥 Pawilony</button>
-            <button type="button" class="flighty-preset-chip" onclick="document.getElementById('edit-fav-district').value='Śródmieście'">🏙️ Śródmieście</button>
-            <button type="button" class="flighty-preset-chip" onclick="document.getElementById('edit-fav-district').value='Bulwary Wiślane'">🌊 Bulwary</button>
-            <button type="button" class="flighty-preset-chip" onclick="document.getElementById('edit-fav-district').value='Praga Północ'">🎨 Praga</button>
-            <button type="button" class="flighty-preset-chip" onclick="document.getElementById('edit-fav-district').value='Mokotów'">🌿 Mokotów</button>
-            <button type="button" class="flighty-preset-chip" onclick="document.getElementById('edit-fav-district').value='Wola'">🍻 Wola</button>
+          <!-- 1-Tap Universal Vibe Chips (works across all cities) -->
+          <div class="flighty-preset-chips-row" id="edit-vibe-presets-row">
+            <button type="button" class="flighty-preset-chip" onclick="window.__toggleEditVibeTag('Kraft')">🍺 Kraft</button>
+            <button type="button" class="flighty-preset-chip" onclick="window.__toggleEditVibeTag('Ogródki')">🌿 Ogródki</button>
+            <button type="button" class="flighty-preset-chip" onclick="window.__toggleEditVibeTag('Tanie Lane')">💸 Tanie Lane</button>
+            <button type="button" class="flighty-preset-chip" onclick="window.__toggleEditVibeTag('Pub Quiz')">🧠 Pub Quiz</button>
+            <button type="button" class="flighty-preset-chip" onclick="window.__toggleEditVibeTag('Bilard & Dart')">🎱 Bilard</button>
+            <button type="button" class="flighty-preset-chip" onclick="window.__toggleEditVibeTag('Live Music')">🎵 Live Music</button>
           </div>
         </div>
 
@@ -2859,11 +2859,8 @@
             </button>
           </div>
 
-          <!-- Quick Jump Pills Strip (One-tap shortcuts to key zones & tools) -->
-          <div class="flighty-quick-pills-strip">
-            <button type="button" class="fqp-pill" onclick="window.__triggerFeedShortcut('zone-pawilony')">🔥 Pawilony</button>
-            <button type="button" class="fqp-pill" onclick="window.__triggerFeedShortcut('zone-bulwary')">🌊 Bulwary</button>
-            <button type="button" class="fqp-pill" onclick="window.__triggerFeedShortcut('zone-srodmiescie')">🏙️ Centrum</button>
+          <!-- Quick Jump Pills Strip (Dynamic per city + core app shortcuts) -->
+          <div class="flighty-quick-pills-strip" id="feed-quick-pills-strip">
             <button type="button" class="fqp-pill" onclick="window.__triggerFeedShortcut('pubcrawl')">🗺️ Pub Crawl</button>
             <button type="button" class="fqp-pill" onclick="window.__triggerFeedShortcut('ranking')">🏆 Top 10</button>
           </div>
@@ -3695,6 +3692,6 @@
   <script src="moderation.js"></script>
 
   <!-- Main Application Logic -->
-  <script src="app.js?v=151"></script>
+  <script src="app.js?v=152"></script>
 </body>
 </html>

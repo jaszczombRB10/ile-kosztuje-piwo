@@ -9452,6 +9452,22 @@
     }
 
     // Edit Profile Modal functions
+    window.__toggleEditVibeTag = function (tag) {
+      const editVibe = document.getElementById("edit-vibe-tags");
+      if (!editVibe) return;
+      const parts = editVibe.value
+        .split(",")
+        .map(s => s.trim())
+        .filter(Boolean);
+      const idx = parts.findIndex(p => p.toLowerCase() === tag.toLowerCase());
+      if (idx >= 0) {
+        parts.splice(idx, 1);
+      } else {
+        parts.push(tag);
+      }
+      editVibe.value = parts.join(", ");
+    };
+
     window.__openEditProfileModal = function () {
       const prof = getEffectiveProfile();
       const editUser = document.getElementById("edit-username");
@@ -10876,6 +10892,24 @@
       if (cityStatLabel && venues.length > 0) {
         const openCount = venues.filter(v => isVenueOpen(v, nowDate)).length;
         cityStatLabel.textContent = openCount > 0 ? `${openCount} OPEN` : `${venues.length} BARÓW`;
+      }
+
+      const quickPillsStrip = document.getElementById("feed-quick-pills-strip");
+      if (quickPillsStrip && curCity) {
+        const zoneButtons = (curCity.hotspots || []).slice(0, 2).map(h => {
+          const shortName = (h.val || h.name || "Centrum").split(" ")[0];
+          const lat = h.coords ? h.coords[0] : curCity.center[0];
+          const lng = h.coords ? h.coords[1] : curCity.center[1];
+          const zm = h.zoom || 16;
+          return `<button type="button" class="fqp-pill" onclick="window.__jumpMainMapToZone(${lat}, ${lng}, ${zm}, '${escapeHtml(h.name || shortName)}')">${escapeHtml(h.icon || "🔥")} ${escapeHtml(shortName)}</button>`;
+        }).join("");
+        const centerBtn = `<button type="button" class="fqp-pill" onclick="window.__jumpMainMapToZone(${curCity.center[0]}, ${curCity.center[1]}, ${curCity.zoom || 14}, '${escapeHtml(curCity.name)} · Centrum')">🏙️ Centrum</button>`;
+        quickPillsStrip.innerHTML = `
+          ${zoneButtons}
+          ${centerBtn}
+          <button type="button" class="fqp-pill" onclick="window.__triggerFeedShortcut('pubcrawl')">🗺️ Pub Crawl</button>
+          <button type="button" class="fqp-pill" onclick="window.__triggerFeedShortcut('ranking')">🏆 Top 10</button>
+        `;
       }
 
       let deletedPostIds = [];
