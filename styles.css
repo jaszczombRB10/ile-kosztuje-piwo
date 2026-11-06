@@ -25298,6 +25298,368 @@ body.theme-light .flighty-sec-title {
   color: #c2410c !important;
 }
 
+/* ==========================================================================
+   3.12 UNIFIED FLIGHTY + iOS GROUPED SHEET SYSTEM ACROSS ALL MODALS & POPUPS
+   ========================================================================== */
+
+/* Apply Flighty Sheet shell to all modals using .flighty-edit-profile-sheet */
+.modal-card.flighty-edit-profile-sheet {
+  background: #0b0b10 !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 26px !important;
+  padding: 0 !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  max-height: 90dvh !important;
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.88), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff;
+}
+
+.flighty-row-field {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.flighty-handle-field {
+  gap: 4px;
+}
+
+.flighty-row-select {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: #ffffff !important;
+  font-size: 16px !important;
+  font-weight: 600;
+  width: 100%;
+  outline: none !important;
+  padding: 2px 18px 2px 0 !important;
+  cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, rgba(235, 235, 245, 0.55) 50%),
+                    linear-gradient(135deg, rgba(235, 235, 245, 0.55) 50%, transparent 50%) !important;
+  background-position: calc(100% - 11px) 52%, calc(100% - 6px) 52% !important;
+  background-size: 5px 5px, 5px 5px !important;
+  background-repeat: no-repeat !important;
+}
+
+.flighty-row-select option,
+.flighty-row-select optgroup {
+  background: #13131b;
+  color: #ffffff;
+}
+
+.flighty-preset-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+/* Grouped Toggles in #filter-modal & Grouped Actions in #action-sheet */
+.flighty-grouped-toggles,
+.flighty-action-grouped {
+  background: #13131b !important;
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  border-radius: 16px !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+  padding: 0 !important;
+}
+
+.flighty-grouped-toggles .filter-toggle-btn,
+.flighty-action-grouped .action-sheet-item {
+  border: none !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 12px 14px !important;
+}
+
+.flighty-grouped-toggles .filter-toggle-btn:not(:last-child),
+.flighty-action-grouped .action-sheet-item:not(:last-child) {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07) !important;
+}
+
+.flighty-grouped-toggles .filter-toggle-btn.active {
+  background: rgba(48, 209, 88, 0.11) !important;
+}
+
+.flighty-grouped-toggles .filter-toggle-btn.active .toggle-check {
+  background: #30D158 !important;
+  border-color: #30D158 !important;
+  color: #03220e !important;
+}
+
+.flighty-action-grouped .action-sheet-item:active {
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Segmented Tabs inside Flighty Modals (#report-modal, #auth-modal, #happyhour-modal) */
+.flighty-edit-profile-sheet .report-mode-toggle,
+.flighty-edit-profile-sheet .auth-tabs,
+.flighty-edit-profile-sheet .hh-modal-tabs {
+  background: #14141d !important;
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  border-radius: 12px !important;
+  padding: 3px !important;
+  display: flex !important;
+  gap: 4px !important;
+}
+
+.flighty-edit-profile-sheet .report-mode-tab,
+.flighty-edit-profile-sheet .auth-tab,
+.flighty-edit-profile-sheet .hh-tab {
+  flex: 1 !important;
+  border-radius: 9px !important;
+  border: none !important;
+  background: transparent !important;
+  color: rgba(235, 235, 245, 0.62) !important;
+  font-size: 0.76rem !important;
+  font-weight: 800 !important;
+  padding: 8px 10px !important;
+}
+
+.flighty-edit-profile-sheet .report-mode-tab.active,
+.flighty-edit-profile-sheet .auth-tab.active,
+.flighty-edit-profile-sheet .hh-tab.active {
+  background: #242432 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Flighty Waze 1-Click Price Verification Module in #venue-sheet */
+.flighty-waze-verify-card {
+  background: #13131b !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 16px !important;
+  padding: 12px 14px !important;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.flighty-waze-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.flighty-waze-eyebrow {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #30D158;
+}
+
+.flighty-waze-question {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.flighty-waze-question strong {
+  color: #fbbf24;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-weight: 900;
+}
+
+.flighty-waze-actions {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 7px !important;
+}
+
+.flighty-waze-btn-yes,
+.flighty-waze-btn-change,
+.flighty-waze-btn-scan {
+  -webkit-appearance: none;
+  appearance: none;
+  padding: 8px 8px !important;
+  border-radius: 10px !important;
+  font-size: 0.72rem !important;
+  font-weight: 800 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  cursor: pointer;
+  white-space: nowrap;
+  grid-column: auto !important;
+  margin-top: 0 !important;
+}
+
+.flighty-waze-btn-yes {
+  background: rgba(48, 209, 88, 0.18) !important;
+  border: 1px solid rgba(48, 209, 88, 0.45) !important;
+  color: #4ade80 !important;
+}
+
+.flighty-waze-btn-change {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #e2e8f0 !important;
+}
+
+.flighty-waze-btn-scan {
+  background: rgba(10, 132, 255, 0.15) !important;
+  border: 1px solid rgba(10, 132, 255, 0.4) !important;
+  color: #60a5fa !important;
+}
+
+.flighty-waze-selector-lbl {
+  font-size: 0.7rem;
+  color: rgba(235, 235, 245, 0.58);
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+.venue-chip.chip-passport-action {
+  cursor: pointer;
+  background: rgba(48, 209, 88, 0.14);
+  border-color: rgba(48, 209, 88, 0.38);
+  color: #86efac;
+}
+
+.venue-chip.chip-fav-action {
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f1f5f9;
+}
+
+.venue-chip.chip-receipt-ok {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #a7f3d0;
+}
+
+/* Light Mode Overrides for Section 3.12 */
+body.theme-light .modal-card.flighty-edit-profile-sheet {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22) !important;
+}
+
+body.theme-light .flighty-row-select {
+  color: #0f172a !important;
+  background-image: linear-gradient(45deg, transparent 50%, #475569 50%),
+                    linear-gradient(135deg, #475569 50%, transparent 50%) !important;
+}
+
+body.theme-light .flighty-row-select option,
+body.theme-light .flighty-row-select optgroup {
+  background: #ffffff;
+  color: #0f172a;
+}
+
+body.theme-light .flighty-grouped-toggles,
+body.theme-light .flighty-action-grouped {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+body.theme-light .flighty-grouped-toggles .filter-toggle-btn:not(:last-child),
+body.theme-light .flighty-action-grouped .action-sheet-item:not(:last-child) {
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+body.theme-light .flighty-grouped-toggles .filter-toggle-btn.active {
+  background: #f0fdf4 !important;
+}
+
+body.theme-light .flighty-action-grouped .action-sheet-item:active {
+  background: #f1f5f9 !important;
+}
+
+body.theme-light .flighty-edit-profile-sheet .report-mode-toggle,
+body.theme-light .flighty-edit-profile-sheet .auth-tabs,
+body.theme-light .flighty-edit-profile-sheet .hh-modal-tabs {
+  background: #e2e8f0 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+body.theme-light .flighty-edit-profile-sheet .report-mode-tab,
+body.theme-light .flighty-edit-profile-sheet .auth-tab,
+body.theme-light .flighty-edit-profile-sheet .hh-tab {
+  color: #475569 !important;
+}
+
+body.theme-light .flighty-edit-profile-sheet .report-mode-tab.active,
+body.theme-light .flighty-edit-profile-sheet .auth-tab.active,
+body.theme-light .flighty-edit-profile-sheet .hh-tab.active {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.1) !important;
+}
+
+body.theme-light .flighty-waze-verify-card {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05) !important;
+}
+
+body.theme-light .flighty-waze-eyebrow {
+  color: #15803d !important;
+}
+
+body.theme-light .flighty-waze-question {
+  color: #0f172a !important;
+}
+
+body.theme-light .flighty-waze-question strong {
+  color: #d97706 !important;
+}
+
+body.theme-light .flighty-waze-btn-yes {
+  background: #dcfce7 !important;
+  border-color: #4ade80 !important;
+  color: #15803d !important;
+}
+
+body.theme-light .flighty-waze-btn-change {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+body.theme-light .flighty-waze-btn-scan {
+  background: #e0f2fe !important;
+  border-color: #7dd3fc !important;
+  color: #0369a1 !important;
+}
+
+body.theme-light .flighty-waze-selector-lbl {
+  color: #64748b !important;
+}
+
+body.theme-light .venue-chip.chip-passport-action {
+  background: #dcfce7 !important;
+  border-color: #4ade80 !important;
+  color: #15803d !important;
+}
+
+body.theme-light .venue-chip.chip-fav-action {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .venue-chip.chip-receipt-ok {
+  background: #dcfce7 !important;
+  border-color: #34d399 !important;
+  color: #065f46 !important;
+}
+
+
 
 
 

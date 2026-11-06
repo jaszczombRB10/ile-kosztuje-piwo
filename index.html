@@ -80,7 +80,7 @@
   <script defer src="https://cloud.umami.is/script.js" data-website-id="auto" id="umami-analytics-script"></script>
 
   <!-- Custom Styles -->
-  <link rel="stylesheet" href="styles.css?v=153">
+  <link rel="stylesheet" href="styles.css?v=154">
 </head>
 <body>
 
@@ -490,26 +490,25 @@
       </div>
     </div>
 
-  <!-- Filter Modal: Comprehensive Filtering & Price Ranges -->
+  <!-- Filter Modal: Flighty + iOS Native Grouped Sheet -->
   <div class="modal-backdrop" id="filter-modal">
-    <div class="modal-card filter-modal-card">
-      <div class="modal-head">
-        <div class="modal-head-title">
-          <div class="modal-icon-badge">🎛️</div>
-          <div>
-            <h2>Filtry</h2>
-            <p class="modal-head-sub">Ustaw cenę, promki studenckie lub kraft</p>
-          </div>
+    <div class="modal-card filter-modal-card flighty-edit-profile-sheet">
+      <div class="flighty-edit-topbar">
+        <button type="button" class="flighty-edit-nav-btn cancel" onclick="document.getElementById('btn-filter-reset') && document.getElementById('btn-filter-reset').click()">Wyczyść</button>
+        <div class="flighty-edit-topbar-title">
+          <span class="flighty-edit-eyebrow">FLIGHTY RADAR · MAPA</span>
+          <h2>Filtry</h2>
         </div>
-        <button type="button" class="modal-close" id="btn-close-filter">✕</button>
+        <button type="button" class="flighty-edit-nav-btn save" id="btn-close-filter">Gotowe ✓</button>
       </div>
 
-      <div class="filter-modal-content">
+      <div class="filter-modal-content flighty-edit-form">
         <!-- Section 1: Ceny piwa -->
-        <div class="filter-section">
-          <label class="filter-section-title">
-            <span>💰 Przedział cenowy (lane 0.5L)</span>
-          </label>
+        <div class="flighty-edit-section">
+          <div class="flighty-edit-sec-header">
+            <span>01 · PRZEDZIAŁ CENOWY (0.5L LANE)</span>
+            <span class="flighty-edit-sec-hint">PLN</span>
+          </div>
           <div class="filter-price-grid">
             <button type="button" class="filter-price-card active" data-price="all">
               <span class="price-card-icon">✨</span>
@@ -551,11 +550,12 @@
         </div>
 
         <!-- Section 2: Dostępność & Promocje -->
-        <div class="filter-section">
-          <label class="filter-section-title">
-            <span>🕒 Godziny i Promocje</span>
-          </label>
-          <div class="filter-toggle-grid">
+        <div class="flighty-edit-section">
+          <div class="flighty-edit-sec-header">
+            <span>02 · GODZINY & PROMOCJE</span>
+            <span class="flighty-edit-sec-hint">LIVE</span>
+          </div>
+          <div class="filter-toggle-grid flighty-grouped-toggles">
             <button type="button" class="filter-toggle-btn" id="filter-toggle-open" data-toggle="openNow">
               <span class="toggle-icon">🟢</span>
               <div class="toggle-text">
@@ -584,11 +584,12 @@
         </div>
 
         <!-- Section 3: Klimat & Wybór piwa -->
-        <div class="filter-section">
-          <label class="filter-section-title">
-            <span>⭐ Klimat & Wybór piwa</span>
-          </label>
-          <div class="filter-toggle-grid">
+        <div class="flighty-edit-section">
+          <div class="flighty-edit-sec-header">
+            <span>03 · KLIMAT & WYBÓR PIWA</span>
+            <span class="flighty-edit-sec-hint">STYL</span>
+          </div>
+          <div class="filter-toggle-grid flighty-grouped-toggles">
             <button type="button" class="filter-toggle-btn" id="filter-toggle-craft" data-toggle="craftOnly">
               <span class="toggle-icon">⭐</span>
               <div class="toggle-text">
@@ -617,10 +618,11 @@
         </div>
 
         <!-- Section 4: Dzielnica / Zagłębie -->
-        <div class="filter-section">
-          <label class="filter-section-title">
-            <span>📍 Dzielnica / Zagłębie</span>
-          </label>
+        <div class="flighty-edit-section">
+          <div class="flighty-edit-sec-header">
+            <span>04 · REJON / ZAGŁĘBIE</span>
+            <span class="flighty-edit-sec-hint">OBSZAR</span>
+          </div>
           <div class="filter-district-chips" id="filter-district-chips">
             <button type="button" class="filter-dist-chip active" data-dist="all">🏙️ Całe miasto</button>
             <button type="button" class="filter-dist-chip" data-dist="Pawilony">🔥 Pawilony</button>
@@ -638,7 +640,7 @@
       <!-- Sticky Action Footer -->
       <div class="filter-modal-footer">
         <button type="button" class="btn-filter-reset" id="btn-filter-reset">Wyczyść</button>
-        <button type="button" class="btn-filter-apply" id="btn-filter-apply">
+        <button type="button" class="btn-filter-apply flighty-edit-submit-btn" id="btn-filter-apply">
           Pokaż (<span id="filter-matching-count">0</span> miejsc)
         </button>
       </div>
@@ -760,52 +762,64 @@
     </div>
   </div>
 
-  <!-- Pub Crawl Generator Modal (poilepiwko) -->
+  <!-- Pub Crawl Generator Modal (Flighty + iOS Native Sheet) -->
   <div class="modal-backdrop" id="pubcrawl-modal">
-    <div class="modal-card modal-card-wide pubcrawl-modal-card">
-      <div class="modal-head">
-        <div>
-          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-            <h3>🍻 Trasa Pub Crawl</h3>
-            <span class="crawl-city-badge" id="crawl-city-badge">Warszawa</span>
-          </div>
-          <p class="modal-head-sub" id="crawl-modal-sub">Zaznacz rejon i liczbę barów. Ułożymy trasę z najkrótszym spacerem między kuflami.</p>
+    <div class="modal-card modal-card-wide pubcrawl-modal-card flighty-edit-profile-sheet">
+      <div class="flighty-edit-topbar">
+        <button type="button" id="btn-close-pubcrawl" class="flighty-edit-nav-btn cancel">Zamknij</button>
+        <div class="flighty-edit-topbar-title">
+          <span class="flighty-edit-eyebrow">FLIGHTY ROUTE · PLANER</span>
+          <h2>🍻 Trasa Pub Crawl</h2>
         </div>
-        <button id="btn-close-pubcrawl" class="btn-close-drawer">✕</button>
+        <span class="crawl-city-badge flighty-log-season" id="crawl-city-badge">Warszawa</span>
       </div>
+      <p class="modal-head-sub" id="crawl-modal-sub" style="display:none;">Zaznacz rejon i liczbę barów.</p>
 
-      <div class="pubcrawl-modal-body">
+      <div class="pubcrawl-modal-body flighty-edit-form" style="padding-bottom: 18px;">
         <!-- City Notice (when city has few/no venues) -->
         <div id="crawl-city-notice" class="crawl-city-notice" style="display: none;"></div>
 
         <!-- Generator Controls Form -->
-        <div class="crawl-form-grid">
-          <!-- Start Location -->
-          <div class="crawl-field">
-            <label for="crawl-start-select" class="crawl-label">📍 Gdzie zaczynamy?</label>
-            <select id="crawl-start-select" class="crawl-select">
-              <option value="gps">🎯 Moja lokalizacja GPS (lub Centrum)</option>
-              <optgroup label="🔥 Imprezowe Zagłębia">
-                <option value="pawilony" selected>🔥 Pawilony Nowy Świat (Klasyk)</option>
-                <option value="nowogrodzka">💎 Nowogrodzka & Poznańska (Krafty)</option>
-                <option value="bulwary">🌊 Bulwary Wiślane</option>
-                <option value="zbawiciela">🌆 Plac Zbawiciela</option>
-                <option value="praga">🎨 Praga (Ząbkowska / Okrzei)</option>
-                <option value="wola">🏙️ Wola (Chłodna / Grzybowska)</option>
-              </optgroup>
-              <optgroup label="🏙️ Dzielnice">
-                <option value="Śródmieście">Śródmieście</option>
-                <option value="Mokotów">Mokotów</option>
-                <option value="Ochota">Ochota</option>
-                <option value="Żoliborz">Żoliborz</option>
-                <option value="Bielany">Bielany</option>
-              </optgroup>
-            </select>
+        <div class="crawl-form-grid" style="display:flex;flex-direction:column;gap:14px;">
+          <!-- Start Location in Grouped Table -->
+          <div class="flighty-edit-section">
+            <div class="flighty-edit-sec-header">
+              <span>01 · PUNKT STARTOWY TRASY</span>
+              <span class="flighty-edit-sec-hint">REJON</span>
+            </div>
+            <div class="flighty-edit-table">
+              <div class="flighty-edit-row">
+                <label for="crawl-start-select" class="flighty-row-label">📍 Start</label>
+                <div class="flighty-row-field">
+                  <select id="crawl-start-select" class="flighty-row-input flighty-row-select crawl-select">
+                    <option value="gps">🎯 Moja lokalizacja GPS (lub Centrum)</option>
+                    <optgroup label="🔥 Imprezowe Zagłębia">
+                      <option value="pawilony" selected>🔥 Pawilony Nowy Świat (Klasyk)</option>
+                      <option value="nowogrodzka">💎 Nowogrodzka & Poznańska (Krafty)</option>
+                      <option value="bulwary">🌊 Bulwary Wiślane</option>
+                      <option value="zbawiciela">🌆 Plac Zbawiciela</option>
+                      <option value="praga">🎨 Praga (Ząbkowska / Okrzei)</option>
+                      <option value="wola">🏙️ Wola (Chłodna / Grzybowska)</option>
+                    </optgroup>
+                    <optgroup label="🏙️ Dzielnice">
+                      <option value="Śródmieście">Śródmieście</option>
+                      <option value="Mokotów">Mokotów</option>
+                      <option value="Ochota">Ochota</option>
+                      <option value="Żoliborz">Żoliborz</option>
+                      <option value="Bielany">Bielany</option>
+                    </optgroup>
+                  </select>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Stops Count -->
-          <div class="crawl-field">
-            <label class="crawl-label">🚶 Liczba barów</label>
+          <div class="flighty-edit-section">
+            <div class="flighty-edit-sec-header">
+              <span>02 · LICZBA PRZYSTANKÓW</span>
+              <span class="flighty-edit-sec-hint">ETAPY</span>
+            </div>
             <div class="crawl-pills-row" id="crawl-stops-pills">
               <button type="button" class="crawl-pill-btn" data-stops="2">2 bary <span>(Szybki bifor)</span></button>
               <button type="button" class="crawl-pill-btn active" data-stops="3">3 bary <span>(Klasyczny wieczór)</span></button>
@@ -814,8 +828,11 @@
           </div>
 
           <!-- Route Profile / Vibe -->
-          <div class="crawl-field">
-            <label class="crawl-label">⭐ Klimat & Priorytet</label>
+          <div class="flighty-edit-section">
+            <div class="flighty-edit-sec-header">
+              <span>03 · KLIMAT & PRIORYTET</span>
+              <span class="flighty-edit-sec-hint">STYL</span>
+            </div>
             <div class="crawl-pills-row" id="crawl-vibe-pills">
               <button type="button" class="crawl-pill-btn active" data-vibe="cheap">💰 Najtaniej <span>(Max oszczędności)</span></button>
               <button type="button" class="crawl-pill-btn" data-vibe="craft">💎 Kraft & Multitap <span>(Dobre piwo)</span></button>
@@ -825,8 +842,8 @@
           </div>
         </div>
 
-        <div class="crawl-generate-wrap">
-          <button type="button" id="btn-generate-crawl" class="btn-generate-crawl">
+        <div class="crawl-generate-wrap" style="margin-top:4px;">
+          <button type="button" id="btn-generate-crawl" class="flighty-edit-submit-btn btn-generate-crawl">
             <span>🍺 Ułóż trasę na wieczór</span>
           </button>
         </div>
@@ -886,12 +903,16 @@
     </div>
   </div>
 
-  <!-- Beer Price Barometer Modal -->
+  <!-- Beer Price Barometer Modal (Flighty Telemetry Sheet) -->
   <div class="modal-backdrop" id="barometer-modal">
-    <div class="modal-card modal-card-wide">
-      <div class="modal-head">
-        <h3>📊 Barometr Cenowy Barów</h3>
-        <button id="btn-close-barometer" class="btn-close-drawer">✕</button>
+    <div class="modal-card modal-card-wide flighty-edit-profile-sheet">
+      <div class="flighty-edit-topbar">
+        <button type="button" id="btn-close-barometer" class="flighty-edit-nav-btn cancel">Zamknij</button>
+        <div class="flighty-edit-topbar-title">
+          <span class="flighty-edit-eyebrow">FLIGHTY TELEMETRY · INDEKS</span>
+          <h2>📊 Barometr Cenowy</h2>
+        </div>
+        <span class="flighty-log-season" style="font-size:0.62rem;">0.5L</span>
       </div>
 
       <div class="barometer-body">
@@ -957,163 +978,201 @@
     </div>
   </div>
 
-  <!-- Crowdsource Price Modal ("Zgłoś Cenę") -->
+  <!-- Crowdsource Price Modal ("Zgłoś Cenę" — Flighty + iOS Native Grouped Sheet) -->
   <div class="modal-backdrop" id="report-modal">
-    <div class="modal-card">
-      <div class="modal-head">
-        <h3 id="report-modal-title">➕ Dodaj Nowy Bar</h3>
-        <button id="btn-close-modal" class="btn-close-drawer">✕</button>
-      </div>
-
-      <!-- Mode Selector Tabs: Nowy Bar vs Zmiana Nazwy (Zastąp z OSM) -->
-      <div class="report-mode-toggle" id="report-mode-toggle">
-        <button type="button" class="report-mode-tab active" id="tab-mode-add">➕ Nowy bar</button>
-        <button type="button" class="report-mode-tab" id="tab-mode-rename">🔄 Bar zmienił nazwę (zastąp)</button>
-      </div>
-
-      <!-- Rename Selector Group (gdy użytkownik wybiera stary bar do zastąpienia) -->
-      <div id="rename-selector-box" class="rename-selector-box" style="display: none;">
-        <label class="form-label" style="color: #fbbf24;">🔍 Wyszukaj stary bar z mapy do zastąpienia:</label>
-        <div style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 6px;">
-          Wybierz stary lokal z bazy OSM, aby zachować jego dokładną pinezkę GPS na mapie:
+    <div class="modal-card flighty-edit-profile-sheet">
+      <div class="flighty-edit-topbar">
+        <button type="button" class="flighty-edit-nav-btn cancel" id="btn-cancel-modal">Anuluj</button>
+        <div class="flighty-edit-topbar-title">
+          <span class="flighty-edit-eyebrow">FLIGHTY RADAR · CENNIK</span>
+          <h2 id="report-modal-title">➕ Dodaj Nowy Bar</h2>
         </div>
-        <input type="text" id="rename-search-input" class="form-input" placeholder="Wpisz starą nazwę lub adres (np. Sultan, Chmielna...)" autocomplete="off" />
-        <div id="rename-suggestions" class="rename-suggestions-list" style="display: none;"></div>
-        <input type="hidden" id="rename-target-id" value="" />
-        <div id="rename-selected-badge" style="display: none;">
-          <div>
-            🔄 Zastępujesz: <strong id="rename-selected-name"></strong> <span id="rename-selected-addr" style="opacity:0.85;font-size:0.75rem;"></span>
+        <button type="submit" form="report-form" class="flighty-edit-nav-btn save">Zapisz ✓</button>
+        <button id="btn-close-modal" class="btn-close-drawer" style="display:none;">✕</button>
+      </div>
+
+      <div class="flighty-edit-form" style="padding-bottom: 18px;">
+        <!-- Mode Selector Tabs: Nowy Bar vs Zmiana Nazwy (Zastąp z OSM) -->
+        <div class="report-mode-toggle" id="report-mode-toggle" style="margin: 0;">
+          <button type="button" class="report-mode-tab active" id="tab-mode-add">➕ Nowy bar</button>
+          <button type="button" class="report-mode-tab" id="tab-mode-rename">🔄 Zmiana szyldu</button>
+        </div>
+
+        <!-- Rename Selector Group (gdy użytkownik wybiera stary bar do zastąpienia) -->
+        <div id="rename-selector-box" class="rename-selector-box" style="display: none;">
+          <label class="form-label" style="color: #fbbf24;">🔍 Wyszukaj stary bar z mapy do zastąpienia:</label>
+          <div style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 6px;">
+            Wybierz stary lokal z bazy OSM, aby zachować jego dokładną pinezkę GPS na mapie:
           </div>
-          <button type="button" id="btn-clear-rename-selection" title="Wybierz inny lokal">✕</button>
-        </div>
-      </div>
-
-      <!-- Edit Modal Unlock Name Toggle (widoczne przy edycji istniejącego baru z karty) -->
-      <div id="rename-edit-toggle-row" class="rename-edit-toggle-row" style="display: none;">
-        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.82rem; color: #f1f5f9;">
-          <input type="checkbox" id="check-unlock-rename" style="accent-color: var(--primary);" />
-          <span>🔄 <strong>Ten bar zmienił nazwę (rebranding / nowy szyld)</strong></span>
-        </label>
-        <div id="rename-edit-tip" style="display: none; font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; margin-left: 24px;">
-          Możesz teraz zmienić nazwę powyżej. Dawna nazwa zostanie zachowana w bazie (d. stara nazwa), a pinezka GPS nie zmieni pozycji.
-        </div>
-      </div>
-      
-      <form id="report-form">
-        <!-- AI Vision Fast Track: Skaner tablicy z kranu / paragonu -->
-        <div class="ocr-fast-track-box" id="ocr-fast-track-box">
-          <div class="ocr-fast-track-head">
-            <span class="ocr-fast-track-icon">📸⚡</span>
-            <div class="ocr-fast-track-info">
-              <strong>Szybki Skaner AI (Tablica / Paragon)</strong>
-              <span>Zrób zdjęcie tablicy z kranu lub paragonu – uzupełnimy formularz w 2 sekundy!</span>
+          <input type="text" id="rename-search-input" class="form-input" placeholder="Wpisz starą nazwę lub adres (np. Sultan, Chmielna...)" autocomplete="off" />
+          <div id="rename-suggestions" class="rename-suggestions-list" style="display: none;"></div>
+          <input type="hidden" id="rename-target-id" value="" />
+          <div id="rename-selected-badge" style="display: none;">
+            <div>
+              🔄 Zastępujesz: <strong id="rename-selected-name"></strong> <span id="rename-selected-addr" style="opacity:0.85;font-size:0.75rem;"></span>
             </div>
+            <button type="button" id="btn-clear-rename-selection" title="Wybierz inny lokal">✕</button>
           </div>
-          <div class="ocr-fast-track-action" id="ocr-fast-track-action">
-            <input type="file" id="ocr-photo-input" accept="image/*" capture="environment" class="photo-file-input" />
-            <label for="ocr-photo-input" class="btn-ocr-trigger" id="btn-ocr-trigger">
-              <span>📷 Zrób zdjęcie / Wgraj paragon lub menu</span>
-            </label>
-            <div id="ocr-scanning-spinner" style="display:none;" class="ocr-scanning-status">
-              <div class="pulse-live-dot"></div>
-              <span>🔍 AI analizuje cennik i szuka najtańszego kufla...</span>
-            </div>
-          </div>
+        </div>
 
-          <!-- High-Tech AI Scanning Viewport with Laser Beam & Status -->
-          <div id="ocr-scan-preview-box" class="ocr-scan-preview-box" style="display:none;">
-            <div class="ocr-preview-viewport">
-              <img id="ocr-preview-img" src="" alt="Skanowany cennik lub paragon" />
-              <div class="ocr-laser-beam" id="ocr-laser-beam"></div>
-              <div class="ocr-laser-status" id="ocr-laser-status">
-                <span class="pulse-live-dot"></span>
-                <span id="ocr-laser-status-text">🔍 AI analizuje cennik i szuka najtańszego kufla...</span>
+        <!-- Edit Modal Unlock Name Toggle (widoczne przy edycji istniejącego baru z karty) -->
+        <div id="rename-edit-toggle-row" class="rename-edit-toggle-row" style="display: none;">
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.82rem;">
+            <input type="checkbox" id="check-unlock-rename" style="accent-color: #30D158;" />
+            <span>🔄 <strong>Ten bar zmienił nazwę (rebranding / nowy szyld)</strong></span>
+          </label>
+          <div id="rename-edit-tip" style="display: none; font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; margin-left: 24px;">
+            Możesz teraz zmienić nazwę poniżej. Dawna nazwa zostanie zachowana w bazie (d. stara nazwa), a pinezka GPS nie zmieni pozycji.
+          </div>
+        </div>
+
+        <form id="report-form" style="display: flex; flex-direction: column; gap: 14px;">
+          <!-- AI Vision Fast Track: Skaner tablicy z kranu / paragonu -->
+          <div class="ocr-fast-track-box flighty-avatar-stage" id="ocr-fast-track-box" style="margin: 0;">
+            <div class="ocr-fast-track-head">
+              <span class="ocr-fast-track-icon">📸⚡</span>
+              <div class="ocr-fast-track-info">
+                <strong>Szybki Skaner AI (Paragon / Tablica)</strong>
+                <span>Zrób zdjęcie paragonu lub menu — automatycznie uzupełnimy cenę i markę piwa!</span>
               </div>
-              <div class="ocr-result-badge" id="ocr-result-badge" style="display:none;"></div>
             </div>
-            <div class="ocr-preview-actions">
-              <button type="button" id="btn-ocr-retake" class="btn-ocr-retake">🔄 Zrób inne zdjęcie</button>
+            <div class="ocr-fast-track-action" id="ocr-fast-track-action">
+              <input type="file" id="ocr-photo-input" accept="image/*" capture="environment" class="photo-file-input" />
+              <label for="ocr-photo-input" class="btn-ocr-trigger flighty-btn-photo-upload" id="btn-ocr-trigger" style="width: 100%; justify-content: center;">
+                <span>📷 Zeskanuj paragon lub cennik AI</span>
+              </label>
+              <div id="ocr-scanning-spinner" style="display:none;" class="ocr-scanning-status">
+                <div class="pulse-live-dot"></div>
+                <span>🔍 AI analizuje cennik i szuka najtańszego kufla...</span>
+              </div>
+            </div>
+
+            <!-- High-Tech AI Scanning Viewport with Laser Beam & Status -->
+            <div id="ocr-scan-preview-box" class="ocr-scan-preview-box" style="display:none;">
+              <div class="ocr-preview-viewport">
+                <img id="ocr-preview-img" src="" alt="Skanowany cennik lub paragon" />
+                <div class="ocr-laser-beam" id="ocr-laser-beam"></div>
+                <div class="ocr-laser-status" id="ocr-laser-status">
+                  <span class="pulse-live-dot"></span>
+                  <span id="ocr-laser-status-text">🔍 AI analizuje cennik i szuka najtańszego kufla...</span>
+                </div>
+                <div class="ocr-result-badge" id="ocr-result-badge" style="display:none;"></div>
+              </div>
+              <div class="ocr-preview-actions">
+                <button type="button" id="btn-ocr-retake" class="btn-ocr-retake">🔄 Zrób inne zdjęcie</button>
+              </div>
             </div>
           </div>
-        </div>
-        <div class="ocr-divider">
-          <span>lub wpisz dane ręcznie</span>
-        </div>
 
-        <div class="form-group">
-          <label class="form-label" id="report-name-label">Nazwa lokalu / baru</label>
-          <div id="report-modal-desc" style="font-size:0.75rem;color:var(--text-muted);margin-bottom:6px;">Wpisz nazwę nowego baru, który chcesz dodać na mapę:</div>
-          <input type="text" id="report-name" class="form-input" placeholder="np. Bar Pacyfik, Browar Warszawski..." required />
-        </div>
+          <!-- Section 1: Lokalizacja i nazwa baru -->
+          <div class="flighty-edit-section">
+            <div class="flighty-edit-sec-header">
+              <span id="report-name-label">01 · LOKALIZACJA & NAZWA BARU</span>
+              <span class="flighty-edit-sec-hint">MAPA GPS</span>
+            </div>
+            <div id="report-modal-desc" style="display:none;"></div>
+            <div class="flighty-edit-table">
+              <div class="flighty-edit-row">
+                <label class="flighty-row-label" for="report-name">🍺 Nazwa</label>
+                <div class="flighty-row-field">
+                  <input type="text" id="report-name" class="flighty-row-input" placeholder="np. Bar Pacyfik, Pijalnia..." required />
+                </div>
+              </div>
+              <div class="flighty-edit-row">
+                <label class="flighty-row-label" for="report-district">📍 Rejon</label>
+                <div class="flighty-row-field">
+                  <select id="report-district" class="flighty-row-input flighty-row-select" required>
+                    <option value="Śródmieście">Śródmieście / Centrum</option>
+                    <option value="Pawilony">Pawilony Nowy Świat</option>
+                    <option value="Bulwary">Bulwary / Nad rzeką</option>
+                    <option value="Mokotów">Mokotów</option>
+                    <option value="Wola">Wola</option>
+                    <option value="Ochota">Ochota</option>
+                    <option value="Żoliborz">Żoliborz</option>
+                    <option value="Praga Północ">Praga-Północ</option>
+                    <option value="Praga Południe">Praga-Południe</option>
+                    <option value="Bielany">Bielany</option>
+                    <option value="Bemowo">Bemowo</option>
+                    <option value="Ursynów">Ursynów</option>
+                    <option value="Targówek">Targówek</option>
+                    <option value="Białołęka">Białołęka</option>
+                    <option value="Wawer">Wawer</option>
+                    <option value="Wilanów">Wilanów</option>
+                    <option value="Ursus">Ursus</option>
+                    <option value="Włochy">Włochy</option>
+                    <option value="Rembertów">Rembertów</option>
+                    <option value="Wesoła">Wesoła</option>
+                  </select>
+                </div>
+              </div>
+              <div class="flighty-edit-row">
+                <label class="flighty-row-label" for="report-address">🏠 Adres</label>
+                <div class="flighty-row-field">
+                  <input type="text" id="report-address" class="flighty-row-input" placeholder="np. Nowogrodzka 12" />
+                </div>
+              </div>
+            </div>
+            <div id="address-match-box"></div>
+          </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Dzielnica</label>
-            <select id="report-district" class="form-select" required>
-              <option value="Śródmieście">Śródmieście</option>
-              <option value="Pawilony">Pawilony Nowy Świat</option>
-              <option value="Bulwary">Bulwary Wiślane</option>
-              <option value="Mokotów">Mokotów</option>
-              <option value="Wola">Wola</option>
-              <option value="Ochota">Ochota</option>
-              <option value="Żoliborz">Żoliborz</option>
-              <option value="Praga Północ">Praga-Północ</option>
-              <option value="Praga Południe">Praga-Południe</option>
-              <option value="Bielany">Bielany</option>
-              <option value="Bemowo">Bemowo</option>
-              <option value="Ursynów">Ursynów</option>
-              <option value="Targówek">Targówek</option>
-              <option value="Białołęka">Białołęka</option>
-              <option value="Wawer">Wawer</option>
-              <option value="Wilanów">Wilanów</option>
-              <option value="Ursus">Ursus</option>
-              <option value="Włochy">Włochy</option>
-              <option value="Rembertów">Rembertów</option>
-              <option value="Wesoła">Wesoła</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Ulica i numer</label>
-            <input type="text" id="report-address" class="form-input" placeholder="np. Nowogrodzka 12" />
-          </div>
-        </div>
-        <div id="address-match-box"></div>
+          <!-- Section 2: Cennik i oferta piwna -->
+          <div class="flighty-edit-section">
+            <div class="flighty-edit-sec-header">
+              <span>02 · CENNIK Z NALEWAKA (0.5L)</span>
+              <span class="flighty-edit-sec-hint">PLN</span>
+            </div>
+            <div class="flighty-edit-table">
+              <div class="flighty-edit-row">
+                <label class="flighty-row-label" for="report-beer-name">🍺 Piwo</label>
+                <div class="flighty-row-field">
+                  <input type="text" id="report-beer-name" class="flighty-row-input" placeholder="np. Łomża, Perła, Kozel, Żywiec" required />
+                </div>
+              </div>
+              <div class="flighty-edit-row">
+                <label class="flighty-row-label" for="report-price">💰 Cena 0.5L</label>
+                <div class="flighty-row-field flighty-handle-field">
+                  <input type="number" id="report-price" class="flighty-row-input" step="0.5" min="5" max="60" placeholder="14.00" required />
+                  <span class="flighty-at-sign" style="font-size:0.75rem;">zł</span>
+                </div>
+              </div>
+              <div class="flighty-edit-row">
+                <label class="flighty-row-label" for="report-shot">🥃 Shot 40ml</label>
+                <div class="flighty-row-field flighty-handle-field">
+                  <input type="number" id="report-shot" class="flighty-row-input" step="0.5" placeholder="8.00 (opcjonalnie)" />
+                  <span class="flighty-at-sign" style="font-size:0.75rem;">zł</span>
+                </div>
+              </div>
+              <div class="flighty-edit-row">
+                <label class="flighty-row-label" for="report-craft">⭐ Klimat</label>
+                <div class="flighty-row-field">
+                  <select id="report-craft" class="flighty-row-input flighty-row-select">
+                    <option value="false">Standardowy pub / bar</option>
+                    <option value="true">Kraft / Multitap rzemieślniczy</option>
+                  </select>
+                </div>
+              </div>
+              <div class="flighty-edit-row">
+                <label class="flighty-row-label" for="report-happy-hour">⚡ Promka</label>
+                <div class="flighty-row-field">
+                  <input type="text" id="report-happy-hour" class="flighty-row-input" placeholder="np. Pn-Śr 16:00-18:00 piwo 10 zł" />
+                </div>
+              </div>
+            </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Najtańsze piwo (0.5L)</label>
-            <input type="text" id="report-beer-name" class="form-input" placeholder="np. Namysłów, Kozel" required />
+            <!-- Szybkie chipy cenowe -->
+            <div class="flighty-preset-chips" id="report-quick-price-chips">
+              <button type="button" class="flighty-preset-chip" onclick="const el=document.getElementById('report-price');if(el)el.value='10'">10 zł</button>
+              <button type="button" class="flighty-preset-chip" onclick="const el=document.getElementById('report-price');if(el)el.value='12'">12 zł</button>
+              <button type="button" class="flighty-preset-chip" onclick="const el=document.getElementById('report-price');if(el)el.value='14'">14 zł</button>
+              <button type="button" class="flighty-preset-chip" onclick="const el=document.getElementById('report-price');if(el)el.value='15'">15 zł</button>
+              <button type="button" class="flighty-preset-chip" onclick="const el=document.getElementById('report-price');if(el)el.value='16'">16 zł</button>
+              <button type="button" class="flighty-preset-chip" onclick="const el=document.getElementById('report-price');if(el)el.value='18'">18 zł</button>
+            </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">Cena piwa (PLN)</label>
-            <input type="number" id="report-price" class="form-input" step="0.5" min="5" max="60" placeholder="12.00" required />
-          </div>
-        </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Cena shota (PLN)</label>
-            <input type="number" id="report-shot" class="form-input" step="0.5" placeholder="6.00" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Czy to multitap kraftowy?</label>
-            <select id="report-craft" class="form-select">
-              <option value="false">Nie (standardowy pub)</option>
-              <option value="true">Tak (craft / multitap)</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Happy Hour (opcjonalnie)</label>
-          <input type="text" id="report-happy-hour" class="form-input" placeholder="np. Pn-Śr 16:00-18:00 piwo 9 zł" />
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" id="btn-cancel-modal" class="btn-cancel">Anuluj</button>
-          <button type="submit" id="report-submit-btn" class="btn-submit">➕ Dodaj bar na mapę</button>
-        </div>
-      </form>
+          <button type="submit" id="report-submit-btn" class="flighty-edit-submit-btn">➕ Dodaj bar na mapę</button>
+        </form>
+      </div>
     </div>
   </div>
 
@@ -1169,21 +1228,19 @@
     </div>
   </div>
 
-  <!-- 2. Discover Sheet (Bento Grid View for 🔥 Odkrywaj) -->
+  <!-- 2. Discover Sheet (Bento Grid View for 🔥 Odkrywaj — Flighty Sheet) -->
   <div class="bottom-sheet-backdrop" id="discover-sheet-backdrop" style="display:none;"></div>
   <div class="bottom-sheet discover-sheet" id="discover-sheet" data-state="closed" style="display:none;">
     <div class="bottom-sheet-handle-wrap" id="discover-sheet-handle-wrap">
       <div class="bottom-sheet-handle"></div>
     </div>
-    <div class="bottom-sheet-header">
-      <div class="sheet-title-group">
-        <span class="sheet-icon-badge">🔥</span>
-        <div>
-          <h2 class="sheet-title">Odkrywaj Miasto</h2>
-          <p class="sheet-sub">Narzędzia nocne, radary i zabawa barowa</p>
-        </div>
+    <div class="flighty-edit-topbar" style="padding-top:4px;">
+      <span class="flighty-log-season" style="font-size:0.62rem;">RADAR</span>
+      <div class="flighty-edit-topbar-title">
+        <span class="flighty-edit-eyebrow">FLIGHTY COCKPIT · NARZĘDZIA</span>
+        <h2 class="sheet-title">🔥 Odkrywaj Miasto</h2>
       </div>
-      <button type="button" class="sheet-close-btn" id="btn-close-discover-sheet" aria-label="Zamknij szufladę">✕</button>
+      <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-discover-sheet" aria-label="Zamknij szufladę">Zamknij</button>
     </div>
     <div class="bottom-sheet-content discover-scroll">
       <div class="bento-grid">
@@ -1281,24 +1338,26 @@
     </div>
   </div>
 
-  <!-- 3. Quick Action Sheet (Triggered by central ➕ FAB) -->
+  <!-- 3. Quick Action Sheet (Triggered by central ➕ FAB — Flighty + iOS Sheet) -->
   <div class="bottom-sheet-backdrop" id="action-sheet-backdrop" style="display:none;"></div>
   <div class="bottom-sheet action-sheet" id="action-sheet" data-state="closed" style="display:none;">
     <div class="bottom-sheet-handle-wrap" id="action-sheet-handle-wrap">
       <div class="bottom-sheet-handle"></div>
     </div>
-    <div class="bottom-sheet-header">
-      <div class="sheet-title-group">
-        <span class="sheet-icon-badge">⚡</span>
-        <div>
-          <h2 class="sheet-title">Szybka Akcja</h2>
-          <p class="sheet-sub">Współtwórz nocną mapę barów</p>
-        </div>
+    <div class="flighty-edit-topbar" style="padding-top:4px;">
+      <span class="flighty-log-season" style="font-size:0.62rem;">LIVE</span>
+      <div class="flighty-edit-topbar-title">
+        <span class="flighty-edit-eyebrow">FLIGHTY ACTION · SKRÓTY</span>
+        <h2 class="sheet-title">⚡ Szybka Akcja</h2>
       </div>
-      <button type="button" class="sheet-close-btn" id="btn-close-action-sheet" aria-label="Zamknij akcje">✕</button>
+      <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-action-sheet" aria-label="Zamknij akcje">Zamknij</button>
     </div>
     <div class="bottom-sheet-content action-sheet-content">
-      <div class="action-sheet-options">
+      <div class="flighty-edit-sec-header" style="margin-bottom:8px;">
+        <span>WYBIERZ AKCJĘ W BARZE</span>
+        <span class="flighty-edit-sec-hint">1 DOTKNIĘCIE</span>
+      </div>
+      <div class="action-sheet-options flighty-action-grouped">
         <button type="button" class="action-sheet-item item-bereal" id="action-btn-bereal">
           <div class="action-item-icon">📸</div>
           <div class="action-item-info">
@@ -1422,30 +1481,35 @@
     </button>
   </nav>
 
-  <!-- City Switcher Modal (Jakdojade Style) -->
+  <!-- City Switcher Modal (Flighty Hub Selector) -->
   <div class="modal-backdrop" id="city-switcher-modal" style="display:none;">
-    <div class="modal-card city-switcher-card">
-      <div class="modal-head">
-        <div class="modal-head-title">
-          <div class="modal-icon-badge">📍</div>
-          <div>
-            <h2>Wybierz miasto</h2>
-            <p class="modal-head-sub">Przeglądaj puby, ceny i trasy w Twoim mieście</p>
+    <div class="modal-card city-switcher-card flighty-edit-profile-sheet">
+      <div class="flighty-edit-topbar">
+        <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-city-switcher" aria-label="Zamknij okno">Zamknij</button>
+        <div class="flighty-edit-topbar-title">
+          <span class="flighty-edit-eyebrow">FLIGHTY HUB · POLSKA</span>
+          <h2>📍 Wybierz miasto</h2>
+        </div>
+        <span style="min-width:64px;text-align:right;font-size:0.7rem;color:#30D158;font-weight:800;font-family:ui-monospace,monospace;">GPS</span>
+      </div>
+
+      <div class="flighty-edit-form" style="padding-bottom: 16px;">
+        <div class="flighty-edit-table">
+          <div class="flighty-edit-row">
+            <label class="flighty-row-label" for="city-search-input">🔍 Szukaj</label>
+            <div class="flighty-row-field">
+              <input type="text" id="city-search-input" class="flighty-row-input" placeholder="Wpisz miasto (np. Kraków, Wrocław)..." autocomplete="off" />
+            </div>
           </div>
         </div>
-        <button type="button" class="modal-close" id="btn-close-city-switcher" aria-label="Zamknij okno">✕</button>
-      </div>
 
-      <div class="city-search-box">
-        <input type="text" id="city-search-input" class="city-search-input" placeholder="🔍 Szukaj miasta (np. Kraków, Wrocław)..." autocomplete="off" />
-      </div>
+        <div class="city-list" id="city-list">
+          <!-- Rendered dynamically in app.js from CITIES -->
+        </div>
 
-      <div class="city-list" id="city-list">
-        <!-- Rendered dynamically in app.js from CITIES -->
-      </div>
-
-      <div class="city-modal-footer">
-        <p class="city-footer-note">Nie ma jeszcze Twojego miasta? Wybierz je i dodaj pierwszy bar jako pionier! 🍻</p>
+        <div class="city-modal-footer" style="margin-top:4px;">
+          <p class="city-footer-note">Nie ma jeszcze Twojego miasta? Wybierz je i dodaj pierwszy bar jako pionier! 🍻</p>
+        </div>
       </div>
     </div>
   </div>
@@ -1734,65 +1798,69 @@
     </div>
   </div>
 
-  <!-- Happy Hours & Promo Calendar Modal -->
+  <!-- Happy Hours & Promo Calendar Modal (Flighty + iOS Sheet) -->
   <div class="modal-backdrop" id="happyhour-modal">
-    <div class="modal-card modal-card-wide happyhour-modal-card">
-      <div class="modal-head">
-        <div>
-          <h3>⚡ Happy Hours & Kalendarz Promocji</h3>
-          <p class="modal-head-sub">Gdzie w Twoim mieście trafisz na promkę w tej chwili lub w dany dzień tygodnia.</p>
+    <div class="modal-card modal-card-wide happyhour-modal-card flighty-edit-profile-sheet">
+      <div class="flighty-edit-topbar">
+        <button type="button" id="btn-close-happyhour" class="flighty-edit-nav-btn cancel">Zamknij</button>
+        <div class="flighty-edit-topbar-title">
+          <span class="flighty-edit-eyebrow">FLIGHTY DEALS · LIVE</span>
+          <h2>⚡ Happy Hours</h2>
         </div>
-        <button id="btn-close-happyhour" class="btn-close-drawer">✕</button>
+        <span class="flighty-log-season" style="font-size:0.62rem;">PROMKI</span>
       </div>
 
-      <div class="hh-modal-tabs">
-        <button type="button" class="hh-tab active" id="tab-hh-now">⚡ Trwające TERAZ (<span id="hh-now-count">0</span>)</button>
-        <button type="button" class="hh-tab" id="tab-hh-calendar">📅 Rozpiska Tygodnia</button>
-      </div>
-
-      <div class="hh-modal-body">
-        <!-- Tab 1: Active Now Content -->
-        <div id="hh-tab-content-now" class="hh-tab-content">
-          <div class="hh-now-banner">
-            <div class="hh-live-indicator"><span class="pulse-dot"></span> NA ŻYWO W TWOIM MIEŚCIE</div>
-            <div class="hh-now-sub" id="hh-now-clock-text">Sprawdzanie ofert...</div>
-          </div>
-          <div class="hh-cards-list" id="hh-now-list">
-            <!-- Populated dynamically via JS -->
-          </div>
+      <div class="flighty-edit-form" style="padding-bottom: 18px;">
+        <div class="hh-modal-tabs" style="margin:0;">
+          <button type="button" class="hh-tab active" id="tab-hh-now">⚡ Trwające TERAZ (<span id="hh-now-count">0</span>)</button>
+          <button type="button" class="hh-tab" id="tab-hh-calendar">📅 Rozpiska Tygodnia</button>
         </div>
 
-        <!-- Tab 2: Weekly Calendar Content -->
-        <div id="hh-tab-content-calendar" class="hh-tab-content" style="display: none;">
-          <div class="hh-days-pills" id="hh-days-pills">
-            <button type="button" class="hh-day-pill" data-day="1">Poniedziałek</button>
-            <button type="button" class="hh-day-pill" data-day="2">Wtorek</button>
-            <button type="button" class="hh-day-pill" data-day="3">Środa</button>
-            <button type="button" class="hh-day-pill" data-day="4">Czwartek</button>
-            <button type="button" class="hh-day-pill" data-day="5">Piątek</button>
-            <button type="button" class="hh-day-pill" data-day="6">Sobota</button>
-            <button type="button" class="hh-day-pill" data-day="0">Niedziela</button>
+        <div class="hh-modal-body" style="padding:0;">
+          <!-- Tab 1: Active Now Content -->
+          <div id="hh-tab-content-now" class="hh-tab-content">
+            <div class="hh-now-banner">
+              <div class="hh-live-indicator"><span class="pulse-dot"></span> NA ŻYWO W TWOIM MIEŚCIE</div>
+              <div class="hh-now-sub" id="hh-now-clock-text">Sprawdzanie ofert...</div>
+            </div>
+            <div class="hh-cards-list" id="hh-now-list">
+              <!-- Populated dynamically via JS -->
+            </div>
           </div>
-          <div class="hh-cards-list" id="hh-calendar-list">
-            <!-- Populated dynamically via JS -->
+
+          <!-- Tab 2: Weekly Calendar Content -->
+          <div id="hh-tab-content-calendar" class="hh-tab-content" style="display: none;">
+            <div class="hh-days-pills" id="hh-days-pills">
+              <button type="button" class="hh-day-pill" data-day="1">Poniedziałek</button>
+              <button type="button" class="hh-day-pill" data-day="2">Wtorek</button>
+              <button type="button" class="hh-day-pill" data-day="3">Środa</button>
+              <button type="button" class="hh-day-pill" data-day="4">Czwartek</button>
+              <button type="button" class="hh-day-pill" data-day="5">Piątek</button>
+              <button type="button" class="hh-day-pill" data-day="6">Sobota</button>
+              <button type="button" class="hh-day-pill" data-day="0">Niedziela</button>
+            </div>
+            <div class="hh-cards-list" id="hh-calendar-list">
+              <!-- Populated dynamically via JS -->
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Piwny Paszport Modal -->
+  <!-- Piwny Paszport Modal (Flighty Logbook Sheet) -->
   <div class="modal-backdrop" id="passport-modal">
-    <div class="modal-card modal-card-wide passport-modal-card">
-      <div class="modal-head">
-        <div>
-          <h3>🎖️ Paszport Piwosza</h3>
-          <p class="modal-head-sub">Odwiedzaj bary, wbijaj pieczątki i zdobywaj odznaki.</p>
+    <div class="modal-card modal-card-wide passport-modal-card flighty-edit-profile-sheet">
+      <div class="flighty-edit-topbar">
+        <button type="button" id="btn-close-passport" class="flighty-edit-nav-btn cancel">Zamknij</button>
+        <div class="flighty-edit-topbar-title">
+          <span class="flighty-edit-eyebrow">FLIGHTY LOGBOOK · SEZON 2026</span>
+          <h2>🎖️ Paszport Piwosza</h2>
         </div>
-        <button id="btn-close-passport" class="btn-close-drawer">✕</button>
+        <button type="button" class="flighty-edit-nav-btn save" onclick="document.getElementById('btn-share-passport') && document.getElementById('btn-share-passport').click()">Udostępnij</button>
       </div>
 
-      <div class="passport-modal-body">
+      <div class="passport-modal-body flighty-edit-form" style="padding-bottom: 18px;">
         <!-- User Level & Progress Card -->
         <div class="passport-hero-card">
           <div class="passport-avatar-wrap">
@@ -1860,178 +1928,229 @@
     </div>
   </div>
 
-  <!-- Auth Modal: Login / Register / Reset Password -->
+  <!-- Auth Modal: Login / Register / Reset Password (Flighty + iOS Native Sheet) -->
   <div class="modal-backdrop" id="auth-modal">
-    <div class="modal-card auth-modal-card">
-      <div class="modal-head">
-        <div class="modal-head-title">
-          <div class="modal-icon-badge">🍺</div>
-          <div>
-            <h2 id="auth-modal-title">Twoje Konto</h2>
-            <p class="modal-head-sub" id="auth-modal-sub">Zaloguj się, żeby wbijać pinezki, wrzucać fotki i planować wyjścia z ekipą.</p>
-          </div>
+    <div class="modal-card auth-modal-card flighty-edit-profile-sheet">
+      <div class="flighty-edit-topbar">
+        <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-auth">Zamknij</button>
+        <div class="flighty-edit-topbar-title">
+          <span class="flighty-edit-eyebrow">FLIGHTY PASS · ID</span>
+          <h2 id="auth-modal-title">Twoje Konto</h2>
         </div>
-        <button type="button" class="modal-close" id="btn-close-auth">✕</button>
+        <span style="min-width:64px;text-align:right;font-size:1.1rem;">🍺</span>
       </div>
 
-      <!-- Auth Tabs: Logowanie vs Rejestracja -->
-      <div class="auth-tabs">
-        <button type="button" class="auth-tab active" id="tab-auth-login">Zaloguj się</button>
-        <button type="button" class="auth-tab" id="tab-auth-register">Załóż konto</button>
+      <div class="flighty-edit-form" style="padding-bottom: 18px;">
+        <p class="modal-head-sub" id="auth-modal-sub" style="margin: 0; font-size: 0.78rem; color: var(--text-muted); text-align: center;">Zaloguj się, żeby wbijać pinezki, wrzucać BeReale i planować wyjścia z ekipą.</p>
+
+        <!-- Auth Tabs: Logowanie vs Rejestracja -->
+        <div class="auth-tabs" style="margin: 0;">
+          <button type="button" class="auth-tab active" id="tab-auth-login">Zaloguj się</button>
+          <button type="button" class="auth-tab" id="tab-auth-register">Załóż konto</button>
+        </div>
+
+        <!-- Social OAuth Buttons (Google & Apple) -->
+        <div class="auth-social-wrap" id="auth-social-wrap" style="margin: 0;">
+          <button type="button" class="btn-oauth btn-oauth-google" id="btn-oauth-google" title="Zaloguj się przez konto Google">
+            <svg class="oauth-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+            </svg>
+            <span class="btn-oauth-text">Kontynuuj z Google</span>
+          </button>
+
+          <button type="button" class="btn-oauth btn-oauth-apple" id="btn-oauth-apple" title="Zaloguj się przez konto Apple">
+            <svg class="oauth-icon" viewBox="0 0 170 170" width="18" height="18" fill="currentColor" aria-hidden="true">
+              <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.7-3.08-7.61-7.8-11.73-14.14-5.65-8.68-10.15-18.78-13.5-30.28-3.36-11.5-5.04-22.38-5.04-32.64 0-14.39 3.63-26.44 10.89-36.14 7.26-9.7 16.5-14.65 27.72-14.85 4.89 0 10.17 1.25 15.84 3.75 5.66 2.5 9.77 3.79 12.32 3.86 2.07 0 6.43-1.42 13.08-4.25 6.65-2.83 12.44-4.07 17.37-3.72 13.04.83 23.63 5.48 31.78 13.97-11.73 7.07-17.47 16.63-17.21 28.69.26 9.46 3.85 17.5 10.77 24.12 6.92 6.63 15.22 10.45 24.91 11.47-2.17 6.41-4.78 12.82-7.82 19.22zM119.22 33.64c0-7.07 2.61-13.79 7.82-20.17 5.22-6.38 11.7-10.75 19.46-13.11-.22 1.41-.33 2.5-.33 3.26 0 7.07-2.73 13.88-8.19 20.44-5.46 6.55-11.97 10.71-19.53 12.49-.22-.98-.33-1.95-.33-2.91z"/>
+            </svg>
+            <span class="btn-oauth-text">Kontynuuj z Apple</span>
+          </button>
+        </div>
+
+        <!-- Form 1: Logowanie -->
+        <form id="form-auth-login" class="auth-form" style="display:flex;flex-direction:column;gap:12px;">
+          <div class="flighty-edit-section">
+            <div class="flighty-edit-sec-header">
+              <span>DANE LOGOWANIA</span>
+              <a href="#" id="link-forgot-pass" class="auth-sublink" style="font-size:0.68rem;">Zapomniałeś hasła?</a>
+            </div>
+            <div class="flighty-edit-table">
+              <div class="flighty-edit-row">
+                <label class="flighty-row-label" for="login-email">Konto</label>
+                <div class="flighty-row-field">
+                  <input type="text" id="login-email" class="flighty-row-input" required placeholder="@nick lub e-mail" autocomplete="username email" autocapitalize="none" spellcheck="false" />
+                </div>
+              </div>
+              <div class="flighty-edit-row">
+                <label class="flighty-row-label" for="login-password">Hasło</label>
+                <div class="flighty-row-field">
+                  <input type="password" id="login-password" class="flighty-row-input" required placeholder="••••••••" autocomplete="current-password" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="auth-error-msg" id="login-error-msg" style="display:none;"></div>
+          <button type="submit" class="flighty-edit-submit-btn" id="btn-submit-login">
+            <span>Zaloguj się ✓</span>
+          </button>
+          <div class="auth-terms-note">
+            Logując się, potwierdzasz akceptację <button type="button" class="btn-text-legal btn-open-legal-terms">Regulaminu serwisu</button>.
+          </div>
+        </form>
+
+        <!-- Form 2: Rejestracja -->
+        <form id="form-auth-register" class="auth-form" style="display:none;flex-direction:column;gap:12px;">
+          <div class="flighty-edit-section">
+            <div class="flighty-edit-sec-header">
+              <span>01 · TOŻSAMOŚĆ PIWOSZA</span>
+              <span class="flighty-edit-sec-hint" id="reg-username-hint">3–20 ZNAKÓW</span>
+            </div>
+            <div class="flighty-edit-table">
+              <div class="flighty-edit-row">
+                <label class="flighty-row-label" for="reg-username">Nick</label>
+                <div class="flighty-row-field flighty-handle-field">
+                  <span class="flighty-at-sign">@</span>
+                  <input type="text" id="reg-username" class="flighty-row-input" required placeholder="twoj_nick" autocomplete="username" maxlength="20" autocapitalize="none" spellcheck="false" />
+                </div>
+              </div>
+              <div class="flighty-edit-row">
+                <label class="flighty-row-label" for="reg-display-name">Imię</label>
+                <div class="flighty-row-field">
+                  <input type="text" id="reg-display-name" class="flighty-row-input" required placeholder="np. Krystian" maxlength="30" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flighty-avatar-stage" style="padding:10px 12px;">
+            <span class="flighty-avatar-grid-lbl">WYBIERZ PIWNY AWATAR</span>
+            <div class="avatar-picker flighty-avatar-grid" id="reg-avatar-picker">
+              <button type="button" class="avatar-option selected" data-avatar="🍺">🍺</button>
+              <button type="button" class="avatar-option" data-avatar="🍻">🍻</button>
+              <button type="button" class="avatar-option" data-avatar="🦁">🦁</button>
+              <button type="button" class="avatar-option" data-avatar="🧜‍♀️">🧜‍♀️</button>
+              <button type="button" class="avatar-option" data-avatar="👑">👑</button>
+              <button type="button" class="avatar-option" data-avatar="🦊">🦊</button>
+              <button type="button" class="avatar-option" data-avatar="⚡">⚡</button>
+              <button type="button" class="avatar-option" data-avatar="🕶️">🕶️</button>
+              <button type="button" class="avatar-option" data-avatar="🦉">🦉</button>
+            </div>
+          </div>
+
+          <div class="flighty-edit-section">
+            <div class="flighty-edit-sec-header">
+              <span>02 · KONTO & WIEK (18+)</span>
+              <span class="flighty-edit-sec-hint" id="reg-birthdate-hint">WYMAGANE</span>
+            </div>
+            <div class="flighty-edit-table">
+              <div class="flighty-edit-row">
+                <label class="flighty-row-label" for="reg-email">E-mail</label>
+                <div class="flighty-row-field">
+                  <input type="email" id="reg-email" class="flighty-row-input" required placeholder="twoj@email.pl" autocomplete="email" />
+                </div>
+              </div>
+              <div class="flighty-edit-row">
+                <label class="flighty-row-label" for="reg-password">Hasło</label>
+                <div class="flighty-row-field">
+                  <input type="password" id="reg-password" class="flighty-row-input" required placeholder="Min. 6 znaków" autocomplete="new-password" minlength="6" />
+                </div>
+              </div>
+              <div class="flighty-edit-row">
+                <label class="flighty-row-label" for="reg-birthdate">Urodziny</label>
+                <div class="flighty-row-field">
+                  <input type="date" id="reg-birthdate" class="flighty-row-input" required max="2008-12-31" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group terms-checkbox-group" style="margin:0;">
+            <label class="terms-checkbox-label" for="reg-terms-agree">
+              <input type="checkbox" id="reg-terms-agree" required checked />
+              <span>Mam 18+ lat i akceptuję <button type="button" class="btn-text-legal btn-open-legal-terms" style="text-decoration: underline; cursor: pointer; color: var(--accent); font-size: 0.76rem; background: none; border: none; padding: 0;">Regulamin serwisu</button>.</span>
+            </label>
+          </div>
+          <div class="auth-error-msg" id="reg-error-msg" style="display:none;"></div>
+          <button type="submit" class="flighty-edit-submit-btn" id="btn-submit-register">
+            <span>Załóż konto ✓</span>
+          </button>
+        </form>
+
+        <!-- Form 3: Przypomnienie hasła -->
+        <form id="form-auth-forgot" class="auth-form" style="display:none;flex-direction:column;gap:12px;">
+          <div class="flighty-edit-section">
+            <div class="flighty-edit-sec-header">
+              <span>RESET HASŁA</span>
+            </div>
+            <div class="flighty-edit-table">
+              <div class="flighty-edit-row">
+                <label class="flighty-row-label" for="forgot-email">Konto</label>
+                <div class="flighty-row-field">
+                  <input type="text" id="forgot-email" class="flighty-row-input" required placeholder="twoj@email.pl lub @nick" autocomplete="username email" autocapitalize="none" spellcheck="false" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="auth-error-msg" id="forgot-error-msg" style="display:none;"></div>
+          <div class="auth-success-msg" id="forgot-success-msg" style="display:none;"></div>
+          <button type="submit" class="flighty-edit-submit-btn" id="btn-submit-forgot">
+            <span>📧 Wyślij link do resetu</span>
+          </button>
+          <button type="button" class="btn-secondary" id="btn-back-to-login" style="margin-top:4px;">
+            <span>← Wróć do logowania</span>
+          </button>
+        </form>
       </div>
-
-      <!-- Social OAuth Buttons (Google & Apple) -->
-      <div class="auth-social-wrap" id="auth-social-wrap">
-        <button type="button" class="btn-oauth btn-oauth-google" id="btn-oauth-google" title="Zaloguj się przez konto Google">
-          <svg class="oauth-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-          </svg>
-          <span class="btn-oauth-text">Kontynuuj z Google</span>
-        </button>
-
-        <button type="button" class="btn-oauth btn-oauth-apple" id="btn-oauth-apple" title="Zaloguj się przez konto Apple">
-          <svg class="oauth-icon" viewBox="0 0 170 170" width="18" height="18" fill="currentColor" aria-hidden="true">
-            <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.7-3.08-7.61-7.8-11.73-14.14-5.65-8.68-10.15-18.78-13.5-30.28-3.36-11.5-5.04-22.38-5.04-32.64 0-14.39 3.63-26.44 10.89-36.14 7.26-9.7 16.5-14.65 27.72-14.85 4.89 0 10.17 1.25 15.84 3.75 5.66 2.5 9.77 3.79 12.32 3.86 2.07 0 6.43-1.42 13.08-4.25 6.65-2.83 12.44-4.07 17.37-3.72 13.04.83 23.63 5.48 31.78 13.97-11.73 7.07-17.47 16.63-17.21 28.69.26 9.46 3.85 17.5 10.77 24.12 6.92 6.63 15.22 10.45 24.91 11.47-2.17 6.41-4.78 12.82-7.82 19.22zM119.22 33.64c0-7.07 2.61-13.79 7.82-20.17 5.22-6.38 11.7-10.75 19.46-13.11-.22 1.41-.33 2.5-.33 3.26 0 7.07-2.73 13.88-8.19 20.44-5.46 6.55-11.97 10.71-19.53 12.49-.22-.98-.33-1.95-.33-2.91z"/>
-          </svg>
-          <span class="btn-oauth-text">Kontynuuj z Apple</span>
-        </button>
-
-        <div class="auth-divider">
-          <span>lub tradycyjnie przez e-mail</span>
-        </div>
-      </div>
-
-      <!-- Form 1: Logowanie -->
-      <form id="form-auth-login" class="auth-form">
-        <div class="form-group">
-          <label for="login-email" class="form-label">E-mail lub Twój nick (@username)</label>
-          <input type="text" id="login-email" class="form-input" required placeholder="np. jaszczomb lub twoj@email.pl" autocomplete="username email" autocapitalize="none" spellcheck="false" />
-        </div>
-        <div class="form-group">
-          <div class="label-with-link">
-            <label for="login-password" class="form-label">Hasło</label>
-            <a href="#" id="link-forgot-pass" class="auth-sublink">Zapomniałeś hasła?</a>
-          </div>
-          <input type="password" id="login-password" class="form-input" required placeholder="••••••••" autocomplete="current-password" />
-        </div>
-        <div class="auth-error-msg" id="login-error-msg" style="display:none;"></div>
-        <button type="submit" class="btn-primary btn-auth-submit" id="btn-submit-login">
-          <span>Zaloguj się</span>
-        </button>
-        <div class="auth-terms-note">
-          Logując się, potwierdzasz akceptację <button type="button" class="btn-text-legal btn-open-legal-terms">Regulaminu serwisu</button>.
-        </div>
-      </form>
-
-      <!-- Form 2: Rejestracja -->
-      <form id="form-auth-register" class="auth-form" style="display:none;">
-        <div class="form-group">
-          <label for="reg-username" class="form-label">Twój unikalny nick (@username)</label>
-          <div class="input-with-prefix">
-            <span class="input-prefix">@</span>
-            <input type="text" id="reg-username" required placeholder="piwosz_mokotow" autocomplete="username" maxlength="20" autocapitalize="none" spellcheck="false" />
-          </div>
-          <div class="input-hint" id="reg-username-hint">3-20 liter, cyfr lub podkreślenie (_)</div>
-        </div>
-        <div class="form-group">
-          <label for="reg-display-name" class="form-label">Nazwa wyświetlana / Imię</label>
-          <input type="text" id="reg-display-name" class="form-input" required placeholder="np. Bartek" maxlength="30" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Wybierz swój piwny awatar</label>
-          <div class="avatar-picker" id="reg-avatar-picker">
-            <button type="button" class="avatar-option selected" data-avatar="🍺">🍺</button>
-            <button type="button" class="avatar-option" data-avatar="🍻">🍻</button>
-            <button type="button" class="avatar-option" data-avatar="🦁">🦁</button>
-            <button type="button" class="avatar-option" data-avatar="🧜‍♀️">🧜‍♀️</button>
-            <button type="button" class="avatar-option" data-avatar="👑">👑</button>
-            <button type="button" class="avatar-option" data-avatar="🦊">🦊</button>
-            <button type="button" class="avatar-option" data-avatar="⚡">⚡</button>
-            <button type="button" class="avatar-option" data-avatar="🕶️">🕶️</button>
-            <button type="button" class="avatar-option" data-avatar="🦉">🦉</button>
-          </div>
-        </div>
-        <div class="form-group">
-          <label for="reg-email" class="form-label">Adres e-mail</label>
-          <input type="email" id="reg-email" class="form-input" required placeholder="twoj@email.pl" autocomplete="email" />
-        </div>
-        <div class="form-group">
-          <label for="reg-password" class="form-label">Hasło (min. 6 znaków)</label>
-          <input type="password" id="reg-password" class="form-input" required placeholder="••••••••" autocomplete="new-password" minlength="6" />
-        </div>
-        <div class="form-group">
-          <label for="reg-birthdate" class="form-label">Data urodzenia (wymóg 18+)</label>
-          <input type="date" id="reg-birthdate" class="form-input" required max="2008-12-31" />
-          <div class="input-hint" id="reg-birthdate-hint">Dostęp do serwisu dozwolony wyłącznie dla osób pełnoletnich.</div>
-        </div>
-        <div class="form-group terms-checkbox-group">
-          <label class="terms-checkbox-label" for="reg-terms-agree">
-            <input type="checkbox" id="reg-terms-agree" required checked />
-            <span>Oświadczam, że mam 18+ lat i akceptuję Regulamin serwisu oraz zasady crowdsourcingu.</span>
-          </label>
-          <div class="terms-link-row" style="margin-top: 4px; padding-left: 26px;">
-            <button type="button" class="btn-text-legal btn-open-legal-terms" style="text-decoration: underline; cursor: pointer; color: var(--accent); font-size: 0.76rem; background: none; border: none; padding: 0;">📖 Zobacz Regulamin serwisu i zasady</button>
-          </div>
-        </div>
-        <div class="auth-error-msg" id="reg-error-msg" style="display:none;"></div>
-        <button type="submit" class="btn-primary btn-auth-submit" id="btn-submit-register">
-          <span>Załóż konto</span>
-        </button>
-      </form>
-
-      <!-- Form 3: Przypomnienie hasła -->
-      <form id="form-auth-forgot" class="auth-form" style="display:none;">
-        <div class="form-group">
-          <label for="forgot-email" class="form-label">Adres e-mail lub Twój nick</label>
-          <input type="text" id="forgot-email" class="form-input" required placeholder="twoj@email.pl lub @jaszczomb" autocomplete="username email" autocapitalize="none" spellcheck="false" />
-        </div>
-        <div class="auth-error-msg" id="forgot-error-msg" style="display:none;"></div>
-        <div class="auth-success-msg" id="forgot-success-msg" style="display:none;"></div>
-        <button type="submit" class="btn-primary btn-auth-submit" id="btn-submit-forgot">
-          <span>📧 Wyślij link do resetu</span>
-        </button>
-        <button type="button" class="btn-secondary" id="btn-back-to-login" style="margin-top:8px;">
-          <span>← Wróć do logowania</span>
-        </button>
-      </form>
-
     </div>
   </div>
 
-  <!-- Modal: Wybór nicku po pierwszym logowaniu przez Google -->
+  <!-- Modal: Wybór nicku po pierwszym logowaniu przez Google (Flighty + iOS Native Sheet) -->
   <div class="modal-backdrop" id="onboarding-username-modal" style="display:none; z-index: 10050;">
-    <div class="modal-card auth-modal-card">
-      <div class="modal-head">
-        <div class="modal-head-title">
-          <div class="modal-icon-badge">🍻</div>
-          <div>
-            <h2>Witaj w poilepiwko!</h2>
-            <p class="modal-head-sub">Podaj nick i wybierz ikonkę na start</p>
-          </div>
+    <div class="modal-card auth-modal-card flighty-edit-profile-sheet">
+      <div class="flighty-edit-topbar">
+        <span style="min-width:64px;font-size:1.1rem;">🍻</span>
+        <div class="flighty-edit-topbar-title">
+          <span class="flighty-edit-eyebrow">FLIGHTY PASS · START</span>
+          <h2>Witaj w poilepiwko!</h2>
         </div>
+        <button type="submit" form="form-onboarding-username" class="flighty-edit-nav-btn save">Dalej ✓</button>
       </div>
 
-      <form id="form-onboarding-username" class="auth-form" style="margin-top: 14px;">
-        <div class="form-group">
-          <label for="onboarding-username" class="form-label">Twój unikalny nick (@username)</label>
-          <div class="input-with-prefix">
-            <span class="input-prefix">@</span>
-            <input type="text" id="onboarding-username" required placeholder="np. piwosz_mokotow" autocomplete="username" maxlength="20" />
+      <form id="form-onboarding-username" class="flighty-edit-form" style="padding-bottom: 18px;">
+        <div class="flighty-edit-section">
+          <div class="flighty-edit-sec-header">
+            <span>01 · TWÓJ PROFIL</span>
+            <span class="flighty-edit-sec-hint" id="onboarding-username-hint">3–20 ZNAKÓW</span>
           </div>
-          <div class="input-hint" id="onboarding-username-hint">3-20 liter, cyfr lub podkreślenie (_)</div>
+          <div class="flighty-edit-table">
+            <div class="flighty-edit-row">
+              <label class="flighty-row-label" for="onboarding-username">Nick</label>
+              <div class="flighty-row-field flighty-handle-field">
+                <span class="flighty-at-sign">@</span>
+                <input type="text" id="onboarding-username" class="flighty-row-input" required placeholder="twoj_nick" autocomplete="username" maxlength="20" />
+              </div>
+            </div>
+            <div class="flighty-edit-row">
+              <label class="flighty-row-label" for="onboarding-display-name">Imię</label>
+              <div class="flighty-row-field">
+                <input type="text" id="onboarding-display-name" class="flighty-row-input" required placeholder="np. Krystian" maxlength="30" />
+              </div>
+            </div>
+            <div class="flighty-edit-row">
+              <label class="flighty-row-label" for="onboarding-birthdate">Urodziny</label>
+              <div class="flighty-row-field">
+                <input type="date" id="onboarding-birthdate" class="flighty-row-input" required max="2008-12-31" />
+              </div>
+            </div>
+          </div>
+          <div class="input-hint" id="onboarding-birthdate-hint" style="display:none;"></div>
         </div>
 
-        <div class="form-group">
-          <label for="onboarding-display-name" class="form-label">Nazwa wyświetlana / Imię</label>
-          <input type="text" id="onboarding-display-name" class="form-input" required placeholder="np. Piwosz" maxlength="30" />
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Wybierz swój awatar</label>
-          <div class="avatar-picker" id="onboarding-avatar-picker">
+        <div class="flighty-avatar-stage" style="padding:10px 12px;">
+          <span class="flighty-avatar-grid-lbl">WYBIERZ PIWNY AWATAR</span>
+          <div class="avatar-picker flighty-avatar-grid" id="onboarding-avatar-picker">
             <button type="button" class="avatar-option selected" data-avatar="🍺">🍺</button>
             <button type="button" class="avatar-option" data-avatar="🍻">🍻</button>
             <button type="button" class="avatar-option" data-avatar="🦁">🦁</button>
@@ -2044,22 +2163,16 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label for="onboarding-birthdate" class="form-label">Data urodzenia (wymóg 18+)</label>
-          <input type="date" id="onboarding-birthdate" class="form-input" required max="2008-12-31" />
-          <div class="input-hint" id="onboarding-birthdate-hint">Dostęp do serwisu dozwolony wyłącznie dla osób pełnoletnich.</div>
-        </div>
-
-        <div class="form-group terms-checkbox-group">
+        <div class="form-group terms-checkbox-group" style="margin:0;">
           <label class="terms-checkbox-label">
             <input type="checkbox" id="onboarding-terms-agree" required checked />
-            <span>Oświadczam, że mam 18+ lat i akceptuję <button type="button" class="btn-text-legal btn-open-legal-terms">Regulamin serwisu i zasady crowdsourcingu</button>.</span>
+            <span>Mam 18+ lat i akceptuję <button type="button" class="btn-text-legal btn-open-legal-terms">Regulamin serwisu</button>.</span>
           </label>
         </div>
 
         <div class="auth-error-msg" id="onboarding-error-msg" style="display:none;"></div>
 
-        <button type="submit" class="btn-primary btn-auth-submit" id="btn-submit-onboarding" style="margin-top: 6px;">
+        <button type="submit" class="flighty-edit-submit-btn" id="btn-submit-onboarding">
           <span>🎉 Zapisz i dołącz do mapy</span>
         </button>
       </form>
@@ -3183,18 +3296,16 @@
     </div>
   </div>
 
-  <!-- Modal: Piwna Ruletka ("Wylosuj bar na dziś") -->
+  <!-- Modal: Piwna Ruletka ("Wylosuj bar na dziś" — Flighty + iOS Sheet) -->
   <div class="modal-backdrop" id="roulette-modal" style="display:none; z-index: 10250;">
-    <div class="modal-card modal-card-roulette">
-      <div class="modal-head">
-        <div class="modal-head-title">
-          <div class="modal-icon-badge modal-icon-roulette">🎲</div>
-          <div>
-            <h2>Piwna Ruletka</h2>
-            <p class="modal-head-sub">Brak pomysłu na wieczór? Zakręć kołem i idźcie tam, gdzie wskaże los.</p>
-          </div>
+    <div class="modal-card modal-card-roulette flighty-edit-profile-sheet">
+      <div class="flighty-edit-topbar">
+        <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-roulette" aria-label="Zamknij Ruletkę">Zamknij</button>
+        <div class="flighty-edit-topbar-title">
+          <span class="flighty-edit-eyebrow">FLIGHTY RADAR · LOSOWANIE</span>
+          <h2>🎲 Piwna Ruletka</h2>
         </div>
-        <button type="button" class="modal-close" id="btn-close-roulette" aria-label="Zamknij Ruletkę">✕</button>
+        <span style="min-width:64px;text-align:right;font-size:1.1rem;">🎰</span>
       </div>
 
       <div class="roulette-body">
@@ -3355,41 +3466,54 @@
     </div>
   </div>
 
-  <!-- Modal: Pub Crawl Quick Expense Logger ("Kto stawia kolejkę?") -->
+  <!-- Modal: Pub Crawl Quick Expense Logger ("Kto stawia kolejkę?" — Flighty Sheet) -->
   <div class="modal-backdrop" id="crawl-expense-modal" style="display:none; z-index: 10320;">
-    <div class="modal-card modal-card-crawl-expense">
-      <div class="modal-head">
-        <div class="modal-head-title">
-          <div class="modal-icon-badge">🍻</div>
-          <div>
-            <h2>Kto stawia tę kolejkę?</h2>
-            <p class="modal-head-sub" id="crawl-expense-venue-title">Zapisz rachunek w bieżącym barze</p>
-          </div>
+    <div class="modal-card modal-card-crawl-expense flighty-edit-profile-sheet">
+      <div class="flighty-edit-topbar">
+        <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-crawl-expense" aria-label="Zamknij">Anuluj</button>
+        <div class="flighty-edit-topbar-title">
+          <span class="flighty-edit-eyebrow" id="crawl-expense-venue-title">ROZLICZENIE KOLEJKI</span>
+          <h2>🍻 Kto stawia?</h2>
         </div>
-        <button type="button" class="modal-close" id="btn-close-crawl-expense" aria-label="Zamknij">✕</button>
+        <button type="button" class="flighty-edit-nav-btn save" onclick="document.getElementById('btn-save-crawl-expense') && document.getElementById('btn-save-crawl-expense').click()">Zapisz ✓</button>
       </div>
-      <div class="crawl-expense-body">
-        <div class="expense-input-group">
-          <label class="expense-label">Kto płacił za tę rundę?</label>
+      <div class="crawl-expense-body flighty-edit-form" style="margin-top:0;padding-bottom:18px;">
+        <div class="flighty-edit-section">
+          <div class="flighty-edit-sec-header">
+            <span>01 · KTO PŁACIŁ ZA TĘ RUNDĘ?</span>
+            <span class="flighty-edit-sec-hint">EKIPA</span>
+          </div>
           <div class="crew-chips-selector" id="crawl-crew-chips">
             <!-- Rendered dynamically: e.g. Ja, Kumpel 1, Kumpel 2 + Dodaj -->
           </div>
-          <div class="crew-add-row">
-            <input type="text" id="input-new-crew-member" class="input-modern" placeholder="Dodaj imię (np. Maciej, Ania)..." maxlength="20" />
-            <button type="button" id="btn-add-crew-member" class="btn-secondary btn-sm">+ Dodaj</button>
+          <div class="flighty-edit-table" style="margin-top:6px;">
+            <div class="flighty-edit-row">
+              <label class="flighty-row-label" for="input-new-crew-member">➕ Osoba</label>
+              <div class="flighty-row-field" style="display:flex;align-items:center;gap:6px;">
+                <input type="text" id="input-new-crew-member" class="flighty-row-input" placeholder="Dodaj imię (np. Maciej, Ania)..." maxlength="20" />
+                <button type="button" id="btn-add-crew-member" class="flighty-edit-nav-btn save" style="min-width:auto;padding:5px 10px;">+ Dodaj</button>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="expense-input-group">
-          <label class="expense-label" for="crawl-expense-amount">Kwota rachunku w tym barze (zł)</label>
-          <div class="expense-amount-wrap">
-            <input type="number" id="crawl-expense-amount" class="input-modern expense-amount-input" step="0.5" min="1" placeholder="np. 48" />
-            <span class="currency-suffix">zł</span>
+        <div class="flighty-edit-section">
+          <div class="flighty-edit-sec-header">
+            <span>02 · KWOTA RACHUNKU</span>
+            <span class="flighty-edit-sec-hint" id="crawl-expense-hint">PLN</span>
           </div>
-          <span class="expense-hint" id="crawl-expense-hint">Sugerowane: ~36.00 zł (cena piwa × liczba osób)</span>
+          <div class="flighty-edit-table">
+            <div class="flighty-edit-row">
+              <label class="flighty-row-label" for="crawl-expense-amount">💰 Rachunek</label>
+              <div class="flighty-row-field flighty-handle-field">
+                <input type="number" id="crawl-expense-amount" class="flighty-row-input" step="0.5" min="1" placeholder="np. 48.00" />
+                <span class="flighty-at-sign" style="font-size:0.75rem;">zł</span>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="expense-actions">
-          <button type="button" class="btn-primary btn-save-expense" id="btn-save-crawl-expense">
-            <span>💾 Zapisz kolejkę do rozliczenia</span>
+          <button type="button" class="flighty-edit-submit-btn" id="btn-save-crawl-expense">
+            <span>✓ Zapisz kolejkę do rozliczenia</span>
           </button>
         </div>
       </div>
@@ -3422,22 +3546,20 @@
     </div>
   </div>
 
-  <!-- Modal: Piwny BeReal Camera Modal -->
+  <!-- Modal: Piwny BeReal Camera Modal (Flighty + iOS Native Sheet) -->
   <div class="modal-backdrop" id="bereal-camera-modal" style="display:none; z-index: 10400;">
-    <div class="modal-card bereal-camera-modal-card">
-      <div class="modal-head">
-        <div class="modal-head-title">
-          <div class="modal-icon-badge">📸</div>
-          <div>
-            <h2>Piwny BeReal</h2>
-            <p class="modal-head-sub" id="bereal-step-desc">KROK 1/2: Zrób zdjęcie piwka lub baru</p>
-          </div>
+    <div class="modal-card bereal-camera-modal-card flighty-edit-profile-sheet">
+      <div class="flighty-edit-topbar">
+        <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-bereal-camera">Zamknij</button>
+        <div class="flighty-edit-topbar-title">
+          <span class="flighty-edit-eyebrow" id="bereal-step-desc">KROK 1/2 · ZDJĘCIE KUFLA</span>
+          <h2>Check-in BeReal</h2>
         </div>
-        <button type="button" class="modal-close" id="btn-close-bereal-camera">✕</button>
+        <span class="flighty-log-season" style="font-size:0.62rem;">● 24H</span>
       </div>
 
       <!-- Stage 1: Active Camera Viewfinder -->
-      <div id="bereal-viewfinder-stage">
+      <div id="bereal-viewfinder-stage" style="padding: 12px 14px 16px;">
         <div class="bereal-camera-viewport">
           <video id="bereal-video" playsinline autoplay muted></video>
           <canvas id="bereal-canvas" style="display:none;"></canvas>
@@ -3474,7 +3596,7 @@
       </div>
 
       <!-- Stage 2: Post Review & Publish Form -->
-      <div id="bereal-review-stage" style="display:none;">
+      <div id="bereal-review-stage" style="display:none; padding: 12px 14px 18px;">
         <div class="bereal-preview-wrapper" onclick="window.__swapBerealReviewImages()">
           <img id="bereal-review-main" src="" alt="Główne zdjęcie" />
           <div class="bereal-review-pip" title="Kliknij, aby zamienić zdjęcia">
@@ -3484,33 +3606,43 @@
           <div class="bereal-preview-tip">👆 Dotknij, aby zamienić widok</div>
         </div>
 
-        <div class="bereal-publish-form">
-          <div class="form-group">
-            <label class="form-label" for="bereal-select-venue">📍 W jakim lokalu jesteś?</label>
-            <div class="bereal-venue-select-wrap">
-              <select id="bereal-select-venue" class="form-select">
-                <option value="local-live">Wybierz lokal z listy...</option>
-              </select>
+        <div class="bereal-publish-form" style="margin-top: 12px; display: flex; flex-direction: column; gap: 12px;">
+          <div class="flighty-edit-section">
+            <div class="flighty-edit-sec-header">
+              <span>SZCZEGÓŁY MELDUNKU · RADAR 24H</span>
+              <span class="flighty-edit-sec-hint">FIND MY</span>
+            </div>
+            <div class="flighty-edit-table">
+              <div class="flighty-edit-row">
+                <label class="flighty-row-label" for="bereal-select-venue">📍 Lokal</label>
+                <div class="flighty-row-field">
+                  <select id="bereal-select-venue" class="flighty-row-input flighty-row-select">
+                    <option value="local-live">Wybierz lokal z listy...</option>
+                  </select>
+                </div>
+              </div>
+              <div class="flighty-edit-row">
+                <label class="flighty-row-label" for="bereal-input-beer">🍺 Piwo</label>
+                <div class="flighty-row-field">
+                  <input type="text" id="bereal-input-beer" class="flighty-row-input" placeholder="np. Łomża, Perła, Hazy IPA..." maxlength="40" />
+                </div>
+              </div>
+              <div class="flighty-edit-row">
+                <label class="flighty-row-label" for="bereal-input-price">💰 Cena</label>
+                <div class="flighty-row-field flighty-handle-field">
+                  <input type="number" id="bereal-input-price" class="flighty-row-input" placeholder="14.00" step="0.5" min="0" max="99" />
+                  <span class="flighty-at-sign" style="font-size:0.75rem;">zł</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div class="form-row-2">
-            <div class="form-group">
-              <label class="form-label" for="bereal-input-beer">🍺 Jakie piwo pijesz?</label>
-              <input type="text" id="bereal-input-beer" class="form-input" placeholder="np. Kozel, Hazy IPA..." maxlength="40" />
-            </div>
-            <div class="form-group" style="max-width: 120px;">
-              <label class="form-label" for="bereal-input-price">💰 Cena (zł)</label>
-              <input type="number" id="bereal-input-price" class="form-input" placeholder="np. 15.00" step="0.5" min="0" max="99" />
-            </div>
-          </div>
-
-          <div class="bereal-review-actions">
-            <button type="button" class="btn-secondary" id="btn-bereal-retake">
+          <div class="bereal-review-actions" style="display:grid;grid-template-columns:1fr 2fr;gap:8px;">
+            <button type="button" class="flighty-edit-nav-btn cancel" id="btn-bereal-retake" style="padding:12px;">
               🔄 Powtórz
             </button>
-            <button type="button" class="btn-primary" id="btn-bereal-publish">
-              🚀 Opublikuj w Feedzie
+            <button type="button" class="flighty-edit-submit-btn" id="btn-bereal-publish">
+              🚀 Opublikuj na mapie
             </button>
           </div>
         </div>
@@ -3519,18 +3651,16 @@
     </div>
   </div>
 
-  <!-- Modal: Piwny Anioł Stróż / SOS Ekipa Modal -->
+  <!-- Modal: Piwny Anioł Stróż / SOS Ekipa Modal (Flighty Guard Sheet) -->
   <div class="modal-backdrop" id="sos-modal" style="display:none; z-index: 10350;">
-    <div class="modal-card sos-modal-card">
-      <div class="modal-head sos-modal-head">
-        <div class="modal-head-title">
-          <div class="modal-icon-badge sos-badge-icon">🛡️</div>
-          <div>
-            <h2>Bezpieczny Powrót</h2>
-            <p class="modal-head-sub">Wracasz w nocy? Jeden klik i ekipa wie gdzie jesteś, albo zamawiasz taryfę.</p>
-          </div>
+    <div class="modal-card sos-modal-card flighty-edit-profile-sheet">
+      <div class="flighty-edit-topbar">
+        <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-sos-modal">Zamknij</button>
+        <div class="flighty-edit-topbar-title">
+          <span class="flighty-edit-eyebrow" style="color:#f87171;">FLIGHTY GUARD · NOCNY POWRÓT</span>
+          <h2>🛡️ Bezpieczny Powrót</h2>
         </div>
-        <button type="button" class="modal-close" id="btn-close-sos-modal">✕</button>
+        <span style="min-width:64px;text-align:right;font-size:1.1rem;">🚨</span>
       </div>
 
       <div class="sos-modal-content">
@@ -3692,6 +3822,6 @@
   <script src="moderation.js"></script>
 
   <!-- Main Application Logic -->
-  <script src="app.js?v=153"></script>
+  <script src="app.js?v=154"></script>
 </body>
 </html>

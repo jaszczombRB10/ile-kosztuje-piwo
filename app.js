@@ -1351,7 +1351,7 @@
             ? `<span class="venue-verified-pill" title="Cennik zaktualizowany bezpośrednio przez personel lokalu"><span class="ver-dot"></span> Cennik z lokalu${venue.venue_updated_at ? ` (${escapeHtml(venue.venue_updated_at)})` : ''}</span>`
             : (venue.is_verified
                 ? `<span class="venue-verified-pill" title="Cena zweryfikowana w lokalu"><span class="ver-dot"></span> Zweryfikowana</span>`
-                : `<span class="venue-unverified-pill" title="Cena szacunkowa na podstawie dzielnicy – pomóż zaktualizować!"><span class="unver-dot"></span> Szacunek</span>`
+                : `<span class="venue-unverified-pill" title="Cena orientacyjna – pomóż zaktualizować!"><span class="unver-dot"></span> Orientacyjna</span>`
               )
           }
           ${venue.hours ? `<span class="venue-hours-chip">🕒 ${escapeHtml(formatDisplayHours(venue.hours))}</span>` : ''}
@@ -1364,7 +1364,7 @@
           <div class="price-beer-info">
             <div class="price-beer-title">
               Najtańsze piwo (0.5L)
-              ${!venue.is_verified && !venue.verified_by_venue ? '<span class="price-est-badge" title="Cena orientacyjna dla dzielnicy – zgłoś aktualną cenę!">szacunek</span>' : ''}
+              ${!venue.is_verified && !venue.verified_by_venue ? '<span class="price-est-badge" title="Cena orientacyjna – zgłoś aktualną cenę!">orientacyjna</span>' : ''}
             </div>
             <div class="price-beer-brand">${escapeHtml(venue.beer_name || "Piwo z nalewaka / kranu")}</div>
           </div>
@@ -23660,25 +23660,26 @@
       `;
     }
 
-    // Waze-style micro-verification card with quick price tiles
+    // Flighty + Waze 1-Click Price Verification Module
     const verifyCardHtml = `
-      <div class="waze-verify-card" id="waze-card-${venue.id}">
-        <div style="font-size:0.80rem; font-weight:700; color:#ffffff;">
-          ⚡ Szybka weryfikacja w 1 klik: czy lane (0.5L) kosztuje <span style="color:#f59e0b;" id="waze-price-display-${venue.id}">${price.toFixed(2)} zł</span>?
+      <div class="waze-verify-card flighty-waze-verify-card" id="waze-card-${venue.id}">
+        <div class="flighty-waze-head">
+          <span class="flighty-waze-eyebrow">⚡ WERYFIKACJA CENY · 1 KLIK</span>
+          <span class="flighty-waze-question">Czy lane (0.5L) kosztuje <strong id="waze-price-display-${venue.id}">${price.toFixed(2)} zł</strong>?</span>
         </div>
-        <div class="waze-actions-row" id="waze-actions-row-${venue.id}" style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
-          <button type="button" class="btn-waze-confirm" id="btn-waze-yes-${venue.id}" style="background:#22c55e; color:#ffffff; font-weight:800; font-size:0.76rem; padding:9px 10px; border-radius:10px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px;">
-            👍 Cena aktualna
+        <div class="waze-actions-row flighty-waze-actions" id="waze-actions-row-${venue.id}">
+          <button type="button" class="btn-waze-confirm flighty-waze-btn-yes" id="btn-waze-yes-${venue.id}">
+            👍 Aktualna
           </button>
-          <button type="button" class="btn-waze-change" id="btn-waze-change-${venue.id}" style="background:rgba(255,255,255,0.1); color:#cbd5e1; font-weight:700; font-size:0.76rem; padding:9px 10px; border-radius:10px; border:1px solid rgba(255,255,255,0.15); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px;">
+          <button type="button" class="btn-waze-change flighty-waze-btn-change" id="btn-waze-change-${venue.id}">
             ✏️ Zmień cenę
           </button>
-          <button type="button" class="btn-waze-scan" onclick="window.__editVenuePrice('${venue.id}', true)" style="grid-column: 1 / -1;">
-            🧾 Zeskanuj paragon / cennik AI
+          <button type="button" class="btn-waze-scan flighty-waze-btn-scan" onclick="window.__editVenuePrice('${venue.id}', true)">
+            🧾 Skaner AI
           </button>
         </div>
         <div class="waze-quick-price-selector" id="waze-selector-${venue.id}" style="display:none; margin-top:6px;">
-          <div style="font-size:0.72rem; color:#94a3b8; width:100%; margin-bottom:4px;">Dotknij aktualną cenę z tablicy / menu:</div>
+          <div class="flighty-waze-selector-lbl">Dotknij aktualną cenę z tablicy / menu:</div>
           <button type="button" class="btn-price-tile" data-price="10">10 zł</button>
           <button type="button" class="btn-price-tile" data-price="12">12 zł</button>
           <button type="button" class="btn-price-tile" data-price="13">13 zł</button>
@@ -23762,21 +23763,21 @@
         </div>
         <div class="apple-spec-tile">
           <span class="spec-label">🛡️ STATUS CENY</span>
-          <strong class="spec-val">${venue.verified_by_receipt ? '🧾 Paragon AI' : (venue.is_verified ? '✓ Zweryfikowana' : '📊 Szacunek')}</strong>
+          <strong class="spec-val">${venue.verified_by_receipt ? '🧾 Paragon AI' : (venue.is_verified ? '✓ Zweryfikowana' : '📊 Orientacyjna')}</strong>
         </div>
       </div>
     `;
 
     // Badges & details
     const chipsHtml = `
-      <div class="venue-chips-row" style="margin-top:2px;">
-        <button type="button" class="venue-chip" id="btn-venue-sheet-visited" style="cursor:pointer; background:rgba(48,209,88,0.12); border-color:rgba(48,209,88,0.35); color:#86efac;">
+      <div class="venue-chips-row flighty-venue-chips-row" style="margin-top:2px;">
+        <button type="button" class="venue-chip chip-passport-action" id="btn-venue-sheet-visited">
           ${isVisited ? '🎖️ W Paszporcie ✓' : '🎖️ Wbij do Paszportu'}
         </button>
-        <button type="button" class="venue-chip" id="btn-venue-sheet-fav" style="cursor:pointer; background:rgba(255,255,255,0.06);">
+        <button type="button" class="venue-chip chip-fav-action" id="btn-venue-sheet-fav">
           ${isFav ? '❤️ W ulubionych' : '🤍 Dodaj do ulubionych'}
         </button>
-        ${venue.verified_by_receipt ? `<span class="venue-chip" style="background:rgba(16,185,129,0.15); border-color:rgba(16,185,129,0.4); color:#a7f3d0;" title="Cena zweryfikowana paragonem fiskalnym (${escapeHtml(venue.receipt_date || 'niedawno')})">🧾 Paragon ${escapeHtml(venue.receipt_date || 'OK')}</span>` : ''}
+        ${venue.verified_by_receipt ? `<span class="venue-chip chip-receipt-ok" title="Cena zweryfikowana paragonem fiskalnym (${escapeHtml(venue.receipt_date || 'niedawno')})">🧾 Paragon ${escapeHtml(venue.receipt_date || 'OK')}</span>` : ''}
         ${(venue.is_partner || venue.pass_partner) ? `<span class="venue-chip chip-pass" title="Lokal honoruje kartę poilepiwko Pass (-10%)">🎟️ Karta Pass (-10%)</span>` : ''}
         ${venue.is_craft ? `<span class="venue-chip craft">⭐ Kraft / Multitap</span>` : ''}
         ${hasZero ? `<span class="venue-chip zero">🌱 Piwo 0.0%</span>` : ''}
