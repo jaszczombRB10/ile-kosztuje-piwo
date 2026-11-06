@@ -24043,55 +24043,78 @@ body.theme-light .telemetry-lbl {
 }
 
 .flighty-edit-topbar-title {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1px;
 }
 
-.fet-eyebrow {
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
-  font-size: 0.56rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  color: #30D158;
+.fet-eyebrow,
+.flighty-edit-eyebrow {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace !important;
+  font-size: 0.56rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  color: #30D158 !important;
+  line-height: 1.2 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 230px;
 }
 
 .flighty-edit-topbar-title h2 {
-  margin: 0;
-  font-size: 0.98rem;
-  font-weight: 800;
-  color: #ffffff;
-  letter-spacing: -0.015em;
+  margin: 0 !important;
+  font-size: 0.96rem !important;
+  font-weight: 800 !important;
+  color: #ffffff !important;
+  letter-spacing: -0.015em !important;
+  line-height: 1.22 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 100%;
 }
 
 .flighty-edit-nav-btn {
   -webkit-appearance: none;
   appearance: none;
+  flex-shrink: 0;
+  white-space: nowrap !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
   border: none;
-  background: transparent;
-  font-size: 0.86rem;
-  font-weight: 700;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.8rem !important;
+  font-weight: 700 !important;
   cursor: pointer;
-  padding: 6px 10px;
-  border-radius: 999px;
+  padding: 6px 12px !important;
+  border-radius: 999px !important;
   transition: all 0.15s ease;
 }
 
 .flighty-edit-nav-btn.cancel {
-  color: rgba(235, 235, 245, 0.68);
+  color: rgba(235, 235, 245, 0.82) !important;
 }
 
 .flighty-edit-nav-btn.cancel:active {
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.14) !important;
 }
 
 .flighty-edit-nav-btn.save {
-  background: #30D158;
-  color: #042f14;
-  font-weight: 800;
-  padding: 6px 14px;
+  background: #30D158 !important;
+  border-color: rgba(48, 209, 88, 0.6) !important;
+  color: #042f14 !important;
+  font-weight: 800 !important;
+  padding: 6px 14px !important;
   box-shadow: 0 2px 10px rgba(48, 209, 88, 0.35);
 }
 
@@ -24099,16 +24122,19 @@ body.theme-light .telemetry-lbl {
   transform: scale(0.95);
 }
 
-/* Form Container */
+/* Form & Body Container across all Flighty Sheets */
+.flighty-edit-form,
 .profile-edit-form.flighty-edit-form {
   background: transparent !important;
   border: none !important;
   border-radius: 0 !important;
-  padding: 16px 16px 22px 16px !important;
+  padding: 14px 16px 22px 16px !important;
   margin: 0 !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 18px !important;
+  gap: 14px !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
 }
 
 /* Centered Avatar Stage */
@@ -25658,6 +25684,488 @@ body.theme-light .venue-chip.chip-receipt-ok {
   border-color: #34d399 !important;
   color: #065f46 !important;
 }
+
+/* ==========================================================================
+   3.13 GLOBAL BOUNDARIES, MAP POPUPS ("CHMURKI") & ALL REMAINING PAGES/MODALS
+   ========================================================================== */
+
+/* 1. Never show duplicate legacy close buttons inside .flighty-edit-topbar */
+.flighty-edit-topbar .btn-close-drawer,
+.flighty-edit-topbar .modal-close,
+.flighty-edit-topbar .modal-close-goin {
+  display: none !important;
+}
+
+/* 2. Inner Container Boundaries across ALL Modals, Bottom Sheets & Drawers */
+.flighty-edit-profile-sheet .barometer-body,
+.flighty-edit-profile-sheet .roulette-body,
+.flighty-edit-profile-sheet .sos-modal-content,
+.flighty-edit-profile-sheet .pubquiz-tab-pane,
+.flighty-edit-profile-sheet .legal-modal-body,
+.flighty-edit-profile-sheet .pwa-ios-body,
+.flighty-edit-profile-sheet .danger-modal-body,
+.flighty-edit-profile-sheet .qr-code-body,
+.flighty-edit-profile-sheet .ugc-report-body,
+.flighty-edit-profile-sheet .celebration-content {
+  padding: 14px 16px 24px 16px !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+}
+
+#filter-modal .filter-modal-footer {
+  padding: 12px 16px 16px 16px !important;
+  background: rgba(11, 11, 16, 0.94) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-sizing: border-box !important;
+}
+
+/* 3. Bottom Sheets (#discover-sheet, #action-sheet, #venue-sheet, #ranking-drawer) */
+#discover-sheet.bottom-sheet,
+#action-sheet.bottom-sheet,
+#venue-sheet.bottom-sheet,
+#ranking-drawer.sidebar-drawer {
+  background: #0b0b10 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.14) !important;
+  color: #ffffff !important;
+}
+
+#discover-sheet .time-context-pill {
+  margin: 10px 16px 2px 16px !important;
+  padding: 9px 12px !important;
+  border-radius: 14px !important;
+  background: #14141d !important;
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  box-sizing: border-box !important;
+}
+
+#discover-sheet .context-pill-badge {
+  flex-shrink: 0 !important;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace !important;
+  font-size: 0.62rem !important;
+  font-weight: 800 !important;
+  padding: 4px 8px !important;
+  border-radius: 999px !important;
+}
+
+#discover-sheet .context-pill-tagline {
+  font-size: 0.74rem !important;
+  font-weight: 600 !important;
+  color: rgba(235, 235, 245, 0.82) !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  line-height: 1.28 !important;
+}
+
+#discover-sheet .bento-grid {
+  padding: 10px 16px 64px 16px !important;
+  box-sizing: border-box !important;
+}
+
+#discover-sheet .bento-card {
+  background: #14141d !important;
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  border-radius: 18px !important;
+}
+
+#action-sheet .action-sheet-content {
+  padding: 14px 16px 32px 16px !important;
+  box-sizing: border-box !important;
+}
+
+#venue-sheet .venue-sheet-header {
+  padding: 8px 16px 12px 16px !important;
+  box-sizing: border-box !important;
+}
+
+#venue-sheet .venue-sheet-body {
+  padding: 12px 16px 34px 16px !important;
+  box-sizing: border-box !important;
+}
+
+#ranking-drawer .drawer-header {
+  padding: 0 0 10px 0 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: transparent !important;
+}
+
+#ranking-drawer .drawer-flighty-topbar {
+  padding: 6px 16px 10px 16px !important;
+  border-bottom: none !important;
+}
+
+#ranking-drawer .ranking-tabs {
+  margin: 2px 16px 0 16px !important;
+  background: #14141d !important;
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  border-radius: 12px !important;
+  padding: 3px !important;
+}
+
+#ranking-drawer .drawer-list {
+  padding: 12px 16px 20px 16px !important;
+  box-sizing: border-box !important;
+}
+
+#ranking-drawer .drawer-legal-footer {
+  padding: 10px 16px 24px 16px !important;
+  box-sizing: border-box !important;
+}
+
+/* 4. Map Popups ("Chmurki") — Clean Flighty Boundaries & Non-Overlapping Close Button */
+.leaflet-popup-content-wrapper {
+  background: rgba(14, 14, 21, 0.97) !important;
+  backdrop-filter: blur(18px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 20px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  box-shadow: 0 22px 52px rgba(0, 0, 0, 0.82), inset 0 1px 0 rgba(255, 255, 255, 0.09) !important;
+  color: #ffffff !important;
+}
+
+.leaflet-popup-tip {
+  background: rgba(14, 14, 21, 0.97) !important;
+}
+
+.leaflet-popup-content {
+  margin: 0 !important;
+  width: auto !important;
+  min-width: 266px !important;
+  max-width: 312px !important;
+}
+
+.leaflet-container a.leaflet-popup-close-button {
+  top: 10px !important;
+  right: 10px !important;
+  width: 26px !important;
+  height: 26px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  color: rgba(235, 235, 245, 0.85) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  padding: 0 !important;
+  z-index: 12 !important;
+}
+
+.venue-card {
+  padding: 15px 16px 14px 16px !important;
+  box-sizing: border-box !important;
+  border-radius: 20px !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+.venue-card .card-top {
+  padding-right: 30px !important;
+  gap: 10px !important;
+  align-items: flex-start !important;
+}
+
+.findmy-popup-card,
+.fmap-popup-card,
+.crawl-popup-card {
+  padding: 14px 16px !important;
+  box-sizing: border-box !important;
+}
+
+.findmy-popup-top,
+.fmap-popup-top {
+  padding-right: 28px !important;
+}
+
+/* 5. Profile Modal (#profile-modal) — Unified Flighty Carbon Cards & Boundaries */
+#profile-modal .profile-goin-hero,
+#profile-modal .profile-stats-unified,
+#profile-modal .profile-achievements-unified-card {
+  margin: 0 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  background: #14141d !important;
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  border-radius: 18px !important;
+  padding: 14px !important;
+}
+
+#profile-modal .btn-header-theme,
+#profile-modal .btn-header-share {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.07) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+}
+
+/* 6. Community & Friends Full-Screen Page (#community-modal) — Flighty Social */
+#community-modal.flighty-page-view {
+  background: #0b0b10 !important;
+  color: #ffffff !important;
+}
+
+#community-modal .community-page-container {
+  background: #0b0b10 !important;
+}
+
+#community-modal .vko-dock-wrapper {
+  padding: 8px 16px 8px 16px !important;
+  background: rgba(11, 11, 16, 0.92) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07) !important;
+  box-sizing: border-box !important;
+}
+
+#community-modal .vko-segment-dock {
+  background: #14141d !important;
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  border-radius: 14px !important;
+  padding: 4px !important;
+}
+
+#community-modal .community-page-body {
+  padding: 12px 16px 104px 16px !important;
+  box-sizing: border-box !important;
+}
+
+#community-modal .comm-tab-pane {
+  padding: 0 !important;
+  box-sizing: border-box !important;
+}
+
+#community-modal .ig-stories-section {
+  margin: 0 0 12px 0 !important;
+  padding: 12px 14px !important;
+  background: #14141d !important;
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  border-radius: 16px !important;
+  box-sizing: border-box !important;
+}
+
+#community-modal .ig-search-filter-wrap {
+  margin: 0 0 10px 0 !important;
+  padding: 0 !important;
+}
+
+#community-modal .ig-search-box {
+  background: #14141d !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 12px !important;
+}
+
+#community-modal .ig-filter-chips-row {
+  margin: 0 0 12px 0 !important;
+  padding: 2px 2px 4px 2px !important;
+  box-sizing: border-box !important;
+}
+
+#community-modal .ig-friends-list,
+#community-modal .recommended-users-list,
+#community-modal .notifications-list {
+  background: #14141d !important;
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  border-radius: 16px !important;
+  padding: 10px 12px !important;
+  box-sizing: border-box !important;
+}
+
+#community-modal .gold-referral-card {
+  background: #14141d !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 16px !important;
+  padding: 14px 16px !important;
+  margin: 0 0 14px 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* 7. Pub Quiz Modal (#pubquiz-modal) & Beer Compass (#beer-compass-modal) */
+#pubquiz-modal .pubquiz-hero {
+  padding: 12px 16px 10px 16px !important;
+  background: transparent !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  margin: 0 !important;
+}
+
+#pubquiz-modal .pubquiz-hero p {
+  font-size: 0.78rem !important;
+  color: rgba(235, 235, 245, 0.68) !important;
+}
+
+#pubquiz-modal .pubquiz-nav-tabs,
+#story-card-modal .story-mode-switch {
+  background: #14141d !important;
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  border-radius: 12px !important;
+  padding: 3px !important;
+  display: flex !important;
+  gap: 4px !important;
+}
+
+#pubquiz-modal .pubquiz-tab-pill,
+#story-card-modal .story-mode-tab {
+  flex: 1 !important;
+  border-radius: 9px !important;
+  border: none !important;
+  background: transparent !important;
+  color: rgba(235, 235, 245, 0.65) !important;
+  font-size: 0.76rem !important;
+  font-weight: 800 !important;
+  padding: 8px 10px !important;
+}
+
+#pubquiz-modal .pubquiz-tab-pill.active,
+#story-card-modal .story-mode-tab.active {
+  background: #242432 !important;
+  color: #ffffff !important;
+}
+
+#pubquiz-modal .quiz-lobby-card,
+#beer-compass-modal .compass-venue-panel {
+  background: #14141d !important;
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  border-radius: 16px !important;
+  padding: 14px !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+
+#beer-compass-modal .compass-filter-pills,
+#beer-compass-modal .compass-dial-container,
+#beer-compass-modal .compass-tip-bar {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* 8. Light Mode (body.theme-light) Overrides for All Unified Flighty Sheets & Popups */
+body.theme-light .fet-eyebrow,
+body.theme-light .flighty-edit-eyebrow {
+  color: #15803d !important;
+}
+
+body.theme-light #filter-modal .filter-modal-footer {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border-top: 1px solid #e2e8f0 !important;
+}
+
+body.theme-light #discover-sheet.bottom-sheet,
+body.theme-light #action-sheet.bottom-sheet,
+body.theme-light #venue-sheet.bottom-sheet,
+body.theme-light #ranking-drawer.sidebar-drawer {
+  background: #f8fafc !important;
+  border-top: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+body.theme-light #discover-sheet .time-context-pill {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+body.theme-light #discover-sheet .context-pill-tagline {
+  color: #334155 !important;
+}
+
+body.theme-light #discover-sheet .bento-card {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+body.theme-light #ranking-drawer .drawer-header {
+  border-bottom-color: #e2e8f0 !important;
+}
+
+body.theme-light #ranking-drawer .ranking-tabs {
+  background: #e2e8f0 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+body.theme-light .leaflet-popup-content-wrapper {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.18) !important;
+}
+
+body.theme-light .leaflet-popup-tip {
+  background: rgba(255, 255, 255, 0.98) !important;
+}
+
+body.theme-light .leaflet-container a.leaflet-popup-close-button {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+body.theme-light #profile-modal .profile-goin-hero,
+body.theme-light #profile-modal .profile-stats-unified,
+body.theme-light #profile-modal .profile-achievements-unified-card,
+body.theme-light #public-profile-modal .profile-hero-wrap {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+body.theme-light #profile-modal .btn-header-theme,
+body.theme-light #profile-modal .btn-header-share {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+body.theme-light #community-modal.flighty-page-view,
+body.theme-light #community-modal .community-page-container {
+  background: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+body.theme-light #community-modal .vko-dock-wrapper {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+body.theme-light #community-modal .vko-segment-dock,
+body.theme-light #pubquiz-modal .pubquiz-nav-tabs,
+body.theme-light #story-card-modal .story-mode-switch {
+  background: #e2e8f0 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+body.theme-light #pubquiz-modal .pubquiz-tab-pill,
+body.theme-light #story-card-modal .story-mode-tab {
+  color: #475569 !important;
+}
+
+body.theme-light #pubquiz-modal .pubquiz-tab-pill.active,
+body.theme-light #story-card-modal .story-mode-tab.active {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
+body.theme-light #community-modal .ig-stories-section,
+body.theme-light #community-modal .ig-search-box,
+body.theme-light #community-modal .ig-friends-list,
+body.theme-light #community-modal .recommended-users-list,
+body.theme-light #community-modal .notifications-list,
+body.theme-light #community-modal .gold-referral-card,
+body.theme-light #pubquiz-modal .quiz-lobby-card,
+body.theme-light #beer-compass-modal .compass-venue-panel {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
 
 
 

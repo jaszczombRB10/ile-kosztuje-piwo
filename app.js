@@ -5409,7 +5409,7 @@
       if (mode === "add") {
         if (modalHeadTitle) modalHeadTitle.textContent = "➕ Dodaj Nowy Bar";
         if (modalHeadDesc) modalHeadDesc.textContent = "Znasz fajny bar, którego brakuje na mapie? Dodaj go, a natychmiast pojawi się w aplikacji:";
-        if (reportNameLabel) reportNameLabel.textContent = "Nazwa lokalu / baru";
+        if (reportNameLabel) reportNameLabel.textContent = "01 · LOKALIZACJA & NAZWA BARU";
         if (submitBtn) submitBtn.innerHTML = "<span>➕</span><span>Dodaj bar na mapę</span>";
 
         if (tabModeAdd) tabModeAdd.classList.add("active");
@@ -5427,9 +5427,9 @@
           nameInput.placeholder = "np. Piwoteka, Browar, multitap...";
         }
       } else if (mode === "rename") {
-        if (modalHeadTitle) modalHeadTitle.textContent = "🔄 Zmień Nazwę Baru z Mapy";
+        if (modalHeadTitle) modalHeadTitle.textContent = "🔄 Zmień Nazwę Baru";
         if (modalHeadDesc) modalHeadDesc.textContent = "Bar w bazie OSM ma nieaktualną nazwę lub działa pod nowym szyldem? Wybierz stary lokal i wprowadź nową nazwę:";
-        if (reportNameLabel) reportNameLabel.textContent = "Nowa nazwa lokalu (aktualny szyld)";
+        if (reportNameLabel) reportNameLabel.textContent = "01 · NOWA NAZWA BARU (AKTUALNY SZYLD)";
         if (submitBtn) submitBtn.innerHTML = "<span>🔄</span><span>Zmień nazwę i zapisz bar</span>";
 
         if (tabModeAdd) tabModeAdd.classList.remove("active");
@@ -5460,7 +5460,7 @@
         }
         if (renameEditTip) renameEditTip.style.display = "none";
 
-        if (reportNameLabel) reportNameLabel.textContent = "Nazwa lokalu";
+        if (reportNameLabel) reportNameLabel.textContent = "01 · LOKALIZACJA & DANE BARU";
         if (submitBtn) submitBtn.innerHTML = "<span>💾</span><span>Zapisz nową cenę / dane</span>";
 
         if (nameInput) {

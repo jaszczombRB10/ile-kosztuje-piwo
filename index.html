@@ -80,7 +80,7 @@
   <script defer src="https://cloud.umami.is/script.js" data-website-id="auto" id="umami-analytics-script"></script>
 
   <!-- Custom Styles -->
-  <link rel="stylesheet" href="styles.css?v=154">
+  <link rel="stylesheet" href="styles.css?v=155">
 </head>
 <body>
 
@@ -458,15 +458,19 @@
       </div>
     </div>
 
-    <!-- Top 10 Ranked Drawer (Bottom Sheet on Mobile, Slide-out on Desktop) -->
-    <div class="sidebar-drawer" id="ranking-drawer">
+    <!-- Top 10 Ranked Drawer (Bottom Sheet on Mobile, Slide-out on Desktop — Flighty Sheet) -->
+    <div class="sidebar-drawer flighty-drawer-sheet" id="ranking-drawer">
       <div class="bottom-sheet-handle-wrap drawer-sheet-handle" id="ranking-drawer-handle">
         <div class="bottom-sheet-handle"></div>
       </div>
       <div class="drawer-header">
-        <div class="drawer-header-top">
-          <h2>🏆 Ranking Piwa</h2>
-          <button id="btn-close-drawer" class="btn-close-drawer">✕</button>
+        <div class="flighty-edit-topbar drawer-flighty-topbar">
+          <span class="flighty-log-season" style="font-size:0.62rem;">TOP 10</span>
+          <div class="flighty-edit-topbar-title">
+            <span class="flighty-edit-eyebrow">FLIGHTY RADAR · CENNIK</span>
+            <h2>🏆 Ranking Piwa</h2>
+          </div>
+          <button type="button" id="btn-close-drawer" class="flighty-edit-nav-btn cancel">Zamknij</button>
         </div>
         <div class="ranking-tabs">
           <button type="button" class="ranking-tab active" id="tab-rank-cheapest">💰 Najtańsze</button>
@@ -647,118 +651,118 @@
     </div>
   </div>
 
-  <!-- Beer Compass / Radar Modal -->
+  <!-- Beer Compass / Radar Modal (Flighty + iOS Native Sheet) -->
   <div class="modal-backdrop compass-modal-backdrop" id="beer-compass-modal">
-    <div class="modal-card compass-modal-card">
-      <div class="compass-modal-header">
-        <div class="compass-title-wrap">
-          <span class="compass-badge-icon">🧭</span>
-          <div>
-            <h2>Piwny Kompas</h2>
-            <p class="compass-sub-text" id="compass-status-text">Kalibrowanie radaru GPS...</p>
-          </div>
+    <div class="modal-card compass-modal-card flighty-edit-profile-sheet">
+      <div class="flighty-edit-topbar">
+        <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-compass">Zamknij</button>
+        <div class="flighty-edit-topbar-title">
+          <span class="flighty-edit-eyebrow" id="compass-status-text">FLIGHTY RADAR · GPS</span>
+          <h2>🧭 Piwny Kompas</h2>
         </div>
-        <button type="button" class="modal-close" id="btn-close-compass">✕</button>
+        <span class="flighty-log-season" style="font-size:0.62rem;">RADAR</span>
       </div>
 
-      <!-- Filter Pills: Cheapest / Nearest / Craft / Open Now -->
-      <div class="compass-filter-pills" id="compass-vibe-pills">
-        <button type="button" class="compass-pill active" data-compass-filter="cheapest">🪙 Najtańsze (≤ 12 zł)</button>
-        <button type="button" class="compass-pill" data-compass-filter="nearest">⚡ Najbliżej</button>
-        <button type="button" class="compass-pill" data-compass-filter="craft">⭐ Kraft</button>
-        <button type="button" class="compass-pill" data-compass-filter="open">🟢 Otwarte</button>
+      <div class="flighty-edit-form compass-body-wrap">
+        <!-- Filter Pills: Cheapest / Nearest / Craft / Open Now -->
+        <div class="compass-filter-pills" id="compass-vibe-pills">
+          <button type="button" class="compass-pill active" data-compass-filter="cheapest">🪙 Najtańsze (≤ 12 zł)</button>
+          <button type="button" class="compass-pill" data-compass-filter="nearest">⚡ Najbliżej</button>
+          <button type="button" class="compass-pill" data-compass-filter="craft">⭐ Kraft</button>
+          <button type="button" class="compass-pill" data-compass-filter="open">🟢 Otwarte</button>
+        </div>
+
+        <!-- Radar Visual Dial -->
+        <div class="compass-dial-container">
+          <div class="compass-radar-circle">
+            <div class="compass-radar-sweep"></div>
+            <div class="compass-cardinal compass-north">N</div>
+            <div class="compass-cardinal compass-east">E</div>
+            <div class="compass-cardinal compass-south">S</div>
+            <div class="compass-cardinal compass-west">W</div>
+            <div class="compass-rings">
+              <div class="ring ring-1"></div>
+              <div class="ring ring-2"></div>
+              <div class="ring ring-3"></div>
+            </div>
+            
+            <!-- Needle / Arrow pointing to bar -->
+            <div class="compass-needle-wrap" id="compass-needle">
+              <div class="needle-arrow">▲</div>
+              <div class="needle-beer-icon">🍺</div>
+              <div class="needle-line"></div>
+            </div>
+            
+            <div class="compass-center-core">
+              <span class="core-dot"></span>
+            </div>
+          </div>
+
+          <!-- Metric Floating HUD -->
+          <div class="compass-hud">
+            <div class="hud-box">
+              <span class="hud-label">DYSTANS</span>
+              <span class="hud-val" id="compass-dist-val">-- m</span>
+            </div>
+            <div class="hud-box">
+              <span class="hud-label">CZAS MARSZU</span>
+              <span class="hud-val" id="compass-time-val">-- min</span>
+            </div>
+            <div class="hud-box">
+              <span class="hud-label">CENA PIWA</span>
+              <span class="hud-val highlight" id="compass-price-val">-- zł</span>
+            </div>
+          </div>
+
+          <!-- Dynamic Step Counter Badge (Apple Find My Precision Finding) -->
+          <div class="compass-steps-badge" id="compass-steps-badge">
+            <span class="steps-icon">🍺</span>
+            <span class="steps-text" id="compass-steps-text">~<strong>--</strong> kroków do kufla za <strong>-- zł</strong></span>
+          </div>
+        </div>
+
+        <!-- Target Venue Card -->
+        <div class="compass-venue-panel" id="compass-venue-panel">
+          <div class="compass-panel-nav">
+            <button type="button" class="btn-compass-nav" id="btn-compass-prev" title="Poprzedni bar">◀</button>
+            <span class="compass-index-label" id="compass-target-index">Bar 1 z 5</span>
+            <button type="button" class="btn-compass-nav" id="btn-compass-next" title="Następny bar">▶</button>
+          </div>
+
+          <div class="compass-target-info">
+            <div class="target-name-row">
+              <h3 class="target-name" id="compass-target-name">Szukanie celu...</h3>
+              <span class="target-district-badge" id="compass-target-district">Warszawa</span>
+            </div>
+            <div class="target-meta-row">
+              <span class="target-beer" id="compass-target-beer">Piwo z kranu</span>
+              <span class="target-dot">•</span>
+              <span class="target-address" id="compass-target-address">...</span>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="compass-actions">
+            <a href="#" target="_blank" rel="noopener" class="btn-compass-action btn-gmaps" id="btn-compass-navigate">
+              <span>🚶 Prowadź (Nawigacja)</span>
+            </a>
+            <button type="button" class="btn-compass-action btn-show-map" id="btn-compass-zoom">
+              <span>🗺️ Na mapie</span>
+            </button>
+            <button type="button" class="btn-compass-action btn-stamp" id="btn-compass-stamp">
+              <span>🎖️ Byłem tu!</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Calibration & Compass Sensor Tip -->
+        <div class="compass-tip-bar" id="compass-tip-bar">
+          💡 <span>Obracaj telefonem – strzałka wskazuje kierunek marszu do lokalu.</span>
+        </div>
+        <button type="button" class="btn-compass-calibrate-sensor" id="btn-compass-calibrate-sensor" style="display:none;" title="Zezwól na dostęp do żyroskopu w iOS Safari">
+          <span>🧭 Kalibruj Radar (Włącz żyroskop iOS)</span>
+        </button>
       </div>
-
-      <!-- Radar Visual Dial -->
-      <div class="compass-dial-container">
-        <div class="compass-radar-circle">
-          <div class="compass-radar-sweep"></div>
-          <div class="compass-cardinal compass-north">N</div>
-          <div class="compass-cardinal compass-east">E</div>
-          <div class="compass-cardinal compass-south">S</div>
-          <div class="compass-cardinal compass-west">W</div>
-          <div class="compass-rings">
-            <div class="ring ring-1"></div>
-            <div class="ring ring-2"></div>
-            <div class="ring ring-3"></div>
-          </div>
-          
-          <!-- Needle / Arrow pointing to bar -->
-          <div class="compass-needle-wrap" id="compass-needle">
-            <div class="needle-arrow">▲</div>
-            <div class="needle-beer-icon">🍺</div>
-            <div class="needle-line"></div>
-          </div>
-          
-          <div class="compass-center-core">
-            <span class="core-dot"></span>
-          </div>
-        </div>
-
-        <!-- Metric Floating HUD -->
-        <div class="compass-hud">
-          <div class="hud-box">
-            <span class="hud-label">DYSTANS</span>
-            <span class="hud-val" id="compass-dist-val">-- m</span>
-          </div>
-          <div class="hud-box">
-            <span class="hud-label">CZAS MARSZU</span>
-            <span class="hud-val" id="compass-time-val">-- min</span>
-          </div>
-          <div class="hud-box">
-            <span class="hud-label">CENA PIWA</span>
-            <span class="hud-val highlight" id="compass-price-val">-- zł</span>
-          </div>
-        </div>
-
-        <!-- Dynamic Step Counter Badge (Apple Find My Precision Finding) -->
-        <div class="compass-steps-badge" id="compass-steps-badge">
-          <span class="steps-icon">🍺</span>
-          <span class="steps-text" id="compass-steps-text">~<strong>--</strong> kroków do kufla za <strong>-- zł</strong></span>
-        </div>
-      </div>
-
-      <!-- Target Venue Card -->
-      <div class="compass-venue-panel" id="compass-venue-panel">
-        <div class="compass-panel-nav">
-          <button type="button" class="btn-compass-nav" id="btn-compass-prev" title="Poprzedni bar">◀</button>
-          <span class="compass-index-label" id="compass-target-index">Bar 1 z 5</span>
-          <button type="button" class="btn-compass-nav" id="btn-compass-next" title="Następny bar">▶</button>
-        </div>
-
-        <div class="compass-target-info">
-          <div class="target-name-row">
-            <h3 class="target-name" id="compass-target-name">Szukanie celu...</h3>
-            <span class="target-district-badge" id="compass-target-district">Warszawa</span>
-          </div>
-          <div class="target-meta-row">
-            <span class="target-beer" id="compass-target-beer">Piwo z kranu</span>
-            <span class="target-dot">•</span>
-            <span class="target-address" id="compass-target-address">...</span>
-          </div>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="compass-actions">
-          <a href="#" target="_blank" rel="noopener" class="btn-compass-action btn-gmaps" id="btn-compass-navigate">
-            <span>🚶 Prowadź (Nawigacja)</span>
-          </a>
-          <button type="button" class="btn-compass-action btn-show-map" id="btn-compass-zoom">
-            <span>🗺️ Na mapie</span>
-          </button>
-          <button type="button" class="btn-compass-action btn-stamp" id="btn-compass-stamp">
-            <span>🎖️ Byłem tu!</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Calibration & Compass Sensor Tip -->
-      <div class="compass-tip-bar" id="compass-tip-bar">
-        💡 <span>Obracaj telefonem – strzałka wskazuje kierunek marszu do lokalu.</span>
-      </div>
-      <button type="button" class="btn-compass-calibrate-sensor" id="btn-compass-calibrate-sensor" style="display:none;" title="Zezwól na dostęp do żyroskopu w iOS Safari">
-        <span>🧭 Kalibruj Radar (Włącz żyroskop iOS)</span>
-      </button>
     </div>
   </div>
 
@@ -988,7 +992,7 @@
           <h2 id="report-modal-title">➕ Dodaj Nowy Bar</h2>
         </div>
         <button type="submit" form="report-form" class="flighty-edit-nav-btn save">Zapisz ✓</button>
-        <button id="btn-close-modal" class="btn-close-drawer" style="display:none;">✕</button>
+        <button type="button" id="btn-close-modal" style="display:none !important;" aria-hidden="true">✕</button>
       </div>
 
       <div class="flighty-edit-form" style="padding-bottom: 18px;">
@@ -1514,55 +1518,56 @@
     </div>
   </div>
 
-  <!-- Age Gate Verification Modal (18+ Wymóg Prawa Polskiego) -->
+  <!-- Age Gate Verification Modal (18+ Wymóg Prawa Polskiego — Flighty Verify Sheet) -->
   <div class="modal-backdrop age-gate-backdrop" id="age-gate-modal">
-    <div class="modal-card age-gate-card">
-      <div class="age-gate-icon">🔞</div>
-      <h2 class="age-gate-title">Weryfikacja wieku (18+)</h2>
-      <p class="age-gate-desc">
-        Serwis <strong>„poilepiwko”</strong> zawiera informacje o ofercie i cenach napojów alkoholowych w lokalach gastronomicznych w Polsce.
-      </p>
-      <div class="age-gate-law-note">
-        Zgodnie z art. 13<sup>1</sup> ustawy z dnia 26 października 1982 r. o wychowaniu w trzeźwości i przeciwdziałaniu alkoholizmowi treści te są przeznaczone wyłącznie dla osób pełnoletnich.
-      </div>
-      <div class="age-gate-question">
-        Czy masz ukończone 18 lat?
-      </div>
-      <div class="age-gate-terms-note">
-        Klikając „Tak” oświadczasz, że masz ukończone 18 lat oraz akceptujesz <button type="button" class="btn-text-legal btn-open-legal-terms">Regulamin serwisu i zasady crowdsourcingu</button>.
-      </div>
-      <div class="age-gate-actions">
-        <button type="button" id="btn-age-yes" class="btn-age-confirm">
-          ✓ Tak, mam ukończone 18 lat
-        </button>
-        <button type="button" id="btn-age-no" class="btn-age-deny">
-          ✕ Nie mam 18 lat
-        </button>
-      </div>
-      <div id="age-denied-message" style="display: none;" class="age-denied-box">
-        <p>⛔ Dostęp do serwisu jest dozwolony wyłącznie dla osób pełnoletnich.</p>
-        <a href="https://www.google.pl" class="btn-age-exit">Opuść stronę</a>
-      </div>
-      <div class="age-gate-footer">
-        Spożywanie alkoholu szkodzi zdrowiu. Nigdy nie siadaj za kierownicą po alkoholu.
+    <div class="modal-card age-gate-card flighty-edit-profile-sheet">
+      <div class="flighty-edit-form" style="align-items:center;text-align:center;padding-top:22px;">
+        <div class="age-gate-icon">🔞</div>
+        <span class="flighty-edit-eyebrow">FLIGHTY VERIFY · 18+ POLSKA</span>
+        <h2 class="age-gate-title" style="margin:2px 0 4px;">Weryfikacja wieku (18+)</h2>
+        <p class="age-gate-desc">
+          Serwis <strong>„poilepiwko”</strong> zawiera informacje o ofercie i cenach napojów alkoholowych w lokalach gastronomicznych w Polsce.
+        </p>
+        <div class="age-gate-law-note">
+          Zgodnie z art. 13<sup>1</sup> ustawy z dnia 26 października 1982 r. o wychowaniu w trzeźwości i przeciwdziałaniu alkoholizmowi treści te są przeznaczone wyłącznie dla osób pełnoletnich.
+        </div>
+        <div class="age-gate-question">
+          Czy masz ukończone 18 lat?
+        </div>
+        <div class="age-gate-terms-note">
+          Klikając „Tak” oświadczasz, że masz ukończone 18 lat oraz akceptujesz <button type="button" class="btn-text-legal btn-open-legal-terms">Regulamin serwisu i zasady crowdsourcingu</button>.
+        </div>
+        <div class="age-gate-actions" style="width:100%;">
+          <button type="button" id="btn-age-yes" class="flighty-edit-submit-btn btn-age-confirm">
+            ✓ Tak, mam ukończone 18 lat
+          </button>
+          <button type="button" id="btn-age-no" class="btn-age-deny">
+            ✕ Nie mam 18 lat
+          </button>
+        </div>
+        <div id="age-denied-message" style="display: none;" class="age-denied-box">
+          <p>⛔ Dostęp do serwisu jest dozwolony wyłącznie dla osób pełnoletnich.</p>
+          <a href="https://www.google.pl" class="btn-age-exit">Opuść stronę</a>
+        </div>
+        <div class="age-gate-footer">
+          Spożywanie alkoholu szkodzi zdrowiu. Nigdy nie siadaj za kierownicą po alkoholu.
+        </div>
       </div>
     </div>
   </div>
 
   <!-- Legal & Terms of Service Modal (Regulamin, Crowdsourcing, Brak antyreklamy i Ochrona Prawna) -->
   <div class="modal-backdrop" id="legal-modal">
-    <div class="modal-card modal-card-wide legal-modal-card">
-      <div class="modal-head">
-        <div class="modal-head-title">
-          <div class="modal-icon-badge">⚖️</div>
-          <div>
-            <h2>Regulamin & Zasady Crowdsourcingu</h2>
-            <p class="modal-head-sub">Warunki korzystania, brak antyreklamy i ochrona prawna twórcy</p>
-          </div>
+    <div class="modal-card modal-card-wide legal-modal-card flighty-edit-profile-sheet">
+      <div class="flighty-edit-topbar">
+        <button type="button" id="btn-close-legal" class="flighty-edit-nav-btn cancel" aria-label="Zamknij">Zamknij</button>
+        <div class="flighty-edit-topbar-title">
+          <span class="flighty-edit-eyebrow">FLIGHTY LEGAL · DSA & RODO</span>
+          <h2>⚖️ Regulamin & Zasady</h2>
         </div>
-        <button id="btn-close-legal" class="modal-close" aria-label="Zamknij">✕</button>
+        <span class="flighty-log-season" style="font-size:0.62rem;">18+</span>
       </div>
-      <div class="legal-modal-body">
+      <div class="legal-modal-body flighty-edit-form">
 
         <!-- Highlighted Callout: Czym jest crowdsourcing? -->
         <div class="legal-highlight-box highlight-crowdsource">
@@ -1711,7 +1716,7 @@
         </div>
 
         <div class="modal-footer legal-modal-footer">
-          <button type="button" id="btn-ack-legal" class="btn-submit btn-legal-ack" style="width: 100%;">
+          <button type="button" id="btn-ack-legal" class="flighty-edit-submit-btn btn-legal-ack" style="width: 100%;">
             ✓ Rozumiem i akceptuję Regulamin
           </button>
         </div>
@@ -1734,14 +1739,18 @@
     </div>
   </div>
 
-  <!-- PWA iOS Safari Install Guide Modal -->
+  <!-- PWA iOS Safari Install Guide Modal (Flighty Sheet) -->
   <div class="modal-backdrop" id="pwa-ios-modal">
-    <div class="modal-card pwa-ios-card">
-      <div class="modal-head">
-        <h3>📲 Jak zainstalować na iPhone</h3>
-        <button id="btn-close-pwa-ios" class="btn-close-drawer">✕</button>
+    <div class="modal-card pwa-ios-card flighty-edit-profile-sheet">
+      <div class="flighty-edit-topbar">
+        <button type="button" id="btn-close-pwa-ios" class="flighty-edit-nav-btn cancel">Zamknij</button>
+        <div class="flighty-edit-topbar-title">
+          <span class="flighty-edit-eyebrow">FLIGHTY APP · iOS SAFARI</span>
+          <h2>📲 Instalacja na iPhone</h2>
+        </div>
+        <span class="flighty-log-season" style="font-size:0.62rem;">PWA</span>
       </div>
-      <div class="pwa-ios-body">
+      <div class="pwa-ios-body flighty-edit-form">
         <div class="pwa-ios-app-header">
           <img src="icons/icon-192.png" alt="poilepiwko" class="pwa-app-icon-preview" />
           <div class="pwa-ios-app-meta">
@@ -1791,8 +1800,8 @@
           <span>Przycisk <strong>Udostępnij</strong> (kwadrat ze strzałką) znajduje się na dolnym pasku Twojego iPhone'a</span>
         </div>
 
-        <div class="modal-footer" style="margin-top: 18px;">
-          <button type="button" id="btn-ack-pwa-ios" class="btn-submit">Rozumiem, dzięki!</button>
+        <div class="modal-footer" style="margin-top: 6px;">
+          <button type="button" id="btn-ack-pwa-ios" class="flighty-edit-submit-btn">Rozumiem, dzięki!</button>
         </div>
       </div>
     </div>
@@ -2179,231 +2188,230 @@
     </div>
   </div>
 
-  <!-- User Profile Modal (Goin' Inspired UI) -->
+  <!-- User Profile Modal (Flighty + iOS Native Sheet) -->
   <div class="modal-backdrop" id="profile-modal">
-    <div class="modal-card modal-card-goin profile-modal-card">
+    <div class="modal-card modal-card-goin profile-modal-card flighty-edit-profile-sheet">
       
       <!-- Top Navigation & Close -->
-      <div class="goin-modal-header">
-        <div class="goin-header-drag-bar" aria-hidden="true"></div>
-        <div class="goin-header-brand">
-          <span class="brand-pill">🍺 poilepiwko</span>
+      <div class="flighty-edit-topbar">
+        <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-profile" aria-label="Zamknij profil">Zamknij</button>
+        <div class="flighty-edit-topbar-title">
+          <span class="flighty-edit-eyebrow">FLIGHTY PASS · PROFIL</span>
+          <h2>Twój Profil</h2>
         </div>
-        <div class="goin-header-actions">
+        <div class="goin-header-actions" style="display:flex;align-items:center;gap:6px;">
           <button type="button" class="btn-header-theme" id="prof-top-theme-btn" aria-label="Przełącz motyw" title="Przełącz motyw (Ciemny / Jasny)">
             <span id="prof-theme-icon">🌙</span>
           </button>
           <button type="button" class="btn-header-share" id="btn-share-profile-header" aria-label="Udostępnij profil" title="Udostępnij swój profil">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
               <polyline points="16 6 12 2 8 6"></polyline>
               <line x1="12" y1="2" x2="12" y2="15"></line>
             </svg>
           </button>
-          <button type="button" class="modal-close-goin" id="btn-close-profile" aria-label="Zamknij profil" title="Zamknij profil i wróć do mapy">✕</button>
         </div>
       </div>
 
-      <!-- Hero Banner (Goin' Style) -->
-      <div class="profile-goin-hero">
-        <div class="goin-hero-content">
-          <div class="goin-hero-left">
-            <div class="goin-name-row">
-              <h2 id="prof-hero-name">Piwosz</h2>
-              <span class="user-num-badge" id="prof-user-number" title="Twój numer wczesnego piwosza w poilepiwko">-</span>
-            </div>
-            <div class="goin-handle-row">
-              <span class="profile-handle" id="prof-hero-handle">@piwosz</span>
-              <span class="profile-rank-tag" id="prof-rank-title">Początkujący Piwosz</span>
-            </div>
-
-            <p class="goin-bio-text" id="prof-bio-display">Poszukiwacz dobrego i taniego piwa 🍻</p>
-
-            <!-- Tags List with clean icons (Goin' style) -->
-            <div class="goin-tags-list">
-              <div class="goin-tag-item" id="prof-tag-beer-wrap">
-                <span class="goin-tag-icon">🍺</span>
-                <span class="goin-tag-val" id="prof-val-beer">Wszystkie dobre!</span>
+      <div class="flighty-edit-form profile-flighty-body">
+        <!-- Hero Banner (Flighty Carbon Style) -->
+        <div class="profile-goin-hero">
+          <div class="goin-hero-content">
+            <div class="goin-hero-left">
+              <div class="goin-name-row">
+                <h2 id="prof-hero-name">Piwosz</h2>
+                <span class="user-num-badge" id="prof-user-number" title="Twój numer wczesnego piwosza w poilepiwko">-</span>
               </div>
-              <div class="goin-tag-item" id="prof-tag-dist-wrap">
-                <span class="goin-tag-icon">📍</span>
-                <span class="goin-tag-val" id="prof-val-district">Wszystkie dzielnice</span>
+              <div class="goin-handle-row">
+                <span class="profile-handle" id="prof-hero-handle">@piwosz</span>
+                <span class="profile-rank-tag" id="prof-rank-title">Początkujący Piwosz</span>
               </div>
-              <div class="goin-tag-item" id="prof-tag-vibe-wrap">
-                <span class="goin-tag-icon">❤️</span>
-                <span class="goin-tag-val" id="prof-val-vibe">Kraft, Ogródki, Pub Quiz</span>
+
+              <p class="goin-bio-text" id="prof-bio-display">Poszukiwacz dobrego i taniego piwa 🍻</p>
+
+              <!-- Tags List with clean icons -->
+              <div class="goin-tags-list">
+                <div class="goin-tag-item" id="prof-tag-beer-wrap">
+                  <span class="goin-tag-icon">🍺</span>
+                  <span class="goin-tag-val" id="prof-val-beer">Wszystkie dobre!</span>
+                </div>
+                <div class="goin-tag-item" id="prof-tag-dist-wrap">
+                  <span class="goin-tag-icon">📍</span>
+                  <span class="goin-tag-val" id="prof-val-district">Wszystkie dzielnice</span>
+                </div>
+                <div class="goin-tag-item" id="prof-tag-vibe-wrap">
+                  <span class="goin-tag-icon">❤️</span>
+                  <span class="goin-tag-val" id="prof-val-vibe">Kraft, Ogródki, Pub Quiz</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="goin-hero-right">
+              <div class="goin-avatar-frame">
+                <div class="goin-avatar-badge" id="prof-hero-avatar">🍻</div>
               </div>
             </div>
           </div>
 
-          <div class="goin-hero-right">
-            <div class="goin-avatar-frame">
-              <div class="goin-avatar-badge" id="prof-hero-avatar">🍻</div>
+          <!-- Profile Actions Bar: Clean 3-Button Row -->
+          <div class="profile-hero-actions-bar">
+            <button type="button" class="btn-hero-action btn-hero-edit" id="btn-toggle-edit-profile" title="Edytuj profil i preferencje">
+              <span class="btn-hero-action-icon">✏️</span>
+              <span>Edytuj</span>
+            </button>
+            <button type="button" class="btn-hero-action btn-hero-club" id="btn-open-club-card" title="Otwórz wirtualną Kartę Klubu PoIlePiwko Pass (-10% rabat)">
+              <span class="btn-hero-action-icon">💳</span>
+              <span>Karta Pass</span>
+            </button>
+            <button type="button" class="btn-hero-action btn-hero-story" id="btn-open-story-card" title="Wygeneruj kartę na Instagram Story">
+              <span class="btn-hero-action-icon">📸</span>
+              <span>Story</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Flighty-Style Passport Logbook Telemetry Card -->
+        <div class="flighty-passport-logbook" id="flighty-passport-logbook" style="margin:0;">
+          <div class="flighty-log-header">
+            <div class="flighty-log-brand">
+              <span class="flighty-log-emblem">🛂</span>
+              <span>PASZPORT PIWOSZA · LOGBOOK</span>
+            </div>
+            <span class="flighty-log-season" id="flighty-log-season">SEZON 2026</span>
+          </div>
+
+          <div class="flighty-route-strip">
+            <div class="flighty-route-node">
+              <span class="route-node-lbl">BAZA (HUB)</span>
+              <strong class="route-node-code" id="flighty-hub-code">WAW</strong>
+            </div>
+            <div class="flighty-route-line">
+              <span class="route-line-dash"></span>
+              <span class="route-line-icon">🍺</span>
+              <span class="route-line-dash"></span>
+            </div>
+            <div class="flighty-route-node align-right">
+              <span class="route-node-lbl">GŁÓWNY REWIR</span>
+              <strong class="route-node-code" id="flighty-top-dist">CENTRUM</strong>
+            </div>
+          </div>
+
+          <div class="flighty-telemetry-grid">
+            <div class="flighty-telemetry-cell">
+              <span class="telemetry-lbl">ZALICZONE BARY</span>
+              <strong class="telemetry-val" id="flighty-stat-bars">0</strong>
+            </div>
+            <div class="flighty-telemetry-cell">
+              <span class="telemetry-lbl">DZIELNICE</span>
+              <strong class="telemetry-val" id="flighty-stat-districts">0 / 18</strong>
+            </div>
+            <div class="flighty-telemetry-cell">
+              <span class="telemetry-lbl">WYPITE (0.5L)</span>
+              <strong class="telemetry-val" id="flighty-stat-liters">0.0 L</strong>
+            </div>
+            <div class="flighty-telemetry-cell">
+              <span class="telemetry-lbl">OSZCZĘDNOŚĆ</span>
+              <strong class="telemetry-val highlight-green" id="flighty-stat-saved">0 zł</strong>
             </div>
           </div>
         </div>
 
-        <!-- Profile Actions Bar: Clean 3-Button Row -->
-        <div class="profile-hero-actions-bar">
-          <button type="button" class="btn-hero-action btn-hero-edit" id="btn-toggle-edit-profile" title="Edytuj profil i preferencje">
-            <span class="btn-hero-action-icon">✏️</span>
-            <span>Edytuj</span>
+        <!-- Unified Dark Glass Stats Grid (Interactive) -->
+        <div class="profile-stats-unified" style="margin:0;">
+          <button type="button" class="stat-unit" id="prof-stat-btn-visited" title="Zobacz odwiedzone bary">
+            <div class="stat-unit-icon">🍺</div>
+            <div class="stat-unit-val" id="prof-stat-visited">0</div>
+            <div class="stat-unit-lbl">Check-iny</div>
           </button>
-          <button type="button" class="btn-hero-action btn-hero-club" id="btn-open-club-card" title="Otwórz wirtualną Kartę Klubu PoIlePiwko Pass (-10% rabat)">
-            <span class="btn-hero-action-icon">💳</span>
-            <span>Karta Pass</span>
+          <div class="stat-unit-sep"></div>
+          <button type="button" class="stat-unit" id="prof-stat-btn-badges" title="Pokaż zdobyte odznaki">
+            <div class="stat-unit-icon">🎖️</div>
+            <div class="stat-unit-val" id="prof-stat-badges">0</div>
+            <div class="stat-unit-lbl">Odznaki</div>
           </button>
-          <button type="button" class="btn-hero-action btn-hero-story" id="btn-open-story-card" title="Wygeneruj kartę na Instagram Story">
-            <span class="btn-hero-action-icon">📸</span>
-            <span>Story</span>
+          <div class="stat-unit-sep"></div>
+          <button type="button" class="stat-unit" id="prof-stat-btn-favorites" title="Pokaż ulubione lokale na mapie">
+            <div class="stat-unit-icon">❤️</div>
+            <div class="stat-unit-val" id="prof-stat-favorites">0</div>
+            <div class="stat-unit-lbl">Ulubione</div>
+          </button>
+          <div class="stat-unit-sep"></div>
+          <button type="button" class="stat-unit" id="prof-stat-btn-friends" title="Przejdź do listy znajomych">
+            <div class="stat-unit-icon">👥</div>
+            <div class="stat-unit-val" id="prof-stat-friends">0</div>
+            <div class="stat-unit-lbl">Znajomi</div>
           </button>
         </div>
-      </div>
 
-      <!-- Flighty-Style Passport Logbook Telemetry Card -->
-      <div class="flighty-passport-logbook" id="flighty-passport-logbook">
-        <div class="flighty-log-header">
-          <div class="flighty-log-brand">
-            <span class="flighty-log-emblem">🛂</span>
-            <span>PASZPORT PIWOSZA · LOGBOOK</span>
+        <!-- Unified Achievements & Rank Card (Pasek postępu + Odznaki w 1 zgrabnej karcie) -->
+        <div class="profile-achievements-unified-card" id="profile-achievements-card" style="margin:0;">
+          <!-- Postęp do następnej rangi -->
+          <div class="achievements-unified-top">
+            <div class="progress-clean-head">
+              <span class="progress-clean-title">
+                <span class="progress-clean-icon">🎯</span>
+                <span id="prof-progress-target">Następna ranga: Koneser Kraftu</span>
+              </span>
+              <span class="progress-clean-pct" id="prof-progress-percent">16%</span>
+            </div>
+            <div class="progress-clean-track">
+              <div class="progress-clean-fill" id="prof-progress-fill" style="width: 16%;"></div>
+            </div>
           </div>
-          <span class="flighty-log-season" id="flighty-log-season">SEZON 2026</span>
-        </div>
 
-        <div class="flighty-route-strip">
-          <div class="flighty-route-node">
-            <span class="route-node-lbl">BAZA (HUB)</span>
-            <strong class="route-node-code" id="flighty-hub-code">WAW</strong>
-          </div>
-          <div class="flighty-route-line">
-            <span class="route-line-dash"></span>
-            <span class="route-line-icon">🍺</span>
-            <span class="route-line-dash"></span>
-          </div>
-          <div class="flighty-route-node align-right">
-            <span class="route-node-lbl">GŁÓWNY REWIR</span>
-            <strong class="route-node-code" id="flighty-top-dist">CENTRUM</strong>
-          </div>
-        </div>
-
-        <div class="flighty-telemetry-grid">
-          <div class="flighty-telemetry-cell">
-            <span class="telemetry-lbl">ZALICZONE BARY</span>
-            <strong class="telemetry-val" id="flighty-stat-bars">0</strong>
-          </div>
-          <div class="flighty-telemetry-cell">
-            <span class="telemetry-lbl">DZIELNICE</span>
-            <strong class="telemetry-val" id="flighty-stat-districts">0 / 18</strong>
-          </div>
-          <div class="flighty-telemetry-cell">
-            <span class="telemetry-lbl">WYPITE (0.5L)</span>
-            <strong class="telemetry-val" id="flighty-stat-liters">0.0 L</strong>
-          </div>
-          <div class="flighty-telemetry-cell">
-            <span class="telemetry-lbl">OSZCZĘDNOŚĆ</span>
-            <strong class="telemetry-val highlight-green" id="flighty-stat-saved">0 zł</strong>
-          </div>
-        </div>
-      </div>
-
-      <!-- Unified Dark Glass Stats Grid (Interactive) -->
-      <div class="profile-stats-unified">
-        <button type="button" class="stat-unit" id="prof-stat-btn-visited" title="Zobacz odwiedzone bary">
-          <div class="stat-unit-icon">🍺</div>
-          <div class="stat-unit-val" id="prof-stat-visited">0</div>
-          <div class="stat-unit-lbl">Check-iny</div>
-        </button>
-        <div class="stat-unit-sep"></div>
-        <button type="button" class="stat-unit" id="prof-stat-btn-badges" title="Pokaż zdobyte odznaki">
-          <div class="stat-unit-icon">🎖️</div>
-          <div class="stat-unit-val" id="prof-stat-badges">0</div>
-          <div class="stat-unit-lbl">Odznaki</div>
-        </button>
-        <div class="stat-unit-sep"></div>
-        <button type="button" class="stat-unit" id="prof-stat-btn-favorites" title="Pokaż ulubione lokale na mapie">
-          <div class="stat-unit-icon">❤️</div>
-          <div class="stat-unit-val" id="prof-stat-favorites">0</div>
-          <div class="stat-unit-lbl">Ulubione</div>
-        </button>
-        <div class="stat-unit-sep"></div>
-        <button type="button" class="stat-unit" id="prof-stat-btn-friends" title="Przejdź do listy znajomych">
-          <div class="stat-unit-icon">👥</div>
-          <div class="stat-unit-val" id="prof-stat-friends">0</div>
-          <div class="stat-unit-lbl">Znajomi</div>
-        </button>
-      </div>
-
-      <!-- Unified Achievements & Rank Card (Pasek postępu + Odznaki w 1 zgrabnej karcie) -->
-      <div class="profile-achievements-unified-card" id="profile-achievements-card">
-        <!-- Postęp do następnej rangi -->
-        <div class="achievements-unified-top">
-          <div class="progress-clean-head">
-            <span class="progress-clean-title">
-              <span class="progress-clean-icon">🎯</span>
-              <span id="prof-progress-target">Następna ranga: Koneser Kraftu</span>
-            </span>
-            <span class="progress-clean-pct" id="prof-progress-percent">16%</span>
-          </div>
-          <div class="progress-clean-track">
-            <div class="progress-clean-fill" id="prof-progress-fill" style="width: 16%;"></div>
+          <!-- Akordeon odznak -->
+          <button type="button" class="achievements-section-toggle" id="btn-toggle-achievements" aria-expanded="false" title="Rozwiń listę odznak">
+            <div class="achievements-toggle-left">
+              <span class="achievements-section-title">🎖️ Osiągnięcia & Paszport</span>
+              <span class="achievements-count-badge" id="prof-achievements-count">0/8</span>
+            </div>
+            <div class="achievements-toggle-right">
+              <span class="achievements-toggle-hint" id="achievements-toggle-hint">Rozwiń</span>
+              <span class="achievements-chevron">▼</span>
+            </div>
+          </button>
+          <div class="achievements-collapse-wrapper" id="prof-achievements-wrapper">
+            <div class="achievements-list" id="prof-achievements-list">
+              <!-- Injected via JavaScript dynamically -->
+            </div>
           </div>
         </div>
 
-        <!-- Akordeon odznak -->
-        <button type="button" class="achievements-section-toggle" id="btn-toggle-achievements" aria-expanded="false" title="Rozwiń listę odznak">
-          <div class="achievements-toggle-left">
-            <span class="achievements-section-title">🎖️ Osiągnięcia & Paszport</span>
-            <span class="achievements-count-badge" id="prof-achievements-count">0/8</span>
-          </div>
-          <div class="achievements-toggle-right">
-            <span class="achievements-toggle-hint" id="achievements-toggle-hint">Rozwiń</span>
-            <span class="achievements-chevron">▼</span>
-          </div>
-        </button>
-        <div class="achievements-collapse-wrapper" id="prof-achievements-wrapper">
-          <div class="achievements-list" id="prof-achievements-list">
-            <!-- Injected via JavaScript dynamically -->
-          </div>
+        <!-- Subtle, Minimalist Profile Footer (Regulamin & Wyloguj się) -->
+        <div class="profile-footer-clean" style="margin:0;">
+          <button type="button" class="profile-footer-link btn-open-legal-terms" id="btn-profile-legal" title="Regulamin serwisu, crowdsourcing i ochrona twórcy">
+            📜 Regulamin & Crowdsourcing
+          </button>
+          <span class="profile-footer-dot" aria-hidden="true">·</span>
+          <button type="button" class="profile-footer-link profile-footer-logout" id="btn-logout" title="Wyloguj się z konta">
+            Wyloguj się
+          </button>
         </div>
-      </div>
 
-
-      <!-- Subtle, Minimalist Profile Footer (Regulamin & Wyloguj się) -->
-      <div class="profile-footer-clean">
-        <button type="button" class="profile-footer-link btn-open-legal-terms" id="btn-profile-legal" title="Regulamin serwisu, crowdsourcing i ochrona twórcy">
-          📜 Regulamin & Crowdsourcing
-        </button>
-        <span class="profile-footer-dot" aria-hidden="true">·</span>
-        <button type="button" class="profile-footer-link profile-footer-logout" id="btn-logout" title="Wyloguj się z konta">
-          Wyloguj się
-        </button>
-      </div>
-
-      <!-- Account Deletion Trigger (Apple App Store Guideline 5.1.1(v)) -->
-      <div class="profile-danger-zone">
-        <button type="button" class="btn-delete-account-trigger" id="btn-delete-account-trigger" title="Trwale usuń konto i powiązane dane z bazy serwisu">
-          🗑️ Usuń konto i dane
-        </button>
+        <!-- Account Deletion Trigger (Apple App Store Guideline 5.1.1(v)) -->
+        <div class="profile-danger-zone" style="margin:0;">
+          <button type="button" class="btn-delete-account-trigger" id="btn-delete-account-trigger" title="Trwale usuń konto i powiązane dane z bazy serwisu">
+            🗑️ Usuń konto i dane
+          </button>
+        </div>
       </div>
 
     </div>
   </div>
 
-  <!-- Modal: Potwierdzenie Usunięcia Konta (Apple Guideline 5.1.1(v)) -->
+  <!-- Modal: Potwierdzenie Usunięcia Konta (Apple Guideline 5.1.1(v) — Flighty Sheet) -->
   <div class="modal-backdrop" id="delete-account-modal" style="display:none; z-index: 10200;">
-    <div class="modal-card modal-card-danger">
-      <div class="modal-head">
-        <div class="modal-head-title">
-          <div class="modal-icon-badge modal-icon-danger">⚠️</div>
-          <div>
-            <h2>Usuń konto i dane</h2>
-            <p class="modal-head-sub">Nieodwracalna operacja usunięcia profilu</p>
-          </div>
+    <div class="modal-card modal-card-danger flighty-edit-profile-sheet">
+      <div class="flighty-edit-topbar">
+        <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-delete-account-modal" aria-label="Zamknij">Anuluj</button>
+        <div class="flighty-edit-topbar-title">
+          <span class="flighty-edit-eyebrow" style="color:#f87171;">FLIGHTY PASS · RODO</span>
+          <h2>⚠️ Usuń konto i dane</h2>
         </div>
-        <button type="button" class="modal-close" id="btn-close-delete-account-modal" aria-label="Zamknij">✕</button>
+        <span class="flighty-log-season" style="font-size:0.62rem;">RODO</span>
       </div>
 
-      <div class="danger-modal-body">
+      <div class="danger-modal-body flighty-edit-form">
         <div class="danger-warning-box">
           <strong>Uwaga: Tej operacji nie można cofnąć!</strong>
           <p>Jeśli zdecydujesz się usunąć konto w poilepiwko:</p>
@@ -2415,12 +2423,21 @@
           </ul>
         </div>
 
-        <div class="form-group" style="margin-top: 14px;">
-          <label for="input-confirm-delete-account" class="form-label">Aby potwierdzić, wpisz wielkimi literami słowo: <strong>USUŃ</strong></label>
-          <input type="text" id="input-confirm-delete-account" class="form-input" placeholder="Wpisz USUŃ" autocomplete="off" />
+        <div class="flighty-edit-section">
+          <div class="flighty-edit-sec-header">
+            <span>POTWIERDŹ USUNIĘCIE (WPISZ: USUŃ)</span>
+          </div>
+          <div class="flighty-edit-table">
+            <div class="flighty-edit-row">
+              <label for="input-confirm-delete-account" class="flighty-row-label">Hasło</label>
+              <div class="flighty-row-field">
+                <input type="text" id="input-confirm-delete-account" class="flighty-row-input" placeholder="Wpisz wielkimi literami USUŃ" autocomplete="off" />
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="danger-actions-grid" style="margin-top: 16px;">
+        <div class="danger-actions-grid" style="margin-top: 4px;">
           <button type="button" class="btn-danger-solid" id="btn-confirm-delete-account" disabled>
             <span>🗑️ Trwale usuń moje konto</span>
           </button>
@@ -2552,24 +2569,23 @@
     </div>
   </div>
 
-  <!-- Piwny Pub Quiz Modal -->
+  <!-- Piwny Pub Quiz Modal (Flighty + iOS Sheet) -->
   <div class="modal-backdrop" id="pubquiz-modal">
-    <div class="modal-card modal-card-goin pubquiz-modal-card">
+    <div class="modal-card modal-card-goin pubquiz-modal-card flighty-edit-profile-sheet">
       
       <!-- Top Navigation & Close -->
-      <div class="goin-modal-header">
-        <div class="goin-header-drag-bar" aria-hidden="true"></div>
-        <div class="goin-header-brand">
-          <span class="brand-pill">🧠 Pub Quiz</span>
+      <div class="flighty-edit-topbar">
+        <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-pubquiz" aria-label="Zamknij Pub Quiz">Zamknij</button>
+        <div class="flighty-edit-topbar-title">
+          <span class="flighty-edit-eyebrow">FLIGHTY TRIVIA · GRA</span>
+          <h2>🧠 Piwny Pub Quiz</h2>
         </div>
-        <button type="button" class="modal-close-goin" id="btn-close-pubquiz" aria-label="Zamknij Pub Quiz" title="Zamknij Pub Quiz i wróć do mapy">✕</button>
+        <span class="flighty-log-season" style="font-size:0.62rem;">QUIZ</span>
       </div>
 
       <!-- Hero Banner -->
       <div class="pubquiz-hero">
-        <div class="pubquiz-hero-badge">🍺 PUB QUIZ & KRAFT</div>
-        <h2>Piwny Pub Quiz</h2>
-        <p>Sprawdź swoją wiedzę o stylach piwa, kulturze barowej i nocnych legendach!</p>
+        <p style="margin:0 0 10px;">Sprawdź swoją wiedzę o stylach piwa, kulturze barowej i nocnych legendach!</p>
         
         <div class="pubquiz-nav-tabs">
           <button type="button" class="pubquiz-tab-pill active" id="tab-btn-quiz-game">🎮 Zagraj w Quiz</button>
@@ -2754,24 +2770,17 @@
     </div>
   </div>
 
-  <!-- Community & Friends Full-Screen Native Page View ("Piwni Znajomi") -->
-  <div class="app-page-view" id="community-modal" style="display:none;">
+  <!-- Community & Friends Full-Screen Native Page View ("Piwni Znajomi" — Flighty Social) -->
+  <div class="app-page-view flighty-page-view" id="community-modal" style="display:none;">
     <div class="community-page-container">
       <!-- Native Page Top App Bar -->
-      <div class="community-page-header">
-        <button type="button" class="btn-page-back" id="btn-close-community" title="Wróć do mapy">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="15 18 9 12 15 6"></polyline>
-          </svg>
-          <span>Mapa</span>
-        </button>
-        <div class="community-header-center">
+      <div class="flighty-edit-topbar community-page-header">
+        <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-community" title="Wróć do mapy">← Mapa</button>
+        <div class="flighty-edit-topbar-title">
+          <span class="flighty-edit-eyebrow" id="community-header-sub">FLIGHTY SOCIAL · LIVE</span>
           <h2>Społeczność & Ekipa</h2>
-          <span class="community-header-sub" id="community-header-sub">Piwosze w Twoim mieście</span>
         </div>
-        <button type="button" class="btn-page-action" id="btn-header-qr-code" title="Pokaż mój kod QR">
-          <span>📱</span>
-        </button>
+        <button type="button" class="flighty-edit-nav-btn save" id="btn-header-qr-code" title="Pokaż mój kod QR">📱 QR</button>
       </div>
 
       <!-- Segmented Dock (Sticky under header) -->
@@ -3016,11 +3025,20 @@
   </div>
 </div>
 
-  <!-- Public User Card Modal (Podgląd profilu innego użytkownika / znajomego) -->
+  <!-- Public User Card Modal (Podgląd profilu innego użytkownika / znajomego — Flighty Sheet) -->
   <div class="modal-backdrop" id="public-profile-modal">
-    <div class="modal-card public-profile-card">
-      <div class="modal-head">
-        <div class="profile-hero-wrap">
+    <div class="modal-card public-profile-card flighty-edit-profile-sheet">
+      <div class="flighty-edit-topbar">
+        <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-public-profile">Zamknij</button>
+        <div class="flighty-edit-topbar-title">
+          <span class="flighty-edit-eyebrow">FLIGHTY PASS · PIWOSZ</span>
+          <h2>Profil Piwosza</h2>
+        </div>
+        <span class="flighty-log-season" style="font-size:0.62rem;">ID</span>
+      </div>
+
+      <div class="flighty-edit-form">
+        <div class="profile-hero-wrap" style="padding:12px 14px;background:#14141d;border:1px solid rgba(255,255,255,0.09);border-radius:16px;">
           <div class="profile-avatar-badge" id="pubprof-avatar">🍺</div>
           <div class="profile-hero-info">
             <div class="profile-hero-names">
@@ -3035,59 +3053,58 @@
             </div>
           </div>
         </div>
-        <button type="button" class="modal-close" id="btn-close-public-profile">✕</button>
-      </div>
 
-      <div class="profile-stats-grid">
-        <div class="profile-stat-box">
-          <div class="stat-box-icon">🍺</div>
-          <div class="stat-num" id="pubprof-stat-visited">0</div>
-          <div class="stat-lbl">Odwiedzone</div>
+        <div class="profile-stats-grid" style="margin:0;">
+          <div class="profile-stat-box">
+            <div class="stat-box-icon">🍺</div>
+            <div class="stat-num" id="pubprof-stat-visited">0</div>
+            <div class="stat-lbl">Odwiedzone</div>
+          </div>
+          <div class="profile-stat-box">
+            <div class="stat-box-icon">❤️</div>
+            <div class="stat-num" id="pubprof-stat-favorites">0</div>
+            <div class="stat-lbl">Ulubione</div>
+          </div>
+          <div class="profile-stat-box">
+            <div class="stat-box-icon">👥</div>
+            <div class="stat-num" id="pubprof-stat-followers">0</div>
+            <div class="stat-lbl">Obserwujący</div>
+          </div>
         </div>
-        <div class="profile-stat-box">
-          <div class="stat-box-icon">❤️</div>
-          <div class="stat-num" id="pubprof-stat-favorites">0</div>
-          <div class="stat-lbl">Ulubione</div>
-        </div>
-        <div class="profile-stat-box">
-          <div class="stat-box-icon">👥</div>
-          <div class="stat-num" id="pubprof-stat-followers">0</div>
-          <div class="stat-lbl">Obserwujący</div>
-        </div>
-      </div>
 
-      <div class="profile-details-section">
-        <div class="profile-bio-text" id="pubprof-bio">--</div>
-        <div class="profile-meta-pills">
-          <span class="profile-pill" id="pubprof-pill-beer">🍺 Ulubione: <strong id="pubprof-val-beer">--</strong></span>
-          <span class="profile-pill" id="pubprof-pill-district">📍 Rewir: <strong id="pubprof-val-district">--</strong></span>
-          <span class="profile-pill" id="pubprof-pill-vibe" style="display:none;">❤️ Vibe: <strong id="pubprof-val-vibe">--</strong></span>
+        <div class="profile-details-section" style="margin:0;">
+          <div class="profile-bio-text" id="pubprof-bio">--</div>
+          <div class="profile-meta-pills">
+            <span class="profile-pill" id="pubprof-pill-beer">🍺 Ulubione: <strong id="pubprof-val-beer">--</strong></span>
+            <span class="profile-pill" id="pubprof-pill-district">📍 Rewir: <strong id="pubprof-val-district">--</strong></span>
+            <span class="profile-pill" id="pubprof-pill-vibe" style="display:none;">❤️ Vibe: <strong id="pubprof-val-vibe">--</strong></span>
+          </div>
         </div>
-      </div>
 
-      <div class="pubprof-actions">
-        <button type="button" class="btn-pubprof-follow" id="btn-pubprof-follow-toggle">
-          <span>➕ Obserwuj znajomego</span>
-        </button>
-        <div class="pubprof-sub-actions">
-          <button type="button" class="btn-pubprof-toast" id="btn-pubprof-toast" title="Wznieś wirtualny toast z tym użytkownikiem!">
-            <span class="btn-hero-action-icon">🍻</span>
-            <span>Na zdrowie!</span>
+        <div class="pubprof-actions" style="margin:0;">
+          <button type="button" class="flighty-edit-submit-btn btn-pubprof-follow" id="btn-pubprof-follow-toggle">
+            <span>➕ Obserwuj znajomego</span>
           </button>
-          <button type="button" class="btn-pubprof-share" id="btn-pubprof-share" title="Udostępnij profil znajomego">
-            <span>📤 Udostępnij</span>
-          </button>
-          <button type="button" class="btn-pubprof-report" id="btn-pubprof-report" title="Zgłoś naruszenie lub zablokuj tego użytkownika (Apple UGC 1.2)">
-            <span class="btn-hero-action-icon">🚩</span>
-            <span>Zgłoś / Zablokuj</span>
-          </button>
+          <div class="pubprof-sub-actions">
+            <button type="button" class="btn-pubprof-toast" id="btn-pubprof-toast" title="Wznieś wirtualny toast z tym użytkownikiem!">
+              <span class="btn-hero-action-icon">🍻</span>
+              <span>Na zdrowie!</span>
+            </button>
+            <button type="button" class="btn-pubprof-share" id="btn-pubprof-share" title="Udostępnij profil znajomego">
+              <span>📤 Udostępnij</span>
+            </button>
+            <button type="button" class="btn-pubprof-report" id="btn-pubprof-report" title="Zgłoś naruszenie lub zablokuj tego użytkownika (Apple UGC 1.2)">
+              <span class="btn-hero-action-icon">🚩</span>
+              <span>Zgłoś / Zablokuj</span>
+            </button>
+          </div>
         </div>
-      </div>
 
-      <div class="pubprof-badges-section">
-        <div class="pubprof-section-title">🎖️ Zdobyte odznaki Paszportu:</div>
-        <div id="pubprof-badges-list" class="pubprof-badges-chips">
-          <!-- Injected via JS -->
+        <div class="pubprof-badges-section" style="margin:0;">
+          <div class="pubprof-section-title">🎖️ Zdobyte odznaki Paszportu:</div>
+          <div id="pubprof-badges-list" class="pubprof-badges-chips">
+            <!-- Injected via JS -->
+          </div>
         </div>
       </div>
     </div>
@@ -3124,174 +3141,174 @@
     </div>
   </div>
 
-  <!-- Modal: Instagram Story Card Preview -->
+  <!-- Modal: Instagram Story Card Preview (Flighty Sheet) -->
   <div class="modal-backdrop" id="story-card-modal" style="display:none; z-index: 10200;">
-    <div class="modal-card modal-card-story">
-      <div class="modal-head">
-        <div class="modal-head-title">
-          <div class="modal-icon-badge">📸</div>
-          <div>
-            <h2>Karta na Instagram Story</h2>
-            <p class="modal-head-sub">Pionowy format 9:16 (1080×1920) gotowy na Twoją relację</p>
+    <div class="modal-card modal-card-story flighty-edit-profile-sheet">
+      <div class="flighty-edit-topbar">
+        <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-story-modal" aria-label="Zamknij podgląd Story">Zamknij</button>
+        <div class="flighty-edit-topbar-title">
+          <span class="flighty-edit-eyebrow">FLIGHTY SHARE · 9:16</span>
+          <h2>📸 Karta na Story</h2>
+        </div>
+        <span class="flighty-log-season" style="font-size:0.62rem;">PNG</span>
+      </div>
+
+      <div class="flighty-edit-form">
+        <!-- Story Card Mode Switch (Poster 9:16 vs Strava-style Transparent Sticker) -->
+        <div class="story-mode-switch" id="story-mode-switch" style="margin:0;">
+          <button type="button" class="story-mode-tab active" data-story-mode="poster">
+            <span>🖼️ Plakat 9:16</span>
+          </button>
+          <button type="button" class="story-mode-tab" data-story-mode="sticker">
+            <span>✨ Naklejka (Strava PNG)</span>
+          </button>
+        </div>
+
+        <div class="story-preview-container" style="margin:0;">
+          <!-- Offscreen Canvas for crisp 1080x1920 generation -->
+          <canvas id="story-canvas" width="1080" height="1920" style="display:none;"></canvas>
+          <div class="story-img-wrapper" id="story-img-wrapper">
+            <img id="story-preview-img" class="story-preview-img" alt="Generowanie Twojej karty..." />
+            <div class="story-loading-spinner" id="story-loading-spinner">
+              <span class="story-spinner-icon">🍺</span>
+              <span>Rysowanie karty 9:16...</span>
+            </div>
           </div>
         </div>
-        <button type="button" class="modal-close" id="btn-close-story-modal" aria-label="Zamknij podgląd Story">✕</button>
-      </div>
 
-      <!-- Story Card Mode Switch (Poster 9:16 vs Strava-style Transparent Sticker) -->
-      <div class="story-mode-switch" id="story-mode-switch">
-        <button type="button" class="story-mode-tab active" data-story-mode="poster">
-          <span>🖼️ Plakat 9:16</span>
-        </button>
-        <button type="button" class="story-mode-tab" data-story-mode="sticker">
-          <span>✨ Naklejka (Strava PNG)</span>
-        </button>
-      </div>
-
-      <div class="story-preview-container">
-        <!-- Offscreen Canvas for crisp 1080x1920 generation -->
-        <canvas id="story-canvas" width="1080" height="1920" style="display:none;"></canvas>
-        <div class="story-img-wrapper" id="story-img-wrapper">
-          <img id="story-preview-img" class="story-preview-img" alt="Generowanie Twojej karty..." />
-          <div class="story-loading-spinner" id="story-loading-spinner">
-            <span class="story-spinner-icon">🍺</span>
-            <span>Rysowanie karty 9:16...</span>
-          </div>
+        <div class="story-actions-bar" style="margin:0;">
+          <button type="button" class="flighty-edit-submit-btn btn-story-copy-sticker" id="btn-story-copy-sticker" style="display:none;">
+            <span>📋 Kopiuj naklejkę do schowka</span>
+          </button>
+          <button type="button" class="flighty-edit-submit-btn btn-story-download" id="btn-story-download">
+            <span>📥 Pobierz grafikę (PNG)</span>
+          </button>
+          <button type="button" class="btn-secondary btn-story-share" id="btn-story-share">
+            <span>📤 Udostępnij</span>
+          </button>
         </div>
-      </div>
-
-      <div class="story-actions-bar">
-        <button type="button" class="btn-primary btn-story-copy-sticker" id="btn-story-copy-sticker" style="display:none;">
-          <span>📋 Kopiuj naklejkę do schowka</span>
-        </button>
-        <button type="button" class="btn-primary btn-story-download" id="btn-story-download">
-          <span>📥 Pobierz grafikę (PNG)</span>
-        </button>
-        <button type="button" class="btn-secondary btn-story-share" id="btn-story-share">
-          <span>📤 Udostępnij</span>
-        </button>
       </div>
     </div>
   </div>
 
-  <!-- Modal: Wirtualna Karta Klubowa (PoIlePiwko Pass) -->
+  <!-- Modal: Wirtualna Karta Klubowa (PoIlePiwko Pass — Flighty Sheet) -->
   <div class="modal-backdrop" id="club-card-modal" style="display:none; z-index: 10220;">
-    <div class="modal-card modal-card-club-pass">
-      <div class="modal-head">
-        <div class="modal-head-title">
-          <div class="modal-icon-badge">💳</div>
-          <div>
-            <h2>PoIlePiwko Pass</h2>
-            <p class="modal-head-sub">Wirtualna karta klubowa uprawniająca do -10% rabatu na piwo</p>
-          </div>
+    <div class="modal-card modal-card-club-pass flighty-edit-profile-sheet">
+      <div class="flighty-edit-topbar">
+        <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-club-modal" aria-label="Zamknij kartę">Zamknij</button>
+        <div class="flighty-edit-topbar-title">
+          <span class="flighty-edit-eyebrow">FLIGHTY PASS · -10% RABAT</span>
+          <h2>💳 PoIlePiwko Pass</h2>
         </div>
-        <button type="button" class="modal-close" id="btn-close-club-modal" aria-label="Zamknij kartę">✕</button>
+        <span class="flighty-log-season" style="font-size:0.62rem;">VIP</span>
       </div>
 
-      <!-- 3D Card Interactive Stage -->
-      <div class="club-card-stage" id="club-card-stage">
-        <div class="club-card-flipper" id="club-card-flipper">
-          <!-- Card Front (Awers) -->
-          <div class="club-card-side club-card-front">
-            <div class="card-front-top">
-              <div class="card-brand-wrap">
-                <span class="card-beer-icon">🍺</span>
-                <div class="card-brand-text">
-                  <span class="card-brand-name">PoIlePiwko Pass</span>
-                  <span class="card-brand-sub" id="club-card-brand-sub">OFICJALNY KLUB PIWOSZA</span>
+      <div class="flighty-edit-form">
+        <!-- 3D Card Interactive Stage -->
+        <div class="club-card-stage" id="club-card-stage" style="margin:0;">
+          <div class="club-card-flipper" id="club-card-flipper">
+            <!-- Card Front (Awers) -->
+            <div class="club-card-side club-card-front">
+              <div class="card-front-top">
+                <div class="card-brand-wrap">
+                  <span class="card-beer-icon">🍺</span>
+                  <div class="card-brand-text">
+                    <span class="card-brand-name">PoIlePiwko Pass</span>
+                    <span class="card-brand-sub" id="club-card-brand-sub">OFICJALNY KLUB PIWOSZA</span>
+                  </div>
+                </div>
+                <span class="card-discount-pill">-10% RABAT</span>
+              </div>
+
+              <!-- Dynamic glowing beer wave -->
+              <div class="card-beer-wave"></div>
+
+              <div class="card-member-details">
+                <div class="card-member-row">
+                  <div class="card-member-meta">
+                    <span class="card-meta-lbl">Członek Klubu</span>
+                    <span class="card-meta-val" id="club-card-name">PIWOSZ</span>
+                  </div>
+                  <div class="card-member-num">
+                    <span class="card-meta-lbl">Numer Karty</span>
+                    <span class="card-meta-val" id="club-card-number">-</span>
+                  </div>
+                </div>
+
+                <div class="card-bottom-row">
+                  <div class="card-validity">
+                    <span class="card-valid-lbl">Ważna do</span>
+                    <span class="card-valid-val" id="club-card-validity">12/2027</span>
+                  </div>
+                  <div class="card-qr-box" id="club-card-qr">
+                    <svg viewBox="0 0 100 100" class="card-qr-svg" aria-label="Kod QR karty klubowej">
+                      <rect width="100" height="100" fill="#ffffff" rx="8"/>
+                      <path d="M10 10h30v30h-30z M16 16h18v18h-18z M22 22h6v6h-6z M60 10h30v30h-30z M66 16h18v18h-18z M72 22h6v6h-6z M10 60h30v30h-30z M16 66h18v18h-18z M22 72h6v6h-6z M46 12h6v6h-6z M46 24h6v12h-6z M52 30h6v6h-6z M46 60h6v18h-6z M60 60h12v6h-12z M78 60h12v12h-12z M60 72h6v18h-6z M72 78h18v12h-18z M46 84h12v6h-12z" fill="#0f172a"/>
+                    </svg>
+                  </div>
                 </div>
               </div>
-              <span class="card-discount-pill">-10% RABAT</span>
+
+              <!-- Live Anti-screenshot Clock for Barmen -->
+              <div class="card-security-clock" id="club-card-live-clock">
+                <span class="clock-live-dot"></span>
+                <span class="clock-live-text" id="club-card-clock-text">🟢 AKTYWNA TERAZ · Ładowanie...</span>
+              </div>
+
+              <!-- Glare effect on tilt & dynamic holographic foil shimmer -->
+              <div class="card-glare" id="club-card-glare"></div>
+              <div class="card-hologram-shimmer" id="club-card-hologram"></div>
             </div>
 
-            <!-- Dynamic glowing beer wave -->
-            <div class="card-beer-wave"></div>
-
-            <div class="card-member-details">
-              <div class="card-member-row">
-                <div class="card-member-meta">
-                  <span class="card-meta-lbl">Członek Klubu</span>
-                  <span class="card-meta-val" id="club-card-name">PIWOSZ</span>
+            <!-- Card Back (Rewers) -->
+            <div class="club-card-side club-card-back">
+              <div class="card-back-header">
+                <span class="card-back-title">Zasady Członkostwa</span>
+                <span class="card-back-badge">Klub PoIlePiwko</span>
+              </div>
+              <div class="card-back-body">
+                <div class="card-rule-item">
+                  <span class="rule-icon">✓</span>
+                  <span>Karta uprawnia do 10% rabatu na piwo z nalewaka w lokalach partnerskich.</span>
                 </div>
-                <div class="card-member-num">
-                  <span class="card-meta-lbl">Numer Karty</span>
-                  <span class="card-meta-val" id="club-card-number">-</span>
+                <div class="card-rule-item">
+                  <span class="rule-icon">✓</span>
+                  <span>Pokaż kartę barmanowi przed złożeniem zamówienia.</span>
+                </div>
+                <div class="card-rule-item">
+                  <span class="rule-icon">✓</span>
+                  <span>Karta jest imienna i powiązana z Twoim kontem poilepiwko.</span>
+                </div>
+                <div class="card-rule-item">
+                  <span class="rule-icon">✓</span>
+                  <span>Rabat naliczany jest bezpośrednio przy kasie.</span>
                 </div>
               </div>
-
-              <div class="card-bottom-row">
-                <div class="card-validity">
-                  <span class="card-valid-lbl">Ważna do</span>
-                  <span class="card-valid-val" id="club-card-validity">12/2027</span>
-                </div>
-                <div class="card-qr-box" id="club-card-qr">
-                  <svg viewBox="0 0 100 100" class="card-qr-svg" aria-label="Kod QR karty klubowej">
-                    <rect width="100" height="100" fill="#ffffff" rx="8"/>
-                    <path d="M10 10h30v30h-30z M16 16h18v18h-18z M22 22h6v6h-6z M60 10h30v30h-30z M66 16h18v18h-18z M72 22h6v6h-6z M10 60h30v30h-30z M16 66h18v18h-18z M22 72h6v6h-6z M46 12h6v6h-6z M46 24h6v12h-6z M52 30h6v6h-6z M46 60h6v18h-6z M60 60h12v6h-12z M78 60h12v12h-12z M60 72h6v18h-6z M72 78h18v12h-18z M46 84h12v6h-12z" fill="#0f172a"/>
-                  </svg>
-                </div>
+              <div class="card-back-footer">
+                <span class="card-back-id" id="club-card-back-id">ID: - • Polska</span>
+                <button type="button" class="btn-flip-back" id="btn-flip-back">Obróć na awers ↺</button>
               </div>
-            </div>
-
-            <!-- Live Anti-screenshot Clock for Barmen -->
-            <div class="card-security-clock" id="club-card-live-clock">
-              <span class="clock-live-dot"></span>
-              <span class="clock-live-text" id="club-card-clock-text">🟢 AKTYWNA TERAZ · Ładowanie...</span>
-            </div>
-
-            <!-- Glare effect on tilt & dynamic holographic foil shimmer -->
-            <div class="card-glare" id="club-card-glare"></div>
-            <div class="card-hologram-shimmer" id="club-card-hologram"></div>
-          </div>
-
-          <!-- Card Back (Rewers) -->
-          <div class="club-card-side club-card-back">
-            <div class="card-back-header">
-              <span class="card-back-title">Zasady Członkostwa</span>
-              <span class="card-back-badge">Klub PoIlePiwko</span>
-            </div>
-            <div class="card-back-body">
-              <div class="card-rule-item">
-                <span class="rule-icon">✓</span>
-                <span>Karta uprawnia do 10% rabatu na piwo z nalewaka w lokalach partnerskich.</span>
-              </div>
-              <div class="card-rule-item">
-                <span class="rule-icon">✓</span>
-                <span>Pokaż kartę barmanowi przed złożeniem zamówienia.</span>
-              </div>
-              <div class="card-rule-item">
-                <span class="rule-icon">✓</span>
-                <span>Karta jest imienna i powiązana z Twoim kontem poilepiwko.</span>
-              </div>
-              <div class="card-rule-item">
-                <span class="rule-icon">✓</span>
-                <span>Rabat naliczany jest bezpośrednio przy kasie.</span>
-              </div>
-            </div>
-            <div class="card-back-footer">
-              <span class="card-back-id" id="club-card-back-id">ID: - • Polska</span>
-              <button type="button" class="btn-flip-back" id="btn-flip-back">Obróć na awers ↺</button>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Instructions & Action Controls -->
-      <p class="club-card-hint">Dotknij karty, aby ją obrócić i sprawdzić warunki zniżki</p>
+        <!-- Instructions & Action Controls -->
+        <p class="club-card-hint" style="margin:0;">Dotknij karty, aby ją obrócić i sprawdzić warunki zniżki</p>
 
-      <div class="club-card-actions">
-        <button type="button" class="btn-card-action btn-card-venues" id="btn-club-filter-venues" title="Filtruj mapę do lokali honorujących rabat">
-          <span>🗺️ Lokale z rabatem (-10%)</span>
-        </button>
-        <button type="button" class="btn-card-action btn-card-flip" id="btn-action-flip-card">
-          <span>🔄 Obróć</span>
-        </button>
-        <button type="button" class="btn-card-action btn-card-show" id="btn-action-show-barman">
-          <span>📱 Pokaż w barze</span>
-        </button>
-        <button type="button" class="btn-card-action btn-card-download" id="btn-action-save-pass" title="Zapisz kartę w plikach lub udostępnij">
-          <span>📥 Pobierz / Udostępnij</span>
-        </button>
+        <div class="club-card-actions" style="margin:0;">
+          <button type="button" class="btn-card-action btn-card-venues" id="btn-club-filter-venues" title="Filtruj mapę do lokali honorujących rabat">
+            <span>🗺️ Lokale z rabatem (-10%)</span>
+          </button>
+          <button type="button" class="btn-card-action btn-card-flip" id="btn-action-flip-card">
+            <span>🔄 Obróć</span>
+          </button>
+          <button type="button" class="btn-card-action btn-card-show" id="btn-action-show-barman">
+            <span>📱 Pokaż w barze</span>
+          </button>
+          <button type="button" class="btn-card-action btn-card-download" id="btn-action-save-pass" title="Zapisz kartę w plikach lub udostępnij">
+            <span>📥 Pobierz / Udostępnij</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -3390,13 +3407,22 @@
     </div>
   </div>
 
-  <!-- Modal: Pub Crawl Ukończony (Ekran Triumfu) -->
+  <!-- Modal: Pub Crawl Ukończony (Ekran Triumfu — Flighty Sheet) -->
   <div class="modal-backdrop" id="crawl-complete-modal" style="display:none; z-index: 10300;">
-    <div class="modal-card modal-card-celebration">
+    <div class="modal-card modal-card-celebration flighty-edit-profile-sheet">
       <!-- Lightweight zero-dependency celebration canvas for confetti -->
       <canvas id="crawl-confetti-canvas" class="celebration-canvas"></canvas>
 
-      <div class="celebration-content">
+      <div class="flighty-edit-topbar">
+        <button type="button" class="flighty-edit-nav-btn cancel" onclick="document.getElementById('btn-close-crawl-complete') && document.getElementById('btn-close-crawl-complete').click()">Zamknij</button>
+        <div class="flighty-edit-topbar-title">
+          <span class="flighty-edit-eyebrow">FLIGHTY ROUTE · META</span>
+          <h2>🏆 Crawl Ukończony!</h2>
+        </div>
+        <span class="flighty-log-season" style="font-size:0.62rem;">META</span>
+      </div>
+
+      <div class="celebration-content flighty-edit-form">
         <div class="celebration-trophy-badge">🏆</div>
         <h2 class="celebration-title">Pub Crawl Ukończony!</h2>
         <p class="celebration-sub">Gratulacje! Przetrwaliście całą trasę Pub Crawlu! 🍻</p>
@@ -3520,26 +3546,24 @@
     </div>
   </div>
 
-  <!-- Modal: QR Code Share Modal -->
+  <!-- Modal: QR Code Share Modal (Flighty Sheet) -->
   <div class="modal-backdrop" id="qr-share-modal" style="display:none; z-index: 10280;">
-    <div class="modal-card qr-modal-card">
-      <div class="modal-head">
-        <div class="modal-head-title">
-          <div class="modal-icon-badge">📱</div>
-          <div>
-            <h2>Twój Kod QR</h2>
-            <p class="modal-head-sub">Pokaż ten kod znajomemu, aby natychmiast dodał Cię do ekipy!</p>
-          </div>
+    <div class="modal-card qr-modal-card flighty-edit-profile-sheet">
+      <div class="flighty-edit-topbar">
+        <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-qr-modal">Zamknij</button>
+        <div class="flighty-edit-topbar-title">
+          <span class="flighty-edit-eyebrow">FLIGHTY PASS · KOD QR</span>
+          <h2>📱 Twój Kod QR</h2>
         </div>
-        <button type="button" class="modal-close" id="btn-close-qr-modal">✕</button>
+        <span class="flighty-log-season" style="font-size:0.62rem;">SCAN</span>
       </div>
-      <div class="qr-code-body">
+      <div class="qr-code-body flighty-edit-form" style="align-items:center;text-align:center;">
         <div class="qr-code-frame">
           <img id="qr-code-image" src="" alt="Kod QR profilu" />
         </div>
-        <p class="qr-code-handle" id="qr-code-handle">@profil</p>
-        <p class="qr-code-note">Zeskanuj aparatem w telefonie, aby otworzyć profil</p>
-        <button type="button" class="btn-primary" id="btn-copy-qr-link" style="width: 100%; margin-top: 14px;">
+        <p class="qr-code-handle" id="qr-code-handle" style="margin:0;">@profil</p>
+        <p class="qr-code-note" style="margin:0;">Zeskanuj aparatem w telefonie, aby dodać znajomego do ekipy</p>
+        <button type="button" class="flighty-edit-submit-btn" id="btn-copy-qr-link" style="width: 100%; margin-top: 6px;">
           🔗 Kopiuj bezpośredni link
         </button>
       </div>
@@ -3751,28 +3775,28 @@
     </div>
   </div>
 
-  <!-- Modal: Zgłaszanie Treści & Blokowanie Użytkownika (Apple UGC Guideline 1.2) -->
+  <!-- Modal: Zgłaszanie Treści & Blokowanie Użytkownika (Apple UGC Guideline 1.2 — Flighty Sheet) -->
   <div class="modal-backdrop" id="ugc-report-modal" style="display:none; z-index: 10250;">
-    <div class="modal-card ugc-report-modal-card">
-      <div class="modal-head">
-        <div class="modal-head-title">
-          <div class="modal-icon-badge">🚩</div>
-          <div>
-            <h2 id="ugc-report-modal-title">Zgłoś treść</h2>
-            <p class="modal-head-sub" id="ugc-report-modal-sub">Zgłoś ściemę cenową, trolla lub nieodpowiednie zdjęcie</p>
-          </div>
+    <div class="modal-card ugc-report-modal-card flighty-edit-profile-sheet">
+      <div class="flighty-edit-topbar">
+        <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-ugc-report" aria-label="Zamknij">Anuluj</button>
+        <div class="flighty-edit-topbar-title">
+          <span class="flighty-edit-eyebrow" id="ugc-report-modal-sub" style="color:#f87171;">FLIGHTY GUARD · MODERACJA</span>
+          <h2 id="ugc-report-modal-title">🚩 Zgłoś treść</h2>
         </div>
-        <button type="button" class="modal-close" id="btn-close-ugc-report" aria-label="Zamknij">✕</button>
+        <span class="flighty-log-season" style="font-size:0.62rem;">DSA</span>
       </div>
 
-      <div class="ugc-report-body">
+      <div class="ugc-report-body flighty-edit-form">
         <div class="ugc-report-target-info" id="ugc-report-target-info">
           <!-- Dynamic author / venue text -->
         </div>
 
-        <div class="form-group" style="margin-top: 12px;">
-          <label class="form-label">Wybierz powód zgłoszenia:</label>
-          <div class="ugc-reasons-list">
+        <div class="flighty-edit-section">
+          <div class="flighty-edit-sec-header">
+            <span>01 · POWÓD ZGŁOSZENIA</span>
+          </div>
+          <div class="ugc-reasons-list flighty-edit-table" style="padding:6px;">
             <label class="ugc-reason-item">
               <input type="radio" name="ugc-report-reason" value="offensive" checked />
               <span>🤬 Wulgaryzmy, obraźliwe treści lub nienawiść</span>
@@ -3792,13 +3816,22 @@
           </div>
         </div>
 
-        <div class="form-group" style="margin-top: 10px;">
-          <label for="ugc-report-details" class="form-label">Dodatkowy opis (opcjonalnie):</label>
-          <textarea id="ugc-report-details" class="form-input" rows="2" placeholder="Napisz krótko co jest nie tak..."></textarea>
+        <div class="flighty-edit-section">
+          <div class="flighty-edit-sec-header">
+            <span>02 · DODATKOWY OPIS (OPCJONALNIE)</span>
+          </div>
+          <div class="flighty-edit-table">
+            <div class="flighty-edit-row bio-row">
+              <label for="ugc-report-details" class="flighty-row-label">Opis</label>
+              <div class="flighty-row-field">
+                <textarea id="ugc-report-details" class="flighty-row-textarea" rows="2" placeholder="Napisz krótko co jest nie tak..."></textarea>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="ugc-actions-box" style="margin-top: 14px;">
-          <button type="button" class="btn-primary" id="btn-submit-ugc-report" style="width: 100%;">
+        <div class="ugc-actions-box" style="margin-top: 4px;">
+          <button type="button" class="flighty-edit-submit-btn" id="btn-submit-ugc-report" style="width: 100%;">
             <span>🚩 Wyślij zgłoszenie do moderacji</span>
           </button>
           <div class="ugc-divider-text">lub</div>
@@ -3822,6 +3855,6 @@
   <script src="moderation.js"></script>
 
   <!-- Main Application Logic -->
-  <script src="app.js?v=154"></script>
+  <script src="app.js?v=155"></script>
 </body>
 </html>
