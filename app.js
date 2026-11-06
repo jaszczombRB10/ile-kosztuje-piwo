@@ -10574,7 +10574,8 @@
           count: totalBars,
           openCount: openBars,
           minPrice: minPriceStr,
-          vibe: `${openBars > 0 ? `${openBars} otwartych teraz · ` : ""}od ${minPriceStr} · ${z.fallbackVibe}`
+          fallbackVibe: z.fallbackVibe,
+          vibe: `${openBars > 0 ? `${openBars} otwartych · ` : ""}${z.fallbackVibe}`
         };
       });
     }
@@ -10712,9 +10713,9 @@
         // Update status summary text
         if (statusSummary) {
           if (activeFriends.length > 0) {
-            statusSummary.innerHTML = `<strong>${activeFriends.length} znajomych</strong> z Twojej ekipy w barach · <strong>${hotspots.length} stref</strong> aktywnych`;
+            statusSummary.innerHTML = `<strong>${activeFriends.length} znajomych</strong> z Twojej ekipy w barach · <strong>${hotspots.length} stref</strong>`;
           } else {
-            statusSummary.innerHTML = `Dotknij strefy poniżej, aby przybliżyć zagłębie lub przeskoczyć na główną mapę`;
+            statusSummary.innerHTML = `🔥 <strong>${hotspots.length} zagłębi barowych</strong> · Dotknij rejonu poniżej`;
           }
         }
 
@@ -10723,13 +10724,13 @@
           hotspotsList.innerHTML = hotspots.map(h => `
             <div class="hotspot-chip-card" onclick="window.__flyToHotspot(${h.coords[0]}, ${h.coords[1]}, ${h.zoom || 15})">
               <div class="hotspot-card-top">
-                <span class="hotspot-name">${escapeHtml(h.name)}</span>
-                <span class="hotspot-count-pill">🔥 ${h.count} barów</span>
+                <span class="hotspot-count-pill">🔥 ${h.count} barów · od ${escapeHtml(h.minPrice || '12 zł')}</span>
               </div>
+              <div class="hotspot-name">${escapeHtml(h.name)}</div>
               <div class="hotspot-vibe">${escapeHtml(h.vibe)}</div>
               <div class="hotspot-card-actions">
                 <button type="button" class="hotspot-jump-btn" onclick="event.stopPropagation(); window.__jumpMainMapToZone(${h.coords[0]}, ${h.coords[1]}, ${h.zoom || 16}, '${escapeHtml(h.name)}')">
-                  🗺️ Pokaż bary na mapie ↗
+                  🗺️ Otwórz na mapie ↗
                 </button>
               </div>
             </div>

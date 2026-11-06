@@ -23217,9 +23217,19 @@ body.theme-light .telemetry-lbl {
   text-overflow: ellipsis;
 }
 
-.findmy-hud-pill.city-stat-pill {
+.findmy-hud-pill.city-stat-pill,
+.findmy-hud-pill.live-beacon-pill {
   color: #30D158;
   border-color: rgba(48, 209, 88, 0.35);
+}
+
+.findmy-hud-code {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace !important;
+  font-size: 0.58rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.05em !important;
+  color: inherit !important;
+  text-transform: uppercase !important;
 }
 
 .findmy-green-beacon {
@@ -23248,6 +23258,11 @@ body.theme-light .telemetry-lbl {
   justify-content: space-between;
   gap: 8px;
   pointer-events: none;
+}
+
+#friends-map-summary {
+  margin: 0 auto !important;
+  text-align: center !important;
 }
 
 .findmy-map-ctrl-btn {
@@ -23911,26 +23926,34 @@ body.theme-light .telemetry-lbl {
 
 /* Section Label Row + Upgraded Hotspots Grid in Mapa 24h */
 .flighty-section-label-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin: 12px 2px 8px 2px;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  margin: 14px 2px 8px 2px !important;
+  padding: 0 2px !important;
 }
 
-.fsl-eyebrow {
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
-  font-size: 0.64rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  color: #f97316;
+.fsl-eyebrow,
+.flighty-sec-title {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace !important;
+  font-size: 0.65rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.08em !important;
+  color: #f97316 !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+  line-height: 1.2 !important;
 }
 
-.fsl-sub {
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
-  font-size: 0.6rem;
-  font-weight: 700;
-  color: rgba(235, 235, 245, 0.5);
+.fsl-sub,
+.flighty-sec-sub {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace !important;
+  font-size: 0.62rem !important;
+  font-weight: 700 !important;
+  color: rgba(235, 235, 245, 0.52) !important;
+  white-space: nowrap !important;
+  line-height: 1.2 !important;
 }
 
 .hotspots-quick-grid {
@@ -23942,13 +23965,19 @@ body.theme-light .telemetry-lbl {
 .hotspot-chip-card {
   background: #12121a !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 15px !important;
-  padding: 11px 12px !important;
+  border-radius: 16px !important;
+  padding: 10px 11px 11px 11px !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 6px !important;
+  gap: 5px !important;
   cursor: pointer;
-  transition: transform 0.14s ease, border-color 0.14s ease;
+  transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.hotspot-chip-card:hover {
+  border-color: rgba(249, 115, 22, 0.35) !important;
 }
 
 .hotspot-chip-card:active {
@@ -23956,57 +23985,87 @@ body.theme-light .telemetry-lbl {
 }
 
 .hotspot-card-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-}
-
-.hotspot-name {
-  font-size: 0.8rem !important;
-  font-weight: 800 !important;
-  color: #ffffff !important;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  width: 100% !important;
 }
 
 .hotspot-count-pill {
-  flex-shrink: 0;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
-  font-size: 0.6rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace !important;
+  font-size: 0.58rem !important;
   font-weight: 800 !important;
   padding: 2px 7px !important;
   border-radius: 999px !important;
-  background: rgba(249, 115, 22, 0.18) !important;
-  border: 1px solid rgba(249, 115, 22, 0.38) !important;
+  background: rgba(249, 115, 22, 0.16) !important;
+  border: 1px solid rgba(249, 115, 22, 0.35) !important;
   color: #fb923c !important;
+  letter-spacing: 0.02em !important;
+  white-space: nowrap !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.hotspot-name {
+  font-size: 0.86rem !important;
+  font-weight: 800 !important;
+  color: #ffffff !important;
+  line-height: 1.25 !important;
+  margin: 1px 0 0 0 !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+  word-break: break-word !important;
+  letter-spacing: -0.01em !important;
+  white-space: normal !important;
 }
 
 .hotspot-vibe {
   font-size: 0.68rem !important;
   color: rgba(235, 235, 245, 0.65) !important;
   line-height: 1.3 !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+  min-height: 1.8em !important;
 }
 
 .hotspot-card-actions {
-  margin-top: 2px;
-  display: flex;
+  margin-top: auto !important;
+  padding-top: 4px !important;
+  display: flex !important;
+  width: 100% !important;
 }
 
 .hotspot-jump-btn {
   -webkit-appearance: none;
   appearance: none;
-  width: 100%;
-  padding: 5px 8px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #60a5fa;
-  font-size: 0.65rem;
-  font-weight: 800;
-  cursor: pointer;
-  text-align: center;
+  width: 100% !important;
+  padding: 6px 4px !important;
+  border-radius: 9px !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.11) !important;
+  color: #60a5fa !important;
+  font-size: 0.68rem !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  transition: all 0.14s ease !important;
+}
+
+.hotspot-jump-btn:active {
+  transform: scale(0.97) !important;
+  background: rgba(96, 165, 250, 0.16) !important;
+  border-color: rgba(96, 165, 250, 0.4) !important;
 }
 
 /* ==========================================================================
@@ -24275,6 +24334,52 @@ body.theme-light .telemetry-lbl {
   font-weight: 800;
   letter-spacing: 0.07em;
   color: rgba(235, 235, 245, 0.48);
+}
+
+.flighty-edit-sec-title {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace !important;
+  font-size: 0.62rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.07em !important;
+  color: rgba(235, 235, 245, 0.52) !important;
+  text-transform: uppercase !important;
+}
+
+.flighty-edit-sec-hint {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace !important;
+  font-size: 0.6rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.06em !important;
+  color: rgba(235, 235, 245, 0.42) !important;
+  text-transform: uppercase !important;
+}
+
+.achievements-toggle-hint {
+  font-size: 0.72rem !important;
+  font-weight: 600 !important;
+  color: #94a3b8 !important;
+}
+
+.sos-location-title {
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  color: #94a3b8 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.4px !important;
+}
+
+.flighty-log-emblem {
+  font-size: 1.05rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  line-height: 1 !important;
+}
+
+.flighty-venue-chips-row {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+  align-items: center !important;
 }
 
 .flighty-edit-table {
@@ -25320,6 +25425,7 @@ body.theme-light .flighty-sec-sub {
   color: #64748b !important;
 }
 
+body.theme-light .fsl-eyebrow,
 body.theme-light .flighty-sec-title {
   color: #c2410c !important;
 }
