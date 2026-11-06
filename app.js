@@ -9318,15 +9318,17 @@
       });
     }
 
-    const tagVibeWrap = document.getElementById("prof-tag-vibe-wrap");
-    if (tagVibeWrap) {
-      tagVibeWrap.style.cursor = "pointer";
-      tagVibeWrap.title = "Kliknij, aby zagrać w Pub Quiz!";
-      tagVibeWrap.addEventListener("click", () => {
-        window.__closeMyProfile();
-        if (window.__openPubQuiz) window.__openPubQuiz();
-      });
-    }
+    // Profile preference tags (Beer, District, Hobbies) -> tap to edit profile preferences
+    ["prof-tag-beer-wrap", "prof-tag-dist-wrap", "prof-tag-vibe-wrap"].forEach(tagId => {
+      const tagEl = document.getElementById(tagId);
+      if (tagEl) {
+        tagEl.style.cursor = "pointer";
+        tagEl.title = "Dotknij, aby edytować profil i preferencje";
+        tagEl.addEventListener("click", () => {
+          if (btnToggleEdit) btnToggleEdit.click();
+        });
+      }
+    });
 
 
 
