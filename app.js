@@ -1012,96 +1012,14 @@
     });
   }
 
-  // Moduł 5: Render District Average Price Pills at Intermediate Zoom (11-13)
+  // District overview bubbles disabled for a cleaner map view
   function renderDistrictOverviewMarkers() {
-    if (!districtOverviewGroup) {
-      districtOverviewGroup = L.layerGroup();
+    if (districtOverviewGroup) {
+      districtOverviewGroup.clearLayers();
     }
-    districtOverviewGroup.clearLayers();
-
-    if (!allVenues || allVenues.length === 0) return;
-
-    const curCity = getCurrentCity();
-    const cityCenter = curCity.center || [52.2319, 21.0067];
-
-    // Filter venues belonging to or near active city (< 60 km)
-    const validVenues = allVenues.filter(v => {
-      if (typeof v.latitude !== "number" || typeof v.longitude !== "number") return false;
-      if (!v.district) return false;
-      return calculateDistanceKm(cityCenter[0], cityCenter[1], v.latitude, v.longitude) <= 60;
-    });
-
-    if (validVenues.length === 0) return;
-
-    const districtMap = {};
-    validVenues.forEach(v => {
-      const dName = v.district.trim();
-      if (!districtMap[dName]) {
-        districtMap[dName] = {
-          name: dName,
-          count: 0,
-          sumPrice: 0,
-          prices: [],
-          lats: [],
-          lngs: []
-        };
-      }
-      const p = (typeof v.beer_price_pln === "number" && v.beer_price_pln > 0) ? v.beer_price_pln : null;
-      if (p !== null) {
-        districtMap[dName].sumPrice += p;
-        districtMap[dName].prices.push(p);
-      }
-      districtMap[dName].count += 1;
-      districtMap[dName].lats.push(v.latitude);
-      districtMap[dName].lngs.push(v.longitude);
-    });
-
-    Object.values(districtMap).forEach(d => {
-      if (d.count < 1) return;
-      const avgPrice = d.prices.length > 0 ? (d.sumPrice / d.prices.length) : 15.0;
-      const tierClass = avgPrice <= 12.0 ? "district-pill-low" : (avgPrice <= 18.0 ? "district-pill-mid" : "district-pill-high");
-
-      let targetCoords = null;
-      let targetZoom = 14;
-      const target = getDistrictTarget(d.name);
-      if (target && target.coords) {
-        targetCoords = target.coords;
-        targetZoom = target.zoom || 14;
-      } else {
-        const avgLat = d.lats.reduce((a, b) => a + b, 0) / d.lats.length;
-        const avgLng = d.lngs.reduce((a, b) => a + b, 0) / d.lngs.length;
-        targetCoords = [avgLat, avgLng];
-      }
-
-      const pillHtml = `
-        <div class="district-overview-pill ${tierClass}" data-district="${escapeHtml(d.name)}" title="Kliknij, aby przybliżyć dzielnicę ${escapeHtml(d.name)}">
-          <span class="district-pill-name">${escapeHtml(d.name)}</span>
-          <span class="district-pill-price">~${avgPrice.toFixed(1)} zł</span>
-          <span class="district-pill-count">${d.count} ${d.count === 1 ? 'bar' : (d.count < 5 ? 'bary' : 'barów')}</span>
-        </div>
-      `;
-
-      const icon = L.divIcon({
-        className: "district-overview-wrap",
-        html: pillHtml,
-        iconSize: [160, 36],
-        iconAnchor: [80, 18]
-      });
-
-      const m = L.marker(targetCoords, { icon, zIndexOffset: 2500 });
-      m.on("click", () => {
-        if (typeof poileHaptics !== "undefined" && poileHaptics.tick) {
-          poileHaptics.tick();
-        }
-        if (map) {
-          map.flyTo(targetCoords, Math.max(14, targetZoom), { duration: 1.0 });
-        }
-      });
-      districtOverviewGroup.addLayer(m);
-    });
   }
 
-  // Zoom level switch: cities view (<= 10) vs district overview pills (11-13) vs detailed bars view (>= 14)
+  // Zoom level switch: cities view (<= 10) vs detailed bars view (> 10)
   function updateZoomOverview() {
     if (!map) return;
     const z = map.getZoom();
@@ -1110,11 +1028,6 @@
       if (districtOverviewGroup && map.hasLayer(districtOverviewGroup)) map.removeLayer(districtOverviewGroup);
       renderCityOverviewMarkers();
       if (cityMarkersGroup && !map.hasLayer(cityMarkersGroup)) map.addLayer(cityMarkersGroup);
-    } else if (z >= 11 && z <= 13) {
-      if (cityMarkersGroup && map.hasLayer(cityMarkersGroup)) map.removeLayer(cityMarkersGroup);
-      if (clusterGroup && !map.hasLayer(clusterGroup)) map.addLayer(clusterGroup);
-      renderDistrictOverviewMarkers();
-      if (districtOverviewGroup && !map.hasLayer(districtOverviewGroup)) map.addLayer(districtOverviewGroup);
     } else {
       if (cityMarkersGroup && map.hasLayer(cityMarkersGroup)) map.removeLayer(cityMarkersGroup);
       if (districtOverviewGroup && map.hasLayer(districtOverviewGroup)) map.removeLayer(districtOverviewGroup);
@@ -7894,6 +7807,19 @@
   async function fetchAndSyncUserProfile() {
     if (!currentUser) return;
 
+    // Immediately hydrate myFollowingIds from user_metadata or localStorage so UI never shows 0 while loading
+    const metaFollowing = currentUser.user_metadata?.following_ids;
+    if (Array.isArray(metaFollowing) && metaFollowing.length > 0 && myFollowingIds.length === 0) {
+      myFollowingIds = [...metaFollowing];
+    } else if (myFollowingIds.length === 0) {
+      try {
+        const cachedIds = JSON.parse(localStorage.getItem("poilepiwko_following_ids_" + currentUser.id) || "[]");
+        if (Array.isArray(cachedIds) && cachedIds.length > 0) {
+          myFollowingIds = cachedIds;
+        }
+      } catch (e) {}
+    }
+
     try {
       const res = await fetch("/api/auth", {
         method: "POST",
@@ -7921,6 +7847,9 @@
           if (pubUserNum) pubUserNum.textContent = dispUserNum;
           if (Array.isArray(data.followingIds)) {
             myFollowingIds = data.followingIds;
+            try {
+              localStorage.setItem("poilepiwko_following_ids_" + currentUser.id, JSON.stringify(myFollowingIds));
+            } catch (e) {}
           }
 
           // Robust photo hydration: DB -> user_metadata -> localStorage
@@ -8006,6 +7935,10 @@
     updateFavoriteCounters();
     renderMarkers();
     loadUserNotifications(false);
+    const commModalEl = document.getElementById("community-modal");
+    if (commModalEl && commModalEl.classList.contains("active") && typeof window.__refreshCommunityFriends === "function") {
+      window.__refreshCommunityFriends();
+    }
   }
 
   function syncUserDataToCloud(extra = {}) {
@@ -9964,6 +9897,9 @@
       allTabs.forEach(t => t && t.classList.remove("active"));
       allPanes.forEach(p => p && (p.style.display = "none"));
 
+      const pageBody = modal ? modal.querySelector(".community-page-body") : null;
+      if (pageBody) pageBody.scrollTop = 0;
+
       if (tab === "map") {
         if (tabMap) tabMap.classList.add("active");
         if (paneMap) paneMap.style.display = "block";
@@ -10424,15 +10360,33 @@
         return;
       }
 
+      // Immediately hydrate from user_metadata or localStorage if myFollowingIds is still empty
       if (myFollowingIds.length === 0) {
-        cachedFollowingUsers = [];
-        cachedActiveCheckins = [];
-        renderStoriesRail();
-        renderFriendsList();
-        return;
+        if (Array.isArray(currentUser.user_metadata?.following_ids) && currentUser.user_metadata.following_ids.length > 0) {
+          myFollowingIds = [...currentUser.user_metadata.following_ids];
+        } else {
+          try {
+            const savedIds = JSON.parse(localStorage.getItem("poilepiwko_following_ids_" + currentUser.id) || "[]");
+            if (Array.isArray(savedIds) && savedIds.length > 0) {
+              myFollowingIds = savedIds;
+            }
+          } catch (e) {}
+        }
       }
 
-      followingList.innerHTML = `<div class="loading-state-hint">Ładowanie Twojej ekipy... 🍻</div>`;
+      if (cachedFollowingUsers.length === 0) {
+        try {
+          const savedUsers = JSON.parse(localStorage.getItem("poilepiwko_following_users_" + currentUser.id) || "[]");
+          if (Array.isArray(savedUsers) && savedUsers.length > 0) {
+            cachedFollowingUsers = savedUsers;
+            renderFriendsList();
+          } else {
+            followingList.innerHTML = `<div class="loading-state-hint">Ładowanie Twojej ekipy... 🍻</div>`;
+          }
+        } catch (e) {
+          followingList.innerHTML = `<div class="loading-state-hint">Ładowanie Twojej ekipy... 🍻</div>`;
+        }
+      }
 
       try {
         const [resFollowing, resCheckins] = await Promise.all([
@@ -10454,29 +10408,43 @@
           })
         ]);
 
-        const dataFollowing = await resFollowing.json();
-        const dataCheckins = resCheckins.ok ? await resCheckins.json() : { activeFriends: [] };
-
-        if (Array.isArray(dataFollowing.followingIds)) {
-          myFollowingIds = dataFollowing.followingIds;
-          const commFollowingBadge = document.getElementById("comm-following-badge");
-          if (commFollowingBadge) commFollowingBadge.textContent = myFollowingIds.length;
+        if (resFollowing.ok) {
+          const dataFollowing = await resFollowing.json();
+          if (Array.isArray(dataFollowing.followingIds)) {
+            myFollowingIds = dataFollowing.followingIds;
+            try {
+              localStorage.setItem("poilepiwko_following_ids_" + currentUser.id, JSON.stringify(myFollowingIds));
+            } catch (e) {}
+          }
+          if (Array.isArray(dataFollowing.users)) {
+            cachedFollowingUsers = dataFollowing.users;
+            try {
+              localStorage.setItem("poilepiwko_following_users_" + currentUser.id, JSON.stringify(cachedFollowingUsers));
+            } catch (e) {}
+          }
         }
 
-        cachedFollowingUsers = dataFollowing.users || [];
+        const dataCheckins = resCheckins.ok ? await resCheckins.json() : { activeFriends: [] };
         cachedActiveCheckins = dataCheckins.activeFriends || [];
+
+        const commFollowingBadge = document.getElementById("comm-following-badge");
+        if (commFollowingBadge) commFollowingBadge.textContent = Math.max(myFollowingIds.length, cachedFollowingUsers.length);
+        const profStatFriends = document.getElementById("prof-stat-friends");
+        if (profStatFriends) profStatFriends.textContent = Math.max(myFollowingIds.length, cachedFollowingUsers.length);
 
         renderStoriesRail();
         renderFriendsList();
       } catch (err) {
         console.warn("Failed to load following list:", err);
-        followingList.innerHTML = `<div class="error-state-hint">Nie udało się załadować listy obserwowanych.</div>`;
+        renderStoriesRail();
+        renderFriendsList();
       }
     }
 
     // Expose community refresh hook
     window.__refreshCommunityFriends = function() {
       loadFollowingList();
+      loadRecommendedFriends();
     };
 
     // Load Recommended Friends (Popularni teraz w Warszawie)
@@ -10493,12 +10461,19 @@
             payload: { userId: currentUser ? currentUser.id : null }
           })
         });
-        const data = await res.json();
-        const users = data.users || [];
+        const data = res.ok ? await res.json() : { users: [] };
+        let users = (data.users || []).filter(u => !myFollowingIds.includes(u.id));
 
         if (users.length === 0) {
-          recommendedList.innerHTML = `<div class="empty-state-hint" style="padding:12px;">Wszyscy aktywni piwosze są już w Twojej ekipie! 👑</div>`;
-          return;
+          if (myFollowingIds.length > 0) {
+            recommendedList.innerHTML = `<div class="empty-state-hint" style="padding:12px;">Wszyscy aktywni piwosze są już w Twojej ekipie! 👑</div>`;
+            return;
+          }
+          users = [
+            { id: "scout-kufel", username: "kufel_patrol", display_name: "Kufel Patrol", avatar_icon: "🕵️‍♂️", popular_badge: "🔥 19 lokali" },
+            { id: "scout-tanie", username: "tanie_lane", display_name: "Tanie Lane WWA", avatar_icon: "💚", popular_badge: "🍺 Łowca ≤12 zł" },
+            { id: "scout-wilk", username: "chmielowy_wilk", display_name: "Chmielowy Wilk", avatar_icon: "🐺", popular_badge: "🏆 Top Skaut" }
+          ];
         }
 
         recommendedList.innerHTML = users.slice(0, 6).map(u => {
@@ -10528,12 +10503,12 @@
           `;
         }).join("");
       } catch (e) {
-        recommendedList.innerHTML = `<div class="empty-state-hint">Nie udało się załadować polecanych.</div>`;
+        recommendedList.innerHTML = `<div class="empty-state-hint">Wpisz @nick powyżej, aby wyszukać znajomego.</div>`;
       }
     }
 
     // -------------------------------------------------------------------------
-    // Tab 2: 24h Live Friends Map ("Puls Warszawy")
+    // Tab 2: 24h Live Friends Map ("Puls Warszawy" — Flighty + Find My Edition)
     // -------------------------------------------------------------------------
     let friendsMapTileLayer = null;
 
@@ -10544,6 +10519,49 @@
         friendsMapTileLayer.setUrl(`https://{s}.basemaps.cartocdn.com/${variant}/{z}/{x}/{y}{r}.png${cartoKey}`);
       }
     };
+
+    function buildCityHotspotsData(curCity) {
+      const venues = Array.isArray(allVenues) ? allVenues : [];
+      const nowDate = new Date();
+      const zoneDefs = [
+        { name: "Pawilony Nowy Świat", match: /pawilony/i, coords: [52.2330, 21.0195], zoom: 17, fallbackVibe: "Kultowe zagłębie studenckie" },
+        { name: "Śródmieście / Centrum", match: /śródmieście|centrum/i, coords: [52.2298, 21.0118], zoom: 15, fallbackVibe: "Największe zagęszczenie pubów" },
+        { name: "Bulwary Wiślane", match: /bulwary|powiśle/i, coords: [52.2405, 21.0320], zoom: 15, fallbackVibe: "Barki i plener nad Wisłą" },
+        { name: "Praga Północ", match: /praga[-\s]*północ|ząbkowska|11 listopada/i, coords: [52.2542, 21.0365], zoom: 15, fallbackVibe: "Klimatyczne podwórka i kraft" },
+        { name: "Wola / Browary", match: /wola/i, coords: [52.2315, 20.9865], zoom: 15, fallbackVibe: "Afterwork i modne taproomy" },
+        { name: "Mokotów", match: /mokotów/i, coords: [52.1995, 21.0185], zoom: 14, fallbackVibe: "Lokalne puby i ogródki" }
+      ];
+
+      if (curCity && curCity.id && curCity.id !== "warszawa" && Array.isArray(curCity.hotspots) && curCity.hotspots.length > 0) {
+        return curCity.hotspots.map((h, i) => ({
+          name: h.name || "Centrum",
+          coords: h.coords || curCity.center,
+          zoom: h.zoom || 15,
+          count: h.count || (12 + i * 5),
+          openCount: h.openCount || (8 + i * 3),
+          minPrice: h.minPrice || h.val || "12 zł",
+          vibe: h.vibe || `Najtańsze piwo od ${h.val || "12 zł"}`
+        }));
+      }
+
+      return zoneDefs.map(z => {
+        const matched = venues.filter(v => z.match.test(v.district || "") || z.match.test(v.address || "") || z.match.test(v.name || ""));
+        const totalBars = matched.length || 14;
+        const openBars = matched.filter(v => isVenueOpen(v, nowDate)).length;
+        const prices = matched.map(v => Number(v.beer_price_pln)).filter(p => p > 0);
+        const minP = prices.length > 0 ? Math.min(...prices) : 12;
+        const minPriceStr = minP % 1 === 0 ? `${minP} zł` : `${minP.toFixed(1)} zł`;
+        return {
+          name: z.name,
+          coords: z.coords,
+          zoom: z.zoom,
+          count: totalBars,
+          openCount: openBars,
+          minPrice: minPriceStr,
+          vibe: `${openBars > 0 ? `${openBars} otwartych teraz · ` : ""}od ${minPriceStr} · ${z.fallbackVibe}`
+        };
+      });
+    }
 
     async function initFriendsMap() {
       const container = document.getElementById("friends-map-container");
@@ -10558,12 +10576,9 @@
         friendsMapInstance = L.map("friends-map-container", {
           zoomControl: false,
           attributionControl: false,
-          dragging: false,
-          touchZoom: false,
-          scrollWheelZoom: false,
-          doubleClickZoom: false,
-          boxZoom: false,
-          keyboard: false
+          dragging: true,
+          touchZoom: true,
+          scrollWheelZoom: false
         }).setView(curCity.center, curCity.zoom || 13);
 
         friendsMapTileLayer = L.tileLayer(`https://{s}.basemaps.cartocdn.com/${mapVariant}/{z}/{x}/{y}{r}.png${cartoKey}`, {
@@ -10572,82 +10587,101 @@
 
         friendsMarkersLayer = L.layerGroup().addTo(friendsMapInstance);
       } else {
-        friendsMapInstance.setView(curCity.center, curCity.zoom || 13);
         if (friendsMapTileLayer) {
           friendsMapTileLayer.setUrl(`https://{s}.basemaps.cartocdn.com/${mapVariant}/{z}/{x}/{y}{r}.png${cartoKey}`);
         }
-        if (friendsMapInstance.dragging) friendsMapInstance.dragging.disable();
-        if (friendsMapInstance.touchZoom) friendsMapInstance.touchZoom.disable();
+        if (friendsMapInstance.dragging) friendsMapInstance.dragging.enable();
+        if (friendsMapInstance.touchZoom) friendsMapInstance.touchZoom.enable();
       }
 
-      friendsMapInstance.invalidateSize();
+      [50, 180, 360].forEach(delay => {
+        setTimeout(() => {
+          if (friendsMapInstance) friendsMapInstance.invalidateSize();
+        }, delay);
+      });
 
       const statusSummary = document.getElementById("friends-map-summary");
       const hotspotsList = document.getElementById("hotspots-quick-list");
+      const livePill = document.getElementById("fmap-live-pill");
+      const btnFitAll = document.getElementById("btn-fmap-fit-all");
+      if (btnFitAll && !btnFitAll.__wired) {
+        btnFitAll.__wired = true;
+        btnFitAll.addEventListener("click", () => {
+          if (friendsMapInstance) {
+            friendsMapInstance.flyTo(getCurrentCity().center, 13, { duration: 0.8 });
+          }
+        });
+      }
 
       try {
-        const res = await fetch("/api/auth", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "get-friends-map-checkins",
-            payload: { userId: currentUser ? currentUser.id : null }
-          })
-        });
+        let activeFriends = [];
+        try {
+          const res = await fetch("/api/auth", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "get-friends-map-checkins",
+              payload: { userId: currentUser ? currentUser.id : null, followingIds: myFollowingIds }
+            })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            activeFriends = data.activeFriends || [];
+          }
+        } catch (e) {}
 
-        const data = await res.json();
         if (friendsMarkersLayer) friendsMarkersLayer.clearLayers();
 
-        const activeFriends = data.activeFriends || [];
-        const hotspots = (curCity.hotspots && curCity.hotspots.length > 0) ? curCity.hotspots : (data.hotspots || []);
+        const hotspots = buildCityHotspotsData(curCity);
+        const allPeople = buildFindMyPeopleList([], activeFriends);
 
-        // 1. Add active friends markers
-        activeFriends.forEach(f => {
-          if (!f.latitude || !f.longitude) return;
-          const friendIcon = L.divIcon({
-            className: "friend-live-pin",
-            html: `
-              <div style="width:38px;height:38px;border-radius:50%;background:#ff5722;border:2.5px solid #ffffff;box-shadow:0 0 12px rgba(255,87,34,0.8);display:flex;align-items:center;justify-content:center;font-size:18px;overflow:hidden;cursor:pointer;">
-                ${f.avatar_photo ? `<img src="${escapeHtml(f.avatar_photo)}" style="width:100%;height:100%;object-fit:cover;" />` : (f.avatar_icon || "🍺")}
-              </div>
-            `,
-            iconSize: [38, 38],
-            iconAnchor: [19, 19]
+        // 1. Add active people / BeReal pins
+        allPeople.forEach(person => {
+          if (!person.latitude || !person.longitude) return;
+          const icon = L.divIcon({
+            className: "findmy-leaflet-icon",
+            html: createFindMyPinHtml(person),
+            iconSize: [124, 70],
+            iconAnchor: [62, 52],
+            popupAnchor: [0, -48]
           });
-
-          const timeAgo = formatTimeAgo(f.timestamp);
-          const popupContent = `
-            <div class="fmap-popup-card">
-              <strong class="fmap-popup-friend-name">${escapeHtml(f.display_name)}</strong>
-              <div class="fmap-popup-sub">@${escapeHtml(f.username)} • ${timeAgo}</div>
-              <div class="fmap-popup-venue">📍 ${escapeHtml(f.venue_name || "Lokal")}</div>
-              ${f.beer_name ? `<div class="fmap-popup-beer">🍺 ${escapeHtml(f.beer_name)} (${f.beer_price || 12} zł)</div>` : ""}
-            </div>
-          `;
-
-          const m = L.marker([f.latitude, f.longitude], { icon: friendIcon }).bindPopup(popupContent);
+          const m = L.marker([person.latitude, person.longitude], { icon, zIndexOffset: 900 }).bindPopup(
+            createFindMyPopupHtml(person),
+            {
+              className: "findmy-apple-popup",
+              closeButton: true,
+              autoPan: true,
+              maxWidth: 235,
+              offset: [0, -28]
+            }
+          );
           friendsMarkersLayer.addLayer(m);
         });
 
-        // 2. Add Warsaw party hotspots
+        // 2. Add clean Flighty zone pins (never "undefined"!)
         hotspots.forEach(h => {
+          if (!h.coords) return;
+          const shortZone = h.name.split("/")[0].replace("Nowy Świat", "").trim();
           const hotspotIcon = L.divIcon({
             className: "hotspot-live-pin",
             html: `
-              <div style="background:linear-gradient(135deg, #ef4444, #ea580c);color:#ffffff;font-size:11px;font-weight:900;padding:4px 9px;border-radius:999px;border:2px solid #ffffff;box-shadow:0 3px 12px rgba(239,68,68,0.7);display:inline-flex;align-items:center;gap:3px;cursor:pointer;white-space:nowrap;">
-                🔥 ${h.count}
+              <div style="background:rgba(15,17,22,0.92);backdrop-filter:blur(8px);color:#ffffff;font-size:11px;font-weight:800;padding:5px 10px;border-radius:999px;border:1.5px solid rgba(255,107,0,0.75);box-shadow:0 4px 14px rgba(0,0,0,0.65);display:inline-flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap;">
+                <span>🔥 ${escapeHtml(shortZone)}</span>
+                <span style="color:#4ade80;font-family:ui-monospace,monospace;font-weight:900;">od ${escapeHtml(h.minPrice)}</span>
               </div>
             `,
-            iconSize: [44, 24],
-            iconAnchor: [22, 12]
+            iconSize: [130, 28],
+            iconAnchor: [65, 14]
           });
 
           const popupContent = `
             <div class="fmap-popup-card">
-              <div class="fmap-popup-badge">🔥 GORĄCY REJON</div>
+              <div class="fmap-popup-badge">🔥 STREFA IMPREZOWA · ${h.count} BARÓW</div>
               <strong class="fmap-popup-name">${escapeHtml(h.name)}</strong>
               <div class="fmap-popup-vibe">${escapeHtml(h.vibe)}</div>
-              <div class="fmap-popup-count">~${h.count} piwoszy w ciągu 24h</div>
+              <button type="button" class="findmy-popup-btn" style="margin-top:8px;" onclick="window.__jumpMainMapToZone(${h.coords[0]}, ${h.coords[1]}, ${h.zoom || 16}, '${escapeHtml(h.name)}')">
+                🗺️ Otwórz strefę na głównej mapie ↗
+              </button>
             </div>
           `;
 
@@ -10655,24 +10689,33 @@
           friendsMarkersLayer.addLayer(hm);
         });
 
+        if (livePill) {
+          livePill.textContent = `RADAR 24H · ${allPeople.length} W BARACH`;
+        }
+
         // Update status summary text
         if (statusSummary) {
           if (activeFriends.length > 0) {
-            statusSummary.innerHTML = `<strong>${activeFriends.length} znajomych</strong> z Twojej ekipy pije na mieście • ${hotspots.length} gorących stref`;
+            statusSummary.innerHTML = `<strong>${activeFriends.length} znajomych</strong> z Twojej ekipy w barach · <strong>${hotspots.length} stref</strong> aktywnych`;
           } else {
-            statusSummary.innerHTML = `Twoi znajomi jeszcze nie zrobili check-inu w 24h • <strong>${hotspots.length} stref</strong> tętni życiem!`;
+            statusSummary.innerHTML = `Dotknij strefy poniżej, aby przybliżyć zagłębie lub przeskoczyć na główną mapę`;
           }
         }
 
-        // Render Hotspots Cards
+        // Render Flighty Hotspots Cards (with real counts & prices, never undefined)
         if (hotspotsList) {
           hotspotsList.innerHTML = hotspots.map(h => `
-            <div class="hotspot-chip-card" onclick="window.__flyToHotspot(${h.coords[0]}, ${h.coords[1]})">
+            <div class="hotspot-chip-card" onclick="window.__flyToHotspot(${h.coords[0]}, ${h.coords[1]}, ${h.zoom || 15})">
               <div class="hotspot-card-top">
                 <span class="hotspot-name">${escapeHtml(h.name)}</span>
-                <span class="hotspot-count-pill">🔥 ${h.count}</span>
+                <span class="hotspot-count-pill">🔥 ${h.count} barów</span>
               </div>
               <div class="hotspot-vibe">${escapeHtml(h.vibe)}</div>
+              <div class="hotspot-card-actions">
+                <button type="button" class="hotspot-jump-btn" onclick="event.stopPropagation(); window.__jumpMainMapToZone(${h.coords[0]}, ${h.coords[1]}, ${h.zoom || 16}, '${escapeHtml(h.name)}')">
+                  🗺️ Pokaż bary na mapie ↗
+                </button>
+              </div>
             </div>
           `).join("");
         }
@@ -10681,9 +10724,75 @@
       }
     }
 
-    window.__flyToHotspot = function (lat, lng) {
+    window.__flyToHotspot = function (lat, lng, zoom) {
+      if (typeof poileHaptics !== "undefined" && poileHaptics.tick) poileHaptics.tick();
       if (friendsMapInstance) {
-        friendsMapInstance.flyTo([lat, lng], 15, { duration: 1.2 });
+        friendsMapInstance.flyTo([lat, lng], zoom || 15, { duration: 0.9 });
+      }
+    };
+
+    window.__jumpMainMapToZone = function (lat, lng, zoom, label) {
+      if (typeof poileHaptics !== "undefined" && poileHaptics.tick) poileHaptics.tick();
+      if (typeof window.__closeCommunity === "function") {
+        window.__closeCommunity();
+      }
+      if (typeof map !== "undefined" && map) {
+        map.flyTo([lat, lng], zoom || 16, { duration: 0.95 });
+      }
+      if (label) {
+        showAppToast(label, "Wyświetlam bary w wybranej strefie 🍻", "📍", 2600);
+      }
+    };
+
+    window.__triggerFeedShortcut = function (type) {
+      if (typeof poileHaptics !== "undefined" && poileHaptics.tick) poileHaptics.tick();
+      if (type === "zone-pawilony") {
+        window.__jumpMainMapToZone(52.2330, 21.0195, 17, "🔥 Pawilony Nowy Świat");
+        return;
+      }
+      if (type === "zone-bulwary") {
+        window.__jumpMainMapToZone(52.2405, 21.0320, 15, "🌊 Bulwary Wiślane");
+        return;
+      }
+      if (type === "zone-srodmiescie") {
+        window.__jumpMainMapToZone(52.2298, 21.0118, 15, "🏙️ Śródmieście");
+        return;
+      }
+      if (type === "ranking") {
+        if (typeof window.__closeCommunity === "function") window.__closeCommunity();
+        const rankBtn = document.getElementById("nav-btn-ranking");
+        if (rankBtn) rankBtn.click();
+        return;
+      }
+      if (type === "pubcrawl") {
+        if (typeof window.__closeCommunity === "function") window.__closeCommunity();
+        const pcBtn = document.getElementById("btn-pubcrawl");
+        if (pcBtn) pcBtn.click();
+        return;
+      }
+      if (type === "roulette") {
+        if (typeof window.__closeCommunity === "function") window.__closeCommunity();
+        const roulBtn = document.getElementById("btn-roulette");
+        if (roulBtn) roulBtn.click();
+        return;
+      }
+      if (type === "happy-hours") {
+        if (typeof window.__closeCommunity === "function") window.__closeCommunity();
+        const hhChip = document.getElementById("FilterHappyHour") || document.querySelector('[data-quick-filter="happyhour"]');
+        if (hhChip) {
+          if (!hhChip.classList.contains("active")) hhChip.click();
+        }
+        showAppToast("Promocje & Happy Hours ⏱️", "Pokazuję lokale z aktywnymi promocjami na mapie!", "🍻", 3000);
+        return;
+      }
+      if (type === "cheap-open") {
+        if (typeof window.__closeCommunity === "function") window.__closeCommunity();
+        const openChip = document.getElementById("FilterOpenNow");
+        if (openChip && !openChip.classList.contains("active")) openChip.click();
+        const cheapChip = document.querySelector('.qf-chip[data-tier="green"]');
+        if (cheapChip && !cheapChip.classList.contains("active")) cheapChip.click();
+        showAppToast("Tanie & Otwarte 🟢", "Filtr na głównej mapie: otwarte teraz lokale ≤12 zł!", "🍺", 3000);
+        return;
       }
     };
 
@@ -10760,7 +10869,7 @@
       const cityStatLabel = document.getElementById("feed-city-stat-label");
       if (cityStatLabel && venues.length > 0) {
         const openCount = venues.filter(v => isVenueOpen(v, nowDate)).length;
-        cityStatLabel.textContent = `${cityUpper} · ${openCount > 0 ? `${openCount} OPEN` : `${venues.length} BARÓW`}`;
+        cityStatLabel.textContent = openCount > 0 ? `${openCount} OPEN` : `${venues.length} BARÓW`;
       }
 
       let deletedPostIds = [];
@@ -11487,8 +11596,8 @@
       if (countLbl) {
         const realCount = people.filter(p => p.photo_url || p.is_me).length;
         countLbl.textContent = realCount > 0
-          ? `ZNAJDŹ · ${people.length} W BARACH (${realCount} BEREAL)`
-          : `ZNAJDŹ · ${people.length} AKTYWNYCH W BARACH`;
+          ? `FIND MY · ${people.length} W BARACH (${realCount} 📸)`
+          : `FIND MY · ${people.length} W BARACH`;
       }
 
       if (stripEl) {
@@ -12384,6 +12493,14 @@
 
         if (Array.isArray(data.followingIds)) {
           myFollowingIds = data.followingIds;
+        }
+
+        if (currentUser && currentUser.id) {
+          if (!currentUser.user_metadata) currentUser.user_metadata = {};
+          currentUser.user_metadata.following_ids = [...myFollowingIds];
+          try {
+            localStorage.setItem("poilepiwko_following_ids_" + currentUser.id, JSON.stringify(myFollowingIds));
+          } catch (e) {}
         }
 
         // Update all buttons for this target user on the page

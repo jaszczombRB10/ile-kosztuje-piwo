@@ -8650,6 +8650,7 @@ header,
   align-items: center;
   gap: 6px;
   white-space: nowrap;
+  flex-shrink: 0;
   transition: all 0.15s ease;
   user-select: none;
 }
@@ -23170,32 +23171,33 @@ body.theme-light .telemetry-lbl {
 .findmy-map-viewport {
   position: relative;
   width: 100%;
-  height: 340px;
+  height: 265px;
   background: #08080c;
 }
 
-#findmy-feed-map {
+#findmy-feed-map,
+#friends-map-container {
   width: 100% !important;
   height: 100% !important;
 }
 
 @media (min-width: 640px) {
   .findmy-map-viewport {
-    height: 390px;
+    height: 360px;
   }
 }
 
 /* Floating Glass HUD Overlays on Find My Map */
 .findmy-map-hud-top {
   position: absolute;
-  top: 10px;
-  left: 10px;
-  right: 10px;
+  top: 9px;
+  left: 9px;
+  right: 9px;
   z-index: 500;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 6px;
   pointer-events: none;
 }
 
@@ -23203,20 +23205,23 @@ body.theme-light .telemetry-lbl {
   pointer-events: auto;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
+  gap: 5px;
+  padding: 4px 9px;
   border-radius: 999px;
-  background: rgba(12, 12, 18, 0.84);
+  background: rgba(12, 12, 18, 0.86);
   backdrop-filter: blur(16px) saturate(180%);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.14);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55);
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
-  font-size: 0.62rem;
+  font-size: 0.58rem;
   font-weight: 800;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   color: #f8fafc;
   white-space: nowrap;
+  max-width: 68%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .findmy-hud-pill.city-stat-pill {
@@ -23784,6 +23789,233 @@ body.theme-light .telemetry-lbl {
   transform: scale(0.97);
   background: rgba(10, 132, 255, 0.35);
 }
+
+/* ==========================================================================
+   3.10 FLIGHTY NATIVE APP SHORTCUTS GRID & QUICK JUMP PILLS IN LIVE FEED
+   ========================================================================== */
+.flighty-shortcuts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+}
+
+.flighty-shortcut-tile {
+  -webkit-appearance: none;
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 11px;
+  border-radius: 15px;
+  background: #13131b;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  color: #ffffff;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  min-width: 0;
+}
+
+.flighty-shortcut-tile:active {
+  transform: scale(0.96);
+}
+
+.flighty-shortcut-tile.primary-bereal {
+  background: linear-gradient(135deg, rgba(48, 209, 88, 0.18), rgba(16, 185, 129, 0.08));
+  border-color: rgba(48, 209, 88, 0.42);
+}
+
+.fst-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+  flex-shrink: 0;
+}
+
+.flighty-shortcut-tile.primary-bereal .fst-icon {
+  background: rgba(48, 209, 88, 0.22);
+  border-color: rgba(48, 209, 88, 0.45);
+}
+
+.fst-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.fst-text strong {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.01em;
+}
+
+.fst-text span {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: rgba(235, 235, 245, 0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.flighty-shortcut-tile.primary-bereal .fst-text span {
+  color: #86efac;
+}
+
+/* Quick Jump Pills Strip */
+.flighty-quick-pills-strip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  overflow-x: auto;
+  padding: 2px 0;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.flighty-quick-pills-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.fqp-pill {
+  -webkit-appearance: none;
+  appearance: none;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #14141d;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+  font-size: 0.73rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease;
+}
+
+.fqp-pill:active {
+  transform: scale(0.95);
+  background: rgba(255, 107, 0, 0.18);
+  border-color: rgba(255, 107, 0, 0.5);
+}
+
+/* Section Label Row + Upgraded Hotspots Grid in Mapa 24h */
+.flighty-section-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 12px 2px 8px 2px;
+}
+
+.fsl-eyebrow {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #f97316;
+}
+
+.fsl-sub {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: rgba(235, 235, 245, 0.5);
+}
+
+.hotspots-quick-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+.hotspot-chip-card {
+  background: #12121a !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 15px !important;
+  padding: 11px 12px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  cursor: pointer;
+  transition: transform 0.14s ease, border-color 0.14s ease;
+}
+
+.hotspot-chip-card:active {
+  transform: scale(0.97);
+}
+
+.hotspot-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.hotspot-name {
+  font-size: 0.8rem !important;
+  font-weight: 800 !important;
+  color: #ffffff !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hotspot-count-pill {
+  flex-shrink: 0;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.6rem !important;
+  font-weight: 800 !important;
+  padding: 2px 7px !important;
+  border-radius: 999px !important;
+  background: rgba(249, 115, 22, 0.18) !important;
+  border: 1px solid rgba(249, 115, 22, 0.38) !important;
+  color: #fb923c !important;
+}
+
+.hotspot-vibe {
+  font-size: 0.68rem !important;
+  color: rgba(235, 235, 245, 0.65) !important;
+  line-height: 1.3 !important;
+}
+
+.hotspot-card-actions {
+  margin-top: 2px;
+  display: flex;
+}
+
+.hotspot-jump-btn {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  padding: 5px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #60a5fa;
+  font-size: 0.65rem;
+  font-weight: 800;
+  cursor: pointer;
+  text-align: center;
+}
+
 
 
 

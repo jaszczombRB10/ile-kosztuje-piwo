@@ -80,7 +80,7 @@
   <script defer src="https://cloud.umami.is/script.js" data-website-id="auto" id="umami-analytics-script"></script>
 
   <!-- Custom Styles -->
-  <link rel="stylesheet" href="styles.css?v=149">
+  <link rel="stylesheet" href="styles.css?v=150">
 </head>
 <body>
 
@@ -2734,98 +2734,123 @@
           </div>
         </div>
 
-      <!-- Tab 2: Mapa 24h (Live check-iny znajomych + Puls Miasta) -->
+      <!-- Tab 2: Mapa 24h (Interaktywna mapa stref i meldunków ekipy w stylu Find My + Flighty) -->
       <div class="comm-tab-pane" id="pane-comm-map" style="display:none;">
-        <div class="friends-map-header-bar">
-          <div>
-            <div class="friends-map-live-tag"><span class="pulsing-dot"></span> LIVE 24H</div>
-            <p class="friends-map-sub">Sprawdź gdzie teraz siedzą znajomi i które rejony tętnią życiem</p>
+        <div class="findmy-feed-radar-card" style="margin-bottom: 12px;">
+          <div class="findmy-map-viewport" style="height: 310px;">
+            <div id="friends-map-container" style="width: 100%; height: 100%;"></div>
+            <div class="findmy-map-hud-top">
+              <div class="findmy-hud-pill live-beacon-pill">
+                <span class="findmy-green-beacon"></span>
+                <span class="findmy-hud-code" id="fmap-status-title">RADAR STREF · 24H</span>
+              </div>
+              <button type="button" class="findmy-map-ctrl-btn checkin-accent" id="btn-open-checkin-direct" style="padding: 4px 10px; font-size: 0.64rem;">
+                <span>📸</span>
+                <span>+ Meldunek</span>
+              </button>
+            </div>
+            <div class="findmy-map-hud-bottom">
+              <div class="findmy-hud-pill" id="friends-map-summary" style="max-width: 100%; overflow: hidden; text-overflow: ellipsis;">
+                Aktywne zagłębia barowe w mieście
+              </div>
+            </div>
           </div>
-          <button type="button" class="btn-primary btn-sm" id="btn-open-checkin-direct">
-            📍 Zamelduj się
-          </button>
         </div>
 
-        <!-- Leaflet Map Box -->
-        <div class="friends-map-wrapper">
-          <div id="friends-map-container" style="width: 100%; height: 320px; border-radius: 14px; overflow: hidden;"></div>
-          <div class="friends-map-overlay-card" id="friends-map-status-card">
-            <div class="fmap-status-title" id="fmap-status-title">🍻 Puls Miasta</div>
-            <div class="fmap-status-desc" id="friends-map-summary">Ładowanie aktywności...</div>
-          </div>
-        </div>
-
-        <!-- Quick Hotspots Grid -->
-        <div class="comm-section-header" style="margin-top: 14px;">
-          <h3>🔥 Główne zagłębia imprezowe</h3>
+        <!-- Quick Hotspots Grid (Flighty Zone Cards with real bar counts & 1-tap map jump) -->
+        <div class="flighty-section-label-row">
+          <span class="flighty-sec-title">🔥 ZAGŁĘBIA BAROWE · SKRÓTY</span>
+          <span class="flighty-sec-sub">Dotknij, aby otworzyć rejon</span>
         </div>
         <div class="hotspots-quick-grid" id="hotspots-quick-list">
-          <!-- Injected via JS -->
+          <!-- Injected via JS with real venue counts -->
         </div>
       </div>
 
-      <!-- Tab 3: Live Feed 2.0 (Apple Find My Hero Map + Flighty UI/UX Stream) -->
+      <!-- Tab 3: Live Feed 2.0 (Native App Cockpit: Apple Find My Radar + Quick App Shortcuts + Flighty Live Stream) -->
       <div class="comm-tab-pane" id="pane-comm-feed" style="display:none;">
         <div class="flighty-feed-console">
-          <!-- Apple Find My (Znajdź) Hero Live Map inside Live Feed -->
+          <!-- 1. Apple Find My (Znajdź) Live Map + People Strip -->
           <div class="findmy-feed-radar-card" id="findmy-feed-map-box">
             <div class="findmy-map-viewport">
               <div id="findmy-feed-map"></div>
 
-              <!-- Floating Top HUD Bar over Map (Apple Find My + Flighty style) -->
+              <!-- Compact Non-Overflowing Top HUD Bar -->
               <div class="findmy-map-hud-top">
                 <div class="findmy-hud-pill live-beacon-pill">
                   <span class="findmy-green-beacon"></span>
-                  <span class="findmy-hud-code" id="findmy-active-count-lbl">ZNAJDŹ W BARACH · LIVE</span>
+                  <span class="findmy-hud-code" id="findmy-active-count-lbl">FIND MY · LIVE</span>
                 </div>
-                <span class="findmy-hud-pill city-stat-pill" id="feed-city-stat-label">WARSZAWA · OPEN</span>
+                <span class="findmy-hud-pill city-stat-pill" id="feed-city-stat-label">OPEN</span>
               </div>
 
-              <!-- Floating Bottom Map Controls (Recenter & Quick Check-in) -->
+              <!-- Floating Bottom Map Controls -->
               <div class="findmy-map-hud-bottom">
                 <button type="button" class="findmy-map-ctrl-btn" id="btn-findmy-fit-all" title="Pokaż wszystkich na mapie">
                   <span>🎯</span>
                   <span>Całe miasto</span>
                 </button>
-                <button type="button" class="findmy-map-ctrl-btn checkin-accent" onclick="window.__openBerealCamera()">
+                <button type="button" class="findmy-map-ctrl-btn checkin-accent" id="btn-open-bereal-camera" onclick="window.__openBerealCamera()">
                   <span>📸</span>
-                  <span>+ Zamelduj się</span>
+                  <span>+ BeReal</span>
                 </button>
               </div>
             </div>
 
-            <!-- Apple Find My "Osoby w barach" Interactive Sheet Strip -->
+            <!-- Apple Find My "Osoby w barach" Interactive Dock -->
             <div class="findmy-sheet-dock">
-              <div class="findmy-sheet-dock-head">
-                <div class="findmy-dock-title-wrap">
-                  <span class="findmy-dock-eyebrow">OSOBY & MELDUNKI 24H</span>
-                </div>
-                <span class="findmy-dock-hint">Dotknij osoby, aby namierzyć ↗</span>
-              </div>
               <div class="findmy-people-strip" id="findmy-people-strip">
                 <!-- Active Find My check-in cards injected via JS -->
               </div>
             </div>
           </div>
 
-          <!-- Flighty Action & Filter Console -->
-          <div class="flighty-feed-action-strip">
-            <button type="button" class="flighty-feed-action-btn primary btn-bereal-camera-trigger" id="btn-open-bereal-camera">
-              <div class="ff-btn-left">
-                <span class="ff-btn-icon">📸</span>
-                <div class="ff-btn-copy">
-                  <span class="ff-btn-title">Zrób Check-in BeReal w barze</span>
-                  <span class="ff-btn-sub">Pokaż kufel i oznacz się na mapie Find My 24h</span>
-                </div>
+          <!-- 2. Native App Quick Shortcuts Grid (Flighty / iOS Control Center Style) -->
+          <div class="flighty-shortcuts-grid">
+            <button type="button" class="flighty-shortcut-tile accent-green" onclick="window.__openBerealCamera()">
+              <span class="fst-icon">📸</span>
+              <div class="fst-copy">
+                <strong>Check-in</strong>
+                <span>Dodaj BeReal</span>
               </div>
-              <span class="ff-btn-live-tag">● LIVE</span>
+            </button>
+            <button type="button" class="flighty-shortcut-tile accent-emerald" onclick="window.__triggerFeedShortcut('cheap-open')">
+              <span class="fst-icon">🟢</span>
+              <div class="fst-copy">
+                <strong>Tanie ≤12 zł</strong>
+                <span>Otwarte teraz</span>
+              </div>
+            </button>
+            <button type="button" class="flighty-shortcut-tile accent-amber" onclick="window.__triggerFeedShortcut('happy-hours')">
+              <span class="fst-icon">⏱️</span>
+              <div class="fst-copy">
+                <strong>Promocje</strong>
+                <span>Happy Hours</span>
+              </div>
+            </button>
+            <button type="button" class="flighty-shortcut-tile accent-blue" onclick="window.__triggerFeedShortcut('roulette')">
+              <span class="fst-icon">🎰</span>
+              <div class="fst-copy">
+                <strong>Losuj bar</strong>
+                <span>Ruletka</span>
+              </div>
             </button>
           </div>
 
+          <!-- Quick Jump Pills Strip (One-tap shortcuts to key zones & tools) -->
+          <div class="flighty-quick-pills-strip">
+            <button type="button" class="fqp-pill" onclick="window.__triggerFeedShortcut('zone-pawilony')">🔥 Pawilony</button>
+            <button type="button" class="fqp-pill" onclick="window.__triggerFeedShortcut('zone-bulwary')">🌊 Bulwary</button>
+            <button type="button" class="fqp-pill" onclick="window.__triggerFeedShortcut('zone-srodmiescie')">🏙️ Centrum</button>
+            <button type="button" class="fqp-pill" onclick="window.__triggerFeedShortcut('pubcrawl')">🗺️ Pub Crawl</button>
+            <button type="button" class="fqp-pill" onclick="window.__triggerFeedShortcut('ranking')">🏆 Top 10</button>
+          </div>
+
+          <!-- 3. Segmented Filter Bar -->
           <div class="live-feed-filter-pills" id="live-feed-filters" role="tablist" aria-label="Filtruj Live Feed">
             <button type="button" class="feed-filter-pill active" data-feed-filter="all">Wszystkie</button>
-            <button type="button" class="feed-filter-pill" data-feed-filter="photos">📸 Zdjęcia BeReal</button>
-            <button type="button" class="feed-filter-pill" data-feed-filter="deals">🟢 Tanie ≤12 zł</button>
+            <button type="button" class="feed-filter-pill" data-feed-filter="photos">📸 BeReal</button>
+            <button type="button" class="feed-filter-pill" data-feed-filter="deals">🟢 ≤12 zł</button>
           </div>
         </div>
 
@@ -3648,6 +3673,6 @@
   <script src="moderation.js"></script>
 
   <!-- Main Application Logic -->
-  <script src="app.js?v=149"></script>
+  <script src="app.js?v=150"></script>
 </body>
 </html>
