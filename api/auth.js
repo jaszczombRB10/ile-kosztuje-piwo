@@ -666,7 +666,7 @@ module.exports = async (req, res) => {
               user_number: getUserNumber(u, allUsers),
               bio: m.bio || "Warszawski poszukiwacz dobrego i taniego piwa 🍻",
               visited_count: Array.isArray(m.visited_venues) ? m.visited_venues.length : 0,
-              popular_badge: "🔥 Aktywny piwosz"
+              popular_badge: null
             };
           });
 

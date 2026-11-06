@@ -10144,11 +10144,10 @@
       });
     }
 
-    // Filter Chips setup ("Wszyscy", "🟢 Na piwie", "🏆 Ranking")
+    // Filter Chips setup ("Wszyscy", "🟢 Na piwie")
     const chipsList = [
       { el: chipFriendsAll, filter: "all" },
-      { el: chipFriendsActive, filter: "active" },
-      { el: chipFriendsTop, filter: "top" }
+      { el: chipFriendsActive, filter: "active" }
     ];
 
     chipsList.forEach(({ el, filter }) => {
@@ -10161,7 +10160,7 @@
       });
     });
 
-    // 1. Render Stories Rail ("Na mieście teraz 🍻")
+    // 1. Render Ekipa Check-in Action Bar (Single Prominent BeReal Card, No Horizontal Swiping)
     function renderStoriesRail() {
       if (!storiesRail) return;
 
@@ -10180,60 +10179,46 @@
       const cutoff24h = 24 * 60 * 60 * 1000;
       const isMyCheckinActive = myLastCheckin && !myLastCheckin.ghost_mode && (now - (myLastCheckin.timestamp || 0) <= cutoff24h);
 
-      const myAvatarHtml = myMeta.avatar_photo
-        ? `<img src="${escapeHtml(myMeta.avatar_photo)}" alt="Ty" />`
-        : escapeHtml(myMeta.avatar_icon || "🍺");
-
-      let html = `
-        <div class="ig-story-item" id="ig-my-story-btn">
-          <div class="ig-story-ring-wrap">
-            <div class="ig-story-ring ${isMyCheckinActive ? "active-story" : ""}">
-              <div class="ig-story-avatar">${myAvatarHtml}</div>
-            </div>
-            ${isMyCheckinActive ? `<div class="ig-story-pin-badge" title="Jesteś zameldowany!">📍</div>` : `<div class="ig-story-plus" title="Dodaj meldunek">+</div>`}
-          </div>
-          <span class="ig-story-label">Twój meldunek</span>
-          <span class="ig-story-venue">${isMyCheckinActive ? escapeHtml(myLastCheckin.venue_name || "W lokalu") : "Dodaj +"}</span>
-        </div>
-      `;
-
-      if (cachedActiveCheckins.length > 0) {
-        cachedActiveCheckins.forEach(f => {
-          const friendAvatarHtml = f.avatar_photo
-            ? `<img src="${escapeHtml(f.avatar_photo)}" alt="Avatar" />`
-            : escapeHtml(f.avatar_icon || "🍺");
-          const shortName = f.display_name || f.username || "Znajomy";
-          const shortVenue = f.venue_name ? f.venue_name.replace(/^(Pub|Bar|Klub|Restauracja)\s+/i, "") : "W lokalu";
-
-          html += `
-            <div class="ig-story-item" onclick="window.__openUserProfile('${escapeHtml(f.username)}')">
-              <div class="ig-story-ring-wrap">
-                <div class="ig-story-ring active-story">
-                  <div class="ig-story-avatar">${friendAvatarHtml}</div>
+      if (isMyCheckinActive) {
+        const vName = myLastCheckin.venue_name || "barze";
+        const pVal = Number(myLastCheckin.beer_price) || 14;
+        const pStr = pVal % 1 === 0 ? `${pVal} zł` : `${pVal.toFixed(1)} zł`;
+        const timeAgo = formatTimeAgo(myLastCheckin.timestamp);
+        storiesRail.innerHTML = `
+          <div class="findmy-action-card checked-in" onclick="window.__openBerealCamera()">
+            <div class="fac-left">
+              <span class="fac-icon">📍</span>
+              <div class="fac-info">
+                <div class="fac-headline">
+                  <span>Twój meldunek: <strong>${escapeHtml(vName)}</strong></span>
+                  <span class="fac-price-badge">${escapeHtml(pStr)}</span>
                 </div>
-                <div class="ig-story-pin-badge">🍻</div>
+                <div class="fac-subtext">Widoczny dla ekipy na mapie (${escapeHtml(timeAgo)}) · Dotknij, by zaktualizować BeReal 📸</div>
               </div>
-              <span class="ig-story-label" title="${escapeHtml(shortName)}">${escapeHtml(shortName)}</span>
-              <span class="ig-story-venue" title="${escapeHtml(f.venue_name || "")}">📍 ${escapeHtml(shortVenue)}</span>
             </div>
-          `;
-        });
-      }
-
-      storiesRail.innerHTML = html;
-
-      const myStoryBtn = document.getElementById("ig-my-story-btn");
-      if (myStoryBtn) {
-        myStoryBtn.addEventListener("click", () => {
-          if (btnCheckinDirect) {
-            btnCheckinDirect.click();
-          } else if (typeof window.__openCheckinModal === "function") {
-            window.__openCheckinModal();
-          } else {
-            showAppToast("Meldunek", "Wybierz lokal na mapie, aby się zameldować! 🍺", "📍");
-            switchTab("map");
-          }
-        });
+            <button type="button" class="fac-btn-action" title="Zaktualizuj BeReal">
+              Zaktualizuj 📸
+            </button>
+          </div>
+        `;
+      } else {
+        storiesRail.innerHTML = `
+          <div class="findmy-action-card" onclick="window.__openBerealCamera()">
+            <div class="fac-left">
+              <span class="fac-icon">📸</span>
+              <div class="fac-info">
+                <div class="fac-headline">
+                  <span>Zrób BeReal w barze</span>
+                  <span class="fac-tag-live">CHECK-IN 24H</span>
+                </div>
+                <div class="fac-subtext">Pokaż ekipie, w jakim lokalu teraz pijesz piwo! 🍻</div>
+              </div>
+            </div>
+            <button type="button" class="fac-btn-action primary" title="Zrób BeReal w barze">
+              + Zrób BeReal
+            </button>
+          </div>
+        `;
       }
     }
 
@@ -10498,6 +10483,8 @@
             ? `<img src="${escapeHtml(u.avatar_photo)}" alt="Avatar" />`
             : escapeHtml(u.avatar_icon || "🍺");
           const isFollowing = myFollowingIds.includes(u.id);
+          const vCount = u.visited_count || (Array.isArray(u.visited_venues) ? u.visited_venues.length : 0);
+          const vLabel = vCount === 1 ? "1 lokal" : `${vCount} lokali`;
 
           return `
             <div class="recommended-user-card">
@@ -10506,8 +10493,9 @@
                 <div class="rec-user-info">
                   <div class="rec-user-name">${escapeHtml(u.display_name || u.username)}${u.user_number ? ` <span class="user-club-number-badge">${escapeHtml(u.user_number)}</span>` : ""}</div>
                   <div class="rec-user-meta">
-                    <span>@${escapeHtml(u.username)}</span>
-                    <span class="rec-user-badge">${escapeHtml(u.popular_badge || "🔥 Aktywny")}</span>
+                    <span class="rec-user-handle">@${escapeHtml(u.username)}</span>
+                    <span class="rec-user-dot">•</span>
+                    <span class="rec-user-bars-count">🎖️ ${vLabel}</span>
                   </div>
                 </div>
               </div>
@@ -10994,82 +10982,7 @@
         });
       });
 
-      // 2. Local user price confirmations from this device (instant gratification!)
-      try {
-        const localConfs = JSON.parse(localStorage.getItem("poilepiwko_price_confirmations") || "{}");
-        Object.keys(localConfs).forEach((vId, idx) => {
-          const ts = localConfs[vId];
-          if (nowMs - ts < 7 * 24 * 3600 * 1000) {
-            const v = venues.find(x => String(x.id) === String(vId));
-            if (v) {
-              const dAvg = distCounts[v.district] ? (distSums[v.district] / distCounts[v.district]) : 15.5;
-              const diffPct = Math.round(((dAvg - v.beer_price_pln) / dAvg) * 100);
-              const vDist = v.district || curCity.name;
-              items.push({
-                kind: "activity",
-                activity_type: "verified",
-                badge_label: "POTWIERDZONO CENĘ",
-                badge_class: "badge-verified",
-                id: `local-conf-${v.id}`,
-                author_name: (currentUser && currentUser.user_metadata && currentUser.user_metadata.username) || "Ty",
-                avatar_icon: "✅",
-                action_text: "potwierdził(a) cenę",
-                venue_id: v.id,
-                venue_name: v.name,
-                district: vDist,
-                latitude: v.latitude,
-                longitude: v.longitude,
-                beer_name: v.beer_brand || v.beer_name || "Lane 0.5L",
-                beer_price: v.beer_price_pln,
-                is_open: isVenueOpen(v, nowDate),
-                benchmark_text: diffPct > 4 ? `-${diffPct}% taniej niż średnia (${vDist})` : `Zgodne z cennikiem baru`,
-                cheers_count: 6 + (idx % 5),
-                created_at: new Date(ts).toISOString()
-              });
-            }
-          }
-        });
-      } catch (e) {}
-
-      // 3. Active city check-in / radar pulses from open bars so the feed complements the Find My pins above
-      const openVenues = venues.filter(v => isVenueOpen(v, nowDate) && typeof v.beer_price_pln === "number");
-      const feedSamplePool = (openVenues.length >= 4 ? openVenues : cheapVenues).slice(0, 12);
-      const liveActivitySeeds = [
-        { handle: "kufel_patrol", icon: "🕵️‍♂️", minsAgo: 9, badge: "MELDUNEK LIVE", bClass: "badge-deal" },
-        { handle: "tanie_lane", icon: "💚", minsAgo: 22, badge: "SPRAWDZONA CENA", bClass: "badge-verified" },
-        { handle: "chmielowy_wilk", icon: "🐺", minsAgo: 38, badge: "MELDUNEK W BARZE", bClass: "badge-deal" },
-        { handle: "nocny_marek", icon: "🦉", minsAgo: 51, badge: "AKTYWNY TERAZ", bClass: "badge-receipt" }
-      ];
-      liveActivitySeeds.forEach((sc, i) => {
-        const v = feedSamplePool[(i * 3) % Math.max(1, feedSamplePool.length)];
-        if (!v) return;
-        const postId = `live-radar-${curCity.id}-${v.id}`;
-        if (deletedPostIds.includes(postId)) return;
-        const vDist = v.district || curCity.name;
-        const dAvg = distCounts[vDist] ? (distSums[vDist] / distCounts[vDist]) : 16;
-        const diffPct = Math.round(((dAvg - v.beer_price_pln) / dAvg) * 100);
-        items.push({
-          kind: "activity",
-          activity_type: "checkin",
-          badge_label: sc.badge,
-          badge_class: sc.bClass,
-          id: postId,
-          author_name: sc.handle,
-          avatar_icon: sc.icon,
-          venue_id: v.id,
-          venue_name: v.name,
-          district: vDist,
-          latitude: v.latitude,
-          longitude: v.longitude,
-          beer_name: v.beer_brand || v.beer_name || "Jasne Pełne 0.5L",
-          beer_price: v.beer_price_pln,
-          is_open: isVenueOpen(v, nowDate),
-          benchmark_text: diffPct > 4 ? `-${diffPct}% taniej niż średnia (${vDist})` : `Świeży meldunek przy barze`,
-          cheers_count: 3 + ((i * 4) % 9),
-          created_at: new Date(nowMs - sc.minsAgo * 60 * 1000).toISOString()
-        });
-      });
-
+      // Live Feed strictly displays BeReal photo posts (clean & 100% focused)
       return items.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     }
 
@@ -11077,8 +10990,6 @@
       if (!feedGrid) return;
 
       const filtered = cachedCombinedFeedItems.filter(item => {
-        if (currentLiveFeedFilter === "photos") return item.kind === "photo";
-        if (currentLiveFeedFilter === "prices") return item.kind === "activity";
         if (currentLiveFeedFilter === "deals") return Number(item.beer_price) <= 12.5;
         return true;
       });
@@ -11087,8 +10998,9 @@
         feedGrid.innerHTML = `
           <div class="flighty-feed-empty-card">
             <div class="ff-empty-code">● BRAK MELDUNKÓW · 24H</div>
-            <div class="ff-empty-title">Brak relacji w wybranym filtrze z ostatnich 24h</div>
-            <p class="ff-empty-sub">Zrób zdjęcie kufla w barze (BeReal), aby pojawić się na mapie znajomych.</p>
+            <div class="ff-empty-title">Brak relacji BeReal w wybranym filtrze</div>
+            <p class="ff-empty-sub">Bądź pierwszym! Zrób zdjęcie kufla w barze, aby pojawić się na żywo na mapie.</p>
+            <button type="button" class="btn-primary" onclick="window.__openBerealCamera()" style="margin-top:14px; font-size:0.85rem; padding:9px 18px;">📸 Dodaj BeReal z baru</button>
           </div>
         `;
         return;
@@ -11642,42 +11554,52 @@
       }
 
       if (stripEl) {
-        const checkinChipHtml = `
-          <button type="button" class="findmy-person-chip checkin-cta" onclick="window.__openBerealCamera()">
-            <span class="fmp-avatar plus">📸</span>
-            <div class="fmp-meta">
-              <div class="fmp-top-line">
-                <strong>+ Zamelduj się</strong>
-                <span class="fmp-live-tag">24H</span>
+        const myCheckin = currentUser?.user_metadata?.last_checkin;
+        const now = Date.now();
+        const cutoff24h = 24 * 60 * 60 * 1000;
+        const isCheckedIn = myCheckin && !myCheckin.ghost_mode && (now - (myCheckin.timestamp || 0) <= cutoff24h);
+
+        if (isCheckedIn) {
+          const vName = myCheckin.venue_name || "barze";
+          const pVal = Number(myCheckin.beer_price) || 14;
+          const pStr = pVal % 1 === 0 ? `${pVal} zł` : `${pVal.toFixed(1)} zł`;
+          const timeAgo = formatTimeAgo(myCheckin.timestamp);
+          stripEl.innerHTML = `
+            <div class="findmy-action-card checked-in" onclick="window.__openBerealCamera()">
+              <div class="fac-left">
+                <span class="fac-icon">📍</span>
+                <div class="fac-info">
+                  <div class="fac-headline">
+                    <span>Zameldowano: <strong>${escapeHtml(vName)}</strong></span>
+                    <span class="fac-price-badge">${escapeHtml(pStr)}</span>
+                  </div>
+                  <div class="fac-subtext">Aktywny na mapie (${escapeHtml(timeAgo)}) · Dotknij, by zaktualizować BeReal 📸</div>
+                </div>
               </div>
-              <span>Dodaj BeReal z baru</span>
+              <button type="button" class="fac-btn-action" title="Zaktualizuj BeReal">
+                Zaktualizuj 📸
+              </button>
             </div>
-          </button>
-        `;
-        const peopleChipsHtml = people.map(p => {
-          const avHtml = p.avatar_photo
-            ? `<img src="${escapeHtml(p.avatar_photo)}" alt="${escapeHtml(p.username)}" />`
-            : `<span>${escapeHtml(p.avatar_icon || "🍺")}</span>`;
-          const timeStr = formatTimeAgo(p.timestamp);
-          const priceVal = Number(p.beer_price) || 14;
-          const priceStr = priceVal % 1 === 0 ? `${priceVal} zł` : `${priceVal.toFixed(1)} zł`;
-          return `
-            <button type="button" class="findmy-person-chip ${p.is_me ? 'is-me' : ''}" onclick="window.__focusFindMyPerson('${escapeHtml(p.key)}', this)">
-              <span class="fmp-avatar">${avHtml}</span>
-              <div class="fmp-meta">
-                <div class="fmp-top-line">
-                  <strong>${p.is_me ? 'Ty (@' + escapeHtml(p.username) + ')' : '@' + escapeHtml(p.username)}</strong>
-                  <em class="fmp-time">${escapeHtml(timeStr)}</em>
-                </div>
-                <div class="fmp-sub-line">
-                  <span>📍 ${escapeHtml(p.venue_name)}</span>
-                  <b class="fmp-price-pill">${escapeHtml(priceStr)}</b>
+          `;
+        } else {
+          stripEl.innerHTML = `
+            <div class="findmy-action-card" onclick="window.__openBerealCamera()">
+              <div class="fac-left">
+                <span class="fac-icon">📸</span>
+                <div class="fac-info">
+                  <div class="fac-headline">
+                    <span>Zrób BeReal w barze</span>
+                    <span class="fac-tag-live">24H NA MAPIE</span>
+                  </div>
+                  <div class="fac-subtext">Zrób fotkę kufla i zamelduj się w lokalu dla znajomych 🍻</div>
                 </div>
               </div>
-            </button>
+              <button type="button" class="fac-btn-action primary" title="Zrób BeReal w barze">
+                + Zamelduj się
+              </button>
+            </div>
           `;
-        }).join("");
-        stripEl.innerHTML = checkinChipHtml + peopleChipsHtml;
+        }
       }
 
       // Also sync active BeReal check-ins onto the main map!

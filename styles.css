@@ -8369,12 +8369,10 @@ header,
 }
 
 .ig-stories-scroll {
-  display: flex;
-  gap: 12px;
-  overflow-x: auto;
-  padding: 4px 2px 10px 2px;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+  display: block;
+  width: 100%;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 .ig-stories-scroll::-webkit-scrollbar {
@@ -9521,17 +9519,28 @@ header,
   color: #94a3b8;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.rec-user-handle {
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.rec-user-dot {
+  opacity: 0.45;
+  font-size: 0.65rem;
+}
+
+.rec-user-bars-count {
+  color: #f59e0b;
+  font-weight: 600;
+  font-size: 0.72rem;
 }
 
 .rec-user-badge {
-  font-size: 0.68rem;
-  background: rgba(249, 115, 22, 0.15);
-  color: #fb923c;
-  border: 1px solid rgba(249, 115, 22, 0.3);
-  padding: 1px 6px;
-  border-radius: 6px;
-  font-weight: 700;
+  display: none;
 }
 
 /* 4. Comm Invite Dock */
@@ -9826,12 +9835,11 @@ header,
 .bereal-sub-meta {
   display: flex;
   align-items: center;
-  gap: 5px;
+  flex-wrap: wrap;
+  gap: 3px 6px;
   font-size: 0.72rem;
   color: #94a3b8;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .bereal-venue-link {
@@ -9839,9 +9847,7 @@ header,
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 150px;
+  max-width: none;
   transition: color 0.15s ease;
 }
 
@@ -23812,19 +23818,20 @@ body.theme-light .telemetry-lbl {
   color: #86efac;
 }
 
-/* Apple Find My "Osoby w barach" Bottom Dock inside Map Card */
+/* Apple Find My Check-in Action Dock inside Map Card */
 .findmy-sheet-dock {
   background: #12121a;
   border-top: 1px solid rgba(255, 255, 255, 0.09);
   display: flex;
   flex-direction: column;
+  padding: 8px 10px;
 }
 
 .findmy-sheet-dock-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 7px 12px 2px 12px;
+  padding: 0 4px 6px 4px;
 }
 
 .findmy-dock-eyebrow {
@@ -23843,17 +23850,125 @@ body.theme-light .telemetry-lbl {
 }
 
 .findmy-people-strip {
-  display: flex;
-  align-items: stretch;
-  gap: 8px;
-  padding: 7px 11px 10px 11px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.findmy-people-strip::-webkit-scrollbar {
-  display: none;
+/* Prominent Check-in BeReal Card */
+.findmy-action-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: linear-gradient(135deg, rgba(255, 107, 0, 0.12), rgba(245, 158, 11, 0.06));
+  border: 1px solid rgba(249, 115, 22, 0.35);
+  border-radius: 14px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.findmy-action-card:active {
+  transform: scale(0.985);
+}
+
+.findmy-action-card.checked-in {
+  background: linear-gradient(135deg, rgba(48, 209, 88, 0.14), rgba(16, 185, 129, 0.06));
+  border-color: rgba(48, 209, 88, 0.38);
+}
+
+.fac-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.fac-icon {
+  font-size: 1.35rem;
+  flex-shrink: 0;
+}
+
+.fac-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.fac-headline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+  color: #ffffff;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fac-headline strong {
+  color: #fb923c;
+}
+
+.findmy-action-card.checked-in .fac-headline strong {
+  color: #4ade80;
+}
+
+.fac-subtext {
+  font-size: 0.72rem;
+  color: rgba(235, 235, 245, 0.65);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fac-tag-live {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.62rem;
+  font-weight: 800;
+  background: rgba(249, 115, 22, 0.2);
+  color: #fb923c;
+  padding: 1px 6px;
+  border-radius: 6px;
+  letter-spacing: 0.04em;
+}
+
+.fac-price-badge {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.75rem;
+  font-weight: 800;
+  background: rgba(48, 209, 88, 0.2);
+  color: #30D158;
+  padding: 1px 6px;
+  border-radius: 6px;
+}
+
+.fac-btn-action {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  transition: transform 0.14s ease, background 0.14s ease;
+}
+
+.fac-btn-action.primary {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.35);
 }
 
 .findmy-person-chip {
@@ -25616,6 +25731,33 @@ body.theme-light .findmy-map-ctrl-btn.ctrl-checkin {
 body.theme-light .findmy-sheet-dock {
   background: #f8fafc !important;
   border-top: 1px solid #e2e8f0 !important;
+}
+
+body.theme-light .findmy-action-card {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+}
+
+body.theme-light .findmy-action-card.checked-in {
+  background: #f0fdf4 !important;
+  border-color: #86efac !important;
+}
+
+body.theme-light .fac-headline {
+  color: #0f172a !important;
+}
+
+body.theme-light .fac-headline strong {
+  color: #ea580c !important;
+}
+
+body.theme-light .findmy-action-card.checked-in .fac-headline strong {
+  color: #16a34a !important;
+}
+
+body.theme-light .fac-subtext {
+  color: #64748b !important;
 }
 
 body.theme-light .findmy-dock-eyebrow {
