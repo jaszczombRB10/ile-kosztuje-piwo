@@ -80,7 +80,7 @@
   <script defer src="https://cloud.umami.is/script.js" data-website-id="auto" id="umami-analytics-script"></script>
 
   <!-- Custom Styles -->
-  <link rel="stylesheet" href="styles.css?v=164">
+  <link rel="stylesheet" href="styles.css?v=165">
 </head>
 <body>
 
@@ -161,13 +161,6 @@
               <div class="menu-item-content">
                 <span class="menu-item-title">Pub Quiz</span>
                 <span class="menu-item-desc">Sprawdź wiedzę o piwie i barach</span>
-              </div>
-            </button>
-            <button type="button" class="more-menu-item" id="btn-compass-header" title="Piwny Kompas – wskaż najbliższe tanie piwo">
-              <span class="menu-item-icon">🧭</span>
-              <div class="menu-item-content">
-                <span class="menu-item-title">Piwny Kompas</span>
-                <span class="menu-item-desc">Radar najbliższego taniego piwa</span>
               </div>
             </button>
             <button type="button" class="more-menu-item" id="btn-barometer-toggle" title="Barometr cenowy barów">
@@ -404,10 +397,6 @@
       <button type="button" id="btn-pubquiz-float" class="fab-pubquiz-float" title="Pub Quiz – Zagraj teraz!">
         <span class="quiz-float-icon">🧠</span>
         <span>Pub Quiz</span>
-      </button>
-      <button type="button" id="btn-compass-float" class="fab-compass-float" title="Uruchom Piwny Kompas (Radar)">
-        <span class="compass-icon">🧭</span>
-        <span>Kompas</span>
       </button>
       <button type="button" id="btn-sos-float" class="fab-sos-float" title="Piwny Anioł Stróż · SOS Ekipa i Bezpieczny Powrót" aria-label="Piwny Anioł Stróż SOS">
         <span class="sos-float-icon">🛡️</span>
@@ -651,8 +640,8 @@
     </div>
   </div>
 
-  <!-- Beer Compass / Radar Modal (Flighty + iOS Native Sheet) -->
-  <div class="modal-backdrop compass-modal-backdrop" id="beer-compass-modal">
+  <!-- Beer Compass / Radar Modal (Temporarily Disabled) -->
+  <div class="modal-backdrop compass-modal-backdrop" id="beer-compass-modal" style="display:none !important;">
     <div class="modal-card compass-modal-card flighty-edit-profile-sheet">
       <div class="flighty-edit-topbar">
         <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-compass">Zamknij</button>
@@ -1248,22 +1237,16 @@
     </div>
     <div class="bottom-sheet-content discover-scroll">
       <div class="bento-grid">
-        <!-- Bento 1: Piwny Kompas (Hero 2-Col) -->
-        <div class="bento-card bento-card-hero bento-compass" id="bento-btn-compass" role="button" tabindex="0">
+        <!-- Bento 1: Pub Crawl Generator (Hero 2-Col) -->
+        <div class="bento-card bento-card-hero bento-pubcrawl" id="bento-btn-pubcrawl" role="button" tabindex="0">
           <div class="bento-card-glow"></div>
           <div class="bento-card-top">
-            <span class="bento-pill-live">🧭 RADAR GPS</span>
+            <span class="bento-pill-live">🗺️ PLANER TRASY</span>
             <span class="bento-arrow-icon">↗</span>
           </div>
           <div class="bento-card-body">
-            <h3 class="bento-title">Piwny Kompas</h3>
-            <p class="bento-desc">Wyceluj telefon i idź prosto do najbliższego kufla</p>
-          </div>
-          <div class="bento-compass-preview" id="bento-compass-preview">
-            <div class="mini-compass-dial">
-              <span class="mini-compass-arrow" id="bento-mini-arrow">▲</span>
-            </div>
-            <span class="mini-compass-text" id="bento-compass-text">Wskaż najbliższe tanie piwo</span>
+            <h3 class="bento-title">Generator Pub Crawlu</h3>
+            <p class="bento-desc">Wygeneruj optymalny spacer po najtańszych lokalach w mieście</p>
           </div>
         </div>
 
@@ -1276,18 +1259,6 @@
           <div class="bento-card-body">
             <h3 class="bento-title">Piwna Ruletka</h3>
             <p class="bento-desc">Brak planu? Wylosuj bar na dziś jednym potrząśnięciem</p>
-          </div>
-        </div>
-
-        <!-- Bento 3: Pub Crawl Generator -->
-        <div class="bento-card bento-pubcrawl" id="bento-btn-pubcrawl" role="button" tabindex="0">
-          <div class="bento-card-top">
-            <span class="bento-icon-circle">🍻</span>
-            <span class="bento-pill-highlight">Planer Trasy</span>
-          </div>
-          <div class="bento-card-body">
-            <h3 class="bento-title">Pub Crawl</h3>
-            <p class="bento-desc">Wygeneruj optymalny spacer po najtańszych lokalach</p>
           </div>
         </div>
 
@@ -2812,14 +2783,10 @@
         <!-- Tab 1: Ekipa (Instagram Style: Stories, Instant Search, Filter Chips, Sleek Rows) -->
         <div class="comm-tab-pane" id="pane-comm-friends">
           
-          <!-- 1. Instagram Stories Rail: Na mieście teraz 🍻 -->
+          <!-- 1. Ekipa Live Check-in / BeReal Hero Banner -->
           <div class="ig-stories-section">
-            <div class="ig-stories-header">
-              <span class="ig-stories-title">⚡ NA MIEŚCIE TERAZ</span>
-              <span class="ig-stories-sub" id="ig-stories-active-count">0 aktywnych</span>
-            </div>
             <div class="ig-stories-scroll" id="ig-stories-rail">
-              <!-- Dynamically populated via JS: your check-in story bubble + active friends -->
+              <!-- Dynamically populated via JS: sleek Flighty Check-in Banner -->
             </div>
           </div>
 
@@ -2962,11 +2929,11 @@
                 <span>Happy Hours</span>
               </div>
             </button>
-            <button type="button" class="flighty-shortcut-tile" onclick="window.__triggerFeedShortcut('compass')">
-              <span class="fst-icon">🧭</span>
+            <button type="button" class="flighty-shortcut-tile" onclick="window.__triggerFeedShortcut('pubcrawl')">
+              <span class="fst-icon">🗺️</span>
               <div class="fst-text">
-                <strong>Kompas GPS</strong>
-                <span>Najbliższy bar</span>
+                <strong>Pub Crawl</strong>
+                <span>Trasy barowe</span>
               </div>
             </button>
             <button type="button" class="flighty-shortcut-tile" onclick="window.__triggerFeedShortcut('roulette')">
@@ -3920,6 +3887,6 @@
   <script src="moderation.js"></script>
 
   <!-- Main Application Logic -->
-  <script src="app.js?v=164"></script>
+  <script src="app.js?v=165"></script>
 </body>
 </html>

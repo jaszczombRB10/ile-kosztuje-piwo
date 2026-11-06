@@ -527,7 +527,7 @@ module.exports = async (req, res) => {
                 avatar_photo: m.avatar_photo || null,
                 created_at: new Date(ch.timestamp).toISOString(),
                 timestamp: ch.timestamp,
-                cheers_count: typeof ch.cheers_count === "number" ? ch.cheers_count : 5
+                cheers_count: typeof ch.cheers_count === "number" ? ch.cheers_count : 0
               });
             }
           }

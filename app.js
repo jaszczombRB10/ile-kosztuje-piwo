@@ -4469,9 +4469,13 @@
   }
 
   // ==========================================================================
-  // PIWNY KOMPAS / BEER RADAR (1-Click Live Bearing & Distance)
+  // PIWNY KOMPAS (Tymczasowo wyłączony na prośbę użytkownika)
   // ==========================================================================
   function initBeerCompass() {
+    window.__openCompass = function() {};
+    window.__closeCompass = function() {};
+    window.__refreshCompassTargets = function() {};
+    return;
     const compassModal = document.getElementById("beer-compass-modal");
     const btnClose = document.getElementById("btn-close-compass");
     const statusText = document.getElementById("compass-status-text");
@@ -10160,7 +10164,7 @@
       });
     });
 
-    // 1. Render Ekipa Check-in Action Bar (Single Prominent BeReal Card, No Horizontal Swiping)
+    // 1. Render Ekipa Check-in Action Bar (Sleek Flighty Banner)
     function renderStoriesRail() {
       if (!storiesRail) return;
 
@@ -10180,43 +10184,59 @@
       const isMyCheckinActive = myLastCheckin && !myLastCheckin.ghost_mode && (now - (myLastCheckin.timestamp || 0) <= cutoff24h);
 
       if (isMyCheckinActive) {
-        const vName = myLastCheckin.venue_name || "barze";
+        const vName = myLastCheckin.venue_name || "Lokal";
+        const vDist = (myLastCheckin.district || getCurrentCity().name || "CENTRUM").toUpperCase();
         const pVal = Number(myLastCheckin.beer_price) || 14;
         const pStr = pVal % 1 === 0 ? `${pVal} zł` : `${pVal.toFixed(1)} zł`;
         const timeAgo = formatTimeAgo(myLastCheckin.timestamp);
+
         storiesRail.innerHTML = `
-          <div class="findmy-action-card checked-in" onclick="window.__openBerealCamera()">
-            <div class="fac-left">
-              <span class="fac-icon">📍</span>
-              <div class="fac-info">
-                <div class="fac-headline">
-                  <span>Twój meldunek: <strong>${escapeHtml(vName)}</strong></span>
-                  <span class="fac-price-badge">${escapeHtml(pStr)}</span>
-                </div>
-                <div class="fac-subtext">Widoczny dla ekipy na mapie (${escapeHtml(timeAgo)}) · Dotknij, by zaktualizować BeReal 📸</div>
+          <div class="flighty-checkin-banner checked-in" onclick="window.__openBerealCamera()">
+            <div class="fcb-top-row">
+              <div class="fcb-badge">
+                <span class="fcb-pulse-dot"></span>
+                <span>ZAMELDOWANO W BARZE · 24H</span>
               </div>
+              <button type="button" class="fcb-action-pill" title="Zaktualizuj lub zmień bar">
+                <span>Zmień bar 📸</span>
+              </button>
             </div>
-            <button type="button" class="fac-btn-action" title="Zaktualizuj BeReal">
-              Zaktualizuj 📸
-            </button>
+            <div class="fcb-main-row">
+              <div class="fcb-venue-group">
+                <span class="fcb-pin-icon">📍</span>
+                <span class="fcb-venue-name">${escapeHtml(vName)}</span>
+              </div>
+              <div class="fcb-price-badge">${escapeHtml(pStr)}</div>
+            </div>
+            <div class="fcb-meta-row">
+              <span>${escapeHtml(vDist)}</span>
+              <span class="fcb-dot">·</span>
+              <span>Zameldowano ${escapeHtml(timeAgo)}</span>
+              <span class="fcb-dot">·</span>
+              <span class="fcb-status-text">Widoczny dla ekipy na mapie</span>
+            </div>
           </div>
         `;
       } else {
         storiesRail.innerHTML = `
-          <div class="findmy-action-card" onclick="window.__openBerealCamera()">
-            <div class="fac-left">
-              <span class="fac-icon">📸</span>
-              <div class="fac-info">
-                <div class="fac-headline">
-                  <span>Zrób BeReal w barze</span>
-                  <span class="fac-tag-live">CHECK-IN 24H</span>
-                </div>
-                <div class="fac-subtext">Pokaż ekipie, w jakim lokalu teraz pijesz piwo! 🍻</div>
+          <div class="flighty-checkin-banner" onclick="window.__openBerealCamera()">
+            <div class="fcb-top-row">
+              <div class="fcb-badge default">
+                <span>⚡ CHECK-IN 24H</span>
+              </div>
+              <button type="button" class="fcb-action-pill primary" title="Zrób BeReal w barze">
+                <span>+ Dodaj BeReal 📸</span>
+              </button>
+            </div>
+            <div class="fcb-main-row">
+              <div class="fcb-venue-group">
+                <span class="fcb-pin-icon">🍻</span>
+                <span class="fcb-venue-name">Gdzie dzisiaj pijesz piwo?</span>
               </div>
             </div>
-            <button type="button" class="fac-btn-action primary" title="Zrób BeReal w barze">
-              + Zrób BeReal
-            </button>
+            <div class="fcb-meta-row">
+              <span>Zrób fotkę kufla w barze, aby pojawić się na mapie dla znajomych</span>
+            </div>
           </div>
         `;
       }
@@ -10467,15 +10487,8 @@
         let users = (data.users || []).filter(u => !myFollowingIds.includes(u.id));
 
         if (users.length === 0) {
-          if (myFollowingIds.length > 0) {
-            recommendedList.innerHTML = `<div class="empty-state-hint" style="padding:12px;">Wszyscy aktywni piwosze są już w Twojej ekipie! 👑</div>`;
-            return;
-          }
-          users = [
-            { id: "scout-kufel", username: "kufel_patrol", display_name: "Kufel Patrol", avatar_icon: "🕵️‍♂️", popular_badge: "🔥 19 lokali" },
-            { id: "scout-tanie", username: "tanie_lane", display_name: "Tanie Lane WWA", avatar_icon: "💚", popular_badge: "🍺 Łowca ≤12 zł" },
-            { id: "scout-wilk", username: "chmielowy_wilk", display_name: "Chmielowy Wilk", avatar_icon: "🐺", popular_badge: "🏆 Top Skaut" }
-          ];
+          recommendedList.innerHTML = `<div class="empty-state-hint" style="padding:14px 10px;">${myFollowingIds.length > 0 ? "Wszyscy aktywni piwosze są już w Twojej ekipie! 👑" : "Wyszukaj znajomego powyżej lub zaproś ekipę! 🍻"}</div>`;
+          return;
         }
 
         recommendedList.innerHTML = users.slice(0, 6).map(u => {
@@ -10976,7 +10989,7 @@
           beer_price: priceNum,
           photo_url: post.photo_url,
           selfie_url: post.selfie_url || null,
-          cheers_count: Number(post.cheers_count) || (4 + (idx * 3) % 11),
+          cheers_count: Number(post.cheers_count) || 0,
           created_at: post.created_at,
           vibe_caption: post.caption ? String(post.caption).trim() : ""
         });
@@ -11077,7 +11090,7 @@
                     🧭 Karta baru ↗
                   </button>
                   <button type="button" class="bereal-cheers-btn" onclick="window.__cheersFeedItem('${escapeHtml(item.id)}', this)">
-                    🍻 <span>${item.cheers_count || 1}</span>
+                    🍻 <span>${Number(item.cheers_count) || 0}</span>
                   </button>
                 </div>
               </div>
@@ -11125,7 +11138,7 @@
                 <span>↗</span>
               </button>
               <button type="button" class="ffc-btn-cheers" onclick="window.__cheersFeedItem('${escapeHtml(item.id)}', this)">
-                🍻 <span>${item.cheers_count || 1}</span>
+                🍻 <span>${Number(item.cheers_count) || 0}</span>
               </button>
             </div>
           </div>
@@ -11241,41 +11254,6 @@
             latitude: matchedV.latitude,
             longitude: matchedV.longitude,
             timestamp: ts
-          });
-        }
-      });
-
-      // 4. Populate active city bar scouts on Find My radar so user always sees live bar pins in current city
-      const openVenues = venues.filter(v => isVenueOpen(v) && typeof v.latitude === "number" && typeof v.longitude === "number");
-      const samplePool = (openVenues.length >= 4 ? openVenues : venues.filter(v => typeof v.latitude === "number")).slice(0, 12);
-      const demoScouts = [
-        { handle: "kufel_patrol", icon: "🕵️‍♂️", minsAgo: 9 },
-        { handle: "tanie_lane", icon: "💚", minsAgo: 22 },
-        { handle: "chmielowy_wilk", icon: "🐺", minsAgo: 38 },
-        { handle: "nocny_marek", icon: "🦉", minsAgo: 51 }
-      ];
-      demoScouts.forEach((sc, i) => {
-        const v = samplePool[(i * 3) % Math.max(1, samplePool.length)];
-        if (!v) return;
-        const key = `scout-${sc.handle}`;
-        if (!peopleMap.has(key)) {
-          peopleMap.set(key, {
-            key,
-            username: sc.handle,
-            display_name: `@${sc.handle}`,
-            is_me: false,
-            is_friend: false,
-            avatar_photo: null,
-            avatar_icon: sc.icon,
-            venue_id: v.id,
-            venue_name: v.name,
-            district: v.district || curCity.name,
-            beer_name: v.beer_name || "Lane 0.5L",
-            beer_price: v.beer_price_pln || 13,
-            photo_url: null,
-            latitude: v.latitude,
-            longitude: v.longitude,
-            timestamp: nowMs - sc.minsAgo * 60 * 1000
           });
         }
       });
@@ -11560,43 +11538,59 @@
         const isCheckedIn = myCheckin && !myCheckin.ghost_mode && (now - (myCheckin.timestamp || 0) <= cutoff24h);
 
         if (isCheckedIn) {
-          const vName = myCheckin.venue_name || "barze";
+          const vName = myCheckin.venue_name || "Lokal";
+          const vDist = (myCheckin.district || getCurrentCity().name || "CENTRUM").toUpperCase();
           const pVal = Number(myCheckin.beer_price) || 14;
           const pStr = pVal % 1 === 0 ? `${pVal} zł` : `${pVal.toFixed(1)} zł`;
           const timeAgo = formatTimeAgo(myCheckin.timestamp);
+
           stripEl.innerHTML = `
-            <div class="findmy-action-card checked-in" onclick="window.__openBerealCamera()">
-              <div class="fac-left">
-                <span class="fac-icon">📍</span>
-                <div class="fac-info">
-                  <div class="fac-headline">
-                    <span>Zameldowano: <strong>${escapeHtml(vName)}</strong></span>
-                    <span class="fac-price-badge">${escapeHtml(pStr)}</span>
-                  </div>
-                  <div class="fac-subtext">Aktywny na mapie (${escapeHtml(timeAgo)}) · Dotknij, by zaktualizować BeReal 📸</div>
+            <div class="flighty-checkin-banner checked-in" onclick="window.__openBerealCamera()">
+              <div class="fcb-top-row">
+                <div class="fcb-badge">
+                  <span class="fcb-pulse-dot"></span>
+                  <span>TWÓJ MELDUNEK NA ŻYWO · 24H</span>
                 </div>
+                <button type="button" class="fcb-action-pill" title="Zmień lub zaktualizuj BeReal">
+                  <span>Zmień bar 📸</span>
+                </button>
               </div>
-              <button type="button" class="fac-btn-action" title="Zaktualizuj BeReal">
-                Zaktualizuj 📸
-              </button>
+              <div class="fcb-main-row">
+                <div class="fcb-venue-group">
+                  <span class="fcb-pin-icon">📍</span>
+                  <span class="fcb-venue-name">${escapeHtml(vName)}</span>
+                </div>
+                <div class="fcb-price-badge">${escapeHtml(pStr)}</div>
+              </div>
+              <div class="fcb-meta-row">
+                <span>${escapeHtml(vDist)}</span>
+                <span class="fcb-dot">·</span>
+                <span>Zameldowano ${escapeHtml(timeAgo)}</span>
+                <span class="fcb-dot">·</span>
+                <span class="fcb-status-text">Widoczny na mapie 24h</span>
+              </div>
             </div>
           `;
         } else {
           stripEl.innerHTML = `
-            <div class="findmy-action-card" onclick="window.__openBerealCamera()">
-              <div class="fac-left">
-                <span class="fac-icon">📸</span>
-                <div class="fac-info">
-                  <div class="fac-headline">
-                    <span>Zrób BeReal w barze</span>
-                    <span class="fac-tag-live">24H NA MAPIE</span>
-                  </div>
-                  <div class="fac-subtext">Zrób fotkę kufla i zamelduj się w lokalu dla znajomych 🍻</div>
+            <div class="flighty-checkin-banner" onclick="window.__openBerealCamera()">
+              <div class="fcb-top-row">
+                <div class="fcb-badge default">
+                  <span>📸 CHECK-IN BE-REAL · 24H</span>
+                </div>
+                <button type="button" class="fcb-action-pill primary" title="Zrób BeReal w barze">
+                  <span>+ Zamelduj się 📸</span>
+                </button>
+              </div>
+              <div class="fcb-main-row">
+                <div class="fcb-venue-group">
+                  <span class="fcb-pin-icon">🍺</span>
+                  <span class="fcb-venue-name">Zrób BeReal w barze</span>
                 </div>
               </div>
-              <button type="button" class="fac-btn-action primary" title="Zrób BeReal w barze">
-                + Zamelduj się
-              </button>
+              <div class="fcb-meta-row">
+                <span>Zamelduj się w lokalu, zrób fotkę kufla i zgarnij kapsle</span>
+              </div>
             </div>
           `;
         }
@@ -11651,7 +11645,7 @@
               avatar_photo: currentUser.user_metadata?.avatar_photo || null,
               created_at: new Date(myCheckin.timestamp).toISOString(),
               timestamp: myCheckin.timestamp,
-              cheers_count: 5
+              cheers_count: 0
             });
           }
         }
@@ -11748,7 +11742,7 @@
       if (btn.classList.contains("cheered")) return;
 
       const countSpan = btn.querySelector("span");
-      const curCount = parseInt(countSpan ? countSpan.textContent : "1", 10) || 1;
+      const curCount = parseInt(countSpan ? countSpan.textContent : "0", 10) || 0;
       if (countSpan) countSpan.textContent = curCount + 1;
       btn.classList.add("cheered");
 

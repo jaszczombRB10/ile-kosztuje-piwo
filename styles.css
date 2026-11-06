@@ -10936,7 +10936,7 @@ header,
 }
 
 .fab-compass-float {
-  display: flex;
+  display: none !important;
   align-items: center;
   gap: 6px;
   background: linear-gradient(135deg, rgba(249, 115, 22, 0.95), rgba(234, 88, 12, 0.95));
@@ -23971,6 +23971,154 @@ body.theme-light .telemetry-lbl {
   box-shadow: 0 4px 12px rgba(234, 88, 12, 0.35);
 }
 
+/* Flighty Native Check-in Banner */
+.flighty-checkin-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: linear-gradient(145deg, #181824 0%, #101018 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 12px 14px;
+  cursor: pointer;
+  width: 100%;
+  box-sizing: border-box;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.flighty-checkin-banner:active {
+  transform: scale(0.985);
+}
+
+.flighty-checkin-banner.checked-in {
+  background: linear-gradient(145deg, rgba(34, 197, 94, 0.12) 0%, rgba(16, 185, 129, 0.05) 100%), #14141e;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  box-shadow: 0 4px 18px rgba(34, 197, 94, 0.12);
+}
+
+.fcb-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.fcb-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #4ade80;
+  text-transform: uppercase;
+}
+
+.fcb-badge.default {
+  color: #fb923c;
+}
+
+.fcb-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 8px #22c55e;
+  animation: fcbPulse 2s infinite;
+}
+
+@keyframes fcbPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+.fcb-action-pill {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.14s ease;
+}
+
+.fcb-action-pill.primary {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  border: none;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(234, 88, 12, 0.3);
+}
+
+.fcb-main-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+}
+
+.fcb-venue-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.fcb-pin-icon {
+  font-size: 1.15rem;
+  flex-shrink: 0;
+}
+
+.fcb-venue-name {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fcb-price-badge {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.88rem;
+  font-weight: 800;
+  background: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  padding: 2px 8px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.fcb-meta-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  font-size: 0.72rem;
+  color: rgba(235, 235, 245, 0.65);
+}
+
+.fcb-dot {
+  opacity: 0.45;
+  font-size: 0.65rem;
+}
+
+.fcb-status-text {
+  color: #94a3b8;
+}
+
 .findmy-person-chip {
   -webkit-appearance: none;
   appearance: none;
@@ -25757,6 +25905,37 @@ body.theme-light .findmy-action-card.checked-in .fac-headline strong {
 }
 
 body.theme-light .fac-subtext {
+  color: #64748b !important;
+}
+
+body.theme-light .flighty-checkin-banner {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05) !important;
+}
+
+body.theme-light .flighty-checkin-banner.checked-in {
+  background: linear-gradient(145deg, #f0fdf4 0%, #ffffff 100%) !important;
+  border-color: #86efac !important;
+  box-shadow: 0 4px 14px rgba(34, 197, 94, 0.12) !important;
+}
+
+body.theme-light .fcb-venue-name {
+  color: #0f172a !important;
+}
+
+body.theme-light .fcb-action-pill {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+body.theme-light .fcb-action-pill.primary {
+  background: linear-gradient(135deg, #f97316, #ea580c) !important;
+  color: #ffffff !important;
+}
+
+body.theme-light .fcb-meta-row {
   color: #64748b !important;
 }
 
