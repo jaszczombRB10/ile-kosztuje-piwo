@@ -12102,64 +12102,322 @@
       return berealCanvas.toDataURL("image/webp", 0.84);
     }
 
-    function populateBerealVenueDropdown() {
-      if (!berealSelectVenue) return;
-      berealSelectVenue.innerHTML = "";
+    let currentBerealSelectedVenue = null;
+    let currentBerealPickerFilter = "all";
+    let currentBerealSearchQuery = "";
 
-      let venuesList = Array.isArray(allVenues) && allVenues.length > 0 ? [...allVenues] : [];
+    function selectBerealVenue(venue) {
+      if (!venue) return;
+      currentBerealSelectedVenue = venue;
 
-      if (venuesList.length === 0) {
-        const cur = getCurrentCity();
+      // Update hidden elements
+      if (berealSelectVenue) {
+        berealSelectVenue.innerHTML = "";
         const opt = document.createElement("option");
-        opt.value = "local-live";
-        opt.textContent = `Bar w mieście (${cur.name})`;
+        opt.value = venue.id || "custom";
+        opt.textContent = venue.name;
+        opt.selected = true;
         berealSelectVenue.appendChild(opt);
+      }
+      const customInput = document.getElementById("bereal-custom-venue-name");
+      if (customInput) customInput.value = venue.isCustom ? venue.name : "";
+
+      // Update display in review stage
+      const nameEl = document.getElementById("bereal-chosen-venue-name");
+      const subEl = document.getElementById("bereal-chosen-venue-sub");
+      if (nameEl) nameEl.textContent = venue.name || "Lokal";
+      if (subEl) {
+        if (venue.isCustom) {
+          subEl.textContent = "Własny lokal · Dotknij, aby zmienić";
+        } else {
+          const parts = [];
+          if (venue.district) parts.push(venue.district);
+          if (venue.beer_price_pln) parts.push(`piwo od ${Number(venue.beer_price_pln).toFixed(2)} zł`);
+          subEl.textContent = parts.length > 0 ? parts.join(" · ") : "Dotknij, aby zmienić";
+        }
+      }
+
+      // Auto-fill price and beer name
+      if (venue.beer_price_pln && berealInputPrice) {
+        berealInputPrice.value = Number(venue.beer_price_pln).toFixed(2);
+      }
+      if (venue.beer_name && berealInputBeer && (!berealInputBeer.value || berealInputBeer.value === "Świeże Piwko")) {
+        berealInputBeer.value = venue.beer_name;
+      }
+
+      // Update quick chips active state
+      const chips = document.querySelectorAll(".bqs-chip");
+      chips.forEach(chip => {
+        if (chip.getAttribute("data-id") === String(venue.id)) {
+          chip.classList.add("selected");
+        } else {
+          chip.classList.remove("selected");
+        }
+      });
+
+      if (typeof poileHaptics !== "undefined" && poileHaptics.tick) {
+        poileHaptics.tick();
+      }
+    }
+    window.__selectBerealVenue = function(venueId) {
+      const v = (allVenues || []).find(x => String(x.id) === String(venueId));
+      if (v) selectBerealVenue(v);
+    };
+
+    function populateBerealVenueSelection() {
+      const curCity = getCurrentCity();
+      const venues = Array.isArray(allVenues) && allVenues.length > 0 ? [...allVenues] : [];
+
+      // Check if user is actually in this city (< 35 km from city center)
+      const isUserInCity = (function() {
+        if (!userLocation || !Array.isArray(userLocation) || userLocation.length !== 2) return false;
+        if (!curCity || !curCity.center) return false;
+        const dCenter = calculateDistanceKm(userLocation[0], userLocation[1], curCity.center[0], curCity.center[1]);
+        return dCenter < 35;
+      })();
+
+      // Sort venues intelligently
+      let sortedVenues = [...venues];
+      if (isUserInCity) {
+        // User is physically near! Sort by real GPS distance
+        sortedVenues.sort((a, b) => {
+          const dA = (a.latitude && a.longitude) ? calculateDistanceKm(userLocation[0], userLocation[1], a.latitude, a.longitude) : 999;
+          const dB = (b.latitude && b.longitude) ? calculateDistanceKm(userLocation[0], userLocation[1], b.latitude, b.longitude) : 999;
+          return dA - dB;
+        });
+      } else {
+        // User is testing or faraway (e.g. 800 km away!).
+        // NEVER show 800 km Białołęka bars first!
+        // Instead, prioritize central hotspots (Pawilony, Śródmieście, Centrum, Bulwary)
+        const centralRegex = /śródmieście|centrum|pawilony|nowy świat|chmielna|bulwary/i;
+        sortedVenues.sort((a, b) => {
+          const aCent = centralRegex.test(a.district || "") || centralRegex.test(a.address || "") || centralRegex.test(a.name || "");
+          const bCent = centralRegex.test(b.district || "") || centralRegex.test(b.address || "") || centralRegex.test(b.name || "");
+          if (aCent && !bCent) return -1;
+          if (!aCent && bCent) return 1;
+          return (a.name || "").localeCompare(b.name || "", "pl");
+        });
+      }
+
+      // Initial Selection:
+      let toSelect = null;
+      if (berealPreselectedVenueId) {
+        toSelect = sortedVenues.find(v => String(v.id) === String(berealPreselectedVenueId));
+      }
+      if (!toSelect && sortedVenues.length > 0) {
+        if (isUserInCity) {
+          const closest = sortedVenues[0];
+          const dist = calculateDistanceKm(userLocation[0], userLocation[1], closest.latitude, closest.longitude);
+          if (dist < 0.5) {
+            toSelect = closest;
+          }
+        }
+        if (!toSelect) {
+          toSelect = sortedVenues[0];
+        }
+      }
+
+      if (toSelect) {
+        selectBerealVenue(toSelect);
+      } else {
+        selectBerealVenue({
+          id: "local-live",
+          name: `Bar w mieście (${curCity.name})`,
+          district: curCity.name
+        });
+      }
+
+      // Render 3-5 Quick Suggestion Chips
+      const quickChipsContainer = document.getElementById("bereal-quick-chips-row");
+      const quickLabel = document.getElementById("bereal-quick-label");
+      if (quickLabel) {
+        quickLabel.textContent = isUserInCity ? "⚡ W POBLIŻU:" : "⚡ POPULARNE W MIEŚCIE:";
+      }
+
+      if (quickChipsContainer) {
+        const topVenues = sortedVenues.slice(0, 5);
+        quickChipsContainer.innerHTML = topVenues.map(v => {
+          const isSel = toSelect && String(toSelect.id) === String(v.id);
+          let distTag = "";
+          if (isUserInCity && v.latitude && v.longitude) {
+            const d = calculateDistanceKm(userLocation[0], userLocation[1], v.latitude, v.longitude);
+            if (d < 25) {
+              distTag = d < 1 ? ` · ${Math.round(d * 1000)}m` : ` · ${d.toFixed(1)}km`;
+            }
+          }
+          return `
+            <button type="button" class="bqs-chip ${isSel ? "selected" : ""}" data-id="${escapeHtml(String(v.id))}" onclick="window.__selectBerealVenue('${escapeHtml(String(v.id))}')">
+              <span>🍺</span>
+              <span>${escapeHtml(v.name)}${distTag}</span>
+            </button>
+          `;
+        }).join("");
+      }
+    }
+
+    function openBerealVenuePicker() {
+      const pickerModal = document.getElementById("bereal-venue-picker-modal");
+      if (!pickerModal) return;
+
+      const curCity = getCurrentCity();
+      const titleEl = document.getElementById("bereal-picker-city-title");
+      if (titleEl) titleEl.textContent = `Bary w mieście ${curCity.name}`;
+
+      const badgeEl = document.getElementById("bereal-picker-count-badge");
+      if (badgeEl) badgeEl.textContent = `${(allVenues || []).length} LOKALI`;
+
+      const searchInput = document.getElementById("bereal-venue-search-input");
+      if (searchInput) {
+        searchInput.value = "";
+        currentBerealSearchQuery = "";
+      }
+      currentBerealPickerFilter = "all";
+
+      const filterChips = document.querySelectorAll(".bvp-filter-chip");
+      filterChips.forEach(chip => {
+        if (chip.getAttribute("data-filter") === "all") chip.classList.add("active");
+        else chip.classList.remove("active");
+      });
+
+      renderBerealVenuePickerList();
+      pickerModal.style.display = "flex";
+
+      if (typeof ModalHistoryManager !== "undefined") {
+        ModalHistoryManager.push("bereal-venue-picker-modal", closeBerealVenuePicker);
+      }
+
+      setTimeout(() => {
+        if (searchInput) searchInput.focus();
+      }, 100);
+    }
+
+    function closeBerealVenuePicker() {
+      const pickerModal = document.getElementById("bereal-venue-picker-modal");
+      if (pickerModal) pickerModal.style.display = "none";
+      if (typeof ModalHistoryManager !== "undefined") {
+        ModalHistoryManager.pop("bereal-venue-picker-modal");
+      }
+    }
+
+    window.__openBerealVenuePicker = openBerealVenuePicker;
+    window.__closeBerealVenuePicker = closeBerealVenuePicker;
+
+    function renderBerealVenuePickerList() {
+      const container = document.getElementById("bereal-venues-scroll-list");
+      const customBox = document.getElementById("bereal-custom-venue-box");
+      const customNameLabel = document.getElementById("bereal-custom-name-label");
+      if (!container) return;
+
+      const curCity = getCurrentCity();
+      const venues = Array.isArray(allVenues) && allVenues.length > 0 ? [...allVenues] : [];
+
+      const isUserInCity = (function() {
+        if (!userLocation || !Array.isArray(userLocation) || userLocation.length !== 2) return false;
+        if (!curCity || !curCity.center) return false;
+        const dCenter = calculateDistanceKm(userLocation[0], userLocation[1], curCity.center[0], curCity.center[1]);
+        return dCenter < 35;
+      })();
+
+      const q = (currentBerealSearchQuery || "").trim().toLowerCase();
+
+      if (customBox && customNameLabel) {
+        if (q.length > 1) {
+          customBox.style.display = "block";
+          customNameLabel.textContent = currentBerealSearchQuery.trim();
+        } else {
+          customBox.style.display = "none";
+        }
+      }
+
+      let filtered = venues.filter(v => {
+        if (q) {
+          const matchName = (v.name || "").toLowerCase().includes(q);
+          const matchDist = (v.district || "").toLowerCase().includes(q);
+          const matchAddr = (v.address || "").toLowerCase().includes(q);
+          const matchBeer = (v.beer_name || "").toLowerCase().includes(q);
+          if (!matchName && !matchDist && !matchAddr && !matchBeer) return false;
+        }
+
+        if (currentBerealPickerFilter === "cheap") {
+          if (!v.beer_price_pln || v.beer_price_pln > 14) return false;
+        } else if (currentBerealPickerFilter === "hotspots") {
+          const isHot = /pawilony|nowy świat|chmielna|bulwary|śródmieście|zbawiciela/i.test((v.district || "") + (v.name || "") + (v.address || ""));
+          if (!isHot) return false;
+        } else if (currentBerealPickerFilter === "fav") {
+          const favs = typeof getFavoriteVenues === "function" ? getFavoriteVenues() : [];
+          if (!favs.includes(v.id)) return false;
+        } else if (currentBerealPickerFilter === "nearby" && isUserInCity) {
+          if (!v.latitude || !v.longitude) return false;
+          const d = calculateDistanceKm(userLocation[0], userLocation[1], v.latitude, v.longitude);
+          if (d > 3) return false;
+        }
+        return true;
+      });
+
+      if (isUserInCity) {
+        filtered.sort((a, b) => {
+          const dA = (a.latitude && a.longitude) ? calculateDistanceKm(userLocation[0], userLocation[1], a.latitude, a.longitude) : 999;
+          const dB = (b.latitude && b.longitude) ? calculateDistanceKm(userLocation[0], userLocation[1], b.latitude, b.longitude) : 999;
+          return dA - dB;
+        });
+      } else {
+        const centralRegex = /śródmieście|centrum|pawilony|nowy świat|chmielna|bulwary/i;
+        filtered.sort((a, b) => {
+          const aCent = centralRegex.test(a.district || "") || centralRegex.test(a.address || "") || centralRegex.test(a.name || "");
+          const bCent = centralRegex.test(b.district || "") || centralRegex.test(b.address || "") || centralRegex.test(b.name || "");
+          if (aCent && !bCent) return -1;
+          if (!aCent && bCent) return 1;
+          return (a.name || "").localeCompare(b.name || "", "pl");
+        });
+      }
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div style="text-align:center; padding: 24px 12px; color: rgba(235, 235, 245, 0.6);">
+            <div style="font-size: 1.8rem; margin-bottom: 6px;">🔍</div>
+            <div style="font-weight: 700; color: #fff;">Nie znaleziono lokalu "${escapeHtml(currentBerealSearchQuery)}"</div>
+            <div style="font-size: 0.76rem; margin-top: 4px;">Użyj przycisku powyżej, aby zameldować się pod własną nazwą! 🍻</div>
+          </div>
+        `;
         return;
       }
 
-      // Proximity sorting if user coordinates are available
-      if (userLocation && Array.isArray(userLocation) && userLocation.length === 2) {
-        venuesList.sort((a, b) => {
-          const distA = calculateDistanceKm(userLocation[0], userLocation[1], a.latitude, a.longitude);
-          const distB = calculateDistanceKm(userLocation[0], userLocation[1], b.latitude, b.longitude);
-          return distA - distB;
-        });
-      } else {
-        venuesList.sort((a, b) => (a.name || "").localeCompare(b.name || "", "pl"));
-      }
-
-      venuesList.forEach((v, idx) => {
-        const opt = document.createElement("option");
-        opt.value = v.id;
-        let distLabel = "";
-        if (userLocation && Array.isArray(userLocation) && userLocation.length === 2 && v.latitude && v.longitude) {
+      container.innerHTML = filtered.map(v => {
+        const isSelected = currentBerealSelectedVenue && String(currentBerealSelectedVenue.id) === String(v.id);
+        
+        let distBadge = "";
+        if (isUserInCity && v.latitude && v.longitude) {
           const d = calculateDistanceKm(userLocation[0], userLocation[1], v.latitude, v.longitude);
-          distLabel = d < 1 ? ` (${Math.round(d * 1000)} m)` : ` (${d.toFixed(1)} km)`;
-        }
-        opt.textContent = `${v.name}${v.district ? ` [${v.district}]` : ""}${distLabel}`;
-        const shouldSelect = berealPreselectedVenueId
-          ? String(v.id) === String(berealPreselectedVenueId)
-          : idx === 0;
-        if (shouldSelect) {
-          opt.selected = true;
-          if (v.beer_price_pln && berealInputPrice) {
-            berealInputPrice.value = v.beer_price_pln.toFixed(2);
-          }
-          if (v.beer_name && berealInputBeer && !berealInputBeer.value) {
-            berealInputBeer.value = v.beer_name;
+          if (d < 25) {
+            distBadge = `<span class="bvp-dist-badge">${d < 1 ? `${Math.round(d * 1000)} m` : `${d.toFixed(1)} km`}</span>`;
           }
         }
-        berealSelectVenue.appendChild(opt);
-      });
 
-      berealSelectVenue.onchange = function() {
-        const chosenId = berealSelectVenue.value;
-        const found = (allVenues || []).find(v => v.id === chosenId);
-        if (found && found.beer_price_pln && berealInputPrice) {
-          berealInputPrice.value = found.beer_price_pln.toFixed(2);
-        }
-      };
+        const priceBadge = v.beer_price_pln
+          ? `<span class="bvp-price-badge">${Number(v.beer_price_pln).toFixed(2)} zł</span>`
+          : "";
+
+        const subText = [v.district || curCity.name, v.address || ""].filter(Boolean).join(" · ");
+
+        return `
+          <div class="bvp-venue-item ${isSelected ? "selected" : ""}" onclick="window.__chooseAndClosePicker('${escapeHtml(String(v.id))}')">
+            <div class="bvp-item-info">
+              <span class="bvp-item-name">${escapeHtml(v.name)}</span>
+              <span class="bvp-item-sub">${escapeHtml(subText)}</span>
+            </div>
+            <div class="bvp-item-meta-right">
+              ${distBadge}
+              ${priceBadge}
+            </div>
+          </div>
+        `;
+      }).join("");
     }
+
+    window.__chooseAndClosePicker = function(venueId) {
+      window.__selectBerealVenue(venueId);
+      closeBerealVenuePicker();
+    };
 
     function goToBerealReviewStage() {
       stopBerealCameraStream();
@@ -12180,7 +12438,7 @@
         if (berealReviewPip && berealReviewPip.parentElement) berealReviewPip.parentElement.style.display = "none";
       }
 
-      populateBerealVenueDropdown();
+      populateBerealVenueSelection();
       const card = document.querySelector(".bereal-camera-modal-card");
       if (card) card.scrollTop = 0;
     }
@@ -12306,10 +12564,10 @@
 
           // 2. Determine venue details & exact coordinates for Apple Find My Map
           const curCity = getCurrentCity();
-          const venueId = (berealSelectVenue && berealSelectVenue.value) || "local-live";
-          const venueObj = (allVenues || []).find(v => v.id === venueId);
-          const venueName = venueObj ? venueObj.name : (venueId === "local-live" ? `Bar w mieście (${curCity.name})` : "Lokal");
-          const district = venueObj ? (venueObj.district || curCity.name) : curCity.name;
+          const venueObj = currentBerealSelectedVenue || (allVenues || []).find(v => v.id === (berealSelectVenue && berealSelectVenue.value));
+          const venueId = venueObj ? (venueObj.id || "custom") : ((berealSelectVenue && berealSelectVenue.value) || "local-live");
+          const venueName = venueObj ? venueObj.name : `Bar w mieście (${curCity.name})`;
+          const district = (venueObj && venueObj.district) || curCity.name;
           const beerName = (berealInputBeer && berealInputBeer.value.trim()) || (venueObj && venueObj.beer_name) || "Świeże Piwko";
           const beerPrice = (berealInputPrice && berealInputPrice.value)
             ? parseFloat(berealInputPrice.value)
@@ -12406,6 +12664,90 @@
           e.preventDefault();
           if (btnBerealPublish) btnBerealPublish.click();
         }
+      });
+    }
+
+    // BeReal Venue Picker Event Listeners
+    const berealVenueSelectRow = document.getElementById("bereal-venue-select-row");
+    if (berealVenueSelectRow) {
+      berealVenueSelectRow.addEventListener("click", openBerealVenuePicker);
+    }
+
+    const btnOpenVenuePickerTrigger = document.getElementById("btn-open-venue-picker-trigger");
+    if (btnOpenVenuePickerTrigger) {
+      btnOpenVenuePickerTrigger.addEventListener("click", (e) => {
+        e.stopPropagation();
+        openBerealVenuePicker();
+      });
+    }
+
+    const btnBrowseAllVenuesLink = document.getElementById("btn-browse-all-venues-link");
+    if (btnBrowseAllVenuesLink) {
+      btnBrowseAllVenuesLink.addEventListener("click", (e) => {
+        e.stopPropagation();
+        openBerealVenuePicker();
+      });
+    }
+
+    const btnCloseBerealPicker = document.getElementById("btn-close-bereal-picker");
+    if (btnCloseBerealPicker) {
+      btnCloseBerealPicker.addEventListener("click", closeBerealVenuePicker);
+    }
+
+    const berealVenuePickerModal = document.getElementById("bereal-venue-picker-modal");
+    if (berealVenuePickerModal) {
+      berealVenuePickerModal.addEventListener("click", (e) => {
+        if (e.target === berealVenuePickerModal) closeBerealVenuePicker();
+      });
+    }
+
+    const berealVenueSearchInput = document.getElementById("bereal-venue-search-input");
+    const btnClearBerealVenueSearch = document.getElementById("btn-clear-bereal-venue-search");
+    if (berealVenueSearchInput) {
+      berealVenueSearchInput.addEventListener("input", () => {
+        currentBerealSearchQuery = berealVenueSearchInput.value;
+        if (btnClearBerealVenueSearch) {
+          btnClearBerealVenueSearch.style.display = currentBerealSearchQuery ? "inline-flex" : "none";
+        }
+        renderBerealVenuePickerList();
+      });
+    }
+
+    if (btnClearBerealVenueSearch) {
+      btnClearBerealVenueSearch.addEventListener("click", () => {
+        if (berealVenueSearchInput) {
+          berealVenueSearchInput.value = "";
+          berealVenueSearchInput.focus();
+        }
+        currentBerealSearchQuery = "";
+        btnClearBerealVenueSearch.style.display = "none";
+        renderBerealVenuePickerList();
+      });
+    }
+
+    const bvpChips = document.querySelectorAll(".bvp-filter-chip");
+    bvpChips.forEach(chip => {
+      chip.addEventListener("click", () => {
+        bvpChips.forEach(c => c.classList.remove("active"));
+        chip.classList.add("active");
+        currentBerealPickerFilter = chip.getAttribute("data-filter") || "all";
+        renderBerealVenuePickerList();
+      });
+    });
+
+    const btnUseCustomVenue = document.getElementById("btn-use-custom-venue");
+    if (btnUseCustomVenue) {
+      btnUseCustomVenue.addEventListener("click", () => {
+        const customName = (currentBerealSearchQuery || "").trim();
+        if (!customName) return;
+        const curCity = getCurrentCity();
+        selectBerealVenue({
+          id: "custom",
+          name: customName,
+          district: curCity.name,
+          isCustom: true
+        });
+        closeBerealVenuePicker();
       });
     }
 

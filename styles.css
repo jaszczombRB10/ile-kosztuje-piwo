@@ -10349,6 +10349,406 @@ header,
   color: #64748b;
 }
 
+/* ==========================================================================
+   Piwny BeReal Searchable Venue Picker & 1-Tap Quick Chips
+   ========================================================================== */
+.bereal-venue-select-row {
+  cursor: pointer !important;
+  user-select: none !important;
+  transition: background 0.15s ease !important;
+}
+
+.bereal-venue-select-row:active {
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+
+.bereal-venue-field {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  width: 100% !important;
+}
+
+.bereal-venue-pill-box {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+.bereal-venue-pill-name {
+  font-size: 0.88rem !important;
+  font-weight: 800 !important;
+  color: #ffffff !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  line-height: 1.25 !important;
+}
+
+.bereal-venue-pill-sub {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace !important;
+  font-size: 0.64rem !important;
+  font-weight: 700 !important;
+  color: #30D158 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.bereal-change-venue-trigger {
+  -webkit-appearance: none;
+  appearance: none;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(96, 165, 250, 0.14);
+  border: 1px solid rgba(96, 165, 250, 0.35);
+  color: #60a5fa;
+  font-size: 0.72rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.14s ease, background 0.14s ease;
+}
+
+.bereal-change-venue-trigger:active {
+  transform: scale(0.96);
+  background: rgba(96, 165, 250, 0.25);
+}
+
+.bereal-quick-suggest-box {
+  margin-top: 4px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bereal-qsb-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bqs-label {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #fb923c;
+  text-transform: uppercase;
+}
+
+.bqs-all-btn {
+  -webkit-appearance: none;
+  appearance: none;
+  background: none;
+  border: none;
+  color: #60a5fa;
+  font-size: 0.66rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+}
+
+.bereal-quick-chips-row {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.bereal-quick-chips-row::-webkit-scrollbar {
+  display: none;
+}
+
+.bqs-chip {
+  -webkit-appearance: none;
+  appearance: none;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #161622;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f1f5f9;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.14s ease;
+  white-space: nowrap;
+}
+
+.bqs-chip:active {
+  transform: scale(0.96);
+}
+
+.bqs-chip.selected {
+  background: rgba(48, 209, 88, 0.18) !important;
+  border-color: #30D158 !important;
+  color: #30D158 !important;
+  box-shadow: 0 0 10px rgba(48, 209, 88, 0.3);
+}
+
+/* Searchable Venue Picker Modal (#bereal-venue-picker-modal) */
+.bereal-picker-modal-card {
+  max-width: 460px !important;
+  width: 95% !important;
+  max-height: 90dvh !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  border-radius: 24px !important;
+}
+
+.bereal-picker-search-wrap {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: #0b0b10;
+  padding: 4px 0 8px 0;
+}
+
+.bereal-search-input-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: #14141d;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  padding: 0 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.bereal-search-input-box:focus-within {
+  border-color: #30D158;
+  box-shadow: 0 0 0 3px rgba(48, 209, 88, 0.18);
+}
+
+.bereal-search-ico {
+  font-size: 0.9rem;
+  margin-right: 6px;
+  opacity: 0.6;
+}
+
+.bereal-venue-search-input {
+  width: 100%;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  color: #ffffff !important;
+  font-size: 0.88rem !important;
+  font-weight: 600 !important;
+  padding: 10px 4px !important;
+}
+
+.bereal-search-clear-btn {
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #cbd5e1;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.bereal-filter-chips-row {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 2px 0 6px 0;
+}
+
+.bereal-filter-chips-row::-webkit-scrollbar {
+  display: none;
+}
+
+.bvp-filter-chip {
+  -webkit-appearance: none;
+  appearance: none;
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(235, 235, 245, 0.75);
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.14s ease;
+}
+
+.bvp-filter-chip.active {
+  background: #30D158 !important;
+  border-color: #30D158 !important;
+  color: #042f14 !important;
+  font-weight: 800 !important;
+}
+
+.bereal-custom-venue-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  border-radius: 14px;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px dashed rgba(96, 165, 250, 0.5);
+  color: #93c5fd;
+  cursor: pointer;
+  text-align: left;
+  margin: 6px 0 10px 0;
+  transition: transform 0.14s ease, background 0.14s ease;
+}
+
+.bereal-custom-venue-btn:active {
+  transform: scale(0.98);
+  background: rgba(59, 130, 246, 0.2);
+}
+
+.bcv-icon {
+  font-size: 1.1rem;
+}
+
+.bcv-texts {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.bcv-title {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #bfdbfe;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bcv-sub {
+  font-size: 0.65rem;
+  color: rgba(191, 219, 254, 0.75);
+  line-height: 1.25;
+}
+
+.bcv-arrow {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #60a5fa;
+}
+
+.bereal-venues-scroll-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 54dvh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 12px;
+}
+
+.bvp-venue-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 11px 13px;
+  background: #14141d;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 15px;
+  cursor: pointer;
+  transition: transform 0.14s ease, background 0.14s ease, border-color 0.14s ease;
+}
+
+.bvp-venue-item:hover,
+.bvp-venue-item:active {
+  background: #1b1b26;
+  border-color: rgba(255, 255, 255, 0.18);
+  transform: scale(0.99);
+}
+
+.bvp-venue-item.selected {
+  background: rgba(48, 209, 88, 0.12) !important;
+  border-color: #30D158 !important;
+  box-shadow: 0 0 12px rgba(48, 209, 88, 0.2);
+}
+
+.bvp-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.bvp-item-name {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bvp-item-sub {
+  font-size: 0.68rem;
+  color: rgba(235, 235, 245, 0.65);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bvp-item-meta-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.bvp-price-badge {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.66rem;
+  font-weight: 800;
+  color: #30D158;
+  background: rgba(48, 209, 88, 0.14);
+  border: 1px solid rgba(48, 209, 88, 0.32);
+  padding: 2px 7px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.bvp-dist-badge {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: #fb923c;
+  background: rgba(249, 115, 22, 0.14);
+  border: 1px solid rgba(249, 115, 22, 0.3);
+  padding: 2px 6px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
 /* 7. Golden Referral Card (Program Kapsli) */
 .gold-referral-card {
   background: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(217, 119, 6, 0.06) 100%);
@@ -14981,6 +15381,91 @@ body.theme-light #btn-bereal-retake:hover {
 
 body.theme-light .bereal-time {
   color: #94a3b8 !important;
+}
+
+body.theme-light .bereal-venue-pill-name {
+  color: #0f172a !important;
+}
+
+body.theme-light .bereal-venue-pill-sub {
+  color: #15803d !important;
+}
+
+body.theme-light .bereal-change-venue-trigger {
+  background: #eff6ff !important;
+  border-color: #93c5fd !important;
+  color: #1d4ed8 !important;
+}
+
+body.theme-light .bereal-quick-suggest-box {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+body.theme-light .bqs-chip {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #1e293b !important;
+}
+
+body.theme-light .bqs-chip.selected {
+  background: #dcfce7 !important;
+  border-color: #22c55e !important;
+  color: #15803d !important;
+}
+
+body.theme-light .bereal-picker-modal-card {
+  background: #ffffff !important;
+}
+
+body.theme-light .bereal-picker-search-wrap {
+  background: #ffffff !important;
+}
+
+body.theme-light .bereal-search-input-box {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+}
+
+body.theme-light .bereal-venue-search-input {
+  color: #0f172a !important;
+}
+
+body.theme-light .bvp-venue-item {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+body.theme-light .bvp-venue-item:hover,
+body.theme-light .bvp-venue-item:active {
+  background: #f1f5f9 !important;
+}
+
+body.theme-light .bvp-venue-item.selected {
+  background: #f0fdf4 !important;
+  border-color: #22c55e !important;
+}
+
+body.theme-light .bvp-item-name {
+  color: #0f172a !important;
+}
+
+body.theme-light .bvp-item-sub {
+  color: #64748b !important;
+}
+
+body.theme-light .bereal-custom-venue-btn {
+  background: #eff6ff !important;
+  border-color: #93c5fd !important;
+  color: #1e40af !important;
+}
+
+body.theme-light .bcv-title {
+  color: #1e3a8a !important;
+}
+
+body.theme-light .bcv-sub {
+  color: #475569 !important;
 }
 
 body.theme-light .empty-state-hint,

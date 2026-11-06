@@ -80,7 +80,7 @@
   <script defer src="https://cloud.umami.is/script.js" data-website-id="auto" id="umami-analytics-script"></script>
 
   <!-- Custom Styles -->
-  <link rel="stylesheet" href="styles.css?v=158">
+  <link rel="stylesheet" href="styles.css?v=159">
 </head>
 <body>
 
@@ -3637,13 +3637,20 @@
               <span class="flighty-edit-sec-hint">24H NA MAPIE</span>
             </div>
             <div class="flighty-edit-table">
-              <div class="flighty-edit-row">
-                <label class="flighty-row-label" for="bereal-select-venue">📍 Lokal</label>
-                <div class="flighty-row-field">
-                  <select id="bereal-select-venue" class="flighty-row-input flighty-row-select">
-                    <option value="local-live">Wybierz lokal z listy...</option>
-                  </select>
+              <div class="flighty-edit-row bereal-venue-select-row" id="bereal-venue-select-row" role="button" tabindex="0" title="Dotknij, aby wyszukać bar">
+                <label class="flighty-row-label">📍 Lokal</label>
+                <div class="flighty-row-field bereal-venue-field">
+                  <div class="bereal-venue-pill-box">
+                    <span class="bereal-venue-pill-name" id="bereal-chosen-venue-name">Wybierz lokal...</span>
+                    <span class="bereal-venue-pill-sub" id="bereal-chosen-venue-sub">Dotknij, aby wyszukać</span>
+                  </div>
+                  <button type="button" class="bereal-change-venue-trigger" id="btn-open-venue-picker-trigger">
+                    <span>Szukaj 🔍</span>
+                  </button>
                 </div>
+                <!-- Hidden select preserved for compatibility with any legacy handler -->
+                <select id="bereal-select-venue" style="display:none;"></select>
+                <input type="hidden" id="bereal-custom-venue-name" value="" />
               </div>
               <div class="flighty-edit-row">
                 <label class="flighty-row-label" for="bereal-input-beer">🍺 Piwo</label>
@@ -3659,6 +3666,17 @@
                 </div>
               </div>
             </div>
+
+            <!-- 1-Tap Quick Suggestions Strip -->
+            <div class="bereal-quick-suggest-box" id="bereal-quick-suggest-box">
+              <div class="bereal-qsb-header">
+                <span class="bqs-label" id="bereal-quick-label">⚡ PROPOZYCJE W POBLIŻU:</span>
+                <button type="button" class="bqs-all-btn" id="btn-browse-all-venues-link">Wszystkie bary ↗</button>
+              </div>
+              <div class="bereal-quick-chips-row" id="bereal-quick-chips-row">
+                <!-- 3-4 top/nearby venue chips injected via JS -->
+              </div>
+            </div>
           </div>
 
           <div class="bereal-review-actions" style="display:grid;grid-template-columns:1fr 2fr;gap:8px;">
@@ -3672,6 +3690,57 @@
         </div>
       </div>
 
+    </div>
+  </div>
+
+  <!-- Modal: Wyszukiwarka i wybór lokalu do BeReal / Check-in -->
+  <div class="modal-backdrop" id="bereal-venue-picker-modal" style="display:none; z-index: 10500;">
+    <div class="modal-card bereal-picker-modal-card flighty-edit-profile-sheet">
+      <!-- Native Navigation Topbar -->
+      <div class="flighty-edit-topbar">
+        <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-bereal-picker">← Wróć</button>
+        <div class="flighty-edit-topbar-title">
+          <span class="flighty-edit-eyebrow">WYBIERZ LOKAL · RADAR 24H</span>
+          <h2 id="bereal-picker-city-title">Wybierz lokal</h2>
+        </div>
+        <span class="flighty-log-season" id="bereal-picker-count-badge" style="font-size:0.62rem;">LOKALE</span>
+      </div>
+
+      <div class="flighty-edit-form bereal-picker-body" style="padding-bottom: 24px;">
+        <!-- Live Search Input -->
+        <div class="bereal-picker-search-wrap">
+          <div class="bereal-search-input-box">
+            <span class="bereal-search-ico">🔍</span>
+            <input type="text" id="bereal-venue-search-input" class="bereal-venue-search-input" placeholder="Wpisz nazwę lokalu, ulicę lub rejon..." autocomplete="off" autocorrect="off" spellcheck="false" />
+            <button type="button" class="bereal-search-clear-btn" id="btn-clear-bereal-venue-search" style="display:none;">✕</button>
+          </div>
+        </div>
+
+        <!-- Filter category tags -->
+        <div class="bereal-filter-chips-row" id="bereal-filter-chips-row">
+          <button type="button" class="bvp-filter-chip active" data-filter="all">Wszystkie</button>
+          <button type="button" class="bvp-filter-chip" data-filter="nearby" id="bvp-chip-nearby">📍 W pobliżu</button>
+          <button type="button" class="bvp-filter-chip" data-filter="hotspots">🔥 Zagłębia</button>
+          <button type="button" class="bvp-filter-chip" data-filter="cheap">💰 Tanie (≤14 zł)</button>
+        </div>
+
+        <!-- Custom Venue Banner (shows when user types a query) -->
+        <div id="bereal-custom-venue-box" style="display:none;">
+          <button type="button" class="bereal-custom-venue-btn" id="btn-use-custom-venue">
+            <span class="bcv-icon">➕</span>
+            <div class="bcv-texts">
+              <span class="bcv-title">Użyj: <strong id="bereal-custom-name-label"></strong></span>
+              <span class="bcv-sub">Nie ma Twojego lokalu na liście? Kliknij, aby zameldować się pod własną nazwą</span>
+            </div>
+            <span class="bcv-arrow">➔</span>
+          </button>
+        </div>
+
+        <!-- Scrollable Venues List -->
+        <div class="bereal-venues-scroll-list" id="bereal-venues-scroll-list">
+          <!-- Dynamically populated via JS -->
+        </div>
+      </div>
     </div>
   </div>
 
@@ -3855,6 +3924,6 @@
   <script src="moderation.js"></script>
 
   <!-- Main Application Logic -->
-  <script src="app.js?v=158"></script>
+  <script src="app.js?v=159"></script>
 </body>
 </html>
