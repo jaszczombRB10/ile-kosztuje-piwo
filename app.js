@@ -10988,7 +10988,7 @@
           selfie_url: post.selfie_url || null,
           cheers_count: Number(post.cheers_count) || (4 + (idx * 3) % 11),
           created_at: post.created_at,
-          vibe_caption: post.caption || (priceNum <= 12 ? "Najlepsza cena na dzielni, kufel zimny jak lód! ❄️🍺" : "Świeżo nalane prosto z kranu, klimat 10/10 🔥")
+          vibe_caption: post.caption ? String(post.caption).trim() : ""
         });
       });
 
@@ -11121,31 +11121,26 @@
                     <div class="bereal-author-name-row">
                       <span class="bereal-author-name" onclick="window.__openUserProfile('${escapeHtml(authorName)}')">@${escapeHtml(authorName)}</span>
                       ${isAuthor ? `<span class="bereal-author-badge-me">TY</span>` : ""}
-                      <span class="flighty-mini-route">📍 ${escapeHtml(districtLabel)}</span>
                     </div>
                     <div class="bereal-sub-meta">
-                      <span class="${isOpen ? 'ffc-status-open' : 'ffc-status-closed'}">${isOpen ? '● OTWARTE' : '○ ZAMKNIĘTE'}</span>
-                      <span class="bereal-meta-dot">·</span>
                       <span class="bereal-venue-link" onclick="window.__openVenueById('${escapeHtml(venueId)}', '${escapeHtml(venueName)}')">
-                        ${escapeHtml(venueName)}
+                        📍 ${escapeHtml(venueName)}
                       </span>
+                      <span class="bereal-meta-dot">·</span>
+                      <span class="bereal-district-badge">${escapeHtml(districtLabel)}</span>
+                      <span class="bereal-meta-dot">·</span>
+                      <span class="${isOpen ? 'ffc-status-open' : 'ffc-status-closed'}">${isOpen ? '● OTWARTE' : '○ ZAMKNIĘTE'}</span>
                     </div>
                   </div>
                 </div>
                 <div class="bereal-header-actions">
                   <span class="ffc-time-mono">${escapeHtml(timeAgo)}</span>
-                  <button type="button" class="bereal-btn-delete" onclick="window.__deleteFeedPost('${escapeHtml(item.id)}', this)" title="Ukryj lub usuń z Feedu">✕</button>
+                  ${isAuthor ? `<button type="button" class="bereal-btn-delete" onclick="window.__deleteFeedPost('${escapeHtml(item.id)}', this)" title="Usuń z Feedu">✕</button>` : ""}
                 </div>
               </div>
 
               <div class="bereal-viewport">
                 <img class="bereal-main-img" src="${escapeHtml(item.photo_url)}" alt="Piwo w ${escapeHtml(venueName)}" loading="lazy" />
-                <div class="bereal-floating-top">
-                  <button type="button" class="bereal-floating-loc-pill" onclick="window.__openVenueById('${escapeHtml(venueId)}', '${escapeHtml(venueName)}')">
-                    <span>📍 ${escapeHtml(venueName)}</span>
-                    <span class="loc-arrow">↗</span>
-                  </button>
-                </div>
                 <div class="bereal-floating-price-tag ${tierClass}">
                   <span class="tag-beer">🍺 ${escapeHtml(item.beer_name || "Lane 0.5L")}</span>
                   <span class="tag-price">${priceFormatted} zł</span>
@@ -11159,7 +11154,7 @@
               </div>
 
               <div class="bereal-post-footer">
-                <p class="bereal-vibe-caption">${escapeHtml(item.vibe_caption || "Zimny kufel na mieście! 🍻")}</p>
+                ${item.vibe_caption ? `<p class="bereal-vibe-caption">"${escapeHtml(item.vibe_caption)}"</p>` : ""}
                 <div class="bereal-footer-actions-row">
                   <button type="button" class="feed-btn-map-jump" onclick="window.__focusFindMyByVenue('${escapeHtml(venueId)}', '${escapeHtml(venueName)}', '${escapeHtml(authorName)}')">
                     🎯 Pokaż na mapie

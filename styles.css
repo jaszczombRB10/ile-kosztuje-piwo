@@ -9762,6 +9762,8 @@ header,
   align-items: center;
   justify-content: space-between;
   padding: 12px 14px 10px 14px;
+  gap: 12px;
+  min-width: 0;
 }
 
 .bereal-author-box {
@@ -9769,6 +9771,7 @@ header,
   align-items: center;
   gap: 10px;
   min-width: 0;
+  flex: 1;
 }
 
 .bereal-author-avatar {
@@ -9796,8 +9799,9 @@ header,
 .bereal-author-meta {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   min-width: 0;
+  flex: 1;
 }
 
 .bereal-author-name-row {
@@ -9808,12 +9812,13 @@ header,
 }
 
 .bereal-author-name {
-  font-size: 0.9rem;
+  font-size: 0.92rem;
   font-weight: 800;
   color: #f8fafc;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 170px;
   cursor: pointer;
 }
 
@@ -9821,7 +9826,7 @@ header,
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 0.73rem;
+  font-size: 0.72rem;
   color: #94a3b8;
   white-space: nowrap;
   overflow: hidden;
@@ -9835,13 +9840,20 @@ header,
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 180px;
+  max-width: 150px;
   transition: color 0.15s ease;
 }
 
 .bereal-venue-link:hover {
   color: #7dd3fc;
   text-decoration: underline;
+}
+
+.bereal-district-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: rgba(235, 235, 245, 0.6);
+  white-space: nowrap;
 }
 
 .bereal-meta-dot {
@@ -25796,6 +25808,19 @@ body.theme-light .ffc-venue-sub,
 body.theme-light .ffc-scout-line,
 body.theme-light .feed-act-author-text {
   color: #475569 !important;
+}
+
+body.theme-light .bereal-author-name {
+  color: #0f172a !important;
+}
+body.theme-light .bereal-venue-link {
+  color: #0284c7 !important;
+}
+body.theme-light .bereal-district-badge {
+  color: #475569 !important;
+}
+body.theme-light .bereal-sub-meta {
+  color: #64748b !important;
 }
 
 body.theme-light .ffc-scout-line strong,
