@@ -10945,7 +10945,7 @@
         if (post.author_id && blockedUsers.includes(post.author_id)) return;
         if (post.author_name && blockedUsers.includes(post.author_name)) return;
 
-        const postTimeMs = post.created_at ? new Date(post.created_at).getTime() : 0;
+        const postTimeMs = post.timestamp ? Number(post.timestamp) : (post.created_at ? new Date(post.created_at).getTime() : 0);
         if (!postTimeMs || isNaN(postTimeMs)) return;
         if (postTimeMs < legacyCutoffMs || (nowMs - postTimeMs) > maxAgeMs) return;
 
@@ -11703,7 +11703,37 @@
           body: JSON.stringify({ action: "get-live-feed" })
         });
         const data = await res.json();
-        const apiFeed = data.feed || [];
+        let apiFeed = data.feed || [];
+
+        // Optimistic check-in inclusion for instant local feedback
+        const myCheckin = currentUser?.user_metadata?.last_checkin;
+        const nowMs = Date.now();
+        if (myCheckin && myCheckin.photo_url && (nowMs - (myCheckin.timestamp || 0) <= 24 * 60 * 60 * 1000)) {
+          const exists = apiFeed.some(item => item.id === myCheckin.id || (item.author_id === currentUser.id && item.timestamp === myCheckin.timestamp));
+          if (!exists) {
+            apiFeed.unshift({
+              id: myCheckin.id || ("post_" + currentUser.id + "_" + myCheckin.timestamp),
+              venue_id: myCheckin.venue_id,
+              venue_name: myCheckin.venue_name,
+              district: myCheckin.district,
+              beer_name: myCheckin.beer_name,
+              beer_price: myCheckin.beer_price,
+              photo_url: myCheckin.photo_url,
+              selfie_url: myCheckin.selfie_url || null,
+              user_id: currentUser.id,
+              author_id: currentUser.id,
+              user_name: currentUser.user_metadata?.username || "Ty",
+              author_name: currentUser.user_metadata?.username || "Ty",
+              user_handle: `@${currentUser.user_metadata?.username || "ty"}`,
+              avatar_icon: currentUser.user_metadata?.avatar_icon || "🍺",
+              avatar_photo: currentUser.user_metadata?.avatar_photo || null,
+              created_at: new Date(myCheckin.timestamp).toISOString(),
+              timestamp: myCheckin.timestamp,
+              cheers_count: 5
+            });
+          }
+        }
+
         cachedCombinedFeedItems = buildLiveFeedItems(apiFeed, blockedUsers);
         renderLiveFeedItems();
         initFindMyFeedMap(apiFeed);
@@ -12085,8 +12115,8 @@
         cropY = 0;
       }
 
-      const outW = 800;
-      const outH = 1000;
+      const outW = 720;
+      const outH = 900;
       berealCanvas.width = outW;
       berealCanvas.height = outH;
       const ctx = berealCanvas.getContext("2d");
@@ -12099,7 +12129,7 @@
       ctx.drawImage(berealVideo, cropX, cropY, cropW, cropH, 0, 0, outW, outH);
       ctx.restore();
 
-      return berealCanvas.toDataURL("image/webp", 0.84);
+      return berealCanvas.toDataURL("image/jpeg", 0.82);
     }
 
     let currentBerealSelectedVenue = null;
@@ -12443,22 +12473,33 @@
       if (card) card.scrollTop = 0;
     }
 
-    // Helper: Upload base64 image
+    // Helper: Upload base64 image to Supabase Storage Proofs CDN
     async function uploadBase64Image(dataUrl, prefix) {
       if (!dataUrl || !dataUrl.startsWith("data:")) return dataUrl;
       try {
+        const mimeMatch = dataUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,/);
+        const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
+        const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+        const tid = ctrl ? setTimeout(() => ctrl.abort(), 14000) : null;
+
         const upRes = await fetch("/api/upload", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          signal: ctrl ? ctrl.signal : undefined,
           body: JSON.stringify({
             imageBase64: dataUrl,
-            contentType: "image/webp",
+            contentType: mimeType,
             fileName: `${prefix}-${Date.now()}`
           })
         });
+        if (tid) clearTimeout(tid);
+
         if (upRes.ok) {
           const upData = await upRes.json();
           if (upData.url) return upData.url;
+        } else {
+          const errText = await upRes.text();
+          console.warn("[uploadBase64Image] Upload failed:", upRes.status, errText);
         }
       } catch (err) {
         console.warn("Upload fallback error:", err);
@@ -12552,7 +12593,7 @@
         }
 
         btnBerealPublish.disabled = true;
-        btnBerealPublish.innerHTML = `<span>⏳ Opublikuj w Feedzie...</span>`;
+        btnBerealPublish.innerHTML = `<span>⏳ Wysyłanie fotki i meldunku...</span>`;
 
         try {
           // 1. Upload shots
@@ -12560,6 +12601,11 @@
           let selfieUrl = null;
           if (berealShot2) {
             selfieUrl = await uploadBase64Image(berealShot2, "bereal-selfie");
+          }
+
+          // Safety check: if upload failed and we still have massive base64, abort to prevent payload drop
+          if (mainUrl && mainUrl.startsWith("data:") && mainUrl.length > 250000) {
+            throw new Error("Nie udało się przesłać zdjęcia. Sprawdź połączenie z internetem i spróbuj ponownie.");
           }
 
           // 2. Determine venue details & exact coordinates for Apple Find My Map
@@ -12614,38 +12660,80 @@
             awardPassportPoints(25);
           }
 
-          // Update local user state
+          // Update local user state immediately
+          const checkinItem = resData.checkin || {
+            id: resData.postId || ("post_" + currentUser.id + "_" + Date.now()),
+            venue_id: venueId,
+            venue_name: venueName,
+            district: district,
+            latitude: lat,
+            longitude: lng,
+            beer_name: beerName,
+            beer_price: beerPrice,
+            photo_url: mainUrl,
+            selfie_url: selfieUrl,
+            timestamp: Date.now(),
+            created_at: new Date().toISOString()
+          };
+
           if (currentUser) {
             if (!currentUser.user_metadata) currentUser.user_metadata = {};
-            currentUser.user_metadata.last_checkin = {
-              venue_id: venueId,
-              venue_name: venueName,
-              district: district,
-              latitude: lat,
-              longitude: lng,
-              beer_name: beerName,
-              beer_price: beerPrice,
-              photo_url: mainUrl,
-              selfie_url: selfieUrl,
-              timestamp: Date.now()
-            };
+            currentUser.user_metadata.last_checkin = checkinItem;
+            if (!Array.isArray(currentUser.user_metadata.bereal_posts)) {
+              currentUser.user_metadata.bereal_posts = [];
+            }
+            currentUser.user_metadata.bereal_posts.unshift(checkinItem);
           }
 
-          showAppToast("Check-in BeReal zaliczony! 📍🍻", `Jesteś zameldowany w ${venueName} na mapie znajomych!`, "📸", 4500);
+          // Close camera modal
           closeBerealCameraModal();
+
+          // Play haptics
+          if (typeof poileHaptics !== "undefined" && poileHaptics.success) {
+            poileHaptics.success();
+          }
+
+          // Make sure community modal is visible and switch directly to Live Feed tab
+          const commModal = document.getElementById("community-modal");
+          if (commModal) {
+            commModal.style.display = "block";
+            commModal.classList.add("active");
+          }
+          const tabFeed = document.getElementById("tab-comm-feed");
+          if (tabFeed) {
+            tabFeed.click();
+          }
+
+          // Immediately reload live feed
           await loadLiveBarFeed();
+
+          // Scroll feed to top
+          const commPageBody = document.querySelector(".community-page-body");
+          if (commPageBody) commPageBody.scrollTop = 0;
+
+          // Refresh map & friends
           if (typeof initFriendsMap === "function") {
             initFriendsMap();
           }
           if (typeof window.__refreshCommunityFriends === "function") {
             window.__refreshCommunityFriends();
           }
+
+          // If map exists, pan to the checked-in venue
+          if (typeof map !== "undefined" && map && lat && lng) {
+            try {
+              map.setView([lat, lng], 16, { animate: true });
+            } catch (e) {}
+          }
+
+          showAppToast("Opublikowano BeReal! 📸🍻", `Zameldowano w ${venueName}! Twoja fotka jest już na żywo w Feedzie i na mapie.`, "🎉", 4500);
+
         } catch (err) {
           console.error("Publish error:", err);
           showAppToast("Błąd publikacji", err.message || "Spróbuj ponownie za chwilę.", "⚠️");
         } finally {
           btnBerealPublish.disabled = false;
-          btnBerealPublish.innerHTML = `<span>🚀 Opublikuj w Feedzie</span>`;
+          btnBerealPublish.innerHTML = `<span>🚀 Opublikuj na mapie</span>`;
         }
       });
     }

@@ -550,7 +550,7 @@ module.exports = async (req, res) => {
     // =========================================================================
     // 5b. Friends Map 24h & Puls Warszawy Hotspots
     // =========================================================================
-    if (action === "get-friends-map-checkins") {
+    if (action === "get-friends-map-checkins" || action === "get-active-checkins") {
       const { userId } = payload || {};
       let followingIds = Array.isArray(payload?.followingIds) ? payload.followingIds : [];
 
@@ -702,28 +702,40 @@ module.exports = async (req, res) => {
             const legacyPurgeTimestamp = new Date("2026-10-20T19:30:00Z").getTime();
             const postId = "post_" + userId.slice(0, 8) + "_" + now;
 
+            // Protect metadata against excessively large base64 strings
+            let cleanPhotoUrl = photoUrl;
+            let cleanSelfieUrl = selfieUrl;
+            if (cleanPhotoUrl && cleanPhotoUrl.startsWith("data:") && cleanPhotoUrl.length > 200000) {
+              console.warn("[Record Checkin] photoUrl is excessively large base64, dropping to protect metadata");
+              cleanPhotoUrl = null;
+            }
+            if (cleanSelfieUrl && cleanSelfieUrl.startsWith("data:") && cleanSelfieUrl.length > 200000) {
+              cleanSelfieUrl = null;
+            }
+
             const checkinData = {
               id: postId,
               venue_id: venueId,
               venue_name: venueName || "Bar w Warszawie",
               district: district || "Warszawa",
-              latitude: latitude || 52.23,
-              longitude: longitude || 21.01,
+              latitude: Number(latitude) || 52.23,
+              longitude: Number(longitude) || 21.01,
               beer_name: beerName || "Piwo z nalewaka",
-              beer_price: beerPrice || 14.0,
-              photo_url: photoUrl || null,
-              selfie_url: selfieUrl || null,
+              beer_price: Number(beerPrice) || 14.0,
+              photo_url: cleanPhotoUrl || null,
+              selfie_url: cleanSelfieUrl || null,
               timestamp: now,
+              created_at: new Date(now).toISOString(),
               ghost_mode: !!ghostMode
             };
 
             let berealPosts = Array.isArray(meta.bereal_posts)
-              ? meta.bereal_posts.filter(p => p && Number(p.timestamp || 0) >= legacyPurgeTimestamp && (now - Number(p.timestamp || 0) <= 24 * 60 * 60 * 1000))
+              ? meta.bereal_posts.filter(p => p && Number(p.timestamp || 0) >= legacyPurgeTimestamp && (now - Number(p.timestamp || 0) <= 24 * 60 * 60 * 1000) && (!p.photo_url || !p.photo_url.startsWith("data:") || p.photo_url.length < 200000))
               : [];
 
-            if (photoUrl) {
+            if (cleanPhotoUrl) {
               berealPosts.unshift(checkinData);
-              if (berealPosts.length > 50) berealPosts = berealPosts.slice(0, 50);
+              if (berealPosts.length > 20) berealPosts = berealPosts.slice(0, 20);
             }
 
             const putRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(userId)}`, {
@@ -746,7 +758,7 @@ module.exports = async (req, res) => {
               return res.status(500).json({ error: "Nie udało się zapisać meldunku w bazie.", details: errText });
             }
 
-            return res.status(200).json({ success: true, earnedKapsle: earned, totalKapsle: newKapsle, postId });
+            return res.status(200).json({ success: true, earnedKapsle: earned, totalKapsle: newKapsle, postId, checkin: checkinData });
           } else {
             console.error("[Record Checkin] Failed to fetch user profile:", userRes.status);
             return res.status(500).json({ error: "Nie udało się pobrać profilu użytkownika." });
