@@ -2354,15 +2354,13 @@
       }
 
       const openNow = isVenueOpen(venue, nowRender);
-      const distRaw = (venue.district || getCurrentCity().name || "BAR").toUpperCase();
-      const distCode = distRaw.replace(/[^A-ZĄĆĘŁŃÓŚŹŻ]/g, "").slice(0, 3) || "BAR";
       const priceNum = venue.beer_price_pln || 14;
       const tierCls = priceNum <= 12 ? "tier-low" : (priceNum <= 18 ? "tier-mid" : "tier-high");
 
       const hasProof = !!(venue.photo_url || venue.proof_image_url);
       const isVisited = isVenueVisited(venue.id);
       const isFav = isVenueFavorite(venue.id);
-      const visitedChip = isVisited ? `<span style="color:#30D158;font-size:0.68rem;font-weight:800;margin-left:4px;">✓ LOG</span>` : "";
+      const visitedChip = isVisited ? `<span style="color:#30D158;font-size:0.68rem;font-weight:800;margin-left:4px;">✓ BYŁEM</span>` : "";
       const favChip = isFav ? `<span style="color:#fb7185;font-size:0.75rem;margin-left:4px;" title="W Twoich ulubionych">❤️</span>` : "";
       const passChip = (venue.is_partner || venue.pass_partner) ? `<span title="Lokal honoruje kartę poilepiwko Pass (-10%)" style="font-size:12px;margin-left:4px;">🎟️</span>` : "";
       const venueUpdatedChip = (venue.verified_by_venue) ? `<span title="Cennik zaktualizowany bezpośrednio przez personel lokalu" style="color:#30D158;font-size:11px;font-weight:700;margin-left:4px;">✓</span>` : "";
@@ -2371,7 +2369,7 @@
         <div class="ranked-card flighty-ranked-row" onclick="window.__zoomToVenue('${venue.id}')">
           <div class="ranked-pos flighty-rank-col">
             <span class="flighty-rank-num">#${String(idx + 1).padStart(2, "0")}</span>
-            <span class="flighty-dist-iata">${escapeHtml(distCode)}</span>
+            <span class="flighty-dist-iata">TOP</span>
           </div>
           <div class="ranked-info">
             <div class="ranked-name">
@@ -9129,19 +9127,7 @@
       // Flighty Passport Logbook Telemetry Calculation
       try {
         const curCity = getCurrentCity();
-        const cityCodeMap = {
-          warszawa: "WAW",
-          krakow: "KRK",
-          wroclaw: "WRO",
-          trojmiasto: "GDN",
-          poznan: "POZ",
-          lodz: "LCJ",
-          katowice: "KTW",
-          lublin: "LUZ",
-          szczecin: "SZZ",
-          bydgoszcz: "BZG"
-        };
-        const hubCode = cityCodeMap[curCity.id] || (curCity.name || "WAW").slice(0, 3).toUpperCase();
+        const hubCode = (curCity.name || "WARSZAWA").toUpperCase();
         const vCount = isGuest ? 0 : (Array.isArray(visitedVenues) ? visitedVenues.length : 0);
 
         const visitedObjs = isGuest ? [] : (allVenues || []).filter(v => visitedVenues.includes(v.id));
@@ -10831,7 +10817,7 @@
           if (authModal) authModal.style.display = "flex";
           return;
         }
-        showAppToast("Check-in = Piwny BeReal 📸", "Zrób zdjęcie kufla w barze, aby zaliczyć Check-in i pojawić się na mapie Find My!", "📍", 4200);
+        showAppToast("Check-in = Piwny BeReal 📸", "Zrób zdjęcie kufla w barze, aby zaliczyć Check-in i pojawić się na mapie znajomych!", "📍", 4200);
         if (typeof window.__openBerealCamera === "function") {
           window.__openBerealCamera();
         }
@@ -10895,7 +10881,7 @@
       const cityStatLabel = document.getElementById("feed-city-stat-label");
       if (cityStatLabel && venues.length > 0) {
         const openCount = venues.filter(v => isVenueOpen(v, nowDate)).length;
-        cityStatLabel.textContent = openCount > 0 ? `${openCount} OPEN` : `${venues.length} BARÓW`;
+        cityStatLabel.textContent = openCount > 0 ? `${openCount} OTWARTYCH` : `${venues.length} BARÓW`;
       }
 
       const quickPillsStrip = document.getElementById("feed-quick-pills-strip");
@@ -11086,7 +11072,7 @@
           <div class="flighty-feed-empty-card">
             <div class="ff-empty-code">● BRAK MELDUNKÓW · 24H</div>
             <div class="ff-empty-title">Brak relacji w wybranym filtrze z ostatnich 24h</div>
-            <p class="ff-empty-sub">Zrób zdjęcie kufla w barze (BeReal), aby pojawić się na mapie Find My.</p>
+            <p class="ff-empty-sub">Zrób zdjęcie kufla w barze (BeReal), aby pojawić się na mapie znajomych.</p>
           </div>
         `;
         return;
@@ -11124,7 +11110,7 @@
                       <span class="flighty-mini-route">📍 ${escapeHtml(districtLabel)}</span>
                     </div>
                     <div class="bereal-sub-meta">
-                      <span class="${isOpen ? 'ffc-status-open' : 'ffc-status-closed'}">${isOpen ? '● OPEN' : '○ ZAMKNIĘTE'}</span>
+                      <span class="${isOpen ? 'ffc-status-open' : 'ffc-status-closed'}">${isOpen ? '● OTWARTE' : '○ ZAMKNIĘTE'}</span>
                       <span class="bereal-meta-dot">·</span>
                       <span class="bereal-venue-link" onclick="window.__openVenueById('${escapeHtml(venueId)}', '${escapeHtml(venueName)}')">
                         ${escapeHtml(venueName)}
@@ -11162,7 +11148,7 @@
                 <p class="bereal-vibe-caption">${escapeHtml(item.vibe_caption || "Zimny kufel na mieście! 🍻")}</p>
                 <div class="bereal-footer-actions-row">
                   <button type="button" class="feed-btn-map-jump" onclick="window.__focusFindMyByVenue('${escapeHtml(venueId)}', '${escapeHtml(venueName)}', '${escapeHtml(authorName)}')">
-                    🎯 Pokaż w Find My
+                    🎯 Pokaż na mapie
                   </button>
                   <button type="button" class="feed-btn-map-jump secondary" onclick="window.__openVenueById('${escapeHtml(venueId)}', '${escapeHtml(venueName)}')">
                     🧭 Karta baru ↗
@@ -11176,7 +11162,7 @@
           `;
         }
 
-        // Compact Flighty Card for Live Check-in / Price Confirmation
+        // Compact Card for Live Check-in / Price Confirmation
         return `
           <div class="flighty-feed-card" data-post-id="${escapeHtml(item.id)}">
             <div class="ffc-telemetry-bar">
@@ -11191,7 +11177,7 @@
               <div class="ffc-venue-col">
                 <div class="ffc-venue-name">${escapeHtml(item.venue_name)}</div>
                 <div class="ffc-venue-sub">
-                  <span class="${isOpen ? "ffc-status-open" : "ffc-status-closed"}">${isOpen ? "● OPEN" : "○ ZAMKNIĘTE"}</span>
+                  <span class="${isOpen ? "ffc-status-open" : "ffc-status-closed"}">${isOpen ? "● OTWARTE" : "○ ZAMKNIĘTE"}</span>
                   <span class="ffc-dot">·</span>
                   <span>🍺 ${escapeHtml(item.beer_name)}</span>
                 </div>
@@ -11209,7 +11195,7 @@
 
             <div class="ffc-bottom-bar">
               <button type="button" class="ffc-btn-map" onclick="window.__focusFindMyByVenue('${escapeHtml(item.venue_id)}', '${escapeHtml(item.venue_name)}', '${escapeHtml(item.author_name)}')">
-                <span>🎯 Namierz w Find My</span>
+                <span>🎯 Namierz na mapie</span>
               </button>
               <button type="button" class="ffc-btn-map" onclick="window.__openVenueById('${escapeHtml(item.venue_id)}', '${escapeHtml(item.venue_name)}')">
                 <span>🧭 Otwórz bar</span>
@@ -11640,8 +11626,8 @@
       if (countLbl) {
         const realCount = people.filter(p => p.photo_url || p.is_me).length;
         countLbl.textContent = realCount > 0
-          ? `FIND MY · ${people.length} W BARACH (${realCount} 📸)`
-          : `FIND MY · ${people.length} W BARACH`;
+          ? `NA ŻYWO · ${people.length} W BARACH (${realCount} 📸)`
+          : `NA ŻYWO · ${people.length} W BARACH`;
       }
 
       if (stripEl) {
@@ -11689,7 +11675,7 @@
 
     async function loadLiveBarFeed() {
       if (!feedGrid) return;
-      feedGrid.innerHTML = `<div class="loading-state-hint" style="grid-column: 1 / -1; padding: 24px;">Ładowanie relacji i radaru Find My... 📸🍻</div>`;
+      feedGrid.innerHTML = `<div class="loading-state-hint" style="grid-column: 1 / -1; padding: 24px;">Ładowanie relacji i mapy na żywo... 📸🍻</div>`;
 
       let blockedUsers = [];
       try {
@@ -12376,7 +12362,7 @@
             };
           }
 
-          showAppToast("Check-in BeReal zaliczony! 📍🍻", `Jesteś zameldowany w ${venueName} na mapie Find My!`, "📸", 4500);
+          showAppToast("Check-in BeReal zaliczony! 📍🍻", `Jesteś zameldowany w ${venueName} na mapie znajomych!`, "📸", 4500);
           closeBerealCameraModal();
           await loadLiveBarFeed();
           if (typeof initFriendsMap === "function") {
@@ -23533,9 +23519,6 @@
     const closeTimeLabel = todayRange.close;
 
     const curCityObj = getCurrentCity();
-    const cityIataMap = { warszawa: "WAW", krakow: "KRK", wroclaw: "WRO", trojmiasto: "GDN", poznan: "POZ", lodz: "LCJ", katowice: "KTW" };
-    const cityIata = cityIataMap[curCityObj.id] || (curCityObj.name || "WAW").slice(0, 3).toUpperCase();
-    const distIata = ((venue.district || curCityObj.name || "BAR").toUpperCase().replace(/[^A-ZĄĆĘŁŃÓŚŹŻ]/g, "").slice(0, 3)) || "BAR";
 
     let distTelemetryPill = "";
     if (userLocation) {
@@ -23557,9 +23540,9 @@
       <div class="flighty-sheet-header-wrap">
         <div class="flighty-sheet-topbar">
           <div class="flighty-callsign-row">
-            <span class="flighty-callsign-badge">${escapeHtml(cityIata)} ➔ ${escapeHtml(distIata)}</span>
+            <span class="flighty-callsign-badge">📍 ${escapeHtml(venue.district || curCityObj.name)}</span>
             <span class="flighty-callsign-status ${open ? 'status-ontime' : 'status-scheduled'}">
-              ${open ? '● OPEN' : '🕒 START ' + escapeHtml(openTimeLabel)}
+              ${open ? '● OTWARTE' : '🕒 OD ' + escapeHtml(openTimeLabel)}
             </span>
             ${distTelemetryPill}
           </div>

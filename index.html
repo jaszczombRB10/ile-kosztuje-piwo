@@ -80,7 +80,7 @@
   <script defer src="https://cloud.umami.is/script.js" data-website-id="auto" id="umami-analytics-script"></script>
 
   <!-- Custom Styles -->
-  <link rel="stylesheet" href="styles.css?v=155">
+  <link rel="stylesheet" href="styles.css?v=156">
 </head>
 <body>
 
@@ -95,8 +95,8 @@
           </div>
         </a>
 
-        <!-- City Switcher Button (Desktop Header - Jakdojade Style) -->
-        <button type="button" class="city-selector-btn" id="btn-city-desktop" title="Zmień miasto (jak w Jakdojade)">
+        <!-- City Switcher Button (Desktop Header) -->
+        <button type="button" class="city-selector-btn" id="btn-city-desktop" title="Zmień miasto">
           <span class="city-pill-icon">📍</span>
           <span class="city-pill-label" id="desktop-city-label">Warszawa</span>
           <span class="city-pill-caret">▾</span>
@@ -467,7 +467,7 @@
         <div class="flighty-edit-topbar drawer-flighty-topbar">
           <span class="flighty-log-season" style="font-size:0.62rem;">TOP 10</span>
           <div class="flighty-edit-topbar-title">
-            <span class="flighty-edit-eyebrow">FLIGHTY RADAR · CENNIK</span>
+            <span class="flighty-edit-eyebrow">RANKING MIASTA · CENNIK</span>
             <h2>🏆 Ranking Piwa</h2>
           </div>
           <button type="button" id="btn-close-drawer" class="flighty-edit-nav-btn cancel">Zamknij</button>
@@ -500,7 +500,7 @@
       <div class="flighty-edit-topbar">
         <button type="button" class="flighty-edit-nav-btn cancel" onclick="document.getElementById('btn-filter-reset') && document.getElementById('btn-filter-reset').click()">Wyczyść</button>
         <div class="flighty-edit-topbar-title">
-          <span class="flighty-edit-eyebrow">FLIGHTY RADAR · MAPA</span>
+          <span class="flighty-edit-eyebrow">MAPA BARÓW · FILTRY</span>
           <h2>Filtry</h2>
         </div>
         <button type="button" class="flighty-edit-nav-btn save" id="btn-close-filter">Gotowe ✓</button>
@@ -657,10 +657,10 @@
       <div class="flighty-edit-topbar">
         <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-compass">Zamknij</button>
         <div class="flighty-edit-topbar-title">
-          <span class="flighty-edit-eyebrow" id="compass-status-text">FLIGHTY RADAR · GPS</span>
+          <span class="flighty-edit-eyebrow" id="compass-status-text">NAWIGACJA DO BARU · GPS</span>
           <h2>🧭 Piwny Kompas</h2>
         </div>
-        <span class="flighty-log-season" style="font-size:0.62rem;">RADAR</span>
+        <span class="flighty-log-season" style="font-size:0.62rem;">GPS</span>
       </div>
 
       <div class="flighty-edit-form compass-body-wrap">
@@ -772,7 +772,7 @@
       <div class="flighty-edit-topbar">
         <button type="button" id="btn-close-pubcrawl" class="flighty-edit-nav-btn cancel">Zamknij</button>
         <div class="flighty-edit-topbar-title">
-          <span class="flighty-edit-eyebrow">FLIGHTY ROUTE · PLANER</span>
+          <span class="flighty-edit-eyebrow">PLANER WIECZORU · TRASA</span>
           <h2>🍻 Trasa Pub Crawl</h2>
         </div>
         <span class="crawl-city-badge flighty-log-season" id="crawl-city-badge">Warszawa</span>
@@ -913,7 +913,7 @@
       <div class="flighty-edit-topbar">
         <button type="button" id="btn-close-barometer" class="flighty-edit-nav-btn cancel">Zamknij</button>
         <div class="flighty-edit-topbar-title">
-          <span class="flighty-edit-eyebrow">FLIGHTY TELEMETRY · INDEKS</span>
+          <span class="flighty-edit-eyebrow">STATYSTYKI MIASTA · CENNIK</span>
           <h2>📊 Barometr Cenowy</h2>
         </div>
         <span class="flighty-log-season" style="font-size:0.62rem;">0.5L</span>
@@ -988,7 +988,7 @@
       <div class="flighty-edit-topbar">
         <button type="button" class="flighty-edit-nav-btn cancel" id="btn-cancel-modal">Anuluj</button>
         <div class="flighty-edit-topbar-title">
-          <span class="flighty-edit-eyebrow">FLIGHTY RADAR · CENNIK</span>
+          <span class="flighty-edit-eyebrow">BAZA LOKALI · CENNIK</span>
           <h2 id="report-modal-title">➕ Dodaj Nowy Bar</h2>
         </div>
         <button type="submit" form="report-form" class="flighty-edit-nav-btn save">Zapisz ✓</button>
@@ -1239,9 +1239,9 @@
       <div class="bottom-sheet-handle"></div>
     </div>
     <div class="flighty-edit-topbar" style="padding-top:4px;">
-      <span class="flighty-log-season" style="font-size:0.62rem;">RADAR</span>
+      <span class="flighty-log-season" style="font-size:0.62rem;">MIASTO</span>
       <div class="flighty-edit-topbar-title">
-        <span class="flighty-edit-eyebrow">FLIGHTY COCKPIT · NARZĘDZIA</span>
+        <span class="flighty-edit-eyebrow">NARZĘDZIA & ATRAKCJE</span>
         <h2 class="sheet-title">🔥 Odkrywaj Miasto</h2>
       </div>
       <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-discover-sheet" aria-label="Zamknij szufladę">Zamknij</button>
@@ -1335,23 +1335,23 @@
           </div>
           <div class="bento-card-body">
             <h3 class="bento-title">Piwny Anioł Stróż (SOS)</h3>
-            <p class="bento-desc">1 klik do wysłania lokalizacji ekipie, wezwania Ubera, Bolta lub Jakdojade</p>
+            <p class="bento-desc">1 klik do wysłania lokalizacji ekipie i szybkiego powrotu do domu</p>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 3. Quick Action Sheet (Triggered by central ➕ FAB — Flighty + iOS Sheet) -->
+  <!-- 3. Quick Action Sheet (Triggered by central ➕ FAB) -->
   <div class="bottom-sheet-backdrop" id="action-sheet-backdrop" style="display:none;"></div>
   <div class="bottom-sheet action-sheet" id="action-sheet" data-state="closed" style="display:none;">
     <div class="bottom-sheet-handle-wrap" id="action-sheet-handle-wrap">
       <div class="bottom-sheet-handle"></div>
     </div>
     <div class="flighty-edit-topbar" style="padding-top:4px;">
-      <span class="flighty-log-season" style="font-size:0.62rem;">LIVE</span>
+      <span class="flighty-log-season" style="font-size:0.62rem;">NA ŻYWO</span>
       <div class="flighty-edit-topbar-title">
-        <span class="flighty-edit-eyebrow">FLIGHTY ACTION · SKRÓTY</span>
+        <span class="flighty-edit-eyebrow">CO ROBIMY DZIŚ?</span>
         <h2 class="sheet-title">⚡ Szybka Akcja</h2>
       </div>
       <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-action-sheet" aria-label="Zamknij akcje">Zamknij</button>
@@ -1366,7 +1366,7 @@
           <div class="action-item-icon">📸</div>
           <div class="action-item-info">
             <strong>Check-in BeReal w barze</strong>
-            <span>Zrób zdjęcie kufla i oznacz się na żywo na mapie Find My 24h</span>
+            <span>Zrób zdjęcie kufla i oznacz się na żywo na mapie znajomych 24h</span>
           </div>
           <span class="action-item-caret">→</span>
         </button>
@@ -1485,13 +1485,13 @@
     </button>
   </nav>
 
-  <!-- City Switcher Modal (Flighty Hub Selector) -->
+  <!-- City Switcher Modal -->
   <div class="modal-backdrop" id="city-switcher-modal" style="display:none;">
     <div class="modal-card city-switcher-card flighty-edit-profile-sheet">
       <div class="flighty-edit-topbar">
         <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-city-switcher" aria-label="Zamknij okno">Zamknij</button>
         <div class="flighty-edit-topbar-title">
-          <span class="flighty-edit-eyebrow">FLIGHTY HUB · POLSKA</span>
+          <span class="flighty-edit-eyebrow">PO ILE PIWKO · POLSKA</span>
           <h2>📍 Wybierz miasto</h2>
         </div>
         <span style="min-width:64px;text-align:right;font-size:0.7rem;color:#30D158;font-weight:800;font-family:ui-monospace,monospace;">GPS</span>
@@ -1518,12 +1518,12 @@
     </div>
   </div>
 
-  <!-- Age Gate Verification Modal (18+ Wymóg Prawa Polskiego — Flighty Verify Sheet) -->
+  <!-- Age Gate Verification Modal (18+ Wymóg Prawa Polskiego) -->
   <div class="modal-backdrop age-gate-backdrop" id="age-gate-modal">
     <div class="modal-card age-gate-card flighty-edit-profile-sheet">
       <div class="flighty-edit-form" style="align-items:center;text-align:center;padding-top:22px;">
         <div class="age-gate-icon">🔞</div>
-        <span class="flighty-edit-eyebrow">FLIGHTY VERIFY · 18+ POLSKA</span>
+        <span class="flighty-edit-eyebrow">PO ILE PIWKO · 18+</span>
         <h2 class="age-gate-title" style="margin:2px 0 4px;">Weryfikacja wieku (18+)</h2>
         <p class="age-gate-desc">
           Serwis <strong>„poilepiwko”</strong> zawiera informacje o ofercie i cenach napojów alkoholowych w lokalach gastronomicznych w Polsce.
@@ -1562,7 +1562,7 @@
       <div class="flighty-edit-topbar">
         <button type="button" id="btn-close-legal" class="flighty-edit-nav-btn cancel" aria-label="Zamknij">Zamknij</button>
         <div class="flighty-edit-topbar-title">
-          <span class="flighty-edit-eyebrow">FLIGHTY LEGAL · DSA & RODO</span>
+          <span class="flighty-edit-eyebrow">INFORMACJE PRAWNE · 18+</span>
           <h2>⚖️ Regulamin & Zasady</h2>
         </div>
         <span class="flighty-log-season" style="font-size:0.62rem;">18+</span>
@@ -1739,16 +1739,16 @@
     </div>
   </div>
 
-  <!-- PWA iOS Safari Install Guide Modal (Flighty Sheet) -->
+  <!-- PWA iOS Safari Install Guide Modal -->
   <div class="modal-backdrop" id="pwa-ios-modal">
     <div class="modal-card pwa-ios-card flighty-edit-profile-sheet">
       <div class="flighty-edit-topbar">
         <button type="button" id="btn-close-pwa-ios" class="flighty-edit-nav-btn cancel">Zamknij</button>
         <div class="flighty-edit-topbar-title">
-          <span class="flighty-edit-eyebrow">FLIGHTY APP · iOS SAFARI</span>
+          <span class="flighty-edit-eyebrow">PO ILE PIWKO · APLIKACJA</span>
           <h2>📲 Instalacja na iPhone</h2>
         </div>
-        <span class="flighty-log-season" style="font-size:0.62rem;">PWA</span>
+        <span class="flighty-log-season" style="font-size:0.62rem;">iOS</span>
       </div>
       <div class="pwa-ios-body flighty-edit-form">
         <div class="pwa-ios-app-header">
@@ -1807,13 +1807,13 @@
     </div>
   </div>
 
-  <!-- Happy Hours & Promo Calendar Modal (Flighty + iOS Sheet) -->
+  <!-- Happy Hours & Promo Calendar Modal -->
   <div class="modal-backdrop" id="happyhour-modal">
     <div class="modal-card modal-card-wide happyhour-modal-card flighty-edit-profile-sheet">
       <div class="flighty-edit-topbar">
         <button type="button" id="btn-close-happyhour" class="flighty-edit-nav-btn cancel">Zamknij</button>
         <div class="flighty-edit-topbar-title">
-          <span class="flighty-edit-eyebrow">FLIGHTY DEALS · LIVE</span>
+          <span class="flighty-edit-eyebrow">PROMOCJE W BARACH · NA ŻYWO</span>
           <h2>⚡ Happy Hours</h2>
         </div>
         <span class="flighty-log-season" style="font-size:0.62rem;">PROMKI</span>
@@ -1857,13 +1857,13 @@
     </div>
   </div>
 
-  <!-- Piwny Paszport Modal (Flighty Logbook Sheet) -->
+  <!-- Piwny Paszport Modal -->
   <div class="modal-backdrop" id="passport-modal">
     <div class="modal-card modal-card-wide passport-modal-card flighty-edit-profile-sheet">
       <div class="flighty-edit-topbar">
         <button type="button" id="btn-close-passport" class="flighty-edit-nav-btn cancel">Zamknij</button>
         <div class="flighty-edit-topbar-title">
-          <span class="flighty-edit-eyebrow">FLIGHTY LOGBOOK · SEZON 2026</span>
+          <span class="flighty-edit-eyebrow">MOJA KOLEKCJA · SEZON 2026</span>
           <h2>🎖️ Paszport Piwosza</h2>
         </div>
         <button type="button" class="flighty-edit-nav-btn save" onclick="document.getElementById('btn-share-passport') && document.getElementById('btn-share-passport').click()">Udostępnij</button>
@@ -1937,13 +1937,13 @@
     </div>
   </div>
 
-  <!-- Auth Modal: Login / Register / Reset Password (Flighty + iOS Native Sheet) -->
+  <!-- Auth Modal: Login / Register / Reset Password -->
   <div class="modal-backdrop" id="auth-modal">
     <div class="modal-card auth-modal-card flighty-edit-profile-sheet">
       <div class="flighty-edit-topbar">
         <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-auth">Zamknij</button>
         <div class="flighty-edit-topbar-title">
-          <span class="flighty-edit-eyebrow">FLIGHTY PASS · ID</span>
+          <span class="flighty-edit-eyebrow">KONTO PIWOSZA</span>
           <h2 id="auth-modal-title">Twoje Konto</h2>
         </div>
         <span style="min-width:64px;text-align:right;font-size:1.1rem;">🍺</span>
@@ -2115,13 +2115,13 @@
     </div>
   </div>
 
-  <!-- Modal: Wybór nicku po pierwszym logowaniu przez Google (Flighty + iOS Native Sheet) -->
+  <!-- Modal: Wybór nicku po pierwszym logowaniu przez Google -->
   <div class="modal-backdrop" id="onboarding-username-modal" style="display:none; z-index: 10050;">
     <div class="modal-card auth-modal-card flighty-edit-profile-sheet">
       <div class="flighty-edit-topbar">
         <span style="min-width:64px;font-size:1.1rem;">🍻</span>
         <div class="flighty-edit-topbar-title">
-          <span class="flighty-edit-eyebrow">FLIGHTY PASS · START</span>
+          <span class="flighty-edit-eyebrow">NOWY PROFIL</span>
           <h2>Witaj w poilepiwko!</h2>
         </div>
         <button type="submit" form="form-onboarding-username" class="flighty-edit-nav-btn save">Dalej ✓</button>
@@ -2188,7 +2188,7 @@
     </div>
   </div>
 
-  <!-- User Profile Modal (Flighty + iOS Native Sheet) -->
+  <!-- User Profile Modal -->
   <div class="modal-backdrop" id="profile-modal">
     <div class="modal-card modal-card-goin profile-modal-card flighty-edit-profile-sheet">
       
@@ -2196,7 +2196,7 @@
       <div class="flighty-edit-topbar">
         <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-profile" aria-label="Zamknij profil">Zamknij</button>
         <div class="flighty-edit-topbar-title">
-          <span class="flighty-edit-eyebrow">FLIGHTY PASS · PROFIL</span>
+          <span class="flighty-edit-eyebrow">TWÓJ PASZPORT</span>
           <h2>Twój Profil</h2>
         </div>
         <div class="goin-header-actions" style="display:flex;align-items:center;gap:6px;">
@@ -2270,20 +2270,20 @@
           </div>
         </div>
 
-        <!-- Flighty-Style Passport Logbook Telemetry Card -->
+        <!-- Passport Stats Card -->
         <div class="flighty-passport-logbook" id="flighty-passport-logbook" style="margin:0;">
           <div class="flighty-log-header">
             <div class="flighty-log-brand">
               <span class="flighty-log-emblem">🛂</span>
-              <span>PASZPORT PIWOSZA · LOGBOOK</span>
+              <span>PASZPORT PIWOSZA · STATYSTYKI</span>
             </div>
             <span class="flighty-log-season" id="flighty-log-season">SEZON 2026</span>
           </div>
 
           <div class="flighty-route-strip">
             <div class="flighty-route-node">
-              <span class="route-node-lbl">BAZA (HUB)</span>
-              <strong class="route-node-code" id="flighty-hub-code">WAW</strong>
+              <span class="route-node-lbl">TWOJE MIASTO</span>
+              <strong class="route-node-code" id="flighty-hub-code">WARSZAWA</strong>
             </div>
             <div class="flighty-route-line">
               <span class="route-line-dash"></span>
@@ -2291,7 +2291,7 @@
               <span class="route-line-dash"></span>
             </div>
             <div class="flighty-route-node align-right">
-              <span class="route-node-lbl">GŁÓWNY REWIR</span>
+              <span class="route-node-lbl">ULUBIONY REWIR</span>
               <strong class="route-node-code" id="flighty-top-dist">CENTRUM</strong>
             </div>
           </div>
@@ -2399,13 +2399,13 @@
     </div>
   </div>
 
-  <!-- Modal: Potwierdzenie Usunięcia Konta (Apple Guideline 5.1.1(v) — Flighty Sheet) -->
+  <!-- Modal: Potwierdzenie Usunięcia Konta (Apple Guideline 5.1.1(v)) -->
   <div class="modal-backdrop" id="delete-account-modal" style="display:none; z-index: 10200;">
     <div class="modal-card modal-card-danger flighty-edit-profile-sheet">
       <div class="flighty-edit-topbar">
         <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-delete-account-modal" aria-label="Zamknij">Anuluj</button>
         <div class="flighty-edit-topbar-title">
-          <span class="flighty-edit-eyebrow" style="color:#f87171;">FLIGHTY PASS · RODO</span>
+          <span class="flighty-edit-eyebrow" style="color:#f87171;">USTAWIENIA KONTA · RODO</span>
           <h2>⚠️ Usuń konto i dane</h2>
         </div>
         <span class="flighty-log-season" style="font-size:0.62rem;">RODO</span>
@@ -2456,7 +2456,7 @@
       <div class="flighty-edit-topbar">
         <button type="button" class="flighty-edit-nav-btn cancel" id="btn-cancel-edit-profile">Anuluj</button>
         <div class="flighty-edit-topbar-title">
-          <span class="fet-eyebrow">PASZPORT ID</span>
+          <span class="fet-eyebrow">USTAWIENIA PROFILU</span>
           <h2>Edytuj profil</h2>
         </div>
         <button type="submit" form="form-edit-profile" class="flighty-edit-nav-btn save">Zapisz</button>
@@ -2530,11 +2530,11 @@
           </div>
         </div>
 
-        <!-- Group 2: Beer & District Telemetry -->
+        <!-- Group 2: Beer & District Preferences -->
         <div class="flighty-edit-section">
           <div class="flighty-edit-sec-header">
-            <span>PREFERENCJE & TELEMETRIA</span>
-            <span>WIDOCZNE W PASZPORCIE</span>
+            <span>ULUBIONE PIWO & KLIMAT</span>
+            <span>WIDOCZNE W PROFILU</span>
           </div>
           <div class="flighty-edit-table">
             <div class="flighty-edit-row">
@@ -2569,7 +2569,7 @@
     </div>
   </div>
 
-  <!-- Piwny Pub Quiz Modal (Flighty + iOS Sheet) -->
+  <!-- Piwny Pub Quiz Modal -->
   <div class="modal-backdrop" id="pubquiz-modal">
     <div class="modal-card modal-card-goin pubquiz-modal-card flighty-edit-profile-sheet">
       
@@ -2577,7 +2577,7 @@
       <div class="flighty-edit-topbar">
         <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-pubquiz" aria-label="Zamknij Pub Quiz">Zamknij</button>
         <div class="flighty-edit-topbar-title">
-          <span class="flighty-edit-eyebrow">FLIGHTY TRIVIA · GRA</span>
+          <span class="flighty-edit-eyebrow">QUIZ BAROWY · GRA</span>
           <h2>🧠 Piwny Pub Quiz</h2>
         </div>
         <span class="flighty-log-season" style="font-size:0.62rem;">QUIZ</span>
@@ -2770,14 +2770,14 @@
     </div>
   </div>
 
-  <!-- Community & Friends Full-Screen Native Page View ("Piwni Znajomi" — Flighty Social) -->
+  <!-- Community & Friends Full-Screen Native Page View ("Piwni Znajomi") -->
   <div class="app-page-view flighty-page-view" id="community-modal" style="display:none;">
     <div class="community-page-container">
       <!-- Native Page Top App Bar -->
       <div class="flighty-edit-topbar community-page-header">
         <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-community" title="Wróć do mapy">← Mapa</button>
         <div class="flighty-edit-topbar-title">
-          <span class="flighty-edit-eyebrow" id="community-header-sub">FLIGHTY SOCIAL · LIVE</span>
+          <span class="flighty-edit-eyebrow" id="community-header-sub">PIWNI ZNAJOMI · NA ŻYWO</span>
           <h2>Społeczność & Ekipa</h2>
         </div>
         <button type="button" class="flighty-edit-nav-btn save" id="btn-header-qr-code" title="Pokaż mój kod QR">📱 QR</button>
@@ -2923,9 +2923,9 @@
               <div class="findmy-map-hud-top">
                 <div class="findmy-hud-pill live-beacon-pill">
                   <span class="findmy-green-beacon"></span>
-                  <span class="findmy-hud-code" id="findmy-active-count-lbl">FIND MY · LIVE</span>
+                  <span class="findmy-hud-code" id="findmy-active-count-lbl">NA ŻYWO · EKIPA W BARACH</span>
                 </div>
-                <span class="findmy-hud-pill city-stat-pill" id="feed-city-stat-label">OPEN</span>
+                <span class="findmy-hud-pill city-stat-pill" id="feed-city-stat-label">OTWARTE</span>
               </div>
 
               <!-- Floating Bottom Map Controls -->
@@ -3025,16 +3025,16 @@
   </div>
 </div>
 
-  <!-- Public User Card Modal (Podgląd profilu innego użytkownika / znajomego — Flighty Sheet) -->
+  <!-- Public User Card Modal (Podgląd profilu innego użytkownika / znajomego) -->
   <div class="modal-backdrop" id="public-profile-modal">
     <div class="modal-card public-profile-card flighty-edit-profile-sheet">
       <div class="flighty-edit-topbar">
         <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-public-profile">Zamknij</button>
         <div class="flighty-edit-topbar-title">
-          <span class="flighty-edit-eyebrow">FLIGHTY PASS · PIWOSZ</span>
+          <span class="flighty-edit-eyebrow">PROFIL UŻYTKOWNIKA</span>
           <h2>Profil Piwosza</h2>
         </div>
-        <span class="flighty-log-season" style="font-size:0.62rem;">ID</span>
+        <span class="flighty-log-season" style="font-size:0.62rem;">PASZPORT</span>
       </div>
 
       <div class="flighty-edit-form">
@@ -3141,26 +3141,26 @@
     </div>
   </div>
 
-  <!-- Modal: Instagram Story Card Preview (Flighty Sheet) -->
+  <!-- Modal: Instagram Story Card Preview -->
   <div class="modal-backdrop" id="story-card-modal" style="display:none; z-index: 10200;">
     <div class="modal-card modal-card-story flighty-edit-profile-sheet">
       <div class="flighty-edit-topbar">
         <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-story-modal" aria-label="Zamknij podgląd Story">Zamknij</button>
         <div class="flighty-edit-topbar-title">
-          <span class="flighty-edit-eyebrow">FLIGHTY SHARE · 9:16</span>
+          <span class="flighty-edit-eyebrow">UDOSTĘPNIJ NA STORY · 9:16</span>
           <h2>📸 Karta na Story</h2>
         </div>
         <span class="flighty-log-season" style="font-size:0.62rem;">PNG</span>
       </div>
 
       <div class="flighty-edit-form">
-        <!-- Story Card Mode Switch (Poster 9:16 vs Strava-style Transparent Sticker) -->
+        <!-- Story Card Mode Switch (Poster 9:16 vs Transparent Sticker) -->
         <div class="story-mode-switch" id="story-mode-switch" style="margin:0;">
           <button type="button" class="story-mode-tab active" data-story-mode="poster">
             <span>🖼️ Plakat 9:16</span>
           </button>
           <button type="button" class="story-mode-tab" data-story-mode="sticker">
-            <span>✨ Naklejka (Strava PNG)</span>
+            <span>✨ Przezroczysta naklejka (PNG)</span>
           </button>
         </div>
 
@@ -3191,13 +3191,13 @@
     </div>
   </div>
 
-  <!-- Modal: Wirtualna Karta Klubowa (PoIlePiwko Pass — Flighty Sheet) -->
+  <!-- Modal: Wirtualna Karta Klubowa (PoIlePiwko Pass) -->
   <div class="modal-backdrop" id="club-card-modal" style="display:none; z-index: 10220;">
     <div class="modal-card modal-card-club-pass flighty-edit-profile-sheet">
       <div class="flighty-edit-topbar">
         <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-club-modal" aria-label="Zamknij kartę">Zamknij</button>
         <div class="flighty-edit-topbar-title">
-          <span class="flighty-edit-eyebrow">FLIGHTY PASS · -10% RABAT</span>
+          <span class="flighty-edit-eyebrow">KARTA KLUBOWA · -10% RABAT</span>
           <h2>💳 PoIlePiwko Pass</h2>
         </div>
         <span class="flighty-log-season" style="font-size:0.62rem;">VIP</span>
@@ -3313,13 +3313,13 @@
     </div>
   </div>
 
-  <!-- Modal: Piwna Ruletka ("Wylosuj bar na dziś" — Flighty + iOS Sheet) -->
+  <!-- Modal: Piwna Ruletka ("Wylosuj bar na dziś") -->
   <div class="modal-backdrop" id="roulette-modal" style="display:none; z-index: 10250;">
     <div class="modal-card modal-card-roulette flighty-edit-profile-sheet">
       <div class="flighty-edit-topbar">
         <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-roulette" aria-label="Zamknij Ruletkę">Zamknij</button>
         <div class="flighty-edit-topbar-title">
-          <span class="flighty-edit-eyebrow">FLIGHTY RADAR · LOSOWANIE</span>
+          <span class="flighty-edit-eyebrow">GDZIE IDZIEMY DZIŚ?</span>
           <h2>🎲 Piwna Ruletka</h2>
         </div>
         <span style="min-width:64px;text-align:right;font-size:1.1rem;">🎰</span>
@@ -3416,7 +3416,7 @@
       <div class="flighty-edit-topbar">
         <button type="button" class="flighty-edit-nav-btn cancel" onclick="document.getElementById('btn-close-crawl-complete') && document.getElementById('btn-close-crawl-complete').click()">Zamknij</button>
         <div class="flighty-edit-topbar-title">
-          <span class="flighty-edit-eyebrow">FLIGHTY ROUTE · META</span>
+          <span class="flighty-edit-eyebrow">TRASA UKOŃCZONA!</span>
           <h2>🏆 Crawl Ukończony!</h2>
         </div>
         <span class="flighty-log-season" style="font-size:0.62rem;">META</span>
@@ -3546,16 +3546,16 @@
     </div>
   </div>
 
-  <!-- Modal: QR Code Share Modal (Flighty Sheet) -->
+  <!-- Modal: QR Code Share Modal -->
   <div class="modal-backdrop" id="qr-share-modal" style="display:none; z-index: 10280;">
     <div class="modal-card qr-modal-card flighty-edit-profile-sheet">
       <div class="flighty-edit-topbar">
         <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-qr-modal">Zamknij</button>
         <div class="flighty-edit-topbar-title">
-          <span class="flighty-edit-eyebrow">FLIGHTY PASS · KOD QR</span>
+          <span class="flighty-edit-eyebrow">ZAPROŚ DO EKIPY · KOD QR</span>
           <h2>📱 Twój Kod QR</h2>
         </div>
-        <span class="flighty-log-season" style="font-size:0.62rem;">SCAN</span>
+        <span class="flighty-log-season" style="font-size:0.62rem;">KOD QR</span>
       </div>
       <div class="qr-code-body flighty-edit-form" style="align-items:center;text-align:center;">
         <div class="qr-code-frame">
@@ -3634,7 +3634,7 @@
           <div class="flighty-edit-section">
             <div class="flighty-edit-sec-header">
               <span>SZCZEGÓŁY MELDUNKU · RADAR 24H</span>
-              <span class="flighty-edit-sec-hint">FIND MY</span>
+              <span class="flighty-edit-sec-hint">24H NA MAPIE</span>
             </div>
             <div class="flighty-edit-table">
               <div class="flighty-edit-row">
@@ -3675,13 +3675,13 @@
     </div>
   </div>
 
-  <!-- Modal: Piwny Anioł Stróż / SOS Ekipa Modal (Flighty Guard Sheet) -->
+  <!-- Modal: Piwny Anioł Stróż / SOS Ekipa Modal -->
   <div class="modal-backdrop" id="sos-modal" style="display:none; z-index: 10350;">
     <div class="modal-card sos-modal-card flighty-edit-profile-sheet">
       <div class="flighty-edit-topbar">
         <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-sos-modal">Zamknij</button>
         <div class="flighty-edit-topbar-title">
-          <span class="flighty-edit-eyebrow" style="color:#f87171;">FLIGHTY GUARD · NOCNY POWRÓT</span>
+          <span class="flighty-edit-eyebrow" style="color:#f87171;">POMOC & NOCNY POWRÓT</span>
           <h2>🛡️ Bezpieczny Powrót</h2>
         </div>
         <span style="min-width:64px;text-align:right;font-size:1.1rem;">🚨</span>
@@ -3775,16 +3775,16 @@
     </div>
   </div>
 
-  <!-- Modal: Zgłaszanie Treści & Blokowanie Użytkownika (Apple UGC Guideline 1.2 — Flighty Sheet) -->
+  <!-- Modal: Zgłaszanie Treści & Blokowanie Użytkownika (Apple UGC Guideline 1.2) -->
   <div class="modal-backdrop" id="ugc-report-modal" style="display:none; z-index: 10250;">
     <div class="modal-card ugc-report-modal-card flighty-edit-profile-sheet">
       <div class="flighty-edit-topbar">
         <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-ugc-report" aria-label="Zamknij">Anuluj</button>
         <div class="flighty-edit-topbar-title">
-          <span class="flighty-edit-eyebrow" id="ugc-report-modal-sub" style="color:#f87171;">FLIGHTY GUARD · MODERACJA</span>
+          <span class="flighty-edit-eyebrow" id="ugc-report-modal-sub" style="color:#f87171;">MODERACJA TREŚCI</span>
           <h2 id="ugc-report-modal-title">🚩 Zgłoś treść</h2>
         </div>
-        <span class="flighty-log-season" style="font-size:0.62rem;">DSA</span>
+        <span class="flighty-log-season" style="font-size:0.62rem;">18+</span>
       </div>
 
       <div class="ugc-report-body flighty-edit-form">
@@ -3855,6 +3855,6 @@
   <script src="moderation.js"></script>
 
   <!-- Main Application Logic -->
-  <script src="app.js?v=155"></script>
+  <script src="app.js?v=156"></script>
 </body>
 </html>
