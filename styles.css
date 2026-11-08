@@ -3470,10 +3470,11 @@ header,
 @media (min-width: 641px) {
   /* Floating Top Island Centered */
   .mobile-floating-top {
-    left: 0 !important;
-    right: 0 !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
     width: 580px !important;
     max-width: calc(100vw - 40px) !important;
     top: 20px !important;
@@ -3481,18 +3482,19 @@ header,
 
   /* Floating Bottom Nav Dock Centered */
   .mobile-bottom-nav {
-    left: 0 !important;
-    right: 0 !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
     width: 480px !important;
     max-width: calc(100vw - 40px) !important;
     bottom: 20px !important;
-    height: 60px !important;
-    padding: 6px 16px !important;
-    border-radius: 30px !important;
+    height: 62px !important;
+    padding: 6px 18px !important;
+    border-radius: 32px !important;
     border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 16px 44px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.12) !important;
   }
 
   /* Floating Add Pill on Desktop (Bottom Left) */
@@ -3570,10 +3572,11 @@ header,
 
   /* Desktop Search Sheet */
   .mobile-search-sheet {
-    left: 0 !important;
-    right: 0 !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
     width: 580px !important;
     max-width: calc(100vw - 40px) !important;
     top: 20px !important;
@@ -18977,6 +18980,9 @@ input, select, textarea {
     width: 480px !important;
     max-width: calc(100vw - 40px) !important;
     left: 50% !important;
+    right: auto !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
     transform: translateX(-50%) !important;
     bottom: 20px !important;
     border-radius: 32px !important;
