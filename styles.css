@@ -11495,18 +11495,21 @@ header,
 
 .filter-modal-card {
   max-width: 480px;
-  padding: 20px 18px 20px 18px;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
 }
 
 .filter-modal-content {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  margin-bottom: 18px;
-  max-height: 62vh;
+  margin: 0;
+  flex: 1 1 auto;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding-right: 4px;
+  padding: 16px 18px 20px 18px;
 }
 
 .filter-section {
@@ -26686,10 +26689,46 @@ body.theme-light .venue-chip.chip-receipt-ok {
   width: 100% !important;
 }
 
+#filter-modal .filter-modal-card {
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+#filter-modal .flighty-edit-topbar {
+  flex-shrink: 0 !important;
+}
+
+#filter-modal .filter-modal-content {
+  flex: 1 1 auto !important;
+  max-height: none !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  padding: 14px 16px 20px 16px !important;
+  margin: 0 !important;
+  gap: 14px !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+}
+
 #filter-modal .filter-modal-footer {
-  padding: 12px 16px 16px 16px !important;
-  background: rgba(11, 11, 16, 0.94) !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  flex-shrink: 0 !important;
+  position: sticky !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 12px 16px calc(14px + env(safe-area-inset-bottom, 14px)) 16px !important;
+  background: rgba(11, 11, 16, 0.95) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.45) !important;
+  z-index: 50 !important;
   box-sizing: border-box !important;
 }
 
@@ -27235,6 +27274,54 @@ body.theme-light #beer-compass-modal .compass-venue-panel {
     overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch !important;
     transform: none !important;
+  }
+
+  /* Native Sticky Bottom Layout for #filter-modal — Eliminates empty space below CTA */
+  #filter-modal.modal-backdrop > .modal-card,
+  #filter-modal .filter-modal-card.flighty-edit-profile-sheet {
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    min-height: 100dvh !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+  }
+
+  #filter-modal .filter-modal-content {
+    flex: 1 1 auto !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding: 14px 16px 24px 16px !important;
+    margin: 0 !important;
+  }
+
+  #filter-modal .filter-modal-footer {
+    position: sticky !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    flex-shrink: 0 !important;
+    margin: 0 !important;
+    padding: 12px 16px calc(14px + env(safe-area-inset-bottom, 16px)) 16px !important;
+    background: rgba(11, 11, 16, 0.96) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.5) !important;
+    z-index: 60 !important;
+    box-sizing: border-box !important;
+  }
+
+  body.theme-light #filter-modal .filter-modal-footer {
+    background: rgba(255, 255, 255, 0.96) !important;
+    border-top: 1px solid #cbd5e1 !important;
+    box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.08) !important;
   }
 
   /* Age Gate Splash Screen Centered Cleanly Inside Full Page */
