@@ -388,16 +388,16 @@
       if (idx !== -1) {
         this.stack.splice(idx, 1);
         if (window.history.state && window.history.state.poileModalId === id) {
-          this.isHandlingPopstate = true;
+          const prev = this.stack.length > 0 ? this.stack[this.stack.length - 1] : null;
           try {
-            window.history.back();
+            window.history.replaceState(prev ? { poileModalId: prev.id, depth: this.stack.length } : null, "");
           } catch (e) {}
-          setTimeout(() => { this.isHandlingPopstate = false; }, 100);
         }
       }
     },
 
     handlePopstate(event) {
+      if (this.isHandlingPopstate) return;
       if (this.stack.length > 0) {
         const top = this.stack.pop();
         if (top && typeof top.closeFn === "function") {
@@ -5723,9 +5723,15 @@
       }
     }
 
-    function openEditModal(venueId, autoScanReceipt = false) {
-      const venue = allVenues.find(v => v.id === venueId);
+    function openEditModal(venueOrId, autoScanReceipt = false) {
+      const venue = (venueOrId && typeof venueOrId === "object")
+        ? venueOrId
+        : allVenues.find(v => String(v.id) === String(venueOrId) || (v.osm_id && String(v.osm_id) === String(venueOrId)));
       if (!venue) return;
+
+      if (typeof window.__closeVenueSheet === "function") {
+        window.__closeVenueSheet();
+      }
 
       currentEditVenue = venue;
       if (reportForm) reportForm.reset();
@@ -5776,6 +5782,7 @@
       if (modal) {
         modal.classList.add("active");
         modal.style.display = "flex";
+        document.body.classList.add("modal-open");
       }
       if (typeof ModalHistoryManager !== "undefined") {
         ModalHistoryManager.push("report-modal", closeModal);
@@ -5797,6 +5804,7 @@
       if (modal) {
         modal.classList.remove("active");
         modal.style.display = "none";
+        document.body.classList.remove("modal-open");
       }
       if (typeof ModalHistoryManager !== "undefined") {
         ModalHistoryManager.pop("report-modal");
@@ -24482,13 +24490,7 @@
         const distM = Math.round(distKm * 1000);
         const walkMin = Math.max(1, Math.round((distKm / 4.8) * 60));
         distTelemetryPill = `<span class="flighty-dist-chip">🚶 ${distM < 1000 ? distM + " m" : distKm.toFixed(1) + " km"} · ${walkMin} min</span>`;
-      } else if (curCityObj && typeof curCityObj.lat === "number" && typeof curCityObj.lng === "number") {
-        const centerKm = calculateDistanceKm(curCityObj.lat, curCityObj.lng, venue.latitude, venue.longitude);
-        distTelemetryPill = `<span class="flighty-dist-chip">📍 ${centerKm < 1 ? Math.round(centerKm * 1000) + " m" : centerKm.toFixed(1) + " km"} od centrum</span>`;
       }
-    } else if (curCityObj && typeof curCityObj.lat === "number" && typeof curCityObj.lng === "number") {
-      const centerKm = calculateDistanceKm(curCityObj.lat, curCityObj.lng, venue.latitude, venue.longitude);
-      distTelemetryPill = `<span class="flighty-dist-chip">📍 ${centerKm < 1 ? Math.round(centerKm * 1000) + " m" : centerKm.toFixed(1) + " km"} od centrum</span>`;
     }
 
     headerEl.innerHTML = `
@@ -24602,33 +24604,7 @@
       `;
     }
 
-    // 1-Click Price Verification Card + Community Trust & Freshness Telemetry
-    const votesCount = Math.max(venue.is_verified ? 1 : 0, parseInt(venue.votes_confirm || 0, 10) || 0);
-    const rawDateStr = venue.last_verified_at || venue.receipt_date || venue.last_updated || "";
-    let formattedFreshness = "w tym sezonie";
-    if (rawDateStr) {
-      const parsedTs = Date.parse(rawDateStr);
-      if (!isNaN(parsedTs)) {
-        const diffDays = Math.max(0, Math.floor((Date.now() - parsedTs) / (1000 * 60 * 60 * 24)));
-        if (diffDays === 0) formattedFreshness = "dzisiaj";
-        else if (diffDays === 1) formattedFreshness = "wczoraj";
-        else if (diffDays <= 30) formattedFreshness = `${diffDays} dni temu`;
-        else {
-          const dObj = new Date(parsedTs);
-          formattedFreshness = dObj.toLocaleDateString("pl-PL", { day: "2-digit", month: "short", year: "numeric" });
-        }
-      }
-    }
-    const isHighTrust = Boolean(venue.verified_by_receipt || venue.is_verified || votesCount >= 1);
-    const trustBadgeClass = venue.verified_by_receipt
-      ? "verified-receipt"
-      : (isHighTrust ? "verified-community" : "unverified");
-    const trustBadgeLabel = venue.verified_by_receipt
-      ? `🧾 Zweryfikowana paragonem AI (${votesCount} potw.)`
-      : (isHighTrust
-        ? `🛡️ Zweryfikowana przez społeczność (${votesCount} ${votesCount === 1 ? "głos" : (votesCount < 5 ? "głosy" : "głosów")})`
-        : `📊 Cena orientacyjna — potwierdź na miejscu`);
-
+    // 1-Click Price Verification Card
     const verifyCardHtml = `
       <div class="waze-verify-card flighty-waze-verify-card" id="waze-card-${venue.id}">
         <div class="flighty-waze-head">
@@ -24642,13 +24618,9 @@
           <button type="button" class="btn-waze-change flighty-waze-btn-change" id="btn-waze-change-${venue.id}">
             👎 Nieaktualna / Zmień
           </button>
-          <button type="button" class="btn-waze-scan flighty-waze-btn-scan" onclick="window.__editVenuePrice('${venue.id}', true)">
+          <button type="button" class="btn-waze-scan flighty-waze-btn-scan" id="btn-waze-scan-${venue.id}">
             🧾 Skaner AI
           </button>
-        </div>
-        <div class="waze-trust-meta-row">
-          <span class="waze-trust-badge ${trustBadgeClass}" id="waze-trust-badge-${venue.id}">${trustBadgeLabel}</span>
-          <span class="waze-trust-date" id="waze-trust-date-${venue.id}">🕒 Sprawdzone: ${escapeHtml(formattedFreshness)}</span>
         </div>
         <div class="waze-quick-price-selector" id="waze-selector-${venue.id}" style="display:none; margin-top:6px;">
           <div class="flighty-waze-selector-lbl">Dotknij aktualną cenę za 0.5L z kranu:</div>
@@ -24664,37 +24636,6 @@
         </div>
       </div>
     `;
-
-    // District Price Benchmark ("TO COŚ" Apple Maps / Flighty style insight)
-    const distName = venue.district || getCurrentCity().name;
-    const distPool = allVenues.filter(v => v.district && venue.district && v.district.toLowerCase() === venue.district.toLowerCase() && typeof v.beer_price_pln === "number");
-    const refPool = distPool.length >= 3 ? distPool : allVenues.filter(v => typeof v.beer_price_pln === "number");
-    const avgDistPrice = refPool.length > 0 ? (refPool.reduce((s, v) => s + v.beer_price_pln, 0) / refPool.length) : 15.0;
-    const diff = avgDistPrice - price;
-
-    let benchmarkHtml = "";
-    if (diff >= 0.75) {
-      benchmarkHtml = `
-        <div class="apple-venue-benchmark-pill benchmark-good">
-          <span class="benchmark-icon">🔥</span>
-          <span>Taniej o <strong>${diff.toFixed(2)} zł</strong> niż średnia w: <strong>${escapeHtml(distName)}</strong> (${avgDistPrice.toFixed(2)} zł)</span>
-        </div>
-      `;
-    } else if (Math.abs(diff) < 0.75) {
-      benchmarkHtml = `
-        <div class="apple-venue-benchmark-pill benchmark-neutral">
-          <span class="benchmark-icon">⚖️</span>
-          <span>W sam raz · Cena na poziomie średniej w: <strong>${escapeHtml(distName)}</strong> (${avgDistPrice.toFixed(2)} zł)</span>
-        </div>
-      `;
-    } else {
-      benchmarkHtml = `
-        <div class="apple-venue-benchmark-pill benchmark-craft">
-          <span class="benchmark-icon">${venue.is_craft ? '⭐' : '💎'}</span>
-          <span>${venue.is_craft ? 'Selekcja Kraft / Multitap' : 'Lokal Premium'} · Średnia w ${escapeHtml(distName)}: ${avgDistPrice.toFixed(2)} zł</span>
-        </div>
-      `;
-    }
 
     // Flighty Action buttons row (Check-in = Piwny BeReal in this bar!)
     const actionButtonsHtml = `
@@ -24718,7 +24659,7 @@
       </div>
     `;
 
-    // Flighty Grouped 2x2 Bento Telemetry Grid
+    // Flighty Grouped Bento Telemetry Grid (No duplicate hours)
     const bentoSpecsHtml = `
       <div class="apple-venue-specs-grid">
         <div class="apple-spec-tile">
@@ -24729,13 +24670,9 @@
           <span class="spec-label">🥃 SHOT (40ML)</span>
           <strong class="spec-val">${venue.shot_price_pln ? venue.shot_price_pln.toFixed(2) + ' zł' : 'W lokalu'}</strong>
         </div>
-        <div class="apple-spec-tile">
-          <span class="spec-label">🕒 DZIŚ OTWARTE</span>
-          <strong class="spec-val">${escapeHtml(todayRange.display)}</strong>
-        </div>
-        <div class="apple-spec-tile">
-          <span class="spec-label">🛡️ STATUS CENY</span>
-          <strong class="spec-val">${venue.verified_by_receipt ? '🧾 Paragon AI' : (venue.is_verified ? '✓ Zweryfikowana' : '📊 Orientacyjna')}</strong>
+        <div class="apple-spec-tile" style="grid-column: 1 / -1; display: flex; flex-direction: row; align-items: center; justify-content: space-between; padding: 10px 14px;">
+          <span class="spec-label" style="margin: 0;">🛡️ STATUS CENY</span>
+          <strong class="spec-val" id="venue-spec-status-${venue.id}" style="margin: 0;">${venue.verified_by_receipt ? '🧾 Paragon AI' : (venue.is_verified ? '✓ Zweryfikowana' : '📊 Orientacyjna')}</strong>
         </div>
       </div>
     `;
@@ -24768,9 +24705,19 @@
       `;
     }
 
-    contentEl.innerHTML = closingWarningHtml + hhHtml + flightyTimelineHtml + benchmarkHtml + actionButtonsHtml + verifyCardHtml + bentoSpecsHtml + chipsHtml + proofHtml;
+    contentEl.innerHTML = closingWarningHtml + hhHtml + flightyTimelineHtml + actionButtonsHtml + verifyCardHtml + bentoSpecsHtml + chipsHtml + proofHtml;
 
     // Attach listeners for venue sheet actions
+    const btnScanAi = document.getElementById(`btn-waze-scan-${venue.id}`);
+    if (btnScanAi) {
+      btnScanAi.addEventListener("click", () => {
+        poileHaptics.tick();
+        if (typeof window.__editVenuePrice === "function") {
+          window.__editVenuePrice(venue, true);
+        }
+      });
+    }
+
     const btnYes = document.getElementById(`btn-waze-yes-${venue.id}`);
     const wazeCard = document.getElementById(`waze-card-${venue.id}`);
     if (btnYes) {
@@ -24795,15 +24742,10 @@
         saveLocalUpdates(localUpdates);
         saveVenuesCache(allVenues);
 
-        // Update trust badge & date in DOM immediately
-        const trustBadgeEl = document.getElementById(`waze-trust-badge-${venue.id}`);
-        if (trustBadgeEl) {
-          trustBadgeEl.className = "waze-trust-badge verified-community";
-          trustBadgeEl.innerHTML = `🛡️ Zweryfikowana przez społeczność (${venue.votes_confirm} ${venue.votes_confirm === 1 ? "głos" : (venue.votes_confirm < 5 ? "głosy" : "głosów")})`;
-        }
-        const trustDateEl = document.getElementById(`waze-trust-date-${venue.id}`);
-        if (trustDateEl) {
-          trustDateEl.innerHTML = "🕒 Sprawdzone: Przed chwilą ✓";
+        // Update status tile in DOM immediately
+        const specStatusEl = document.getElementById(`venue-spec-status-${venue.id}`);
+        if (specStatusEl) {
+          specStatusEl.textContent = "✓ Zweryfikowana";
         }
 
         // Persist to backend or queue offline
@@ -24871,10 +24813,10 @@
         tile.addEventListener("click", () => {
           const pVal = tile.getAttribute("data-price");
           if (pVal === "other") {
-            closeVenueSheet();
             if (typeof window.__editVenuePrice === "function") {
-              window.__editVenuePrice(venue.id);
+              window.__editVenuePrice(venue);
             } else if (typeof openAddModal === "function") {
+              closeVenueSheet();
               openAddModal();
               const nameInput = document.getElementById("report-name");
               if (nameInput) nameInput.value = venue.name;
@@ -24992,9 +24934,8 @@
     if (btnEditVenue) {
       btnEditVenue.addEventListener("click", () => {
         poileHaptics.tick();
-        closeVenueSheet();
         if (typeof window.__editVenuePrice === "function") {
-          window.__editVenuePrice(venue.id);
+          window.__editVenuePrice(venue);
         }
       });
     }

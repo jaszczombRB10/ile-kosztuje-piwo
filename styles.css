@@ -27641,15 +27641,17 @@ body.theme-light #beer-compass-modal .compass-venue-panel {
   z-index: 985;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 2px 14px 6px 14px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  pointer-events: auto;
+  padding: 2px 12px 6px 12px;
+  overflow: visible;
+  pointer-events: none;
   box-sizing: border-box;
   transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.map-quick-pills > .quick-hud-pill {
+  pointer-events: auto;
 }
 
 .map-quick-pills::-webkit-scrollbar {
