@@ -14119,6 +14119,12 @@ body.theme-light .district-select {
   color: #0f172a !important;
 }
 
+body.theme-light .district-select option,
+body.theme-light .district-select optgroup {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
 body.theme-light .filter-chip {
   background: rgba(255, 255, 255, 0.92) !important;
   border: 1px solid rgba(0, 0, 0, 0.1) !important;
@@ -20139,6 +20145,19 @@ body.theme-light .mobile-bottom-nav {
   margin-top: 2px;
 }
 
+body.theme-light .ocr-fast-track-box {
+  background: linear-gradient(145deg, #ffffff 0%, #f0fdf4 100%) !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+body.theme-light .ocr-fast-track-info strong {
+  color: #0f172a !important;
+}
+
+body.theme-light .ocr-fast-track-info span {
+  color: #475569 !important;
+}
+
 .ocr-fast-track-action {
   display: flex;
   flex-direction: column;
@@ -25437,7 +25456,7 @@ body.theme-light .crop-btn-action {
   flex: 1 !important;
   min-width: 0 !important;
   width: auto !important;
-  background: transparent !important;
+  background-color: transparent !important;
   border: none !important;
   border-radius: 0 !important;
   box-shadow: none !important;
@@ -26047,7 +26066,7 @@ body.theme-light .flighty-row-label {
 body.theme-light .flighty-row-input,
 body.theme-light .flighty-row-textarea {
   color: #0f172a !important;
-  background: transparent !important;
+  background-color: transparent !important;
 }
 
 body.theme-light .flighty-row-input::placeholder,
@@ -26537,9 +26556,9 @@ body.theme-light .flighty-sec-title {
 }
 
 .flighty-row-select {
-  -webkit-appearance: none;
-  appearance: none;
-  background: transparent !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  background-color: transparent !important;
   border: none !important;
   box-shadow: none !important;
   color: #ffffff !important;
@@ -26547,12 +26566,11 @@ body.theme-light .flighty-sec-title {
   font-weight: 600;
   width: 100%;
   outline: none !important;
-  padding: 2px 18px 2px 0 !important;
+  padding: 2px 22px 2px 0 !important;
   cursor: pointer;
-  background-image: linear-gradient(45deg, transparent 50%, rgba(235, 235, 245, 0.55) 50%),
-                    linear-gradient(135deg, rgba(235, 235, 245, 0.55) 50%, transparent 50%) !important;
-  background-position: calc(100% - 11px) 52%, calc(100% - 6px) 52% !important;
-  background-size: 5px 5px, 5px 5px !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(235, 235, 245, 0.65)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+  background-position: right 6px center !important;
+  background-size: 12px 12px !important;
   background-repeat: no-repeat !important;
 }
 
@@ -26767,14 +26785,28 @@ body.theme-light .modal-card.flighty-edit-profile-sheet {
 
 body.theme-light .flighty-row-select {
   color: #0f172a !important;
-  background-image: linear-gradient(45deg, transparent 50%, #475569 50%),
-                    linear-gradient(135deg, #475569 50%, transparent 50%) !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+  background-position: right 6px center !important;
+  background-size: 12px 12px !important;
+  background-repeat: no-repeat !important;
 }
 
 body.theme-light .flighty-row-select option,
 body.theme-light .flighty-row-select optgroup {
-  background: #ffffff;
-  color: #0f172a;
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .flighty-edit-row select.crawl-select,
+body.theme-light .flighty-row-select.crawl-select {
+  background-color: transparent !important;
+  border: none !important;
 }
 
 body.theme-light .flighty-grouped-toggles,
