@@ -5987,6 +5987,7 @@
         is_craft: existing.is_craft,
         happy_hour: existing.happy_hour,
         hours: existing.hours,
+        photo_url: existing.photo_url || null,
         is_verified: existing.is_verified || false,
         verified_by_receipt: existing.verified_by_receipt || false,
         receipt_date: existing.receipt_date || null,
