@@ -3967,6 +3967,7 @@
       toast.style.display = "none";
     }, duration);
   }
+  window.showAppToast = showAppToast;
 
   function showPassportToast(badge) {
     showAppToast("Odblokowano nową odznakę!", `${badge.name} (${badge.desc})`, badge.icon || "🎉", 4200);
@@ -9333,6 +9334,28 @@
         });
       }
     });
+
+    // Flighty Telemetry info popups (interactive stats explanation)
+    window.__showTelemetryInfo = function (type) {
+      if (typeof showAppToast !== "function") return;
+      if (type === "bars") {
+        const el = document.getElementById("flighty-stat-bars");
+        const val = el ? el.textContent.trim() : "0";
+        showAppToast("Zaliczone bary 🍺", `Odwiedziłeś już ${val} unikalnych lokali na piwnej mapie Warszawy!`, "🍺", 4000);
+      } else if (type === "districts") {
+        const el = document.getElementById("flighty-stat-districts");
+        const val = el ? el.textContent.trim() : "0 / 18";
+        showAppToast("Eksploracja dzielnic 🗺️", `Zaliczyłeś lokale w ${val} dzielnicach Warszawy! Odkrywaj kolejne rejony.`, "🗺️", 4000);
+      } else if (type === "liters") {
+        const el = document.getElementById("flighty-stat-liters");
+        const val = el ? el.textContent.trim() : "0.0 L";
+        showAppToast("Wypite piwko 🍻", `Szacunkowa objętość: ${val} (liczona jako 0.5L na każdy zaliczony bar).`, "🍻", 4000);
+      } else if (type === "saved") {
+        const el = document.getElementById("flighty-stat-saved");
+        const val = el ? el.textContent.trim() : "0 zł";
+        showAppToast("Twoja oszczędność 💰", `Zaoszczędziłeś ${val}! Wyliczane z różnicy między średnią ceną w pubach (18 zł) a cenami piwa w Twoich lokalach.`, "💰", 5500);
+      }
+    };
 
 
 
