@@ -1737,25 +1737,6 @@
       if (filterState.nonAlcoholicOnly && !isNonAlcoholicVenue(venue)) return false;
       if (filterState.passOnly && !(venue.is_partner || venue.pass_partner)) return false;
 
-      // Fallback for legacy currentFilter
-      if (currentFilter && currentFilter !== "all" && filterState.priceTier === "all" && filterState.maxPrice === null && !filterState.openNow && !filterState.craftOnly && !filterState.happyHourOnly && !filterState.favoritesOnly && !filterState.nonAlcoholicOnly && !filterState.passOnly) {
-        switch (currentFilter) {
-          case "open-now": return isVenueOpen(venue);
-          case "favorites": return isVenueFavorite(venue.id);
-          case "non-alcoholic": return isNonAlcoholicVenue(venue);
-          case "pass": return !!(venue.is_partner || venue.pass_partner);
-          case "pawilony": return venue.district.toLowerCase() === "pawilony";
-          case "srodmiescie": return venue.district.toLowerCase().includes("śródmieście");
-          case "praga": return venue.district.toLowerCase().includes("praga");
-          case "bulwary": return venue.district.toLowerCase().includes("bulwary");
-          case "tier-low": return price <= 12.0;
-          case "tier-mid": return price > 12.0 && price <= 18.0;
-          case "tier-high": return price > 18.0;
-          case "craft": return venue.is_craft === true;
-          case "happy-hour": return !!(venue.happy_hour || venue.happy_hour_rule);
-        }
-      }
-
       return true;
     });
   }
@@ -1800,8 +1781,24 @@
     }
   }
 
+  function resetFilterState() {
+    filterState = {
+      priceTier: "all",
+      maxPrice: null,
+      openNow: false,
+      craftOnly: false,
+      happyHourOnly: false,
+      favoritesOnly: false,
+      nonAlcoholicOnly: false,
+      passOnly: false
+    };
+  }
+
   function syncQuickChipsWithFilterState() {
     const isAllDefault = (filterState.priceTier === "all" && filterState.maxPrice === null && !filterState.openNow && !filterState.craftOnly && !filterState.happyHourOnly && !filterState.favoritesOnly && !filterState.nonAlcoholicOnly && !filterState.passOnly && currentDistrict === "all");
+    if (isAllDefault) {
+      currentFilter = "all";
+    }
     const chips = document.querySelectorAll(".filter-chip[data-filter]");
     chips.forEach(c => {
       const f = c.getAttribute("data-filter");
@@ -1912,16 +1909,7 @@
   }
 
   function resetAllFilters() {
-    filterState = {
-      priceTier: "all",
-      maxPrice: null,
-      openNow: false,
-      craftOnly: false,
-      happyHourOnly: false,
-      favoritesOnly: false,
-      nonAlcoholicOnly: false,
-      passOnly: false
-    };
+    resetFilterState();
     currentFilter = "all";
     currentDistrict = "all";
     const districtSelect = document.getElementById("district-select");
@@ -4237,7 +4225,7 @@
       showAppToast("Usunięto z ulubionych", vName, "🤍");
     }
 
-    if (currentFilter === "favorites") {
+    if (currentFilter === "favorites" || filterState.favoritesOnly) {
       renderMarkers();
     }
     if (rankingMode === "favorites") {
@@ -5037,12 +5025,22 @@
         openFilterModal();
       });
     }
+    function applyAndCloseFilterModal() {
+      closeFilterModal();
+      syncQuickChipsWithFilterState();
+      renderMarkers();
+      const count = getFilteredVenues().length;
+      if (typeof showAppToast === "function") {
+        showAppToast("Zastosowano filtry", `Znaleziono ${count} pasujących lokali`, "🍻");
+      }
+    }
+
     if (btnCloseFilterModal) {
-      btnCloseFilterModal.addEventListener("click", closeFilterModal);
+      btnCloseFilterModal.addEventListener("click", applyAndCloseFilterModal);
     }
     if (filterModal) {
       filterModal.addEventListener("click", (e) => {
-        if (e.target === filterModal) closeFilterModal();
+        if (e.target === filterModal) applyAndCloseFilterModal();
       });
     }
     if (btnFilterReset) {
@@ -5054,25 +5052,24 @@
       });
     }
     if (btnFilterApply) {
-      btnFilterApply.addEventListener("click", () => {
-        closeFilterModal();
-        syncQuickChipsWithFilterState();
-        renderMarkers();
-        const count = getFilteredVenues().length;
-        if (typeof showAppToast === "function") {
-          showAppToast("Zastosowano filtry", `Znaleziono ${count} pasujących lokali`, "🍻");
-        }
-      });
+      btnFilterApply.addEventListener("click", applyAndCloseFilterModal);
     }
 
-    // Modal: Price preset cards
+    // Modal: Price preset cards (tap active card to toggle off to all)
     document.querySelectorAll(".filter-price-card").forEach(card => {
       card.addEventListener("click", () => {
         const tier = card.getAttribute("data-price");
-        filterState.priceTier = tier;
-        filterState.maxPrice = null;
-        currentFilter = tier === "all" ? "all" : tier;
+        if (tier !== "all" && filterState.priceTier === tier && (filterState.maxPrice === null || filterState.maxPrice >= 35)) {
+          filterState.priceTier = "all";
+          filterState.maxPrice = null;
+          currentFilter = "all";
+        } else {
+          filterState.priceTier = tier;
+          filterState.maxPrice = null;
+          currentFilter = tier === "all" ? "all" : tier;
+        }
         syncFilterModalUI();
+        syncQuickChipsWithFilterState();
       });
     });
 
@@ -5084,44 +5081,67 @@
         const val = parseInt(e.target.value, 10);
         if (val >= 35) {
           filterState.maxPrice = null;
+          if (filterState.priceTier === "custom") {
+            filterState.priceTier = "all";
+            currentFilter = "all";
+          }
         } else {
           filterState.maxPrice = val;
           filterState.priceTier = "custom";
         }
         syncFilterModalUI();
+        syncQuickChipsWithFilterState();
       });
     }
 
-    // Modal: Toggle criteria
+    // Modal: Toggle criteria (immediate matching count update on tap)
     document.querySelectorAll(".filter-toggle-btn").forEach(tBtn => {
       tBtn.addEventListener("click", () => {
         const prop = tBtn.getAttribute("data-toggle");
         if (prop && filterState.hasOwnProperty(prop)) {
           filterState[prop] = !filterState[prop];
           syncFilterModalUI();
+          syncQuickChipsWithFilterState();
         }
       });
     });
 
-    // Modal: District chips
+    // Modal: District chips (tap active district to toggle off to all)
     document.querySelectorAll(".filter-dist-chip").forEach(dChip => {
       dChip.addEventListener("click", () => {
-        currentDistrict = dChip.getAttribute("data-dist");
-        if (districtSelect) districtSelect.value = currentDistrict;
-        const target = DISTRICT_CENTERS[currentDistrict] || DISTRICT_CENTERS["all"];
-        if (map && target) {
-          map.flyTo(target.coords, target.zoom, { duration: 1.0 });
+        const d = dChip.getAttribute("data-dist");
+        if (currentDistrict === d && d !== "all") {
+          currentDistrict = "all";
+          if (districtSelect) districtSelect.value = "all";
+          const target = DISTRICT_CENTERS["all"];
+          if (map && target) {
+            map.flyTo(target.coords, target.zoom, { duration: 1.0 });
+          }
+        } else {
+          currentDistrict = d;
+          if (districtSelect) districtSelect.value = currentDistrict;
+          const target = DISTRICT_CENTERS[currentDistrict] || DISTRICT_CENTERS["all"];
+          if (map && target) {
+            map.flyTo(target.coords, target.zoom, { duration: 1.0 });
+          }
         }
         syncFilterModalUI();
+        syncQuickChipsWithFilterState();
       });
     });
 
-    // Top Filter Bar Chips
+    // Top Filter Bar Chips (tap active chip to toggle off back to all)
     const quickFilterChips = document.querySelectorAll(".filter-chip[data-filter]");
     quickFilterChips.forEach(chip => {
       chip.addEventListener("click", () => {
         const filterVal = chip.getAttribute("data-filter");
         if (filterVal === "all") {
+          resetAllFilters();
+          return;
+        }
+
+        // Deselect if already active
+        if (chip.classList.contains("active")) {
           resetAllFilters();
           return;
         }
@@ -6175,14 +6195,26 @@
 
         filterChipsWrap.querySelectorAll(".filter-dist-chip").forEach(dChip => {
           dChip.addEventListener("click", () => {
-            currentDistrict = dChip.getAttribute("data-dist");
-            const dSelect = document.getElementById("district-select");
-            if (dSelect) dSelect.value = currentDistrict;
-            const target = getDistrictTarget(currentDistrict);
-            if (map && target) {
-              map.flyTo(target.coords, target.zoom, { duration: 1.0 });
+            const d = dChip.getAttribute("data-dist");
+            if (currentDistrict === d && d !== "all") {
+              currentDistrict = "all";
+              const dSelect = document.getElementById("district-select");
+              if (dSelect) dSelect.value = "all";
+              const target = getDistrictTarget("all");
+              if (map && target) {
+                map.flyTo(target.coords, target.zoom, { duration: 1.0 });
+              }
+            } else {
+              currentDistrict = d;
+              const dSelect = document.getElementById("district-select");
+              if (dSelect) dSelect.value = currentDistrict;
+              const target = getDistrictTarget(currentDistrict);
+              if (map && target) {
+                map.flyTo(target.coords, target.zoom, { duration: 1.0 });
+              }
             }
             syncFilterModalUI();
+            syncQuickChipsWithFilterState();
           });
         });
       }
