@@ -80,7 +80,7 @@
   <script defer src="https://cloud.umami.is/script.js" data-website-id="auto" id="umami-analytics-script"></script>
 
   <!-- Custom Styles -->
-  <link rel="stylesheet" href="styles.css?v=168">
+  <link rel="stylesheet" href="styles.css?v=169">
 </head>
 <body>
 
@@ -2452,6 +2452,9 @@
             <button type="button" class="flighty-btn-photo-upload" id="btn-choose-photo">
               <span>📷 Zmień zdjęcie</span>
             </button>
+            <button type="button" class="flighty-btn-photo-crop" id="btn-crop-profile-photo" style="display:none;" title="Kadruj i dopasuj pozycję zdjęcia">
+              <span>✂️ Kadruj</span>
+            </button>
             <button type="button" class="flighty-btn-photo-remove" id="btn-remove-profile-photo" style="display:none;">
               <span>✕ Usuń zdjęcie</span>
             </button>
@@ -2537,6 +2540,52 @@
           <span>✓ Zapisz profil</span>
         </button>
       </form>
+    </div>
+  </div>
+
+  <!-- Modal: Avatar Cropper (Interactive Framing, Zoom, Rotate) -->
+  <div class="modal-backdrop" id="avatar-crop-modal" style="display:none; z-index: 26000;">
+    <div class="modal-card avatar-crop-modal-card flighty-edit-profile-sheet">
+      <div class="flighty-edit-topbar">
+        <button type="button" class="flighty-edit-nav-btn cancel" id="btn-crop-cancel">Anuluj</button>
+        <div class="flighty-edit-topbar-title">
+          <span class="fet-eyebrow">ZDJĘCIE PROFILOWE</span>
+          <h2>Kadruj zdjęcie</h2>
+        </div>
+        <button type="button" class="flighty-edit-nav-btn save" id="btn-crop-apply">Gotowe ✓</button>
+      </div>
+
+      <div class="avatar-crop-body">
+        <p class="avatar-crop-hint">Przesuwaj i powiększaj zdjęcie, aby idealnie dopasować kadr w kółku</p>
+
+        <!-- Viewport Stage -->
+        <div class="avatar-crop-stage" id="avatar-crop-stage">
+          <canvas id="avatar-crop-canvas" class="avatar-crop-canvas"></canvas>
+          <div class="avatar-crop-mask" aria-hidden="true">
+            <div class="avatar-crop-circle">
+              <div class="avatar-crop-grid"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Controls Toolbar -->
+        <div class="avatar-crop-controls">
+          <div class="avatar-crop-zoom-row">
+            <button type="button" class="crop-btn-tool" id="btn-crop-zoom-out" title="Oddal" aria-label="Oddal">🔍−</button>
+            <input type="range" id="avatar-crop-slider" min="100" max="350" value="100" class="crop-zoom-slider" aria-label="Powiększenie" />
+            <button type="button" class="crop-btn-tool" id="btn-crop-zoom-in" title="Przybliż" aria-label="Przybliż">🔍+</button>
+          </div>
+
+          <div class="avatar-crop-tools-row">
+            <button type="button" class="crop-btn-action" id="btn-crop-rotate" title="Obróć o 90 stopni">
+              <span>🔄 Obróć 90°</span>
+            </button>
+            <button type="button" class="crop-btn-action" id="btn-crop-center" title="Wyśrodkuj kadr">
+              <span>🎯 Wyśrodkuj</span>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -3887,6 +3936,6 @@
   <script src="moderation.js"></script>
 
   <!-- Main Application Logic -->
-  <script src="app.js?v=167"></script>
+  <script src="app.js?v=169"></script>
 </body>
 </html>

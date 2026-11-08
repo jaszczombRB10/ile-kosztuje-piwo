@@ -8976,6 +8976,8 @@
       const previewImg = document.getElementById("edit-photo-preview-img");
       const previewEmoji = document.getElementById("edit-photo-preview-emoji");
       const btnRemovePhoto = document.getElementById("btn-remove-profile-photo");
+      const btnCropPhoto = document.getElementById("btn-crop-profile-photo");
+      const btnChoosePhoto = document.getElementById("btn-choose-photo");
       const btns = editAvatarPicker ? editAvatarPicker.querySelectorAll(".avatar-option") : [];
 
       if (editSelectedPhoto) {
@@ -8984,7 +8986,9 @@
           previewImg.style.display = "block";
         }
         if (previewEmoji) previewEmoji.style.display = "none";
-        if (btnRemovePhoto) btnRemovePhoto.style.display = "inline-block";
+        if (btnRemovePhoto) btnRemovePhoto.style.display = "inline-flex";
+        if (btnCropPhoto) btnCropPhoto.style.display = "inline-flex";
+        if (btnChoosePhoto) btnChoosePhoto.innerHTML = "<span>📷 Zmień</span>";
         btns.forEach(b => b.classList.remove("selected"));
       } else {
         if (previewImg) {
@@ -8996,6 +9000,8 @@
           previewEmoji.style.display = "flex";
         }
         if (btnRemovePhoto) btnRemovePhoto.style.display = "none";
+        if (btnCropPhoto) btnCropPhoto.style.display = "none";
+        if (btnChoosePhoto) btnChoosePhoto.innerHTML = "<span>📷 Dodaj zdjęcie</span>";
         btns.forEach(b => {
           if (b.getAttribute("data-avatar") === editSelectedAvatar) {
             b.classList.add("selected");
@@ -9552,6 +9558,305 @@
       });
     }
 
+    // ========================================================================
+    // INTERACTIVE AVATAR CROPPER (Pan, Pinch/Zoom, Rotate 90°, Circular Framing)
+    // ========================================================================
+    const avatarCropModal = document.getElementById("avatar-crop-modal");
+    const avatarCropStage = document.getElementById("avatar-crop-stage");
+    const avatarCropCanvas = document.getElementById("avatar-crop-canvas");
+    const avatarCropSlider = document.getElementById("avatar-crop-slider");
+    const btnCropCancel = document.getElementById("btn-crop-cancel");
+    const btnCropApply = document.getElementById("btn-crop-apply");
+    const btnCropRotate = document.getElementById("btn-crop-rotate");
+    const btnCropCenter = document.getElementById("btn-crop-center");
+    const btnCropZoomIn = document.getElementById("btn-crop-zoom-in");
+    const btnCropZoomOut = document.getElementById("btn-crop-zoom-out");
+    const btnCropPhoto = document.getElementById("btn-crop-profile-photo");
+
+    const avatarCropState = {
+      img: null,
+      scale: 1,
+      minScale: 1,
+      maxScale: 3.5,
+      x: 0,
+      y: 0,
+      rotation: 0,
+      isDragging: false,
+      dragStartX: 0,
+      dragStartY: 0,
+      imgStartX: 0,
+      imgStartY: 0,
+      pinchStartDist: 0,
+      pinchStartScale: 1,
+      onComplete: null,
+      stageSize: 300,
+      circleDiameter: 240
+    };
+
+    function renderAvatarCrop() {
+      if (!avatarCropState.img || !avatarCropCanvas) return;
+      const S = avatarCropState.stageSize;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+      if (avatarCropCanvas.width !== S * dpr || avatarCropCanvas.height !== S * dpr) {
+        avatarCropCanvas.width = S * dpr;
+        avatarCropCanvas.height = S * dpr;
+      }
+      const ctx = avatarCropCanvas.getContext("2d");
+      ctx.save();
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, S, S);
+      ctx.fillStyle = "#08080d";
+      ctx.fillRect(0, 0, S, S);
+
+      ctx.translate(avatarCropState.x, avatarCropState.y);
+      ctx.rotate((avatarCropState.rotation * Math.PI) / 180);
+      const img = avatarCropState.img;
+      const w = img.naturalWidth * avatarCropState.scale;
+      const h = img.naturalHeight * avatarCropState.scale;
+      ctx.drawImage(img, -w / 2, -h / 2, w, h);
+      ctx.restore();
+    }
+
+    function clampAvatarCropPosition() {
+      if (!avatarCropState.img) return;
+      const S = avatarCropState.stageSize;
+      const D = avatarCropState.circleDiameter;
+      const C = S / 2;
+      const R = D / 2;
+      const rot = avatarCropState.rotation;
+      const s = avatarCropState.scale;
+      const effW = (rot % 180 === 0 ? avatarCropState.img.naturalWidth : avatarCropState.img.naturalHeight) * s;
+      const effH = (rot % 180 === 0 ? avatarCropState.img.naturalHeight : avatarCropState.img.naturalWidth) * s;
+
+      const minX = C + R - effW / 2;
+      const maxX = C - R + effW / 2;
+      const minY = C + R - effH / 2;
+      const maxY = C - R + effH / 2;
+
+      if (minX <= maxX) {
+        avatarCropState.x = Math.max(minX, Math.min(maxX, avatarCropState.x));
+      } else {
+        avatarCropState.x = C;
+      }
+      if (minY <= maxY) {
+        avatarCropState.y = Math.max(minY, Math.min(maxY, avatarCropState.y));
+      } else {
+        avatarCropState.y = C;
+      }
+    }
+
+    function computeAvatarCropMinScale() {
+      if (!avatarCropState.img) return 1;
+      const D = avatarCropState.circleDiameter;
+      const rot = avatarCropState.rotation;
+      const effW = rot % 180 === 0 ? avatarCropState.img.naturalWidth : avatarCropState.img.naturalHeight;
+      const effH = rot % 180 === 0 ? avatarCropState.img.naturalHeight : avatarCropState.img.naturalWidth;
+      return Math.max(D / (effW || 1), D / (effH || 1));
+    }
+
+    function setAvatarCropScale(ratio) {
+      avatarCropState.scale = avatarCropState.minScale * ratio;
+      clampAvatarCropPosition();
+      renderAvatarCrop();
+    }
+
+    if (avatarCropSlider) {
+      avatarCropSlider.addEventListener("input", (e) => {
+        const ratio = parseFloat(e.target.value) / 100;
+        setAvatarCropScale(ratio);
+      });
+    }
+
+    if (btnCropZoomIn && avatarCropSlider) {
+      btnCropZoomIn.addEventListener("click", () => {
+        let val = Math.min(350, parseInt(avatarCropSlider.value, 10) + 25);
+        avatarCropSlider.value = val;
+        setAvatarCropScale(val / 100);
+      });
+    }
+
+    if (btnCropZoomOut && avatarCropSlider) {
+      btnCropZoomOut.addEventListener("click", () => {
+        let val = Math.max(100, parseInt(avatarCropSlider.value, 10) - 25);
+        avatarCropSlider.value = val;
+        setAvatarCropScale(val / 100);
+      });
+    }
+
+    if (btnCropRotate) {
+      btnCropRotate.addEventListener("click", () => {
+        avatarCropState.rotation = (avatarCropState.rotation + 90) % 360;
+        avatarCropState.minScale = computeAvatarCropMinScale();
+        const curRatio = avatarCropSlider ? parseFloat(avatarCropSlider.value) / 100 : 1;
+        avatarCropState.scale = avatarCropState.minScale * curRatio;
+        clampAvatarCropPosition();
+        renderAvatarCrop();
+      });
+    }
+
+    if (btnCropCenter) {
+      btnCropCenter.addEventListener("click", () => {
+        avatarCropState.x = avatarCropState.stageSize / 2;
+        avatarCropState.y = avatarCropState.stageSize / 2;
+        clampAvatarCropPosition();
+        renderAvatarCrop();
+      });
+    }
+
+    if (avatarCropStage) {
+      function getTouchDist(t1, t2) {
+        return Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+      }
+
+      avatarCropStage.addEventListener("touchstart", (e) => {
+        if (e.touches.length === 1) {
+          avatarCropState.isDragging = true;
+          avatarCropState.dragStartX = e.touches[0].clientX;
+          avatarCropState.dragStartY = e.touches[0].clientY;
+          avatarCropState.imgStartX = avatarCropState.x;
+          avatarCropState.imgStartY = avatarCropState.y;
+        } else if (e.touches.length === 2) {
+          avatarCropState.isDragging = false;
+          avatarCropState.pinchStartDist = getTouchDist(e.touches[0], e.touches[1]);
+          avatarCropState.pinchStartScale = avatarCropState.scale;
+        }
+      }, { passive: false });
+
+      avatarCropStage.addEventListener("touchmove", (e) => {
+        e.preventDefault();
+        if (e.touches.length === 1 && avatarCropState.isDragging) {
+          const dx = e.touches[0].clientX - avatarCropState.dragStartX;
+          const dy = e.touches[0].clientY - avatarCropState.dragStartY;
+          avatarCropState.x = avatarCropState.imgStartX + dx;
+          avatarCropState.y = avatarCropState.imgStartY + dy;
+          clampAvatarCropPosition();
+          renderAvatarCrop();
+        } else if (e.touches.length === 2 && avatarCropState.pinchStartDist > 0) {
+          const dist = getTouchDist(e.touches[0], e.touches[1]);
+          const factor = dist / avatarCropState.pinchStartDist;
+          const targetScale = Math.max(avatarCropState.minScale, Math.min(avatarCropState.minScale * 3.5, avatarCropState.pinchStartScale * factor));
+          avatarCropState.scale = targetScale;
+          if (avatarCropSlider) avatarCropSlider.value = Math.round((targetScale / avatarCropState.minScale) * 100);
+          clampAvatarCropPosition();
+          renderAvatarCrop();
+        }
+      }, { passive: false });
+
+      avatarCropStage.addEventListener("touchend", () => {
+        avatarCropState.isDragging = false;
+        avatarCropState.pinchStartDist = 0;
+      });
+
+      avatarCropStage.addEventListener("pointerdown", (e) => {
+        if (e.pointerType === "touch") return;
+        avatarCropState.isDragging = true;
+        avatarCropState.dragStartX = e.clientX;
+        avatarCropState.dragStartY = e.clientY;
+        avatarCropState.imgStartX = avatarCropState.x;
+        avatarCropState.imgStartY = avatarCropState.y;
+        try { avatarCropStage.setPointerCapture(e.pointerId); } catch(err) {}
+      });
+
+      avatarCropStage.addEventListener("pointermove", (e) => {
+        if (!avatarCropState.isDragging || e.pointerType === "touch") return;
+        const dx = e.clientX - avatarCropState.dragStartX;
+        const dy = e.clientY - avatarCropState.dragStartY;
+        avatarCropState.x = avatarCropState.imgStartX + dx;
+        avatarCropState.y = avatarCropState.imgStartY + dy;
+        clampAvatarCropPosition();
+        renderAvatarCrop();
+      });
+
+      avatarCropStage.addEventListener("pointerup", (e) => {
+        if (e.pointerType === "touch") return;
+        avatarCropState.isDragging = false;
+        try { avatarCropStage.releasePointerCapture(e.pointerId); } catch(err) {}
+      });
+
+      avatarCropStage.addEventListener("wheel", (e) => {
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? -0.12 : 0.12;
+        const curRatio = avatarCropSlider ? parseFloat(avatarCropSlider.value) / 100 : 1;
+        const nextRatio = Math.max(1.0, Math.min(3.5, curRatio + delta));
+        if (avatarCropSlider) avatarCropSlider.value = Math.round(nextRatio * 100);
+        setAvatarCropScale(nextRatio);
+      }, { passive: false });
+    }
+
+    window.__closeAvatarCropper = function () {
+      if (avatarCropModal) {
+        avatarCropModal.classList.remove("active");
+        avatarCropModal.style.display = "none";
+      }
+      avatarCropState.onComplete = null;
+    };
+
+    if (btnCropCancel) {
+      btnCropCancel.addEventListener("click", () => window.__closeAvatarCropper());
+    }
+    if (avatarCropModal) {
+      avatarCropModal.addEventListener("click", (e) => {
+        if (e.target === avatarCropModal) window.__closeAvatarCropper();
+      });
+    }
+
+    if (btnCropApply) {
+      btnCropApply.addEventListener("click", () => {
+        if (!avatarCropState.img) return;
+        const outCanvas = document.createElement("canvas");
+        outCanvas.width = 400;
+        outCanvas.height = 400;
+        const outCtx = outCanvas.getContext("2d");
+        const S = avatarCropState.stageSize;
+        const D = avatarCropState.circleDiameter;
+        const k = 400 / D;
+
+        outCtx.save();
+        outCtx.translate(200, 200);
+
+        const relX = (avatarCropState.x - S / 2) * k;
+        const relY = (avatarCropState.y - S / 2) * k;
+        outCtx.translate(relX, relY);
+        outCtx.rotate((avatarCropState.rotation * Math.PI) / 180);
+
+        const drawW = avatarCropState.img.naturalWidth * avatarCropState.scale * k;
+        const drawH = avatarCropState.img.naturalHeight * avatarCropState.scale * k;
+        outCtx.drawImage(avatarCropState.img, -drawW / 2, -drawH / 2, drawW, drawH);
+        outCtx.restore();
+
+        const croppedDataUrl = outCanvas.toDataURL("image/jpeg", 0.88);
+        if (typeof avatarCropState.onComplete === "function") {
+          avatarCropState.onComplete(croppedDataUrl);
+        }
+        window.__closeAvatarCropper();
+      });
+    }
+
+    window.__openAvatarCropper = function (imageSrc, onComplete) {
+      if (!imageSrc || !avatarCropModal) return;
+      avatarCropState.onComplete = onComplete;
+      const img = new Image();
+      img.onload = function () {
+        avatarCropState.img = img;
+        avatarCropState.stageSize = 300;
+        avatarCropState.circleDiameter = 240;
+        avatarCropState.rotation = 0;
+        avatarCropState.minScale = computeAvatarCropMinScale();
+        avatarCropState.scale = avatarCropState.minScale * 1.05;
+        avatarCropState.x = avatarCropState.stageSize / 2;
+        avatarCropState.y = avatarCropState.stageSize / 2;
+        if (avatarCropSlider) avatarCropSlider.value = 105;
+        clampAvatarCropPosition();
+        renderAvatarCrop();
+        avatarCropModal.classList.add("active");
+        avatarCropModal.style.display = "flex";
+      };
+      img.onerror = function () {
+        showAppToast("Błąd", "Nie udało się otworzyć wybranego zdjęcia.", "⚠️");
+      };
+      img.src = imageSrc;
+    };
+
     // Edit Profile Photo Uploader Handlers
     const editFileInput = document.getElementById("edit-avatar-file-input");
     const btnChoosePhoto = document.getElementById("btn-choose-photo");
@@ -9561,8 +9866,33 @@
     if (btnChoosePhoto && editFileInput) {
       btnChoosePhoto.addEventListener("click", () => editFileInput.click());
     }
-    if (btnTriggerBadge && editFileInput) {
-      btnTriggerBadge.addEventListener("click", () => editFileInput.click());
+    if (btnTriggerBadge) {
+      btnTriggerBadge.addEventListener("click", () => {
+        if (editSelectedPhoto && window.__openAvatarCropper) {
+          window.__openAvatarCropper(editSelectedPhoto, (croppedDataUrl) => {
+            editSelectedPhoto = croppedDataUrl;
+            updateEditModalAvatarPreview();
+            showAppToast("Kadr zaktualizowany! ✂️", "Kliknij 'Zapisz', aby zastosować w profilu.", "📷");
+          });
+        } else if (editFileInput) {
+          editFileInput.click();
+        }
+      });
+    }
+    if (btnCropPhoto) {
+      btnCropPhoto.addEventListener("click", () => {
+        if (!editSelectedPhoto) {
+          if (editFileInput) editFileInput.click();
+          return;
+        }
+        if (window.__openAvatarCropper) {
+          window.__openAvatarCropper(editSelectedPhoto, (croppedDataUrl) => {
+            editSelectedPhoto = croppedDataUrl;
+            updateEditModalAvatarPreview();
+            showAppToast("Kadr zaktualizowany! ✂️", "Kliknij 'Zapisz', aby zastosować w profilu.", "📷");
+          });
+        }
+      });
     }
     if (editFileInput) {
       editFileInput.addEventListener("change", async (e) => {
@@ -9577,12 +9907,17 @@
           return;
         }
         try {
-          const croppedDataUrl = await cropAndCompressAvatarPhoto(file, 240, 0.84);
-          if (croppedDataUrl) {
-            editSelectedPhoto = croppedDataUrl;
-            updateEditModalAvatarPreview();
-            showAppToast("Zdjęcie wczytane!", "Kliknij 'Zapisz zmiany', aby zastosować.", "📷");
-          }
+          const reader = new FileReader();
+          reader.onload = function(ev) {
+            if (window.__openAvatarCropper) {
+              window.__openAvatarCropper(ev.target.result, (croppedDataUrl) => {
+                editSelectedPhoto = croppedDataUrl;
+                updateEditModalAvatarPreview();
+                showAppToast("Zdjęcie wykadrowane! ✂️", "Kliknij 'Zapisz', aby zastosować w profilu.", "📷");
+              });
+            }
+          };
+          reader.readAsDataURL(file);
         } catch (cropErr) {
           console.warn("Avatar crop error:", cropErr);
           showAppToast("Błąd", "Nie udało się przetworzyć zdjęcia.", "⚠️");
