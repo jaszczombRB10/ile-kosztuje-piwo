@@ -1833,6 +1833,30 @@
       if (filterState.openNow) btnTopTime.classList.add("active-open-now");
       else btnTopTime.classList.remove("active-open-now");
     }
+
+    // Sync Quick Map HUD Pills (#map-quick-pills)
+    const hudDealPill = document.getElementById("hud-pill-quick-deal");
+    const isQuickDealActive = Boolean(filterState.openNow && filterState.maxPrice === 15);
+    if (hudDealPill) {
+      if (isQuickDealActive) hudDealPill.classList.add("active");
+      else hudDealPill.classList.remove("active");
+    }
+
+    const hudFilterPills = document.querySelectorAll(".quick-hud-pill[data-hud-filter]");
+    hudFilterPills.forEach(p => {
+      const hf = p.getAttribute("data-hud-filter");
+      let active = false;
+      if (hf === "open-now") {
+        active = Boolean(filterState.openNow && !isQuickDealActive);
+      } else if (hf === "tier-low") {
+        active = Boolean(filterState.priceTier === "tier-low" && filterState.maxPrice === null);
+      } else if (hf === "happy-hour") {
+        active = Boolean(filterState.happyHourOnly);
+      }
+      if (active) p.classList.add("active");
+      else p.classList.remove("active");
+    });
+
     updateFilterBadge();
   }
 
@@ -6718,6 +6742,142 @@
           else if (window.__openAddModal) window.__openAddModal();
         });
       }
+
+      // 5. Quick Map HUD Pills (#map-quick-pills) & Map Legend Modal (#map-legend-modal)
+      const legendModal = document.getElementById("map-legend-modal");
+      const btnHudLegend = document.getElementById("hud-pill-legend");
+      const btnCloseLegend = document.getElementById("btn-close-legend");
+      const btnLegendDone = document.getElementById("btn-legend-done");
+
+      function openMapLegend() {
+        if (!legendModal) return;
+        legendModal.style.display = "flex";
+        legendModal.classList.add("active");
+        if (typeof ModalHistoryManager !== "undefined") {
+          ModalHistoryManager.push("map-legend-modal", closeMapLegend);
+        }
+      }
+      function closeMapLegend() {
+        if (!legendModal) return;
+        legendModal.classList.remove("active");
+        legendModal.style.display = "none";
+        if (typeof ModalHistoryManager !== "undefined") {
+          ModalHistoryManager.pop("map-legend-modal");
+        }
+      }
+      window.__openMapLegend = openMapLegend;
+      window.__closeMapLegend = closeMapLegend;
+
+      if (btnHudLegend) {
+        btnHudLegend.addEventListener("click", () => {
+          if (window.poileHaptics) window.poileHaptics.tick();
+          openMapLegend();
+        });
+      }
+      if (btnCloseLegend) btnCloseLegend.addEventListener("click", closeMapLegend);
+      if (btnLegendDone) btnLegendDone.addEventListener("click", closeMapLegend);
+      if (legendModal) {
+        legendModal.addEventListener("click", (e) => {
+          if (e.target === legendModal) closeMapLegend();
+        });
+      }
+
+      const btnHudList = document.getElementById("hud-pill-list");
+      if (btnHudList) {
+        btnHudList.addEventListener("click", () => {
+          if (window.poileHaptics) window.poileHaptics.tick();
+          if (typeof window.__openRankingDrawer === "function") {
+            window.__openRankingDrawer();
+          }
+        });
+      }
+
+      function triggerQuickDeal15(forceEnable = false) {
+        if (window.poileHaptics) window.poileHaptics.tick();
+        const isAlreadyActive = Boolean(filterState.openNow && filterState.maxPrice === 15);
+        if (isAlreadyActive && !forceEnable) {
+          resetAllFilters();
+          showAppToast("Wyczyszczono szybki filtr ⚡", `Wyświetlam wszystkie lokale (${getFilteredVenues().length})`, "🍺", 2600);
+          return;
+        }
+
+        resetFilterState();
+        filterState.openNow = true;
+        filterState.maxPrice = 15;
+        filterState.priceTier = "custom";
+        currentFilter = "custom";
+        syncFilterModalUI();
+        syncQuickChipsWithFilterState();
+        renderMarkers();
+
+        const matching = getFilteredVenues().filter(v => typeof v.latitude === "number" && typeof v.longitude === "number");
+        const refCoords = (Array.isArray(userLocation) && userLocation.length === 2)
+          ? userLocation
+          : (typeof map !== "undefined" && map && map.getCenter ? [map.getCenter().lat, map.getCenter().lng] : getCurrentCity().center);
+
+        if (matching.length > 0 && refCoords) {
+          let nearest = matching[0];
+          let minDistKm = Infinity;
+          matching.forEach(v => {
+            const d = calculateDistanceKm(refCoords[0], refCoords[1], v.latitude, v.longitude);
+            if (d < minDistKm) {
+              minDistKm = d;
+              nearest = v;
+            }
+          });
+          if (map && nearest) {
+            map.flyTo([nearest.latitude, nearest.longitude], 16, { duration: 0.9 });
+          }
+          const distLabel = minDistKm < 1 ? `${Math.round(minDistKm * 1000)} m` : `${minDistKm.toFixed(1)} km`;
+          showAppToast(
+            `⚡ Najbliższe otwarte ≤ 15 zł (${matching.length})`,
+            `${nearest.name}: ${nearest.beer_price_pln.toFixed(2)} zł (${distLabel})`,
+            "🍺",
+            4200
+          );
+        } else {
+          showAppToast(
+            "⚡ Otwarte do 15 zł",
+            `Znaleziono ${matching.length} otwartych lokali z piwem do 15 zł`,
+            "🍺",
+            3200
+          );
+        }
+      }
+      window.__triggerQuickDeal15 = triggerQuickDeal15;
+
+      const btnHudQuickDeal = document.getElementById("hud-pill-quick-deal");
+      if (btnHudQuickDeal) {
+        btnHudQuickDeal.addEventListener("click", () => triggerQuickDeal15(false));
+      }
+
+      document.querySelectorAll(".quick-hud-pill[data-hud-filter]").forEach(pill => {
+        pill.addEventListener("click", () => {
+          if (window.poileHaptics) window.poileHaptics.tick();
+          const hf = pill.getAttribute("data-hud-filter");
+          if (hf === "open-now") {
+            if (filterState.openNow && filterState.maxPrice === 15) {
+              filterState.maxPrice = null;
+              filterState.priceTier = "all";
+              filterState.openNow = true;
+            } else {
+              filterState.openNow = !filterState.openNow;
+            }
+          } else if (hf === "tier-low") {
+            if (filterState.priceTier === "tier-low" && filterState.maxPrice === null) {
+              filterState.priceTier = "all";
+            } else {
+              filterState.priceTier = "tier-low";
+              filterState.maxPrice = null;
+            }
+          } else if (hf === "happy-hour") {
+            filterState.happyHourOnly = !filterState.happyHourOnly;
+          }
+          syncFilterModalUI();
+          syncQuickChipsWithFilterState();
+          renderMarkers();
+        });
+      });
     }
     initMobileControls();
 
@@ -6743,6 +6903,7 @@
       if (typeof window.__closeMobileSearch === "function") window.__closeMobileSearch();
       if (typeof window.__closePublicProfile === "function") window.__closePublicProfile();
       if (typeof window.__closeEditProfileModal === "function") window.__closeEditProfileModal();
+      if (typeof window.__closeMapLegend === "function") window.__closeMapLegend();
 
       const drawer = document.getElementById("ranking-drawer");
       if (drawer) drawer.classList.remove("open");
@@ -6954,15 +7115,41 @@
       if (regBirth) regBirth.max = maxDateStr;
       if (onbBirth) onbBirth.max = maxDateStr;
 
-      if (btnAgeYes && ageModal) {
-        btnAgeYes.addEventListener("click", () => {
-          try {
-            localStorage.setItem("age_verified_18", "true");
-            localStorage.setItem("poilepiwko_terms_accepted", "true");
-          } catch (e) {}
-          ageModal.classList.remove("active");
-        });
+      function confirmAge18() {
+        try {
+          localStorage.setItem("age_verified_18", "true");
+          localStorage.setItem("poilepiwko_terms_accepted", "true");
+        } catch (e) {}
+        if (ageModal) ageModal.classList.remove("active");
       }
+
+      if (btnAgeYes && ageModal) {
+        btnAgeYes.addEventListener("click", confirmAge18);
+      }
+
+      document.querySelectorAll(".age-intent-pill[data-age-intent]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          confirmAge18();
+          const intent = btn.getAttribute("data-age-intent");
+          if (intent === "quick-deal" && typeof window.__triggerQuickDeal15 === "function") {
+            window.__triggerQuickDeal15(true);
+          } else if (intent === "cheapest") {
+            resetFilterState();
+            filterState.priceTier = "tier-low";
+            syncFilterModalUI();
+            syncQuickChipsWithFilterState();
+            renderMarkers();
+            showAppToast("💰 Najtańsze piwo (≤ 12 zł)", `Wyświetlam ${getFilteredVenues().length} najtańszych barów na mapie`, "🍺", 3200);
+          } else if (intent === "open-now") {
+            resetFilterState();
+            filterState.openNow = true;
+            syncFilterModalUI();
+            syncQuickChipsWithFilterState();
+            renderMarkers();
+            showAppToast("🟢 Otwarte teraz", `Wyświetlam ${getFilteredVenues().length} lokali otwartych w tej chwili`, "🍺", 3200);
+          }
+        });
+      });
 
       if (btnAgeNo && ageDeniedMsg && ageActions) {
         btnAgeNo.addEventListener("click", () => {
@@ -24256,13 +24443,18 @@
     const contentEl = document.getElementById("venue-sheet-content");
     if (!sheet || !headerEl || !contentEl) return;
 
-    // Deep linking: update URL hash to current venue slug or id
+    // Deep linking: update URL hash and dynamic SEO document.title to current venue
     const venueSlug = venue.slug || venue.id;
     if (venueSlug && window.location.hash !== `#${venueSlug}`) {
       try {
         history.replaceState(null, "", `#${venueSlug}`);
       } catch (e) {}
     }
+    try {
+      const seoPrice = typeof venue.beer_price_pln === "number" ? `${venue.beer_price_pln.toFixed(2)} zł` : "cennik";
+      const seoDist = venue.district || getCurrentCity().name;
+      document.title = `${venue.name} – Piwo ${seoPrice} (${seoDist}) | poilepiwko.pl`;
+    } catch (e) {}
     if (window.poileAnalytics && typeof window.poileAnalytics.track === "function") {
       window.poileAnalytics.track("venue_view", { id: venue.id, name: venue.name, price: venue.beer_price_pln, district: venue.district });
     }
@@ -24410,11 +24602,37 @@
       `;
     }
 
-    // Flighty + Waze 1-Click Price Verification Module
+    // 1-Click Price Verification Card + Community Trust & Freshness Telemetry
+    const votesCount = Math.max(venue.is_verified ? 1 : 0, parseInt(venue.votes_confirm || 0, 10) || 0);
+    const rawDateStr = venue.last_verified_at || venue.receipt_date || venue.last_updated || "";
+    let formattedFreshness = "w tym sezonie";
+    if (rawDateStr) {
+      const parsedTs = Date.parse(rawDateStr);
+      if (!isNaN(parsedTs)) {
+        const diffDays = Math.max(0, Math.floor((Date.now() - parsedTs) / (1000 * 60 * 60 * 24)));
+        if (diffDays === 0) formattedFreshness = "dzisiaj";
+        else if (diffDays === 1) formattedFreshness = "wczoraj";
+        else if (diffDays <= 30) formattedFreshness = `${diffDays} dni temu`;
+        else {
+          const dObj = new Date(parsedTs);
+          formattedFreshness = dObj.toLocaleDateString("pl-PL", { day: "2-digit", month: "short", year: "numeric" });
+        }
+      }
+    }
+    const isHighTrust = Boolean(venue.verified_by_receipt || venue.is_verified || votesCount >= 1);
+    const trustBadgeClass = venue.verified_by_receipt
+      ? "verified-receipt"
+      : (isHighTrust ? "verified-community" : "unverified");
+    const trustBadgeLabel = venue.verified_by_receipt
+      ? `🧾 Zweryfikowana paragonem AI (${votesCount} potw.)`
+      : (isHighTrust
+        ? `🛡️ Zweryfikowana przez społeczność (${votesCount} ${votesCount === 1 ? "głos" : (votesCount < 5 ? "głosy" : "głosów")})`
+        : `📊 Cena orientacyjna — potwierdź na miejscu`);
+
     const verifyCardHtml = `
       <div class="waze-verify-card flighty-waze-verify-card" id="waze-card-${venue.id}">
         <div class="flighty-waze-head">
-          <span class="flighty-waze-eyebrow">⚡ WERYFIKACJA CENY · 1 KLIK</span>
+          <span class="flighty-waze-eyebrow">⚡ WERYFIKACJA CENY · 1 KLIK (+PKT DO PASZPORTU)</span>
           <span class="flighty-waze-question">Czy lane (0.5L) kosztuje <strong id="waze-price-display-${venue.id}">${price.toFixed(2)} zł</strong>?</span>
         </div>
         <div class="waze-actions-row flighty-waze-actions" id="waze-actions-row-${venue.id}">
@@ -24422,14 +24640,18 @@
             👍 Aktualna
           </button>
           <button type="button" class="btn-waze-change flighty-waze-btn-change" id="btn-waze-change-${venue.id}">
-            ✏️ Zmień cenę
+            👎 Nieaktualna / Zmień
           </button>
           <button type="button" class="btn-waze-scan flighty-waze-btn-scan" onclick="window.__editVenuePrice('${venue.id}', true)">
             🧾 Skaner AI
           </button>
         </div>
+        <div class="waze-trust-meta-row">
+          <span class="waze-trust-badge ${trustBadgeClass}" id="waze-trust-badge-${venue.id}">${trustBadgeLabel}</span>
+          <span class="waze-trust-date" id="waze-trust-date-${venue.id}">🕒 Sprawdzone: ${escapeHtml(formattedFreshness)}</span>
+        </div>
         <div class="waze-quick-price-selector" id="waze-selector-${venue.id}" style="display:none; margin-top:6px;">
-          <div class="flighty-waze-selector-lbl">Dotknij aktualną cenę z tablicy / menu:</div>
+          <div class="flighty-waze-selector-lbl">Dotknij aktualną cenę za 0.5L z kranu:</div>
           <button type="button" class="btn-price-tile" data-price="10">10 zł</button>
           <button type="button" class="btn-price-tile" data-price="12">12 zł</button>
           <button type="button" class="btn-price-tile" data-price="13">13 zł</button>
@@ -24555,7 +24777,79 @@
       btnYes.addEventListener("click", () => {
         poileHaptics.success();
         recordNightLogVisit(venue);
-        showAppToast("Cena potwierdzona! ✓", `Dziękujemy za potwierdzenie ceny w ${venue.name}.`, "🍺", 4000);
+        const nowIso = new Date().toISOString();
+        venue.is_verified = true;
+        venue.verified_by_community = true;
+        venue.last_updated = nowIso;
+        venue.last_verified_at = nowIso;
+        venue.votes_confirm = (typeof venue.votes_confirm === "number" ? venue.votes_confirm : 1) + 1;
+
+        // Save locally
+        const localUpdates = loadLocalUpdates();
+        const existingIdx = localUpdates.findIndex(v => v.id === venue.id);
+        if (existingIdx !== -1) {
+          localUpdates[existingIdx] = Object.assign({}, localUpdates[existingIdx], venue);
+        } else {
+          localUpdates.push(venue);
+        }
+        saveLocalUpdates(localUpdates);
+        saveVenuesCache(allVenues);
+
+        // Update trust badge & date in DOM immediately
+        const trustBadgeEl = document.getElementById(`waze-trust-badge-${venue.id}`);
+        if (trustBadgeEl) {
+          trustBadgeEl.className = "waze-trust-badge verified-community";
+          trustBadgeEl.innerHTML = `🛡️ Zweryfikowana przez społeczność (${venue.votes_confirm} ${venue.votes_confirm === 1 ? "głos" : (venue.votes_confirm < 5 ? "głosy" : "głosów")})`;
+        }
+        const trustDateEl = document.getElementById(`waze-trust-date-${venue.id}`);
+        if (trustDateEl) {
+          trustDateEl.innerHTML = "🕒 Sprawdzone: Przed chwilą ✓";
+        }
+
+        // Persist to backend or queue offline
+        const confirmPayload = {
+          venuePayload: {
+            osm_id: venue.id,
+            name: venue.name,
+            slug: venue.slug,
+            district: venue.district,
+            address: venue.address,
+            latitude: venue.latitude,
+            longitude: venue.longitude,
+            beer_name: venue.beer_name || "Piwo z kranu",
+            beer_price_pln: venue.beer_price_pln,
+            shot_price_pln: venue.shot_price_pln,
+            is_craft: venue.is_craft,
+            happy_hour: venue.happy_hour,
+            hours: venue.hours,
+            is_verified: true,
+            votes_confirm: venue.votes_confirm,
+            last_updated: nowIso
+          },
+          reportPayload: {
+            reported_beer_name: venue.beer_name || "Piwo z kranu",
+            reported_price_pln: venue.beer_price_pln,
+            happy_hour_info: "Potwierdzenie ceny z karty lokalu (👍 Aktualna)"
+          }
+        };
+
+        if (!navigator.onLine) {
+          queueOfflineAction({
+            type: "update_venue",
+            venueId: venue.id,
+            payload: confirmPayload
+          });
+        } else {
+          try {
+            fetch("/api/update-venue", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(confirmPayload)
+            }).catch(() => {});
+          } catch (e) {}
+        }
+
+        showAppToast("Cena potwierdzona! +10 pkt ✓", `Dziękujemy za potwierdzenie ceny w ${venue.name}.`, "🍺", 4000);
         btnYes.style.background = "#15803d";
         btnYes.innerHTML = "✓ Potwierdzono";
         btnYes.disabled = true;
@@ -24587,10 +24881,13 @@
             }
           } else {
             const newPrice = parseFloat(pVal);
+            const nowIso = new Date().toISOString();
             venue.beer_price_pln = newPrice;
             venue.is_verified = true;
             venue.verified_by_community = true;
-            venue.last_verified_at = new Date().toISOString();
+            venue.last_updated = nowIso;
+            venue.last_verified_at = nowIso;
+            venue.votes_confirm = (typeof venue.votes_confirm === "number" ? venue.votes_confirm : 1) + 1;
 
             // Save locally
             const localUpdates = loadLocalUpdates();
@@ -24603,15 +24900,38 @@
             saveLocalUpdates(localUpdates);
             saveVenuesCache(allVenues);
 
+            const updatePayload = {
+              venuePayload: {
+                osm_id: venue.id,
+                name: venue.name,
+                slug: venue.slug,
+                district: venue.district,
+                address: venue.address,
+                latitude: venue.latitude,
+                longitude: venue.longitude,
+                beer_name: venue.beer_name || "Piwo z kranu",
+                beer_price_pln: newPrice,
+                shot_price_pln: venue.shot_price_pln,
+                is_craft: venue.is_craft,
+                happy_hour: venue.happy_hour,
+                hours: venue.hours,
+                is_verified: true,
+                votes_confirm: venue.votes_confirm,
+                last_updated: nowIso
+              },
+              reportPayload: {
+                reported_beer_name: venue.beer_name || "Piwo z kranu",
+                reported_price_pln: newPrice,
+                happy_hour_info: "Szybka aktualizacja ceny z karty lokalu"
+              }
+            };
+
             // Send to backend or queue offline
             if (!navigator.onLine) {
               queueOfflineAction({
                 type: "update_venue",
                 venueId: venue.id,
-                payload: {
-                  venuePayload: { osm_id: venue.id, beer_price_pln: newPrice, is_verified: true, last_updated: new Date().toISOString() },
-                  reportPayload: { reported_beer_name: venue.beer_name || "Piwo z kranu", reported_price_pln: newPrice, happy_hour_info: "Szybka aktualizacja ceny z karty lokalu" }
-                }
+                payload: updatePayload
               });
               showMapToast(`💾 Zapisano cenę offline (${venue.name})!`);
             } else {
@@ -24619,18 +24939,14 @@
                 fetch("/api/update-venue", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    venueId: venue.id,
-                    beerPrice: newPrice,
-                    isVerified: true
-                  })
+                  body: JSON.stringify(updatePayload)
                 }).catch(() => {});
               } catch (e) {}
             }
 
             poileHaptics.success();
             awardPassportPoints(15);
-            showAppToast("Cena zaktualizowana! ✓", `Nowa cena piwa w ${venue.name}: ${newPrice.toFixed(2)} zł 🍻`, "🍺", 4500);
+            showAppToast("Cena zaktualizowana! +15 pkt ✓", `Nowa cena piwa w ${venue.name}: ${newPrice.toFixed(2)} zł 🍻`, "🍺", 4500);
 
             // Re-render sheet header and map
             openVenueSheet(venue);
@@ -24738,6 +25054,10 @@
     isClosingVenueSheet = true;
     suppressHashCheckUntil = Date.now() + 1200;
     activeOpenVenueId = null;
+
+    try {
+      document.title = "poilepiwko.pl – Znajdź najtańsze i otwarte teraz piwo w okolicy | Mapa Cenników Barów";
+    } catch (e) {}
 
     if (zoomToVenueTimer) {
       clearTimeout(zoomToVenueTimer);

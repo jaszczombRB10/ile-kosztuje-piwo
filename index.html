@@ -3,27 +3,47 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>poilepiwko - Gdzie na piwo? Nocna Mapa Barów, Kompas & Pub Crawl</title>
-  <meta name="description" content="poilepiwko: sprawdź na żywo aktualne ceny piwa z nalewaka, happy hours, krafty i wyznacz optymalny Pub Crawl w Twoim mieście!">
+  <title>poilepiwko.pl – Znajdź najtańsze i otwarte teraz piwo w okolicy | Mapa Cenników Barów</title>
+  <meta name="description" content="Znajdź najtańsze i otwarte teraz piwo w swojej okolicy. Sprawdź na żywo aktualne ceny z nalewaka (0.5L), promocje Happy Hours, ranking barów i zaplanuj Pub Crawl!">
   <meta name="theme-color" content="#09090c">
 
   <!-- Open Graph & Social Sharing Meta Tags -->
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://www.poilepiwko.pl/">
-  <meta property="og:title" content="poilepiwko - Gdzie na piwo? Nocna Mapa Barów, Kompas & Pub Crawl">
-  <meta property="og:description" content="Sprawdź na żywo aktualne ceny piwa z nalewaka, skorzystaj z Piwnego Kompasu GPS, Pub Crawlu i ruletki barowej!">
+  <meta property="og:title" content="poilepiwko.pl – Znajdź najtańsze i otwarte teraz piwo w swojej okolicy">
+  <meta property="og:description" content="Sprawdź na żywo aktualne ceny piwa z nalewaka (0.5L), otwarte lokale, Happy Hours, ranking najtańszych barów i Pub Crawl!">
   <meta property="og:image" content="https://www.poilepiwko.pl/icons/og-preview.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="poilepiwko - Nocna mapa barów i cen piwa">
+  <meta property="og:image:alt" content="poilepiwko.pl - Mapa cen piwa i otwartych barów">
   <meta property="og:locale" content="pl_PL">
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:url" content="https://www.poilepiwko.pl/">
-  <meta name="twitter:title" content="poilepiwko - Gdzie na piwo?">
-  <meta name="twitter:description" content="Nocna mapa barów, radar piwny GPS, ruletka i ceny z kranu.">
+  <meta name="twitter:title" content="poilepiwko.pl – Znajdź najtańsze i otwarte teraz piwo w okolicy">
+  <meta name="twitter:description" content="Aktualne ceny piwa z kranu (0.5L), lokale otwarte teraz, promocje Happy Hours i Pub Crawl.">
   <meta name="twitter:image" content="https://www.poilepiwko.pl/icons/og-preview.png">
+
+  <!-- Structured Data (Schema.org) for Google Search Indexing -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "poilepiwko.pl",
+    "alternateName": "Po Ile Piwko",
+    "url": "https://www.poilepiwko.pl/",
+    "applicationCategory": "FoodAndDrinkApplication",
+    "operatingSystem": "Web, iOS, Android",
+    "description": "Znajdź najtańsze i otwarte teraz piwo w swojej okolicy. Społecznościowa mapa cen piwa z nalewaka (0.5L), godzin otwarcia, promocji Happy Hours i tras Pub Crawl w Warszawie i największych miastach Polski.",
+    "inLanguage": "pl-PL",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "PLN"
+    }
+  }
+  </script>
   
   <!-- PWA & Mobile Web App Meta Tags -->
   <link rel="manifest" href="manifest.json">
@@ -80,7 +100,7 @@
   <script defer src="https://cloud.umami.is/script.js" data-website-id="auto" id="umami-analytics-script"></script>
 
   <!-- Custom Styles -->
-  <link rel="stylesheet" href="styles.css?v=172">
+  <link rel="stylesheet" href="styles.css?v=173">
 </head>
 <body>
 
@@ -247,6 +267,28 @@
           <circle cx="11" cy="11" r="8"></circle>
           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
+      </button>
+    </div>
+
+    <!-- Quick Map Action & Filter Pills (Instant 1-Tap Access) -->
+    <div class="map-quick-pills" id="map-quick-pills" role="toolbar" aria-label="Szybkie filtry mapy">
+      <button type="button" class="quick-hud-pill pill-deal" id="hud-pill-quick-deal" title="Pokaż najbliższe otwarte piwo do 15 zł">
+        <span>⚡</span><span>Blisko ≤15 zł</span>
+      </button>
+      <button type="button" class="quick-hud-pill" data-hud-filter="open-now" title="Tylko lokale otwarte teraz">
+        <span>🟢</span><span>Otwarte</span>
+      </button>
+      <button type="button" class="quick-hud-pill" data-hud-filter="tier-low" title="Najtańsze piwo do 12 zł">
+        <span>💰</span><span>≤ 12 zł</span>
+      </button>
+      <button type="button" class="quick-hud-pill" data-hud-filter="happy-hour" title="Aktualne promocje Happy Hours">
+        <span>🔥</span><span>Promocje</span>
+      </button>
+      <button type="button" class="quick-hud-pill" id="hud-pill-list" title="Przełącz na listę i ranking lokali">
+        <span>📋</span><span>Lista</span>
+      </button>
+      <button type="button" class="quick-hud-pill pill-legend" id="hud-pill-legend" title="Legenda mapy i znaczenie symboli">
+        <span>ℹ️</span><span>Legenda</span>
       </button>
     </div>
 
@@ -1510,8 +1552,16 @@
         </div>
         <div class="age-gate-actions" style="width:100%;">
           <button type="button" id="btn-age-yes" class="flighty-edit-submit-btn btn-age-confirm">
-            ✓ Tak, mam ukończone 18 lat
+            ✓ Tak, mam ukończone 18 lat – Wejdź na mapę
           </button>
+          <div class="age-quick-intent-box">
+            <span class="age-quick-intent-label">SZYBKI START (18+) — CZEGO SZUKASZ?</span>
+            <div class="age-quick-intent-pills">
+              <button type="button" class="age-intent-pill intent-deal" data-age-intent="quick-deal">⚡ Blisko &amp; Otwarte ≤15 zł</button>
+              <button type="button" class="age-intent-pill" data-age-intent="cheapest">💰 Najtańsze ≤12 zł</button>
+              <button type="button" class="age-intent-pill" data-age-intent="open-now">🟢 Otwarte teraz</button>
+            </div>
+          </div>
           <button type="button" id="btn-age-no" class="btn-age-deny">
             ✕ Nie mam 18 lat
           </button>
@@ -1522,6 +1572,111 @@
         </div>
         <div class="age-gate-footer">
           Spożywanie alkoholu szkodzi zdrowiu. Nigdy nie siadaj za kierownicą po alkoholu.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Map Legend & Onboarding Modal (Znaczenie kolorów, ikon i weryfikacji cen) -->
+  <div class="modal-backdrop" id="map-legend-modal" style="display:none;">
+    <div class="modal-card flighty-edit-profile-sheet legend-modal-card">
+      <div class="flighty-edit-topbar">
+        <button type="button" id="btn-close-legend" class="flighty-edit-nav-btn cancel" aria-label="Zamknij">Zamknij</button>
+        <div class="flighty-edit-topbar-title">
+          <span class="flighty-edit-eyebrow">PRZEWODNIK PO MAPIE</span>
+          <h2>ℹ️ Legenda &amp; Symbole</h2>
+        </div>
+        <button type="button" id="btn-legend-done" class="flighty-edit-nav-btn save">Gotowe ✓</button>
+      </div>
+      <div class="flighty-edit-form legend-modal-body">
+        <div class="flighty-edit-section">
+          <div class="flighty-edit-sec-header">
+            <span>01 · KOLORY CEN NA MAPIE (0.5L Z NALEWAKA)</span>
+            <span class="flighty-sec-meta">PLN</span>
+          </div>
+          <div class="legend-items-list">
+            <div class="legend-row">
+              <span class="legend-badge badge-green">11 zł</span>
+              <div class="legend-text">
+                <strong>Zielony (≤ 12 zł)</strong>
+                <span>Najtańsze bary, lokale studenckie i kultowe puby</span>
+              </div>
+            </div>
+            <div class="legend-row">
+              <span class="legend-badge badge-orange">15 zł</span>
+              <div class="legend-text">
+                <strong>Pomarańczowy (13 – 18 zł)</strong>
+                <span>Standardowa cena miejska za kufel 0.5L z kranu</span>
+              </div>
+            </div>
+            <div class="legend-row">
+              <span class="legend-badge badge-red">19 zł</span>
+              <div class="legend-text">
+                <strong>Czerwony (19+ zł)</strong>
+                <span>Specjalistyczne multitapy kraftowe, browary i lokale premium</span>
+              </div>
+            </div>
+            <div class="legend-row">
+              <span class="legend-badge badge-closed">🌙 14 zł</span>
+              <div class="legend-text">
+                <strong>Ciemna pinezka z obwódką</strong>
+                <span>Lokal jest w tej chwili zamknięty (kliknij, aby zobaczyć godziny otwarcia)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flighty-edit-section">
+          <div class="flighty-edit-sec-header">
+            <span>02 · SYMBOLE I OZNACZENIA NA MAPIE</span>
+            <span class="flighty-sec-meta">IKONY</span>
+          </div>
+          <div class="legend-items-list">
+            <div class="legend-row">
+              <span class="legend-badge badge-cluster">3 od 12 zł</span>
+              <div class="legend-text">
+                <strong>Grupa barów obok siebie</strong>
+                <span>Pokazuje liczbę lokali w tym miejscu oraz najniższą cenę w grupie. Kliknij, aby przybliżyć.</span>
+              </div>
+            </div>
+            <div class="legend-row">
+              <span class="legend-badge badge-closing">⚠️ 16m</span>
+              <div class="legend-text">
+                <strong>Zamyka się wkrótce (np. ⚠️ 16m)</strong>
+                <span>Ostrzeżenie na żywo: lokal zamyka się za podaną liczbę minut (mniej niż 45 min).</span>
+              </div>
+            </div>
+            <div class="legend-row">
+              <span class="legend-badge badge-star">⭐</span>
+              <div class="legend-text">
+                <strong>Gwiazdka przy pinezce (⭐)</strong>
+                <span>Multitap lub bar z szeroką selekcją piw rzemieślniczych (kraftowych).</span>
+              </div>
+            </div>
+            <div class="legend-row">
+              <span class="legend-badge badge-pass">🎟️ -10%</span>
+              <div class="legend-text">
+                <strong>Karta poilepiwko Pass</strong>
+                <span>Lokal partnerski honorujący darmową kartę klubową w aplikacji.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flighty-edit-section">
+          <div class="flighty-edit-sec-header">
+            <span>03 · JAK DZIAŁA SPOŁECZNOŚCIOWA WERYFIKACJA CEN?</span>
+            <span class="flighty-sec-meta">ZAUFANIE</span>
+          </div>
+          <div class="legend-items-list">
+            <div class="legend-row">
+              <span class="legend-badge badge-trust">👍 / 👎</span>
+              <div class="legend-text">
+                <strong>Potwierdź lub zmień cenę w 1 klik</strong>
+                <span>Na karcie każdego lokalu możesz kliknąć <strong>„👍 Aktualna”</strong> (+10 pkt) lub <strong>„👎 Nieaktualna / Zmień”</strong> (+15 pkt), aby pomóc innym piwoszom.</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -3933,6 +4088,6 @@
   <script src="moderation.js"></script>
 
   <!-- Main Application Logic -->
-  <script src="app.js?v=172"></script>
+  <script src="app.js?v=173"></script>
 </body>
 </html>
