@@ -9154,14 +9154,15 @@
         const allCityDists = new Set((allVenues || []).map(v => v.district).filter(Boolean));
         const totalDists = Math.max(allCityDists.size || 18, uniqueDists.size || 1);
 
-        // Calculate estimated savings vs 17.50 PLN pub benchmark
+        // Calculate savings from PoIlePiwko Pass discounts in partner bars (0 zł default)
         let totalSaved = 0;
-        visitedObjs.forEach(v => {
-          const p = typeof v.beer_price_pln === "number" ? v.beer_price_pln : 14;
-          totalSaved += Math.max(2.5, 18.0 - p);
-        });
-        if (vCount > visitedObjs.length) {
-          totalSaved += (vCount - visitedObjs.length) * 4.5;
+        if (!isGuest && prof && typeof prof.pass_savings === "number") {
+          totalSaved = prof.pass_savings;
+        } else if (!isGuest) {
+          try {
+            const storedPassSaved = localStorage.getItem("poilepiwko_pass_savings_" + (currentUser ? currentUser.id : "me"));
+            if (storedPassSaved) totalSaved = parseFloat(storedPassSaved) || 0;
+          } catch (e) {}
         }
 
         const topDistStr = isGuest
@@ -9354,7 +9355,7 @@
       } else if (type === "saved") {
         const el = document.getElementById("flighty-stat-saved");
         const val = el ? el.textContent.trim() : "0 zł";
-        showAppToast("Twoja oszczędność 💰", `Zaoszczędziłeś ${val}! Wyliczane z różnicy między średnią ceną w pubach (18 zł) a cenami piwa w Twoich lokalach.`, "💰", 5500);
+        showAppToast("Oszczędność z PoIlePiwko Pass 💳", `Zaoszczędziłeś ${val}! Kwota nalicza się ze zniżek przy użyciu wirtualnej Karty Pass w lokalach partnerskich.`, "💳", 5000);
       }
     };
 
