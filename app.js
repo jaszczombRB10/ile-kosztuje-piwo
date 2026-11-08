@@ -9008,7 +9008,6 @@
       const previewImg = document.getElementById("edit-photo-preview-img");
       const previewEmoji = document.getElementById("edit-photo-preview-emoji");
       const btnRemovePhoto = document.getElementById("btn-remove-profile-photo");
-      const btnCropPhoto = document.getElementById("btn-crop-profile-photo");
       const btnChoosePhoto = document.getElementById("btn-choose-photo");
       const btns = editAvatarPicker ? editAvatarPicker.querySelectorAll(".avatar-option") : [];
 
@@ -9019,8 +9018,7 @@
         }
         if (previewEmoji) previewEmoji.style.display = "none";
         if (btnRemovePhoto) btnRemovePhoto.style.display = "inline-flex";
-        if (btnCropPhoto) btnCropPhoto.style.display = "inline-flex";
-        if (btnChoosePhoto) btnChoosePhoto.innerHTML = "<span>📷 Zmień</span>";
+        if (btnChoosePhoto) btnChoosePhoto.innerHTML = "<span>📷 Zmień zdjęcie</span>";
         btns.forEach(b => b.classList.remove("selected"));
       } else {
         if (previewImg) {
@@ -9032,7 +9030,6 @@
           previewEmoji.style.display = "flex";
         }
         if (btnRemovePhoto) btnRemovePhoto.style.display = "none";
-        if (btnCropPhoto) btnCropPhoto.style.display = "none";
         if (btnChoosePhoto) btnChoosePhoto.innerHTML = "<span>📷 Dodaj zdjęcie</span>";
         btns.forEach(b => {
           if (b.getAttribute("data-avatar") === editSelectedAvatar) {
@@ -9908,21 +9905,6 @@
           });
         } else if (editFileInput) {
           editFileInput.click();
-        }
-      });
-    }
-    if (btnCropPhoto) {
-      btnCropPhoto.addEventListener("click", () => {
-        if (!editSelectedPhoto) {
-          if (editFileInput) editFileInput.click();
-          return;
-        }
-        if (window.__openAvatarCropper) {
-          window.__openAvatarCropper(editSelectedPhoto, (croppedDataUrl) => {
-            editSelectedPhoto = croppedDataUrl;
-            updateEditModalAvatarPreview();
-            showAppToast("Kadr zaktualizowany! ✂️", "Kliknij 'Zapisz', aby zastosować w profilu.", "📷");
-          });
         }
       });
     }

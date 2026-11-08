@@ -25072,28 +25072,6 @@ body.theme-light .telemetry-lbl {
   cursor: pointer;
 }
 
-.flighty-btn-photo-crop {
-  -webkit-appearance: none;
-  appearance: none;
-  padding: 6px 13px;
-  border-radius: 999px;
-  background: rgba(245, 158, 11, 0.16);
-  border: 1px solid rgba(245, 158, 11, 0.38);
-  color: #fde68a;
-  font-size: 0.75rem;
-  font-weight: 800;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  transition: transform 0.14s ease, background 0.14s ease;
-}
-
-.flighty-btn-photo-crop:active {
-  transform: scale(0.96);
-  background: rgba(245, 158, 11, 0.28);
-}
-
 /* ==========================================================================
    3.13 INTERACTIVE AVATAR CROPPER (#avatar-crop-modal)
    ========================================================================== */
