@@ -5451,12 +5451,15 @@
 
     function setModalMode(mode, targetVenue = null) {
       currentModalMode = mode;
+      if (modal) modal.setAttribute("data-mode", mode);
+      const modalHeadEyebrow = document.getElementById("report-modal-eyebrow");
       const modalHeadTitle = document.getElementById("report-modal-title");
       const modalHeadDesc = document.getElementById("report-modal-desc");
       const nameInput = document.getElementById("report-name");
       const submitBtn = document.getElementById("report-submit-btn");
 
       if (mode === "add") {
+        if (modalHeadEyebrow) modalHeadEyebrow.textContent = "DODAJ LOKAL · MAPA BARÓW";
         if (modalHeadTitle) modalHeadTitle.textContent = "➕ Dodaj Nowy Bar";
         if (modalHeadDesc) modalHeadDesc.textContent = "Znasz fajny bar, którego brakuje na mapie? Dodaj go, a natychmiast pojawi się w aplikacji:";
         if (reportNameLabel) reportNameLabel.textContent = "01 · LOKALIZACJA & NAZWA BARU";
@@ -5477,6 +5480,7 @@
           nameInput.placeholder = "np. Piwoteka, Browar, multitap...";
         }
       } else if (mode === "rename") {
+        if (modalHeadEyebrow) modalHeadEyebrow.textContent = "ZMIANA SZYLDULOKALU · MAPA BARÓW";
         if (modalHeadTitle) modalHeadTitle.textContent = "🔄 Zmień Nazwę Baru";
         if (modalHeadDesc) modalHeadDesc.textContent = "Bar w bazie OSM ma nieaktualną nazwę lub działa pod nowym szyldem? Wybierz stary lokal i wprowadź nową nazwę:";
         if (reportNameLabel) reportNameLabel.textContent = "01 · NOWA NAZWA BARU (AKTUALNY SZYLD)";
@@ -5501,6 +5505,8 @@
           setTimeout(() => renameSearchInput.focus(), 150);
         }
       } else if (mode === "edit") {
+        if (modalHeadEyebrow) modalHeadEyebrow.textContent = "AKTUALIZACJA OFERTY · CENNIK";
+        if (modalHeadTitle) modalHeadTitle.textContent = "✏️ Edycja cennika";
         if (reportModeToggle) reportModeToggle.style.display = "none";
         if (renameSelectorBox) renameSelectorBox.style.display = "none";
         if (renameEditToggleRow) renameEditToggleRow.style.display = "block";
@@ -5510,8 +5516,8 @@
         }
         if (renameEditTip) renameEditTip.style.display = "none";
 
-        if (reportNameLabel) reportNameLabel.textContent = "01 · LOKALIZACJA & DANE BARU";
-        if (submitBtn) submitBtn.innerHTML = "<span>💾</span><span>Zapisz nową cenę / dane</span>";
+        if (reportNameLabel) reportNameLabel.textContent = "01 · WYBRANY LOKAL";
+        if (submitBtn) submitBtn.innerHTML = "<span>💾</span><span>Zapisz zmiany w cenniku</span>";
 
         if (nameInput) {
           nameInput.readOnly = true;
@@ -5738,14 +5744,16 @@
       resetPhotoUpload();
       if (addressMatchBox) addressMatchBox.innerHTML = "";
 
+      const modalHeadEyebrow = document.getElementById("report-modal-eyebrow");
       const modalHeadTitle = document.getElementById("report-modal-title");
       const modalHeadDesc = document.getElementById("report-modal-desc");
       const nameInput = document.getElementById("report-name");
 
-      if (modalHeadTitle) modalHeadTitle.textContent = `✏️ Edycja lokalu: ${venue.name}`;
-      if (modalHeadDesc) modalHeadDesc.textContent = `Zaktualizuj cenę, ofertę lub zgłoś nową nazwę baru w tym miejscu:`;
-
       setModalMode("edit");
+
+      if (modalHeadEyebrow) modalHeadEyebrow.textContent = `EDYCJA CENNIKA · ${(venue.name || "LOKAL").toUpperCase()}`;
+      if (modalHeadTitle) modalHeadTitle.textContent = `✏️ Edycja cennika: ${venue.name}`;
+      if (modalHeadDesc) modalHeadDesc.textContent = `Zaktualizuj cenę, ofertę lub zgłoś nową nazwę baru w tym miejscu:`;
 
       if (nameInput) {
         nameInput.value = venue.name;
@@ -24650,7 +24658,7 @@
         </a>
         <button type="button" class="btn-venue-sheet-action" id="btn-venue-sheet-edit">
           <span style="font-size:1.15rem;">✏️</span>
-          <span>Cennik</span>
+          <span>Edycja cennika</span>
         </button>
         <button type="button" class="btn-venue-sheet-action" id="btn-venue-sheet-share-action">
           <span style="font-size:1.15rem;">🔗</span>

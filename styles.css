@@ -26619,8 +26619,14 @@ body.theme-light .flighty-sec-title {
   border: 1px solid rgba(255, 255, 255, 0.09) !important;
   border-radius: 12px !important;
   padding: 3px !important;
-  display: flex !important;
+  display: flex;
   gap: 4px !important;
+}
+
+#report-modal[data-mode="edit"] #report-mode-toggle,
+#report-mode-toggle[style*="display: none"],
+#report-mode-toggle[style*="display:none"] {
+  display: none !important;
 }
 
 .flighty-edit-profile-sheet .report-mode-tab,
