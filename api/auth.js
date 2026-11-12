@@ -424,6 +424,7 @@ module.exports = async (req, res) => {
             vibe_tags: meta.vibe_tags || "",
             visited_venues: meta.visited_venues || [],
             favorite_venues: meta.favorite_venues || [],
+            rank_title: meta.rank_title || null,
             created_at: targetUser.created_at
           };
         }

@@ -3952,7 +3952,25 @@
     { min: 20, title: "Legenda Nocnego Życia", icon: "👑", sub: "Absolutny mistrz! Twoja wiedza o barach przeszła do historii.", nextMin: null, nextTitle: null }
   ];
 
-  function getPassportRank(count) {
+  function isSigmaUser(userOrUsername) {
+    let u = userOrUsername;
+    if (typeof u === "object" && u !== null) {
+      u = u.username || (u.user_metadata && u.user_metadata.username) || (u.email && u.email.split("@")[0]);
+    }
+    if (!u) {
+      u = (typeof currentProfile !== "undefined" && currentProfile && currentProfile.username) ||
+          (typeof currentUser !== "undefined" && currentUser && currentUser.user_metadata && currentUser.user_metadata.username) ||
+          (typeof currentUser !== "undefined" && currentUser && currentUser.email && currentUser.email.split("@")[0]);
+    }
+    const clean = String(u || "").toLowerCase().replace(/^@/, "").trim();
+    return clean === "sigma67" || clean === "kacperzuchowski0005@gmail.com" || clean === "kacperzuchowski0005";
+  }
+
+  function getPassportRank(count, username) {
+    const isSigma = isSigmaUser(username);
+    if (count === 0 && isSigma) {
+      return { min: 0, title: "Piwosz Sigma", icon: "🗿", sub: "Prawdziwy sigma piwnych szlaków! 🗿", nextMin: 1, nextTitle: "Bywalec Barowy" };
+    }
     let activeRank = PASSPORT_RANKS[0];
     for (const r of PASSPORT_RANKS) {
       if (count >= r.min) activeRank = r;
@@ -7941,17 +7959,21 @@
   // AUTHENTICATION, USER PROFILES & SOCIAL COMMUNITY ("Untappd + Strava dla Warszawy")
   // ==========================================================================
 
-  function calculateUserRank(visitedCount) {
+  function calculateUserRank(visitedCount, username) {
+    const isSigma = isSigmaUser(username);
     if (visitedCount >= 50) return { title: "Miejska Legenda 👑", level: 5 };
     if (visitedCount >= 25) return { title: "Piwny Koneser 🍺", level: 4 };
     if (visitedCount >= 10) return { title: "Barowy Bywalec 🍻", level: 3 };
     if (visitedCount >= 5) return { title: "Miejski Eksplorator 🦁", level: 2 };
-    return { title: "Początkujący Piwosz 🦊", level: 1 };
+    return { title: isSigma ? "Piwosz Sigma 🗿" : "Początkujący Piwosz 🦊", level: 1 };
   }
 
-  function calculateRankProgress(visitedCount) {
+  function calculateRankProgress(visitedCount, username) {
+    const isSigma = isSigmaUser(username);
+    const baseTitle = isSigma ? "Piwosz Sigma 🗿" : "Początkujący Piwosz 🦊";
+
     const ranks = [
-      { min: 0, title: "Początkujący Piwosz 🦊", nextMin: 5, nextTitle: "Miejski Eksplorator 🦁" },
+      { min: 0, title: baseTitle, nextMin: 5, nextTitle: "Miejski Eksplorator 🦁" },
       { min: 5, title: "Miejski Eksplorator 🦁", nextMin: 10, nextTitle: "Barowy Bywalec 🍻" },
       { min: 10, title: "Barowy Bywalec 🍻", nextMin: 25, nextTitle: "Piwny Koneser 🍺" },
       { min: 25, title: "Piwny Koneser 🍺", nextMin: 50, nextTitle: "Miejska Legenda 👑" },
@@ -9269,7 +9291,7 @@
     function renderMyProfile() {
       const isGuest = !currentUser;
       const prof = getEffectiveProfile();
-      const rank = calculateUserRank(isGuest ? 0 : visitedVenues.length);
+      const rank = calculateUserRank(isGuest ? 0 : visitedVenues.length, prof.username);
 
       const heroAvatar = document.getElementById("prof-hero-avatar");
       const heroName = document.getElementById("prof-hero-name");
@@ -9425,7 +9447,7 @@
       } catch (e) {}
 
       // Progress bar (Goin' style)
-      const rankProg = isGuest ? { percent: 0, nextTitle: "Zaloguj się, aby odblokować rangi" } : calculateRankProgress(visitedVenues.length);
+      const rankProg = isGuest ? { percent: 0, nextTitle: "Zaloguj się, aby odblokować rangi" } : calculateRankProgress(visitedVenues.length, prof.username);
       const progressFill = document.getElementById("prof-progress-fill");
       const progressPercent = document.getElementById("prof-progress-percent");
       const progressTarget = document.getElementById("prof-progress-target");
@@ -13611,7 +13633,7 @@
 
         const p = data.profile;
         currentViewedProfile = p;
-        const rank = calculateUserRank((p.visited_venues || []).length);
+        const rank = calculateUserRank((p.visited_venues || []).length, p.username);
 
         if (avatarEl) {
           if (p.avatar_photo) {
@@ -16108,7 +16130,7 @@
         ctx.stroke();
 
         // 2. Rank & Bio Tagline
-        const rank = calculateUserRank(visitedVenues.length);
+        const rank = calculateUserRank(visitedVenues.length, currentProfile?.username);
         ctx.textAlign = "center";
         ctx.font = "800 30px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
         ctx.fillStyle = "#fde68a";
@@ -16317,7 +16339,7 @@
         ctx.fillText(`@${currentProfile.username}`, W / 2, 705);
 
         // 5. Rank Title Pill (e.g. 🏆 Koneser Kraftu)
-        const rank = calculateUserRank(visitedVenues.length);
+        const rank = calculateUserRank(visitedVenues.length, currentProfile?.username);
         const rankText = `🏆 ${rank.title}`;
         ctx.font = "800 32px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
         const rankW = ctx.measureText(rankText).width + 60;
