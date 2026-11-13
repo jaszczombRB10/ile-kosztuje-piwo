@@ -18857,6 +18857,7 @@ input, select, textarea {
   }
   .fab-stack-right .fab-roulette-float,
   .fab-stack-right .fab-pubquiz-float,
+  .fab-stack-right .fab-czolko-float,
   .fab-stack-right .fab-compass-float,
   .fab-stack-right .fab-sos-float {
     display: none !important;
@@ -21592,6 +21593,8 @@ body.theme-light .btn-empty-vp-action.secondary {
   .fab-stack-right #btn-roulette-float,
   .fab-stack-right .fab-pubquiz-float,
   .fab-stack-right #btn-pubquiz-float,
+  .fab-stack-right .fab-czolko-float,
+  .fab-stack-right #btn-czolko-float,
   .fab-stack-right .fab-compass-float,
   .fab-stack-right #btn-compass-float,
   .fab-stack-right .fab-sos-float,
@@ -28033,5 +28036,1186 @@ body.theme-light .waze-trust-badge.trust-high {
 body.theme-light .waze-trust-date {
   color: #64748b;
 }
+
+/* ==========================================================================
+   3.15 GRA W CZÓŁKO (HEADS UP! PARTY GAME) - MODAL, STAGE & LIGHT MODE
+   ========================================================================== */
+
+/* Desktop Floating Action Button (Matches circular .fab-stack-right icons) */
+.fab-czolko-float {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #06b6d4 0%, #0d9488 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(255, 255, 255, 0.38);
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(6, 182, 212, 0.5), 0 2px 6px rgba(0, 0, 0, 0.5);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: inherit;
+}
+
+.fab-czolko-float span:not(.czolko-float-icon) {
+  display: none;
+}
+
+.fab-czolko-float .czolko-float-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.fab-czolko-float:hover {
+  transform: translateY(-2px) scale(1.08);
+  box-shadow: 0 6px 24px rgba(6, 182, 212, 0.72), 0 2px 10px rgba(0, 0, 0, 0.75);
+}
+
+.fab-czolko-float:active {
+  transform: scale(0.92);
+}
+
+/* Mobile Search Chip */
+.m-dist-chip.chip-czolko {
+  background: rgba(6, 182, 212, 0.2) !important;
+  border-color: rgba(34, 211, 238, 0.45) !important;
+  color: #67e8f9 !important;
+  font-weight: 700 !important;
+}
+
+.m-dist-chip.chip-czolko:hover,
+.m-dist-chip.chip-czolko:active {
+  background: rgba(6, 182, 212, 0.36) !important;
+  color: #ffffff !important;
+}
+
+body.theme-light .m-dist-chip.chip-czolko {
+  background: #ecfeff !important;
+  border-color: #67e8f9 !important;
+  color: #0e7490 !important;
+}
+
+/* Bento Card inside Discover Sheet */
+#discover-sheet .bento-card.bento-czolko {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.18) 0%, rgba(16, 185, 129, 0.12) 100%) !important;
+  border-color: rgba(34, 211, 238, 0.38) !important;
+}
+
+.bento-pill-party {
+  font-size: 0.66rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  background: rgba(6, 182, 212, 0.22);
+  color: #67e8f9;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(34, 211, 238, 0.42);
+  letter-spacing: 0.04em;
+}
+
+body.theme-light #discover-sheet .bento-card.bento-czolko {
+  background: linear-gradient(135deg, #ecfeff 0%, #ecfdf5 100%) !important;
+  border-color: #67e8f9 !important;
+}
+
+body.theme-light .bento-pill-party {
+  background: #cffafe !important;
+  border-color: #67e8f9 !important;
+  color: #0e7490 !important;
+}
+
+/* Czółko Lobby & Results Modal */
+.czolko-modal-card {
+  max-width: 490px;
+  width: 100%;
+  position: relative;
+  scrollbar-width: none;
+}
+
+.czolko-modal-card::-webkit-scrollbar {
+  display: none;
+}
+
+#czolko-confetti-canvas {
+  z-index: 30;
+}
+
+#czolko-modal .czolko-hero {
+  padding: 12px 16px 14px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: center;
+  background: linear-gradient(180deg, rgba(6, 182, 212, 0.08) 0%, transparent 100%);
+}
+
+#czolko-modal .czolko-hero p {
+  font-size: 0.78rem;
+  color: rgba(235, 235, 245, 0.74);
+  margin: 0 0 10px 0;
+  line-height: 1.4;
+}
+
+.czolko-guide-pills {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.czolko-guide-pill {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #e2e8f0;
+}
+
+.czolko-guide-pill.pill-ok {
+  background: rgba(16, 185, 129, 0.16);
+  border-color: rgba(52, 211, 153, 0.4);
+  color: #6ee7b7;
+}
+
+.czolko-guide-pill.pill-pass {
+  background: rgba(245, 158, 11, 0.16);
+  border-color: rgba(251, 191, 36, 0.4);
+  color: #fcd34d;
+}
+
+.czolko-body-pane {
+  padding: 14px 16px 16px 16px;
+}
+
+#czolko-modal .goin-profile-footer {
+  padding: 0 16px 16px 16px;
+}
+
+.czolko-lobby-card {
+  background: #14141d;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 18px;
+  padding: 14px;
+  text-align: center;
+}
+
+.czolko-lobby-card h3 {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #f8fafc;
+  margin: 0 0 10px 0;
+  text-align: left;
+}
+
+.czolko-cat-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-bottom: 14px;
+}
+
+.czolko-cat-btn {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1.5px solid rgba(255, 255, 255, 0.09);
+  border-radius: 13px;
+  padding: 10px 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  font-family: inherit;
+}
+
+.czolko-cat-btn:hover {
+  background: rgba(255, 255, 255, 0.085);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.czolko-cat-btn.active {
+  background: rgba(6, 182, 212, 0.16);
+  border-color: #22d3ee;
+  box-shadow: 0 0 14px rgba(6, 182, 212, 0.22);
+}
+
+.czolko-cat-ico {
+  font-size: 1.35rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.czolko-cat-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.czolko-cat-text strong {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #f8fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.czolko-cat-text small {
+  font-size: 0.68rem;
+  color: #94a3b8;
+  margin-top: 1px;
+  line-height: 1.28;
+}
+
+.czolko-cat-count {
+  flex-shrink: 0;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+}
+
+.czolko-cat-btn.active .czolko-cat-count {
+  background: #22d3ee;
+  color: #083344;
+}
+
+.czolko-settings-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.czolko-setting-row {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.czolko-setting-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #94a3b8;
+  margin-bottom: 8px;
+}
+
+.czolko-setting-val {
+  color: #22d3ee;
+  font-weight: 800;
+}
+
+.czolko-setting-pills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.czolko-pill-btn {
+  flex: 1 1 auto;
+  min-width: 44px;
+  padding: 7px 9px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 9px;
+  color: #cbd5e1;
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+  font-family: inherit;
+}
+
+.czolko-pill-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.czolko-pill-btn.active {
+  background: linear-gradient(135deg, #06b6d4 0%, #0d9488 100%);
+  border-color: #22d3ee;
+  color: #ffffff;
+  font-weight: 800;
+  box-shadow: 0 2px 10px rgba(6, 182, 212, 0.35);
+}
+
+.czolko-toggles-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.czolko-toggle-chip {
+  flex: 1 1 auto;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 10px;
+  color: #cbd5e1;
+  font-size: 0.71rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.czolko-toggle-chip:hover {
+  background: rgba(255, 255, 255, 0.09);
+  color: #ffffff;
+}
+
+.czolko-toggle-chip.active {
+  background: rgba(16, 185, 129, 0.18);
+  border-color: #34d399;
+  color: #6ee7b7;
+}
+
+.czolko-lobby-meta {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.czolko-meta-pill {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 0.72rem;
+  color: #cbd5e1;
+}
+
+.czolko-meta-pill strong {
+  color: #22d3ee;
+}
+
+.btn-czolko-cta {
+  width: 100%;
+  padding: 13px 16px;
+  font-size: 0.92rem;
+  font-weight: 800;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #06b6d4 0%, #10b981 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 6px 20px rgba(6, 182, 212, 0.4) !important;
+}
+
+.btn-czolko-cta:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+
+/* Results Screen */
+.czolko-result-hero {
+  background: #14141d;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 18px;
+  padding: 18px 14px;
+  text-align: center;
+}
+
+.czolko-result-badge-ico {
+  font-size: 3rem;
+  line-height: 1.1;
+  margin-bottom: 4px;
+}
+
+.czolko-result-hero h3 {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 6px 0;
+}
+
+.czolko-new-record-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 999px;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+.czolko-res-score-box {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+  margin: 6px 0 4px 0;
+}
+
+.czolko-res-num {
+  font-size: 3.1rem;
+  font-weight: 900;
+  color: #22d3ee;
+  line-height: 1;
+}
+
+.czolko-res-unit {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #94a3b8;
+}
+
+.czolko-res-sub {
+  font-size: 0.76rem;
+  color: #94a3b8;
+  margin: 0 0 12px 0;
+}
+
+.czolko-unlocked-notice {
+  background: rgba(34, 197, 94, 0.16);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  color: #86efac;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.czolko-results-tip {
+  font-size: 0.72rem;
+  color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+  line-height: 1.35;
+}
+
+.czolko-results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 230px;
+  overflow-y: auto;
+  margin-bottom: 14px;
+  padding-right: 2px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.czolko-results-empty {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  padding: 16px 8px;
+}
+
+.czolko-word-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 11px;
+  border-radius: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: #f8fafc;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.czolko-word-item:active {
+  transform: scale(0.98);
+}
+
+.czolko-word-item.is-correct {
+  background: rgba(16, 185, 129, 0.14);
+  border-color: rgba(52, 211, 153, 0.45);
+}
+
+.czolko-word-item.is-pass {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(251, 191, 36, 0.35);
+}
+
+.cwi-status {
+  flex-shrink: 0;
+  font-size: 1rem;
+}
+
+.cwi-word {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.cwi-badge {
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.25);
+  color: #cbd5e1;
+}
+
+.czolko-word-item.is-correct .cwi-badge {
+  background: rgba(16, 185, 129, 0.3);
+  color: #a7f3d0;
+}
+
+.czolko-word-item.is-pass .cwi-badge {
+  background: rgba(245, 158, 11, 0.28);
+  color: #fde68a;
+}
+
+.czolko-res-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.czolko-res-actions > button {
+  flex: 1 1 120px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   FULLSCREEN GAME STAGE (#czolko-stage-overlay)
+   ========================================================================== */
+body.czolko-stage-open {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
+
+.czolko-stage-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 20000 !important;
+  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 52%, #311042 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  transition: background 0.18s ease;
+}
+
+.czolko-stage-overlay.is-playing {
+  background: linear-gradient(135deg, #1d4ed8 0%, #4338ca 52%, #312e81 100%);
+}
+
+.czolko-stage-overlay.flash-correct {
+  background: linear-gradient(135deg, #059669 0%, #10b981 55%, #047857 100%) !important;
+}
+
+.czolko-stage-overlay.flash-pass {
+  background: linear-gradient(135deg, #d97706 0%, #f59e0b 55%, #c2410c 100%) !important;
+}
+
+.czolko-stage-inner {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  padding: env(safe-area-inset-top, 10px) env(safe-area-inset-right, 14px) env(safe-area-inset-bottom, 12px) env(safe-area-inset-left, 14px);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* Rotate stage 90deg onto horizontal forehead hold even when Portrait Lock is ON */
+.czolko-stage-inner.czolko-rotated {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 100vh;
+  width: 100dvh;
+  height: 100vw;
+  height: 100dvw;
+  transform: translate(-50%, -50%) rotate(90deg);
+  transform-origin: center center;
+  padding: 12px calc(16px + env(safe-area-inset-bottom, 10px)) 12px calc(16px + env(safe-area-inset-top, 10px));
+}
+
+/* Countdown View */
+.czolko-countdown-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.czolko-stage-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.czolko-stage-btn {
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: #ffffff;
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.czolko-stage-btn:active {
+  transform: scale(0.95);
+}
+
+.czolko-stage-deck-pill {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: #e0f2fe;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.czolko-countdown-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 12px;
+}
+
+.czolko-countdown-ring {
+  width: clamp(120px, 28vmin, 175px);
+  height: clamp(120px, 28vmin, 175px);
+  border-radius: 50%;
+  border: 5px solid rgba(34, 211, 238, 0.75);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 42px rgba(34, 211, 238, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+
+.czolko-countdown-num {
+  font-size: clamp(3.6rem, 12vmin, 5.5rem);
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.czolko-countdown-num.pop-go {
+  font-size: clamp(2rem, 7vmin, 3rem);
+  color: #6ee7b7;
+}
+
+.czolko-countdown-prompt {
+  margin: 0 0 6px 0;
+  font-size: clamp(1.15rem, 3.6vmin, 1.55rem);
+  font-weight: 900;
+  color: #ffffff;
+}
+
+.czolko-countdown-sub {
+  margin: 0;
+  font-size: clamp(0.78rem, 2.3vmin, 0.92rem);
+  color: rgba(255, 255, 255, 0.78);
+  font-weight: 600;
+}
+
+/* Active Play View */
+.czolko-play-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  min-height: 0;
+}
+
+.czolko-hud-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  z-index: 5;
+}
+
+.czolko-hud-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex: 1 1 0;
+}
+
+.czolko-hud-deck {
+  background: rgba(0, 0, 0, 0.32);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
+.czolko-hud-score {
+  background: rgba(16, 185, 129, 0.25);
+  border: 1px solid rgba(52, 211, 153, 0.5);
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: #a7f3d0;
+  white-space: nowrap;
+}
+
+.czolko-hud-timer {
+  background: rgba(0, 0, 0, 0.42);
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+  padding: 6px 18px;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: clamp(1.1rem, 3.2vmin, 1.45rem);
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.czolko-hud-timer.warning {
+  background: #dc2626;
+  border-color: #fca5a5;
+  color: #ffffff;
+  animation: czolkoTimerPulse 0.75s infinite alternate;
+}
+
+@keyframes czolkoTimerPulse {
+  from { transform: scale(1); box-shadow: 0 0 8px rgba(220, 38, 38, 0.5); }
+  to { transform: scale(1.06); box-shadow: 0 0 24px rgba(239, 68, 68, 0.9); }
+}
+
+.czolko-hud-tools {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  flex: 1 1 0;
+}
+
+.czolko-hud-tool-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: rgba(0, 0, 0, 0.28);
+  color: #ffffff;
+  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+.czolko-hud-tool-btn.active {
+  background: rgba(34, 211, 238, 0.35);
+  border-color: #67e8f9;
+}
+
+.czolko-hud-tool-btn.stop {
+  background: rgba(239, 68, 68, 0.35);
+  border-color: rgba(252, 165, 165, 0.6);
+}
+
+.czolko-card-arena {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 10px 18px;
+  min-height: 0;
+  position: relative;
+}
+
+.czolko-tilt-guide {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.72);
+  background: rgba(0, 0, 0, 0.22);
+  padding: 4px 12px;
+  border-radius: 999px;
+  margin-bottom: 12px;
+  display: inline-flex;
+  gap: 8px;
+}
+
+.czolko-word-wrap {
+  max-width: min(92%, 820px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.czolko-active-word {
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  font-size: clamp(2.2rem, 8vw, 4.4rem);
+}
+
+.czolko-active-word.len-short {
+  font-size: clamp(2.6rem, 9.5vmin, 5rem);
+}
+
+.czolko-active-word.len-medium {
+  font-size: clamp(2.1rem, 7.6vmin, 4rem);
+}
+
+.czolko-active-word.len-long {
+  font-size: clamp(1.65rem, 6vmin, 3.1rem);
+}
+
+.czolko-active-hint {
+  margin-top: 12px;
+  font-size: clamp(0.84rem, 2.4vmin, 1.05rem);
+  font-weight: 700;
+  color: rgba(224, 242, 254, 0.88);
+  background: rgba(0, 0, 0, 0.26);
+  padding: 5px 14px;
+  border-radius: 999px;
+}
+
+.czolko-active-hint:empty {
+  display: none;
+}
+
+.czolko-stage-overlay.flash-correct .czolko-card-arena,
+.czolko-stage-overlay.flash-pass .czolko-card-arena {
+  opacity: 0;
+  transition: opacity 0.08s ease;
+}
+
+.czolko-flash-banner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.92);
+  transition: opacity 0.14s ease, transform 0.14s ease;
+  z-index: 10;
+}
+
+.czolko-flash-banner.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.czolko-flash-banner span {
+  font-size: clamp(2.4rem, 10vmin, 4.8rem);
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow: 0 6px 26px rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.42);
+  padding: 14px 32px;
+  border-radius: 26px;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+}
+
+.czolko-touch-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  z-index: 5;
+}
+
+.czolko-touch-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 10px;
+  border-radius: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform 0.1s ease, filter 0.12s ease;
+}
+
+.czolko-touch-btn:active {
+  transform: scale(0.96);
+}
+
+.czolko-touch-btn.btn-pass {
+  background: rgba(245, 158, 11, 0.32);
+  border-color: rgba(251, 191, 36, 0.65);
+}
+
+.czolko-touch-btn.btn-correct {
+  background: rgba(16, 185, 129, 0.36);
+  border-color: rgba(52, 211, 153, 0.72);
+}
+
+.ctb-main {
+  font-size: clamp(0.92rem, 2.8vmin, 1.15rem);
+  font-weight: 900;
+  letter-spacing: 0.02em;
+}
+
+.ctb-key {
+  font-size: 0.66rem;
+  opacity: 0.85;
+  margin-top: 2px;
+  font-weight: 600;
+}
+
+@media (max-height: 460px) {
+  .czolko-touch-btn {
+    padding: 8px 10px;
+  }
+  .ctb-key {
+    display: none;
+  }
+  .czolko-tilt-guide {
+    margin-bottom: 6px;
+  }
+}
+
+/* ==========================================================================
+   LIGHT MODE OVERRIDES FOR GRA W CZÓŁKO MODAL
+   ========================================================================== */
+body.theme-light .czolko-modal-card {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.18) !important;
+}
+
+body.theme-light #czolko-modal .czolko-hero {
+  background: linear-gradient(180deg, #ecfeff 0%, #f8fafc 100%) !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+body.theme-light #czolko-modal .czolko-hero p {
+  color: #475569 !important;
+}
+
+body.theme-light .czolko-guide-pill {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+body.theme-light .czolko-guide-pill.pill-ok {
+  background: #dcfce7 !important;
+  border-color: #86efac !important;
+  color: #15803d !important;
+}
+
+body.theme-light .czolko-guide-pill.pill-pass {
+  background: #fef3c7 !important;
+  border-color: #fde68a !important;
+  color: #b45309 !important;
+}
+
+body.theme-light .czolko-lobby-card,
+body.theme-light .czolko-result-hero {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .czolko-lobby-card h3,
+body.theme-light .czolko-result-hero h3 {
+  color: #0f172a !important;
+}
+
+body.theme-light .czolko-cat-btn {
+  background: #ffffff !important;
+  border: 1.5px solid #e2e8f0 !important;
+}
+
+body.theme-light .czolko-cat-btn:hover {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+
+body.theme-light .czolko-cat-btn.active {
+  background: #ecfeff !important;
+  border-color: #06b6d4 !important;
+  box-shadow: 0 0 0 1px #06b6d4, 0 2px 8px rgba(6, 182, 212, 0.18) !important;
+}
+
+body.theme-light .czolko-cat-text strong {
+  color: #0f172a !important;
+}
+
+body.theme-light .czolko-cat-text small {
+  color: #64748b !important;
+}
+
+body.theme-light .czolko-cat-count {
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+}
+
+body.theme-light .czolko-cat-btn.active .czolko-cat-count {
+  background: #0891b2 !important;
+  color: #ffffff !important;
+}
+
+body.theme-light .czolko-setting-row {
+  background: #ffffff !important;
+  border: 1.5px solid #e2e8f0 !important;
+}
+
+body.theme-light .czolko-setting-label {
+  color: #334155 !important;
+}
+
+body.theme-light .czolko-setting-val {
+  color: #0e7490 !important;
+}
+
+body.theme-light .czolko-pill-btn {
+  background: #f1f5f9 !important;
+  border: 1.5px solid #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+body.theme-light .czolko-pill-btn:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .czolko-pill-btn.active {
+  background: linear-gradient(135deg, #0891b2 0%, #0d9488 100%) !important;
+  border-color: #0891b2 !important;
+  color: #ffffff !important;
+}
+
+body.theme-light .czolko-toggle-chip {
+  background: #ffffff !important;
+  border: 1.5px solid #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+body.theme-light .czolko-toggle-chip.active {
+  background: #dcfce7 !important;
+  border-color: #16a34a !important;
+  color: #15803d !important;
+}
+
+body.theme-light .czolko-meta-pill {
+  background: #f1f5f9 !important;
+  border-color: #e2e8f0 !important;
+  color: #475569 !important;
+}
+
+body.theme-light .czolko-meta-pill strong {
+  color: #0e7490 !important;
+}
+
+body.theme-light .czolko-res-num {
+  color: #0891b2 !important;
+}
+
+body.theme-light .czolko-res-unit,
+body.theme-light .czolko-res-sub {
+  color: #475569 !important;
+}
+
+body.theme-light .czolko-unlocked-notice {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+
+body.theme-light .czolko-results-tip {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #475569 !important;
+}
+
+body.theme-light .czolko-word-item {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .czolko-word-item.is-correct {
+  background: #dcfce7 !important;
+  border-color: #86efac !important;
+}
+
+body.theme-light .czolko-word-item.is-pass {
+  background: #fef3c7 !important;
+  border-color: #fde68a !important;
+}
+
+body.theme-light .czolko-word-item.is-correct .cwi-badge {
+  background: #16a34a !important;
+  color: #ffffff !important;
+}
+
+body.theme-light .czolko-word-item.is-pass .cwi-badge {
+  background: #d97706 !important;
+  color: #ffffff !important;
+}
+
 
 

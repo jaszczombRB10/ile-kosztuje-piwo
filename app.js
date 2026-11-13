@@ -3941,6 +3941,16 @@
         const count = parseInt(localStorage.getItem("poilepiwko_receipts_scanned") || "0", 10) || 0;
         return { unlocked: count >= 1, progress: `${Math.min(count, 1)}/1` };
       }
+    },
+    {
+      id: "czolko_master",
+      name: "Mistrz Czółka",
+      icon: "🎭",
+      desc: "Odgadnij co najmniej 7 haseł w jednej rundzie imprezowej Gry w Czółko",
+      check: (visited, vMap) => {
+        const won = localStorage.getItem("poilepiwko_czolko_won") === "true";
+        return { unlocked: won, progress: won ? "1/1" : "0/1" };
+      }
     }
   ];
 
@@ -4455,7 +4465,7 @@
         const badgesIcons = unlockedBadges.map(b => b.icon).join(" ") || "Brak odznak";
 
         const curCity = getCurrentCity();
-        const text = `🎖️ Mój Piwny Paszport – ${curCity.name} (poilepiwko):\n👑 Ranga: ${rank.icon} ${rank.title}\n📍 Odwiedzone bary: ${count} / ${total}\n🏆 Odznaki (${unlockedBadges.length}/10): ${badgesIcons}\nSprawdź ceny piwa w mieście ${curCity.name} na https://poilepiwko.pl !`;
+        const text = `🎖️ Mój Piwny Paszport – ${curCity.name} (poilepiwko):\n👑 Ranga: ${rank.icon} ${rank.title}\n📍 Odwiedzone bary: ${count} / ${total}\n🏆 Odznaki (${unlockedBadges.length}/${PASSPORT_BADGES.length}): ${badgesIcons}\nSprawdź ceny piwa w mieście ${curCity.name} na https://poilepiwko.pl !`;
 
         if (navigator.share) {
           navigator.share({ title: `Piwny Paszport – ${curCity.name} - poilepiwko`, text: text }).catch(() => {});
@@ -6296,6 +6306,7 @@
           <span class="m-dist-chip chip-roulette" id="chip-search-roulette">🎲 Ruletka</span>
           <span class="m-dist-chip chip-happyhour" id="chip-search-happyhour">⚡ Happy Hours</span>
           <span class="m-dist-chip chip-quiz" id="chip-search-quiz">🧠 Pub Quiz</span>
+          <span class="m-dist-chip chip-czolko" id="chip-search-czolko">🎭 Czółko</span>
           <span class="m-dist-chip chip-find-friends" id="chip-search-friends">👥 Szukaj znajomych</span>
         `;
         mobileDistWrap.innerHTML = mHtml;
@@ -6311,6 +6322,13 @@
         if (chipHappy && window.__openHappyHours) chipHappy.addEventListener("click", window.__openHappyHours);
         const chipQuiz = document.getElementById("chip-search-quiz");
         if (chipQuiz && window.__openPubQuiz) chipQuiz.addEventListener("click", window.__openPubQuiz);
+        const chipCzolko = document.getElementById("chip-search-czolko");
+        if (chipCzolko && window.__openCzolko) {
+          chipCzolko.addEventListener("click", () => {
+            if (window.__closeMobileSearch) window.__closeMobileSearch();
+            window.__openCzolko();
+          });
+        }
         const chipFriends = document.getElementById("chip-search-friends");
         if (chipFriends && window.__openFriendsSearch) chipFriends.addEventListener("click", window.__openFriendsSearch);
 
@@ -6502,6 +6520,9 @@
         }
         if (window.__updateQuizCityUI) {
           window.__updateQuizCityUI();
+        }
+        if (window.__updateCzolkoCityUI) {
+          window.__updateCzolkoCityUI();
         }
         if (window.__updatePubCrawlCityUI) {
           window.__updatePubCrawlCityUI(cur);
@@ -6928,6 +6949,7 @@
       if (typeof window.__closeHappyHours === "function") window.__closeHappyHours();
       if (typeof window.__closeBarometer === "function") window.__closeBarometer();
       if (typeof window.__closePubQuiz === "function") window.__closePubQuiz();
+      if (typeof window.__closeCzolko === "function") window.__closeCzolko();
       if (typeof window.__closeRoulette === "function") window.__closeRoulette();
       if (typeof window.__closeSos === "function") window.__closeSos();
       if (typeof window.__closeAuth === "function") window.__closeAuth();
@@ -7870,6 +7892,15 @@
       });
     }
 
+    // "Gra w Czółko" chip in mobile search sheet
+    const chipSearchCzolko = document.getElementById("chip-search-czolko");
+    if (chipSearchCzolko) {
+      chipSearchCzolko.addEventListener("click", () => {
+        if (window.__closeMobileSearch) window.__closeMobileSearch();
+        if (window.__openCzolko) window.__openCzolko();
+      });
+    }
+
     // Initialize Auth & Social Modals
     initAuthModal();
     initOnboardingUsernameModal();
@@ -7877,6 +7908,7 @@
     initCommunityModal();
     initPublicProfileModal();
     initPubQuizModal();
+    initCzolkoModal();
     initRouletteModal();
     initStoryCardModal();
     initClubCardModal();
@@ -11398,6 +11430,11 @@
         if (roulBtn) roulBtn.click();
         return;
       }
+      if (type === "czolko") {
+        if (typeof window.__closeCommunity === "function") window.__closeCommunity();
+        if (typeof window.__openCzolko === "function") window.__openCzolko();
+        return;
+      }
       if (type === "compass") {
         if (typeof window.__closeCommunity === "function") window.__closeCommunity();
         const compBtn = document.getElementById("bento-btn-compass") || document.getElementById("btn-compass");
@@ -11514,6 +11551,7 @@
           ${zoneButtons}
           ${centerBtn}
           <button type="button" class="fqp-pill" onclick="window.__triggerFeedShortcut('pubcrawl')">🗺️ Pub Crawl</button>
+          <button type="button" class="fqp-pill" onclick="window.__triggerFeedShortcut('czolko')">🎭 Czółko</button>
           <button type="button" class="fqp-pill" onclick="window.__triggerFeedShortcut('ranking')">🏆 Top 10</button>
         `;
       }
@@ -16030,6 +16068,1174 @@
     }
 
     updateHighscoreDisplay();
+  }
+
+  // 🎭 Gra w Czółko ("Heads Up!" Party Game Controller)
+  function initCzolkoModal() {
+    const modal = document.getElementById("czolko-modal");
+    const stageOverlay = document.getElementById("czolko-stage-overlay");
+    const stageInner = document.getElementById("czolko-stage-inner");
+    const countdownView = document.getElementById("czolko-countdown-view");
+    const playView = document.getElementById("czolko-play-view");
+
+    // Triggers & Close Buttons
+    const btnOpenHeader = document.getElementById("btn-czolko-header");
+    const btnOpenFloat = document.getElementById("btn-czolko-float");
+    const btnClose = document.getElementById("btn-close-czolko");
+    const btnCloseBottom = document.getElementById("btn-close-czolko-bottom");
+
+    // Screens inside modal
+    const screenLobby = document.getElementById("czolko-screen-lobby");
+    const screenResults = document.getElementById("czolko-screen-results");
+
+    // Lobby controls
+    const deckBtns = document.querySelectorAll("#czolko-deck-grid .czolko-cat-btn");
+    const timePills = document.querySelectorAll("#czolko-time-pills .czolko-pill-btn");
+    const ctrlPills = document.querySelectorAll("#czolko-ctrl-pills .czolko-pill-btn");
+    const valTime = document.getElementById("czolko-val-time");
+    const valCtrl = document.getElementById("czolko-val-ctrl");
+    const highscoreVal = document.getElementById("czolko-highscore-val");
+    const deckCountVal = document.getElementById("czolko-deck-count-val");
+    const btnLandscape = document.getElementById("btn-czolko-landscape");
+    const btnInvert = document.getElementById("btn-czolko-invert");
+    const btnSound = document.getElementById("btn-czolko-sound");
+    const btnStart = document.getElementById("btn-czolko-start");
+
+    // Stage Countdown controls
+    const btnCountdownAbort = document.getElementById("btn-czolko-countdown-abort");
+    const btnCountdownRotate = document.getElementById("btn-czolko-countdown-rotate");
+    const countdownDeckPill = document.getElementById("czolko-countdown-deck-pill");
+    const countdownNum = document.getElementById("czolko-countdown-num");
+
+    // Stage Play HUD & Touch controls
+    const hudDeck = document.getElementById("czolko-hud-deck");
+    const hudScore = document.getElementById("czolko-hud-score");
+    const hudTimer = document.getElementById("czolko-hud-timer");
+    const activeWordEl = document.getElementById("czolko-active-word");
+    const activeHintEl = document.getElementById("czolko-active-hint");
+    const tiltGuideEl = document.getElementById("czolko-tilt-guide");
+    const flashBanner = document.getElementById("czolko-flash-banner");
+    const flashText = document.getElementById("czolko-flash-text");
+    const btnStageInvert = document.getElementById("btn-czolko-stage-invert");
+    const btnStageRotate = document.getElementById("btn-czolko-stage-rotate");
+    const btnStageSound = document.getElementById("btn-czolko-stage-sound");
+    const btnStageStop = document.getElementById("btn-czolko-stage-stop");
+    const btnPass = document.getElementById("btn-czolko-pass");
+    const btnCorrect = document.getElementById("btn-czolko-correct");
+
+    // Results screen elements
+    const resIco = document.getElementById("czolko-res-ico");
+    const resTitle = document.getElementById("czolko-res-title");
+    const resRecordBadge = document.getElementById("czolko-res-record-badge");
+    const resScore = document.getElementById("czolko-res-score");
+    const resSub = document.getElementById("czolko-res-sub");
+    const unlockedNotice = document.getElementById("czolko-unlocked-notice");
+    const resultsList = document.getElementById("czolko-results-list");
+    const btnReplay = document.getElementById("btn-czolko-replay");
+    const btnBackLobby = document.getElementById("btn-czolko-lobby");
+    const btnShare = document.getElementById("btn-czolko-share");
+
+    if (!modal || !stageOverlay) return;
+
+    // Curated Party Decks tailored for bars, breweries, polish popculture & nights out
+    const CZOLKO_DECKS = {
+      bar: {
+        label: "🍺 Bar, Piwo & Drinki",
+        items: [
+          { word: "Piwo kraftowe", hint: "Rzemieślnicze" },
+          { word: "IPA (India Pale Ale)", hint: "Goryczka i chmiel" },
+          { word: "Porter Bałtycki", hint: "Ciemne i mocne" },
+          { word: "Grzane piwo z goździkami", hint: "Na zimowy wieczór" },
+          { word: "Piwo z sokiem malinowym", hint: "Z rurką" },
+          { word: "Wściekły pies", hint: "Syrop, wódka, tabasco" },
+          { word: "Kamikaze", hint: "Niebieskie szoty" },
+          { word: "Aperol Spritz", hint: "Pomarańczowy klasyk" },
+          { word: "Mojito", hint: "Mięta i limonka" },
+          { word: "Cuba Libre", hint: "Rum i cola" },
+          { word: "Jägerbomb", hint: "Z energetykiem" },
+          { word: "Pina Colada", hint: "Ananas i kokos" },
+          { word: "Long Island Iced Tea", hint: "Mocny drink" },
+          { word: "Guinness", hint: "Czarny stout z Irlandii" },
+          { word: "Radler / Shandy", hint: "Piwo z lemoniadą" },
+          { word: "Piwo z nalewaka (z kija)", hint: "Świeże z beczki" },
+          { word: "Piwo 0.0% (Bezalkoholowe)", hint: "Dla kierowcy" },
+          { word: "Kufel 0,5 litra", hint: "Szkło z uchem" },
+          { word: "Kapsel od butelki", hint: "Trzeba otworzyć" },
+          { word: "Otwieracz do piwa", hint: "Zawsze znika" },
+          { word: "Nalewak / Kran piwny", hint: "Za barem" },
+          { word: "Barman / Barmanka", hint: "Leje trunki" },
+          { word: "Bimber (Księżycówka)", hint: "Domowy wyrób" },
+          { word: "Nalewka wiśniowa", hint: "Słodka i mocna" },
+          { word: "Happy Hour", hint: "Tańsze drinki" },
+          { word: "Kolejka dla stolika", hint: "Runda na koszt jednego" },
+          { word: "Rachunek grupowy", hint: "Kto za co płaci?" },
+          { word: "Napiwek w słoiku", hint: "Dla obsługi" },
+          { word: "Deska serów i wędlin", hint: "Przekąska" },
+          { word: "Orzeszki ziemne w misce", hint: "Słone przy barze" },
+          { word: "Paluszki słone", hint: "Klasyk stołowy" },
+          { word: "Ogórek kiszony pod wódkę", hint: "Zagryzka" },
+          { word: "Tatar wołowy", hint: "Z żółtkiem i cebulką" },
+          { word: "Lorneta z meduzą", hint: "Dwa szoty i galareta" },
+          { word: "Piana opada", hint: "Zlewek lub źle nalane" },
+          { word: "Degustacja piwa", hint: "Deska małych szklanek" },
+          { word: "Wypite do dna", hint: "Na hejnał!" },
+          { word: "Kaucja za szklankę", hint: "Na koncercie" },
+          { word: "Woda z cytryną", hint: "Ratunek nad ranem" },
+          { word: "Słone nachosy z sosem", hint: "Kinowo-pubowe" },
+          { word: "Shot cytrynowy", hint: "Cytrynówka" },
+          { word: "Sake lub Soju", hint: "Azjatycki trunek" }
+        ]
+      },
+      nightlife: {
+        label: "🌆 Nocne Życie & Polska",
+        items: [
+          { word: "Pawilony Nowy Świat", hint: "Warszawski labirynt barów" },
+          { word: "Bulwary Wiślane", hint: "Nad rzeką" },
+          { word: "Nocny kebab o 3:00", hint: "Obowiązkowy finał" },
+          { word: "Uber pod klubem", hint: "Czasem podjeżdża daleko" },
+          { word: "Bramkarz na selekcji", hint: "Stoi na wejściu" },
+          { word: "Ostatni autobus nocny", hint: "Wyścig na przystanek" },
+          { word: "Afterparty w kuchni", hint: "Najlepsze rozmowy" },
+          { word: "Karaoke przy barze", hint: "Fałszowanie do mikrofonu" },
+          { word: "Beer Pong", hint: "Piłeczka i kubeczki" },
+          { word: "Piłkarzyki w pubie", hint: "Kręcenie drążkami" },
+          { word: "Bilard z ekipą", hint: "Czarna ósemka" },
+          { word: "Rzutki (Darts)", hint: "Celuj w środek" },
+          { word: "Stolik w ogródku piwnym", hint: "Pod parasolem" },
+          { word: "Domówka u znajomego", hint: "Mieszkanie sąsiadów" },
+          { word: "Kolejka do toalety", hint: "Długa przerwa" },
+          { word: "Bateria 1%", hint: "Krytyczny poziom" },
+          { word: "Zgubiony telefon", hint: "Panika rano" },
+          { word: "Tylko na jedno piwo", hint: "Największe kłamstwo" },
+          { word: "Jeszcze po jednym!", hint: "Przed wyjściem" },
+          { word: "Rosół w niedzielę", hint: "Leczy wszystko" },
+          { word: "Hot-dog z Żabki", hint: "Z sosikiem czosnkowym" },
+          { word: "Pieczątka na dłoni", hint: "Możesz wyjść i wrócić" },
+          { word: "Rozmowa o sensie życia o 4:00", hint: "Głęboka filozofia" },
+          { word: "Kanar w nocnym tramwaju", hint: "Kontrola biletów" },
+          { word: "Wschód słońca w drodze do domu", hint: "Pora spać" },
+          { word: "Kac gigant", hint: "Ciężki poranek" },
+          { word: "Okulary przeciwsłoneczne w klubie", hint: "Tajemniczy styl" },
+          { word: "DJ puszczający hity z 2010", hint: "Parkiet płonie" },
+          { word: "Taniec na stole", hint: "Szczyt zabawy" },
+          { word: "Numerki do szatni", hint: "Pilnuj kartonika" },
+          { word: "Powrót z buta przez miasto", hint: "Długi spacer" },
+          { word: "Śpiewanie Sto Lat", hint: "Urodziny w lokalu" },
+          { word: "Grupa na Messengerze po imprezie", hint: "Zdjęcia z nocy" },
+          { word: "Kebab na grubym z ostrym", hint: "Piecze dwa razy" },
+          { word: "Zapiekanka z budki", hint: "Chrupiąca bagietka" },
+          { word: "Koncert plenerowy", hint: "Scena pod chmurką" },
+          { word: "Festiwal muzyczny", hint: "Namioty i opaski" },
+          { word: "Bar mleczny o świcie", hint: "Pierogi i kompot" },
+          { word: "Runda honorowa", hint: "Pożegnalny toast" },
+          { word: "Lista gości na bramce", hint: "Wpisani na wejście" },
+          { word: "Krakowski Kazimierz", hint: "Dzielnica knajp" },
+          { word: "Wyspa Słodowa", hint: "Wrocławskie spotkania" }
+        ]
+      },
+      movies: {
+        label: "🎬 Filmy, Seriale & Memy",
+        items: [
+          { word: "Kiler (Jurek Kiler)", hint: "Polska komedia" },
+          { word: "Chłopaki nie płaczą", hint: "Bunkrów nie ma..." },
+          { word: "Dzień Świra", hint: "Adaś Miauczyński" },
+          { word: "Miś (Bareja)", hint: "Miś na miarę możliwości" },
+          { word: "Seksmisja", hint: "Ciemność widzę!" },
+          { word: "Ranczo (Ławeczka)", hint: "Mamrot pod sklepem" },
+          { word: "Świat według Kiepskich", hint: "Mocny Full" },
+          { word: "1670 (Jan Paweł)", hint: "Polski serial komediowy" },
+          { word: "The Office PL", hint: "Kropliczanka z Siedlec" },
+          { word: "Kapitan Bomba", hint: "Kosmiczna animacja" },
+          { word: "Wiedźmin Geralt", hint: "Toss a coin" },
+          { word: "Robert Makłowicz", hint: "Kulinarny podróżnik" },
+          { word: "Magda Gessler", hint: "Kuchenne rewolucje" },
+          { word: "Mariusz Pudzianowski", hint: "Tanio skóry nie sprzedam" },
+          { word: "Adam Małysz", hint: "Bułka z bananem" },
+          { word: "Robert Lewandowski", hint: "Snajper na boisku" },
+          { word: "Iga Świątek", hint: "Królowa tenisa" },
+          { word: "Krzysztof Krawczyk", hint: "Parostatek" },
+          { word: "Zenek Martyniuk", hint: "Przez Twe oczy zielone" },
+          { word: "Shrek i Osioł", hint: "Ogr z bagien" },
+          { word: "Harry Potter", hint: "Szkoła magii" },
+          { word: "Darth Vader", hint: "Ciemna strona mocy" },
+          { word: "James Bond (007)", hint: "Wstrząśnięte, niemieszane" },
+          { word: "Breaking Bad", hint: "Walter White" },
+          { word: "Gra o Tron", hint: "Winter is coming" },
+          { word: "Stranger Things", hint: "Drugie dno w Hawkins" },
+          { word: "Squid Game", hint: "Serial z Korei" },
+          { word: "Joker", hint: "Czerwony garnitur i uśmiech" },
+          { word: "Barbie i Ken", hint: "Różowy świat" },
+          { word: "Matrix", hint: "Czerwona czy niebieska?" },
+          { word: "Ojciec Chrzestny", hint: "Propozycja nie do odrzucenia" },
+          { word: "Szybcy i Wściekli", hint: "Rodzina i auta" },
+          { word: "Król Lew", hint: "Hakuna Matata" },
+          { word: "Nosacz Janusza (Somsiad)", hint: "Polski mem" },
+          { word: "Bóbr! (Jakie bydlę!)", hint: "Wiralowy zwierzak" },
+          { word: "Będzie pan zadowolony", hint: "Złota rączka" },
+          { word: "Złoty a skromny", hint: "Tekst z komedii" },
+          { word: "Psy (Franz Maurer)", hint: "Bogusław Linda" },
+          { word: "Sami swoi", hint: "Kargul i Pawlak" },
+          { word: "Podsiadło Dawid", hint: "Małomiasteczkowy" },
+          { word: "Sanah", hint: "Polska piosenkarka" },
+          { word: "Gollum (Mój skarb)", hint: "Władca Pierścieni" }
+        ]
+      },
+      actions: {
+        label: "🤸 Kalambury (Scenki)",
+        items: [
+          { word: "Otwieranie butelki bez otwieracza", hint: "Pokaż lub opisz!" },
+          { word: "Nalewanie piwa z idealną pianą", hint: "Pod kątem 45°" },
+          { word: "Zamawianie w głośnym klubie", hint: "Krzyk do ucha barmana" },
+          { word: "Walka o ostatni kawałek pizzy", hint: "Szybki refleks" },
+          { word: "Szukanie kluczy po imprezie", hint: "Wszystkie kieszenie" },
+          { word: "Taniec na weselu o 2 w nocy", hint: "Wężyk i disco" },
+          { word: "Rzucanie lotką w środek tarczy", hint: "Skupienie" },
+          { word: "Udawanie trzeźwego w taksówce", hint: "Pełna powaga" },
+          { word: "Śpiewanie na karaoke", hint: "Emocje z mikrofonem" },
+          { word: "Płacenie wspólnym BLIK-iem", hint: "Kod z telefonu" },
+          { word: "Niesienie 4 kufli naraz", hint: "Równowaga" },
+          { word: "Składanie łóżka z IKEA", hint: "Brak jednej śrubki" },
+          { word: "Łapanie taksówki w deszczu", hint: "Machanie ręką" },
+          { word: "Bieg na ostatni autobus", hint: "Sprint nocny" },
+          { word: "Próba otwarcia słoika z ogórkami", hint: "Mocny chwyt" },
+          { word: "Robienie grupowego selfie", hint: "Uśmiech wszystkich" },
+          { word: "Chodzenie po linie na kacu", hint: "Krok za krokiem" },
+          { word: "Gra na niewidzialnej gitarze", hint: "Rockowa solówka" },
+          { word: "Taniec robota na parkiecie", hint: "Sztywne ruchy" },
+          { word: "Szukanie gniazdka przy 2% baterii", hint: "Rozpacz" },
+          { word: "Rozpakowywanie kebaba na ławce", hint: "Folia i sos" },
+          { word: "Zdmuchiwanie świeczek z tortu", hint: "Głęboki wdech" },
+          { word: "Wznoszenie toastu z krzesła", hint: "Przemowa" },
+          { word: "Oglądanie karnych w barze", hint: "Nerwy i skok radości" },
+          { word: "Zamawianie po angielsku łamanym akcentem", hint: "One beer please" },
+          { word: "Unikanie znajomego na ulicy", hint: "Patrzysz w telefon" },
+          { word: "Przepychanie się pod scenę", hint: "Przepraszam, przejście" },
+          { word: "Picie gorącej herbaty", hint: "Dmuchanie na kubek" },
+          { word: "Nadmuchiwanie materaca ustami", hint: "Kręci się w głowie" },
+          { word: "Zakładanie skarpetek na jednej nodze", hint: "Akrobatyka" },
+          { word: "Golenie się w pośpiechu", hint: "Piana i lustro" },
+          { word: "Kichanie z pełnymi ustami", hint: "Trudna sytuacja" },
+          { word: "Odbieranie paczki w piżamie", hint: "Paczkomat o świcie" },
+          { word: "Podnoszenie zgubionej monety", hint: "Schylenie się" },
+          { word: "Kłótnia kto zamawia Ubera", hint: "Mnożnik x3" },
+          { word: "Udawanie posągu na Rynku", hint: "Bez ruchu" },
+          { word: "Wyjaśnianie drogi turyście", hint: "Prosto i w prawo" },
+          { word: "Zatykanie korka od szampana", hint: "Uwaga na żyrandol!" },
+          { word: "Mieszanie drinka jak profesjonalny barman", hint: "Shaker w górze" },
+          { word: "Budzik dzwoniący o 7:00 rano w sobotę", hint: "Drzemka" }
+        ]
+      },
+      adult: {
+        label: "🌶️ Bez Cenzury (18+)",
+        items: [
+          { word: "Tinder o 2 nad ranem", hint: "Przesuwanie w prawo" },
+          { word: "Wiadomość do ex po 4 piwach", hint: "Zły pomysł!" },
+          { word: "Walk of Shame (Powrót rano)", hint: "Wczorajsze ubrania" },
+          { word: "Angielskie wyjście", hint: "Znikasz bez pożegnania" },
+          { word: "Striptiz na wieczorze panieńskim", hint: "Gorące show" },
+          { word: "Wieczór kawalerski w centrum", hint: "Śmieszne przebrania" },
+          { word: "Sex on the Beach", hint: "Słodki drink... i nie tylko" },
+          { word: "Gorący całus przy barze", hint: "Iskrzy między nimi" },
+          { word: "Rozpięty rozporek", hint: "Wstydliwa wpadka" },
+          { word: "Kac moralny rano", hint: "Co ja wczoraj zrobiłem?!" },
+          { word: "Nocne wyznanie uczuć", hint: "Po kilku kolejkach" },
+          { word: "Flirt z barmanką lub barmanem", hint: "Dodatkowy uśmiech" },
+          { word: "Prawda czy Wyzwanie (18+)", hint: "Ostre pytania" },
+          { word: "Gra w butelkę", hint: "Kręci się na stole" },
+          { word: "Ciemny kąt w klubie", hint: "Dyskrecja" },
+          { word: "Złamane łóżko w hotelu", hint: "Za dużo energii" },
+          { word: "Różowe kajdanki z futerkiem", hint: "Gadżet do sypialni" },
+          { word: "Śpisz? (SMS w nocy)", hint: "Klasyczna zaczepka" },
+          { word: "Pierwsza randka w kinie w ostatnim rzędzie", hint: "Nikt nie patrzy" },
+          { word: "Zgubiona bielizna po domówce", hint: "Pod kanapą" },
+          { word: "Kąpiel w pianie we dwoje", hint: "Romantycznie" },
+          { word: "Tańczenie bez koszulki", hint: "Za gorąco na parkiecie" },
+          { word: "Krępująca cisza w windzie", hint: "Sąsiedzi patrzą" },
+          { word: "Nie pamiętam wczoraj", hint: "Urwany film" },
+          { word: "Podryw na tani tekst", hint: "Bolało jak spadłaś z nieba?" },
+          { word: "Niespodzianka pod płaszczem", hint: "Tylko bielizna" },
+          { word: "Tajemniczy nieznajomy", hint: "Bez imienia" },
+          { word: "Masaż stóp po tańcach", hint: "Z podtekstem" },
+          { word: "Szybki numerek", hint: "W pośpiechu" },
+          { word: "Wódeczka czysta bez popity", hint: "Dla odważnych" },
+          { word: "Nagi bieg po korytarzu", hint: "Przegrany zakład" },
+          { word: "Zakazany romans w pracy", hint: "Kuchnia biurowa" },
+          { word: "Bita śmietana na ciele", hint: "Deser inaczej" },
+          { word: "Randka w ciemno", hint: "Nigdy nie wiesz" },
+          { word: "Kolega z pracy o 3 w nocy", hint: "Zmiana relacji" },
+          { word: "Skok w bok", hint: "Ryzykowna sprawa" }
+        ]
+      }
+    };
+
+    // State & Persistence
+    let selectedDeck = "all";
+    let roundDuration = 60;
+    let controlMode = localStorage.getItem("poilepiwko_czolko_ctrl") || "motion";
+    let soundEnabled = localStorage.getItem("poilepiwko_czolko_sound") !== "false";
+    let invertTilt = localStorage.getItem("poilepiwko_czolko_invert") === "true";
+
+    const storedLandscape = localStorage.getItem("poilepiwko_czolko_landscape");
+    const isMobilePortraitInit = window.innerWidth <= 768 && window.innerHeight > window.innerWidth;
+    let landscapeMode = storedLandscape !== null ? storedLandscape === "true" : (isMobilePortraitInit && controlMode === "motion");
+
+    let phase = "idle"; // "idle" | "countdown" | "play" | "results"
+    let countdownTimer = null;
+    let roundTimer = null;
+    let flashTimer = null;
+    let remainingSec = 60;
+    let deckQueue = [];
+    let currentCard = null;
+    let playedCards = [];
+    let isActionLocked = false;
+    let tiltArmed = false;
+    let lastTiltSampleMs = 0;
+    let wakeLockSentinel = null;
+    let sharedAudioCtx = null;
+    const usedWordsByDeck = {};
+
+    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+    function getAudioCtx() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return null;
+        if (!sharedAudioCtx) sharedAudioCtx = new AudioCtx();
+        if (sharedAudioCtx.state === "suspended") {
+          sharedAudioCtx.resume().catch(() => {});
+        }
+        return sharedAudioCtx;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function playCzolkoTone(type) {
+      if (!soundEnabled) return;
+      const ctx = getAudioCtx();
+      if (!ctx) return;
+      try {
+        const now = ctx.currentTime;
+        const scheduleNote = (freq, startOffset, dur, oscType = "sine", vol = 0.16) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = oscType;
+          osc.frequency.setValueAtTime(freq, now + startOffset);
+          gain.gain.setValueAtTime(0.001, now + startOffset);
+          gain.gain.exponentialRampToValueAtTime(vol, now + startOffset + 0.015);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + startOffset + dur);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + startOffset);
+          osc.stop(now + startOffset + dur + 0.02);
+        };
+
+        if (type === "tick") {
+          scheduleNote(740, 0, 0.07, "sine", 0.14);
+        } else if (type === "warn") {
+          scheduleNote(920, 0, 0.08, "triangle", 0.16);
+        } else if (type === "start") {
+          scheduleNote(587.33, 0, 0.1, "triangle", 0.18);
+          scheduleNote(880.0, 0.09, 0.22, "triangle", 0.22);
+        } else if (type === "correct") {
+          scheduleNote(523.25, 0, 0.09, "triangle", 0.18);
+          scheduleNote(783.99, 0.07, 0.19, "triangle", 0.2);
+        } else if (type === "pass") {
+          scheduleNote(440.0, 0, 0.09, "triangle", 0.15);
+          scheduleNote(311.13, 0.08, 0.16, "triangle", 0.15);
+        } else if (type === "end") {
+          scheduleNote(659.25, 0, 0.14, "sine", 0.18);
+          scheduleNote(523.25, 0.13, 0.14, "sine", 0.18);
+          scheduleNote(392.0, 0.26, 0.35, "sine", 0.2);
+        }
+      } catch (e) {}
+    }
+
+    async function acquireWakeLock() {
+      try {
+        if ("wakeLock" in navigator && typeof navigator.wakeLock.request === "function") {
+          wakeLockSentinel = await navigator.wakeLock.request("screen");
+          if (wakeLockSentinel) {
+            wakeLockSentinel.addEventListener("release", () => {
+              wakeLockSentinel = null;
+            });
+          }
+        }
+      } catch (e) {}
+    }
+
+    function releaseWakeLock() {
+      try {
+        if (wakeLockSentinel) {
+          wakeLockSentinel.release().catch(() => {});
+          wakeLockSentinel = null;
+        }
+      } catch (e) {}
+    }
+
+    function getVenuesDeckCards() {
+      const venues = Array.isArray(allVenues) ? allVenues : [];
+      const curCity = typeof getCurrentCity === "function" ? getCurrentCity() : { id: "warszawa", name: "Warszawa", center: [52.2297, 21.0122] };
+      let pool = venues;
+      if (curCity && Array.isArray(curCity.center)) {
+        const local = venues.filter(v => {
+          if (typeof v.latitude !== "number" || typeof v.longitude !== "number") return false;
+          return calculateDistanceKm(curCity.center[0], curCity.center[1], v.latitude, v.longitude) <= 45;
+        });
+        if (local.length >= 10) {
+          pool = local;
+        }
+      }
+      const seen = new Set();
+      const cards = [];
+      pool.forEach(v => {
+        const rawName = (v && v.name ? String(v.name) : "").trim();
+        if (rawName.length < 3) return;
+        const norm = rawName.toLowerCase();
+        if (seen.has(norm)) return;
+        seen.add(norm);
+        const pricePart = typeof v.beer_price_pln === "number" ? `🍺 ${v.beer_price_pln.toFixed(2)} zł` : "Pub";
+        const locPart = v.district || (curCity ? curCity.name : "");
+        cards.push({
+          word: rawName,
+          cat: "Lokale z Mapy",
+          hint: `${locPart ? locPart + " · " : ""}${pricePart}`
+        });
+      });
+      if (cards.length < 8) {
+        // Fallback sample so deck is playable even before network finishes loading
+        ["Pawilony Nowy Świat", "Plan B", "W Oparach Absurdu", "Jabeerwocky", "Kufle i Kapsle", "Drugie Dno", "Hala Koszyki", "Bulwary Wiślane"].forEach(name => {
+          if (!seen.has(name.toLowerCase())) {
+            cards.push({ word: name, cat: "Lokale z Mapy", hint: "Kultowa miejscówka" });
+          }
+        });
+      }
+      return cards;
+    }
+
+    function getDeckCards(deckId) {
+      if (deckId === "venues") {
+        return getVenuesDeckCards();
+      }
+      if (deckId === "all") {
+        const merged = [];
+        const seen = new Set();
+        ["bar", "nightlife", "movies", "actions"].forEach(k => {
+          const d = CZOLKO_DECKS[k];
+          if (!d) return;
+          d.items.forEach(item => {
+            const norm = item.word.toLowerCase();
+            if (!seen.has(norm)) {
+              seen.add(norm);
+              merged.push({ ...item, cat: d.label });
+            }
+          });
+        });
+        const localBars = getVenuesDeckCards().slice(0, 24);
+        localBars.forEach(item => {
+          const norm = item.word.toLowerCase();
+          if (!seen.has(norm)) {
+            seen.add(norm);
+            merged.push(item);
+          }
+        });
+        return merged;
+      }
+      const deckObj = CZOLKO_DECKS[deckId];
+      if (!deckObj) return getDeckCards("all");
+      return deckObj.items.map(item => ({ ...item, cat: deckObj.label }));
+    }
+
+    function getDeckLabel(deckId) {
+      if (deckId === "all") return "🎲 Mix Imprezowy";
+      if (deckId === "venues") {
+        const curCity = typeof getCurrentCity === "function" ? getCurrentCity() : { name: "Miasto" };
+        return `📍 Bary: ${curCity.name}`;
+      }
+      return CZOLKO_DECKS[deckId] ? CZOLKO_DECKS[deckId].label : "🎭 Gra w Czółko";
+    }
+
+    function getHighscore(deckId = selectedDeck) {
+      return parseInt(localStorage.getItem(`poilepiwko_czolko_hs_${deckId}`) || "0", 10) || 0;
+    }
+
+    function saveHighscore(deckId, score) {
+      const prev = getHighscore(deckId);
+      if (score > prev) {
+        localStorage.setItem(`poilepiwko_czolko_hs_${deckId}`, String(score));
+        return true;
+      }
+      return false;
+    }
+
+    function updateSettingsUI() {
+      // Deck active state
+      deckBtns.forEach(btn => {
+        btn.classList.toggle("active", btn.getAttribute("data-deck") === selectedDeck);
+      });
+
+      // Time pills
+      timePills.forEach(p => {
+        p.classList.toggle("active", parseInt(p.getAttribute("data-time"), 10) === roundDuration);
+      });
+      if (valTime) valTime.textContent = `${roundDuration}s`;
+
+      // Control mode pills
+      ctrlPills.forEach(p => {
+        p.classList.toggle("active", p.getAttribute("data-ctrl") === controlMode);
+      });
+      if (valCtrl) valCtrl.textContent = controlMode === "motion" ? "Czujnik + Dotyk" : "Tylko Dotyk / Klawiatura";
+
+      // Quick toggle chips
+      if (btnLandscape) {
+        btnLandscape.classList.toggle("active", landscapeMode);
+        btnLandscape.setAttribute("aria-pressed", landscapeMode ? "true" : "false");
+      }
+      if (btnInvert) {
+        btnInvert.classList.toggle("active", invertTilt);
+        btnInvert.setAttribute("aria-pressed", invertTilt ? "true" : "false");
+      }
+      if (btnSound) {
+        btnSound.classList.toggle("active", soundEnabled);
+        btnSound.setAttribute("aria-pressed", soundEnabled ? "true" : "false");
+        const sp = btnSound.querySelector("span");
+        if (sp) sp.textContent = soundEnabled ? "🔊 Dźwięki" : "🔇 Wyciszone";
+      }
+
+      // Counts & city title
+      const curCity = typeof getCurrentCity === "function" ? getCurrentCity() : { name: "Warszawa" };
+      const vTitle = document.getElementById("czolko-deck-venues-title");
+      const vSub = document.getElementById("czolko-deck-venues-sub");
+      if (vTitle) vTitle.textContent = `Lokale z Mapy (${curCity.name})`;
+      if (vSub) vSub.textContent = `Zgaduj bary i puby w mieście ${curCity.name}!`;
+
+      const deckKeys = ["all", "bar", "venues", "nightlife", "movies", "actions", "adult"];
+      deckKeys.forEach(k => {
+        const cntEl = document.getElementById(`czolko-cnt-${k}`);
+        if (cntEl) cntEl.textContent = String(getDeckCards(k).length);
+      });
+
+      const currentCards = getDeckCards(selectedDeck);
+      if (deckCountVal) deckCountVal.textContent = String(currentCards.length);
+      if (highscoreVal) highscoreVal.textContent = String(getHighscore(selectedDeck));
+    }
+
+    function applyStageVisualPreferences() {
+      const isPortraitViewport = window.innerHeight > window.innerWidth;
+      const shouldRotate = Boolean(landscapeMode && isPortraitViewport);
+      if (stageInner) {
+        stageInner.classList.toggle("czolko-rotated", shouldRotate);
+      }
+      if (btnStageRotate) {
+        btnStageRotate.classList.toggle("active", landscapeMode);
+      }
+      if (btnCountdownRotate) {
+        btnCountdownRotate.textContent = landscapeMode ? "📐 Poziomo ✓" : "📐 Obróć";
+      }
+      if (btnStageInvert) {
+        btnStageInvert.classList.toggle("active", invertTilt);
+      }
+      if (btnStageSound) {
+        btnStageSound.textContent = soundEnabled ? "🔊" : "🔇";
+        btnStageSound.classList.toggle("muted", !soundEnabled);
+      }
+      if (tiltGuideEl) {
+        if (controlMode === "motion") {
+          tiltGuideEl.innerHTML = invertTilt
+            ? "<span>⬇️ Dół = PAS</span><span>·</span><span>⬆️ Góra = ZGADŁEM</span>"
+            : "<span>⬆️ Góra = PAS</span><span>·</span><span>⬇️ Dół = ZGADŁEM</span>";
+        } else {
+          tiltGuideEl.textContent = "👆 Dotknij przycisk poniżej lub użyj Spacji / Strzałek";
+        }
+      }
+    }
+
+    function shuffleArray(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function prepareDeckQueue() {
+      const allCards = getDeckCards(selectedDeck);
+      if (!usedWordsByDeck[selectedDeck]) usedWordsByDeck[selectedDeck] = new Set();
+      const usedSet = usedWordsByDeck[selectedDeck];
+      let fresh = allCards.filter(c => !usedSet.has(c.word));
+      if (fresh.length < 15) {
+        usedSet.clear();
+        fresh = allCards;
+      }
+      deckQueue = shuffleArray(fresh);
+    }
+
+    function drawNextCard() {
+      if (!deckQueue || deckQueue.length === 0) {
+        usedWordsByDeck[selectedDeck] = new Set();
+        deckQueue = shuffleArray(getDeckCards(selectedDeck));
+      }
+      currentCard = deckQueue.pop() || { word: "Wznosimy Toast!", cat: "Bar", hint: "Na zdrowie!" };
+      if (!usedWordsByDeck[selectedDeck]) usedWordsByDeck[selectedDeck] = new Set();
+      usedWordsByDeck[selectedDeck].add(currentCard.word);
+
+      if (activeWordEl) {
+        activeWordEl.textContent = currentCard.word;
+        activeWordEl.classList.remove("len-short", "len-medium", "len-long");
+        const len = currentCard.word.length;
+        if (len <= 14) activeWordEl.classList.add("len-short");
+        else if (len <= 28) activeWordEl.classList.add("len-medium");
+        else activeWordEl.classList.add("len-long");
+      }
+      if (activeHintEl) {
+        activeHintEl.textContent = currentCard.hint || currentCard.cat || "";
+      }
+    }
+
+    function formatTimer(sec) {
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    }
+
+    function handleMotionEvent(e) {
+      if (phase !== "play" || controlMode !== "motion") return;
+      const acc = e.accelerationIncludingGravity;
+      if (!acc || typeof acc.z !== "number") return;
+
+      const now = Date.now();
+      if (now - lastTiltSampleMs < 40) return;
+      lastTiltSampleMs = now;
+
+      let nz = acc.z;
+      if (isIOSDevice) nz = -nz;
+      if (invertTilt) nz = -nz;
+
+      if (isActionLocked) return;
+
+      // Require neutral upright position (~forehead facing out) before/between triggers
+      if (!tiltArmed) {
+        if (Math.abs(nz) < 4.0) {
+          tiltArmed = true;
+        }
+        return;
+      }
+
+      if (nz <= -5.8) {
+        // Tilted head DOWN -> Correct!
+        recordAction("correct");
+      } else if (nz >= 5.8) {
+        // Tilted head UP -> Pass!
+        recordAction("pass");
+      }
+    }
+
+    function handleKeyDown(e) {
+      if (phase === "countdown") {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          abortStageToLobby();
+        }
+        return;
+      }
+      if (phase !== "play") return;
+      if (e.repeat) return;
+
+      if (e.key === " " || e.key === "ArrowDown" || e.key === "Enter") {
+        e.preventDefault();
+        recordAction("correct");
+      } else if (e.key === "ArrowUp" || e.key === "p" || e.key === "P" || e.key === "Backspace") {
+        e.preventDefault();
+        recordAction("pass");
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        finishRound();
+      }
+    }
+
+    function attachStageListeners() {
+      window.addEventListener("keydown", handleKeyDown);
+      if (controlMode === "motion" && typeof DeviceMotionEvent !== "undefined") {
+        window.addEventListener("devicemotion", handleMotionEvent, { passive: true });
+      }
+    }
+
+    function detachStageListeners() {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("devicemotion", handleMotionEvent);
+    }
+
+    function recordAction(type) {
+      if (phase !== "play" || isActionLocked || !currentCard) return;
+      isActionLocked = true;
+      tiltArmed = false;
+
+      playedCards.push({
+        word: currentCard.word,
+        hint: currentCard.hint || "",
+        cat: currentCard.cat || "",
+        status: type === "correct" ? "correct" : "pass"
+      });
+
+      const scoreNow = playedCards.filter(c => c.status === "correct").length;
+      if (hudScore) hudScore.textContent = String(scoreNow);
+
+      if (type === "correct") {
+        playCzolkoTone("correct");
+        if (window.poileHaptics && window.poileHaptics.success) {
+          window.poileHaptics.success();
+        } else if (navigator.vibrate) {
+          try { navigator.vibrate([30, 40, 60]); } catch (e) {}
+        }
+        stageOverlay.classList.remove("flash-pass");
+        stageOverlay.classList.add("flash-correct");
+        if (flashText) flashText.textContent = "✅ ZGADŁEM!";
+      } else {
+        playCzolkoTone("pass");
+        if (window.poileHaptics && window.poileHaptics.tick) {
+          window.poileHaptics.tick();
+        } else if (navigator.vibrate) {
+          try { navigator.vibrate(35); } catch (e) {}
+        }
+        stageOverlay.classList.remove("flash-correct");
+        stageOverlay.classList.add("flash-pass");
+        if (flashText) flashText.textContent = "⏭️ PAS!";
+      }
+
+      if (flashBanner) flashBanner.classList.add("visible");
+
+      if (flashTimer) clearTimeout(flashTimer);
+      flashTimer = setTimeout(() => {
+        stageOverlay.classList.remove("flash-correct", "flash-pass");
+        if (flashBanner) flashBanner.classList.remove("visible");
+        isActionLocked = false;
+        if (phase === "play") {
+          drawNextCard();
+        }
+      }, 580);
+    }
+
+    function clearAllStageTimers() {
+      if (countdownTimer) {
+        clearInterval(countdownTimer);
+        clearTimeout(countdownTimer);
+        countdownTimer = null;
+      }
+      if (roundTimer) {
+        clearInterval(roundTimer);
+        roundTimer = null;
+      }
+      if (flashTimer) {
+        clearTimeout(flashTimer);
+        flashTimer = null;
+      }
+    }
+
+    function closeStageOverlay(popHistory = true) {
+      clearAllStageTimers();
+      detachStageListeners();
+      releaseWakeLock();
+      stageOverlay.classList.remove("flash-correct", "flash-pass", "is-playing");
+      if (flashBanner) flashBanner.classList.remove("visible");
+      stageOverlay.style.display = "none";
+      document.body.classList.remove("czolko-stage-open");
+      if (popHistory && typeof ModalHistoryManager !== "undefined") {
+        ModalHistoryManager.pop("czolko-stage");
+      }
+    }
+
+    function abortStageToLobby() {
+      phase = "idle";
+      closeStageOverlay(true);
+      if (screenResults) screenResults.style.display = "none";
+      if (screenLobby) screenLobby.style.display = "block";
+      updateSettingsUI();
+    }
+
+    function startActivePlay() {
+      phase = "play";
+      playedCards = [];
+      currentCard = null;
+      isActionLocked = false;
+      tiltArmed = false;
+      remainingSec = roundDuration;
+
+      stageOverlay.classList.add("is-playing");
+      if (countdownView) countdownView.style.display = "none";
+      if (playView) playView.style.display = "flex";
+      if (hudDeck) hudDeck.textContent = getDeckLabel(selectedDeck);
+      if (hudScore) hudScore.textContent = "0";
+      if (hudTimer) {
+        hudTimer.textContent = formatTimer(remainingSec);
+        hudTimer.classList.remove("warning");
+      }
+
+      applyStageVisualPreferences();
+      attachStageListeners();
+      drawNextCard();
+
+      // Safety fallback: if sensor axis wasn't triggered upright immediately on non-moving test devices
+      setTimeout(() => {
+        if (phase === "play" && !isActionLocked) {
+          tiltArmed = true;
+        }
+      }, 450);
+
+      roundTimer = setInterval(() => {
+        if (phase !== "play") return;
+        remainingSec--;
+        if (hudTimer) {
+          hudTimer.textContent = formatTimer(Math.max(0, remainingSec));
+          hudTimer.classList.toggle("warning", remainingSec <= 10 && remainingSec > 0);
+        }
+        if (remainingSec <= 5 && remainingSec > 0) {
+          playCzolkoTone("warn");
+          if (window.poileHaptics && window.poileHaptics.tick) window.poileHaptics.tick();
+        }
+        if (remainingSec <= 0) {
+          finishRound();
+        }
+      }, 1000);
+    }
+
+    function beginCountdown() {
+      clearAllStageTimers();
+      prepareDeckQueue();
+      phase = "countdown";
+
+      if (countdownDeckPill) countdownDeckPill.textContent = getDeckLabel(selectedDeck);
+      if (countdownView) countdownView.style.display = "flex";
+      if (playView) playView.style.display = "none";
+      stageOverlay.classList.remove("flash-correct", "flash-pass", "is-playing");
+      if (flashBanner) flashBanner.classList.remove("visible");
+
+      applyStageVisualPreferences();
+      stageOverlay.style.display = "flex";
+      document.body.classList.add("czolko-stage-open");
+
+      if (typeof ModalHistoryManager !== "undefined") {
+        ModalHistoryManager.push("czolko-stage", abortStageToLobby);
+      }
+      acquireWakeLock();
+      window.addEventListener("keydown", handleKeyDown);
+
+      let step = 3;
+      if (countdownNum) {
+        countdownNum.textContent = "3";
+        countdownNum.classList.remove("pop-go");
+      }
+      playCzolkoTone("tick");
+
+      countdownTimer = setInterval(() => {
+        if (phase !== "countdown") {
+          clearInterval(countdownTimer);
+          return;
+        }
+        step--;
+        if (step >= 1) {
+          if (countdownNum) countdownNum.textContent = String(step);
+          playCzolkoTone("tick");
+          if (window.poileHaptics && window.poileHaptics.tick) window.poileHaptics.tick();
+        } else if (step === 0) {
+          if (countdownNum) {
+            countdownNum.textContent = "START!";
+            countdownNum.classList.add("pop-go");
+          }
+          playCzolkoTone("start");
+          if (window.poileHaptics && window.poileHaptics.success) window.poileHaptics.success();
+        } else {
+          clearInterval(countdownTimer);
+          countdownTimer = null;
+          startActivePlay();
+        }
+      }, 850);
+    }
+
+    function renderResultsScreen(shouldLaunchConfetti = false) {
+      const correctCount = playedCards.filter(c => c.status === "correct").length;
+      const passCount = playedCards.length - correctCount;
+
+      if (resScore) resScore.textContent = String(correctCount);
+      if (resSub) resSub.textContent = `Zgadnięte: ${correctCount} · Pominięte: ${passCount} · ${getDeckLabel(selectedDeck)}`;
+
+      const isNewRecord = saveHighscore(selectedDeck, correctCount);
+      if (resRecordBadge) resRecordBadge.style.display = isNewRecord && correctCount > 0 ? "inline-flex" : "none";
+      updateSettingsUI();
+
+      if (correctCount >= 10) {
+        if (resIco) resIco.textContent = "👑";
+        if (resTitle) resTitle.textContent = "Legenda Czółka!";
+      } else if (correctCount >= 7) {
+        if (resIco) resIco.textContent = "🔥";
+        if (resTitle) resTitle.textContent = "Mistrz Imprezy!";
+      } else if (correctCount >= 4) {
+        if (resIco) resIco.textContent = "🍻";
+        if (resTitle) resTitle.textContent = "Świetna Runda!";
+      } else {
+        if (resIco) resIco.textContent = "🎭";
+        if (resTitle) resTitle.textContent = "Dobra Rozgrzewka!";
+      }
+
+      // Check & Unlock Passport Badge (Mistrz Czółka >= 7 correct words)
+      if (correctCount >= 7 && roundDuration >= 30) {
+        localStorage.setItem("poilepiwko_czolko_won", "true");
+        if (unlockedNotice) unlockedNotice.style.display = "block";
+        if (typeof loadUnlockedBadges === "function" && typeof saveUnlockedBadges === "function") {
+          const badges = loadUnlockedBadges();
+          if (!badges.includes("czolko_master")) {
+            badges.push("czolko_master");
+            saveUnlockedBadges(badges);
+            if (typeof showAppToast === "function") {
+              showAppToast("Odblokowano Odznakę Paszportu!", `Mistrz Czółka 🎭 (${correctCount} haseł w rundzie)`, "👑", 4500);
+            }
+          }
+        }
+        if (typeof updatePassportCounters === "function") updatePassportCounters();
+      } else {
+        if (unlockedNotice) unlockedNotice.style.display = "none";
+      }
+
+      // Render interactive review list (tap any word to toggle correct/pass)
+      if (resultsList) {
+        if (playedCards.length === 0) {
+          resultsList.innerHTML = `<div class="czolko-results-empty">Brak zagranych haseł w tej rundzie. Spróbuj jeszcze raz! 🍻</div>`;
+        } else {
+          resultsList.innerHTML = playedCards.map((item, idx) => `
+            <button type="button" class="czolko-word-item ${item.status === "correct" ? "is-correct" : "is-pass"}" data-idx="${idx}" title="Dotknij, aby zmienić status">
+              <span class="cwi-status">${item.status === "correct" ? "✅" : "⏭️"}</span>
+              <span class="cwi-word">${escapeHtml(item.word)}</span>
+              <span class="cwi-badge">${item.status === "correct" ? "+1 pkt" : "Pas"}</span>
+            </button>
+          `).join("");
+
+          resultsList.querySelectorAll(".czolko-word-item").forEach(btn => {
+            btn.addEventListener("click", () => {
+              const idx = parseInt(btn.getAttribute("data-idx"), 10);
+              if (!isNaN(idx) && playedCards[idx]) {
+                playedCards[idx].status = playedCards[idx].status === "correct" ? "pass" : "correct";
+                if (window.poileHaptics && window.poileHaptics.tick) window.poileHaptics.tick();
+                renderResultsScreen(false);
+              }
+            });
+          });
+        }
+      }
+
+      if (shouldLaunchConfetti && correctCount >= 3 && typeof launchConfetti === "function") {
+        setTimeout(() => {
+          launchConfetti("czolko-confetti-canvas", 3200);
+        }, 120);
+      }
+    }
+
+    function finishRound() {
+      if (phase === "results" || phase === "idle") return;
+      // Include active unguessed word on screen if user wasn't mid-flash so it can be reviewed/flipped
+      if (phase === "play" && currentCard && !isActionLocked) {
+        playedCards.push({
+          word: currentCard.word,
+          hint: currentCard.hint || "",
+          cat: currentCard.cat || "",
+          status: "pass"
+        });
+      }
+      phase = "results";
+      playCzolkoTone("end");
+      if (window.poileHaptics && window.poileHaptics.lockOn) {
+        window.poileHaptics.lockOn();
+      } else if (navigator.vibrate) {
+        try { navigator.vibrate([120, 60, 120]); } catch (e) {}
+      }
+
+      closeStageOverlay(true);
+      if (screenLobby) screenLobby.style.display = "none";
+      if (screenResults) screenResults.style.display = "block";
+      renderResultsScreen(true);
+    }
+
+    // Event bindings: Lobby selectors
+    deckBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        if (window.poileHaptics && window.poileHaptics.tick) window.poileHaptics.tick();
+        selectedDeck = btn.getAttribute("data-deck") || "all";
+        updateSettingsUI();
+      });
+    });
+
+    timePills.forEach(pill => {
+      pill.addEventListener("click", () => {
+        if (window.poileHaptics && window.poileHaptics.tick) window.poileHaptics.tick();
+        roundDuration = parseInt(pill.getAttribute("data-time"), 10) || 60;
+        updateSettingsUI();
+      });
+    });
+
+    ctrlPills.forEach(pill => {
+      pill.addEventListener("click", () => {
+        if (window.poileHaptics && window.poileHaptics.tick) window.poileHaptics.tick();
+        controlMode = pill.getAttribute("data-ctrl") || "motion";
+        localStorage.setItem("poilepiwko_czolko_ctrl", controlMode);
+        if (controlMode === "touch" && localStorage.getItem("poilepiwko_czolko_landscape") === null) {
+          landscapeMode = false;
+        } else if (controlMode === "motion" && localStorage.getItem("poilepiwko_czolko_landscape") === null) {
+          landscapeMode = window.innerWidth <= 768 && window.innerHeight > window.innerWidth;
+        }
+        updateSettingsUI();
+      });
+    });
+
+    function handleViewportRotationSync() {
+      if (phase === "countdown" || phase === "play") {
+        applyStageVisualPreferences();
+      }
+    }
+
+    function toggleLandscapePref() {
+      landscapeMode = !landscapeMode;
+      localStorage.setItem("poilepiwko_czolko_landscape", landscapeMode ? "true" : "false");
+      if (window.poileHaptics && window.poileHaptics.tick) window.poileHaptics.tick();
+      updateSettingsUI();
+      applyStageVisualPreferences();
+      if ((phase === "countdown" || phase === "play") && landscapeMode && window.innerHeight <= window.innerWidth && typeof showAppToast === "function") {
+        showAppToast("Ekran jest już poziomy", "Obrót o 90° włącza się automatycznie w orientacji pionowej (z blokadą obrotu).", "📐", 2600);
+      }
+    }
+
+    function toggleInvertPref() {
+      invertTilt = !invertTilt;
+      localStorage.setItem("poilepiwko_czolko_invert", invertTilt ? "true" : "false");
+      if (window.poileHaptics && window.poileHaptics.tick) window.poileHaptics.tick();
+      updateSettingsUI();
+      applyStageVisualPreferences();
+      if (phase === "play" && typeof showAppToast === "function") {
+        showAppToast("Kierunek przechyłu zmieniony", invertTilt ? "⬇️ Dół = PAS · ⬆️ Góra = ZGADŁEM" : "⬇️ Dół = ZGADŁEM · ⬆️ Góra = PAS", "↕️", 2200);
+      }
+    }
+
+    function toggleSoundPref() {
+      soundEnabled = !soundEnabled;
+      localStorage.setItem("poilepiwko_czolko_sound", soundEnabled ? "true" : "false");
+      if (soundEnabled) {
+        getAudioCtx();
+        playCzolkoTone("tick");
+      }
+      updateSettingsUI();
+      applyStageVisualPreferences();
+    }
+
+    if (btnLandscape) btnLandscape.addEventListener("click", toggleLandscapePref);
+    if (btnInvert) btnInvert.addEventListener("click", toggleInvertPref);
+    if (btnSound) btnSound.addEventListener("click", toggleSoundPref);
+
+    if (btnCountdownRotate) btnCountdownRotate.addEventListener("click", toggleLandscapePref);
+    if (btnStageRotate) btnStageRotate.addEventListener("click", toggleLandscapePref);
+    if (btnStageInvert) btnStageInvert.addEventListener("click", toggleInvertPref);
+    if (btnStageSound) btnStageSound.addEventListener("click", toggleSoundPref);
+
+    if (btnCountdownAbort) btnCountdownAbort.addEventListener("click", abortStageToLobby);
+    if (btnStageStop) btnStageStop.addEventListener("click", finishRound);
+    if (btnPass) btnPass.addEventListener("click", () => recordAction("pass"));
+    if (btnCorrect) btnCorrect.addEventListener("click", () => recordAction("correct"));
+
+    function startWithGesture() {
+      getAudioCtx();
+      if (controlMode === "motion" && typeof DeviceMotionEvent !== "undefined" && typeof DeviceMotionEvent.requestPermission === "function") {
+        DeviceMotionEvent.requestPermission()
+          .then((state) => {
+            if (state !== "granted" && typeof showAppToast === "function") {
+              showAppToast("Brak dostępu do czujnika", "Możesz grać dużymi przyciskami ✅ / ⏭️ na dole ekranu!", "📱", 3400);
+            }
+            beginCountdown();
+          })
+          .catch(() => {
+            beginCountdown();
+          });
+      } else {
+        beginCountdown();
+      }
+    }
+
+    if (btnStart) btnStart.addEventListener("click", startWithGesture);
+    if (btnReplay) btnReplay.addEventListener("click", startWithGesture);
+    if (btnBackLobby) {
+      btnBackLobby.addEventListener("click", () => {
+        phase = "idle";
+        if (screenResults) screenResults.style.display = "none";
+        if (screenLobby) screenLobby.style.display = "block";
+        updateSettingsUI();
+      });
+    }
+
+    if (btnShare) {
+      btnShare.addEventListener("click", () => {
+        const correctCount = playedCards.filter(c => c.status === "correct").length;
+        const deckTitle = getDeckLabel(selectedDeck);
+        const text = `🎭 Zagraliśmy w Czółko przy barze na poilepiwko.pl!\nTalia: ${deckTitle}\n🏆 Wynik: ${correctCount} pkt w ${roundDuration}s!\nDołącz do ekipy: https://poilepiwko.pl/?action=czolko`;
+        if (navigator.share) {
+          navigator.share({ title: "Gra w Czółko – poilepiwko", text }).catch(() => {});
+        } else if (navigator.clipboard) {
+          navigator.clipboard.writeText(text).then(() => {
+            if (typeof showAppToast === "function") showAppToast("Skopiowano wynik!", "Wyślij ekipie na Messengerze lub WhatsAppie!", "📤");
+          }).catch(() => prompt("Skopiuj wynik:", text));
+        } else {
+          prompt("Skopiuj wynik:", text);
+        }
+      });
+    }
+
+    window.__updateCzolkoCityUI = function () {
+      updateSettingsUI();
+    };
+
+    window.__openCzolko = function () {
+      if (phase === "countdown" || phase === "play") {
+        closeStageOverlay(false);
+      }
+      phase = "idle";
+      if (modal) {
+        modal.classList.add("active");
+        modal.style.display = "flex";
+      }
+      document.body.classList.add("modal-open");
+      if (screenResults) screenResults.style.display = "none";
+      if (screenLobby) screenLobby.style.display = "block";
+      updateSettingsUI();
+      if (window.__clearBottomNavActive) window.__clearBottomNavActive();
+      if (typeof ModalHistoryManager !== "undefined") {
+        ModalHistoryManager.push("czolko-modal", window.__closeCzolko);
+      }
+    };
+
+    window.__closeCzolko = function () {
+      phase = "idle";
+      closeStageOverlay(true);
+      if (modal) {
+        modal.classList.remove("active");
+        modal.style.display = "none";
+      }
+      document.body.classList.remove("modal-open");
+      if (typeof ModalHistoryManager !== "undefined") {
+        ModalHistoryManager.pop("czolko-modal");
+      }
+    };
+
+    if (btnOpenHeader) btnOpenHeader.addEventListener("click", window.__openCzolko);
+    if (btnOpenFloat) btnOpenFloat.addEventListener("click", window.__openCzolko);
+    if (btnClose) btnClose.addEventListener("click", window.__closeCzolko);
+    if (btnCloseBottom) btnCloseBottom.addEventListener("click", window.__closeCzolko);
+
+    if (modal) {
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) window.__closeCzolko();
+      });
+    }
+
+    window.addEventListener("resize", handleViewportRotationSync);
+    window.addEventListener("orientationchange", handleViewportRotationSync);
+
+    updateSettingsUI();
   }
 
   // ==========================================================================
@@ -25413,6 +26619,16 @@
         }
       },
       {
+        ids: ["bento-btn-czolko", "bento-czolko"],
+        fn: () => {
+          if (typeof window.__openCzolko === "function") window.__openCzolko();
+          else {
+            const m = document.getElementById("czolko-modal");
+            if (m) { m.classList.add("active"); m.style.display = "flex"; }
+          }
+        }
+      },
+      {
         ids: ["bento-btn-sos", "bento-sos"],
         fn: () => {
           if (typeof window.__openSos === "function") window.__openSos();
@@ -25958,6 +27174,7 @@
         "bento-btn-happyhour",
         "bento-btn-barometer",
         "bento-btn-pubquiz",
+        "bento-btn-czolko",
         "bento-btn-sos"
       ];
       bentoCardIds.forEach(id => {
@@ -26030,6 +27247,11 @@
           case "roulette":
             if (typeof window.__openRoulette === "function") {
               window.__openRoulette();
+            }
+            break;
+          case "czolko":
+            if (typeof window.__openCzolko === "function") {
+              window.__openCzolko();
             }
             break;
           case "happyhours":

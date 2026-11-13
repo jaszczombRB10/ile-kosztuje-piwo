@@ -100,7 +100,7 @@
   <script defer src="https://cloud.umami.is/script.js" data-website-id="auto" id="umami-analytics-script"></script>
 
   <!-- Custom Styles -->
-  <link rel="stylesheet" href="styles.css?v=175">
+  <link rel="stylesheet" href="styles.css?v=178">
 </head>
 <body>
 
@@ -181,6 +181,13 @@
               <div class="menu-item-content">
                 <span class="menu-item-title">Pub Quiz</span>
                 <span class="menu-item-desc">Sprawdź wiedzę o piwie i barach</span>
+              </div>
+            </button>
+            <button type="button" class="more-menu-item" id="btn-czolko-header" title="Gra w Czółko – przyłóż telefon do czoła i zgaduj na czas!">
+              <span class="menu-item-icon">🎭</span>
+              <div class="menu-item-content">
+                <span class="menu-item-title">Gra w Czółko</span>
+                <span class="menu-item-desc">Imprezowe zgadywanie przy stoliku</span>
               </div>
             </button>
             <button type="button" class="more-menu-item" id="btn-barometer-toggle" title="Barometr cenowy barów">
@@ -305,6 +312,7 @@
         <span class="m-dist-chip chip-roulette" id="chip-search-roulette">🎲 Ruletka</span>
         <span class="m-dist-chip chip-happyhour" id="chip-search-happyhour">⚡ Happy Hours</span>
         <span class="m-dist-chip chip-quiz" id="chip-search-quiz">🧠 Pub Quiz</span>
+        <span class="m-dist-chip chip-czolko" id="chip-search-czolko">🎭 Czółko</span>
         <span class="m-dist-chip chip-find-friends" id="chip-search-friends">👥 Szukaj znajomych</span>
       </div>
       <div class="mobile-search-results" id="mobile-search-results">
@@ -430,6 +438,10 @@
       <button type="button" id="btn-pubquiz-float" class="fab-pubquiz-float" title="Pub Quiz – Zagraj teraz!">
         <span class="quiz-float-icon">🧠</span>
         <span>Pub Quiz</span>
+      </button>
+      <button type="button" id="btn-czolko-float" class="fab-czolko-float" title="Gra w Czółko – Imprezowa gra na czoło!">
+        <span class="czolko-float-icon">🎭</span>
+        <span>Czółko</span>
       </button>
       <button type="button" id="btn-sos-float" class="fab-sos-float" title="Piwny Anioł Stróż · SOS Ekipa i Bezpieczny Powrót" aria-label="Piwny Anioł Stróż SOS">
         <span class="sos-float-icon">🛡️</span>
@@ -1328,6 +1340,18 @@
           <div class="bento-card-body">
             <h3 class="bento-title">Piwny Pub Quiz</h3>
             <p class="bento-desc">Quiz wiedzy o piwie i harmonogram w pubach</p>
+          </div>
+        </div>
+
+        <!-- Bento 6b: Gra w Czółko (Hero 2-Col) -->
+        <div class="bento-card bento-card-hero bento-czolko" id="bento-btn-czolko" role="button" tabindex="0">
+          <div class="bento-card-top">
+            <span class="bento-pill-party">🎭 GRA IMPREZOWA</span>
+            <span class="bento-arrow-icon">↗</span>
+          </div>
+          <div class="bento-card-body">
+            <h3 class="bento-title">Gra w Czółko</h3>
+            <p class="bento-desc">Przyłóż telefon do czoła przy stoliku — znajomi podpowiadają, Ty zgadujesz hasła na czas!</p>
           </div>
         </div>
 
@@ -2933,6 +2957,267 @@
     </div>
   </div>
 
+  <!-- Gra w Czółko Modal (Lobby & Results) -->
+  <div class="modal-backdrop" id="czolko-modal" style="display:none;">
+    <div class="modal-card modal-card-goin czolko-modal-card flighty-edit-profile-sheet">
+      <canvas id="czolko-confetti-canvas" class="celebration-canvas"></canvas>
+
+      <!-- Top Navigation & Close -->
+      <div class="flighty-edit-topbar">
+        <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-czolko" aria-label="Zamknij Grę w Czółko">Zamknij</button>
+        <div class="flighty-edit-topbar-title">
+          <span class="flighty-edit-eyebrow">GRA IMPREZOWA · PRZY STOLIKU</span>
+          <h2>🎭 Gra w Czółko</h2>
+        </div>
+        <span class="flighty-log-season" style="font-size:0.62rem;">PARTY</span>
+      </div>
+
+      <!-- Hero Banner -->
+      <div class="czolko-hero">
+        <p>Przyłóż telefon do czoła ekranem do znajomych. Ekipa podpowiada hasło, a Ty zgadujesz na czas!</p>
+        <div class="czolko-guide-pills">
+          <span class="czolko-guide-pill">📱 Na czoło</span>
+          <span class="czolko-guide-pill pill-ok">⬇️ W dół = Zgadłem</span>
+          <span class="czolko-guide-pill pill-pass">⬆️ W górę = Pas</span>
+        </div>
+      </div>
+
+      <div class="czolko-body-pane">
+        <!-- Screen 1: Lobby / Deck & Settings -->
+        <div id="czolko-screen-lobby" class="czolko-screen">
+          <div class="czolko-lobby-card">
+            <h3>Wybierz talię haseł:</h3>
+            <div class="czolko-cat-grid" id="czolko-deck-grid">
+              <button type="button" class="czolko-cat-btn active" data-deck="all">
+                <span class="czolko-cat-ico">🎲</span>
+                <div class="czolko-cat-text">
+                  <strong>Mix Imprezowy</strong>
+                  <small>Najlepsze hasła ze wszystkich kategorii naraz</small>
+                </div>
+                <span class="czolko-cat-count" id="czolko-cnt-all">0</span>
+              </button>
+              <button type="button" class="czolko-cat-btn" data-deck="bar">
+                <span class="czolko-cat-ico">🍺</span>
+                <div class="czolko-cat-text">
+                  <strong>Bar, Piwo & Drinki</strong>
+                  <small>Krafty, szoty, przekąski i klimat pubowy</small>
+                </div>
+                <span class="czolko-cat-count" id="czolko-cnt-bar">0</span>
+              </button>
+              <button type="button" class="czolko-cat-btn" data-deck="venues" id="btn-czolko-deck-venues">
+                <span class="czolko-cat-ico">📍</span>
+                <div class="czolko-cat-text">
+                  <strong id="czolko-deck-venues-title">Lokale z Mapy (Warszawa)</strong>
+                  <small id="czolko-deck-venues-sub">Zgaduj prawdziwe puby i bary z naszego miasta!</small>
+                </div>
+                <span class="czolko-cat-count" id="czolko-cnt-venues">0</span>
+              </button>
+              <button type="button" class="czolko-cat-btn" data-deck="nightlife">
+                <span class="czolko-cat-ico">🌆</span>
+                <div class="czolko-cat-text">
+                  <strong>Nocne Życie & Polska</strong>
+                  <small>Aftery, kebaby o 3:00, koncerty i polskie klasyki</small>
+                </div>
+                <span class="czolko-cat-count" id="czolko-cnt-nightlife">0</span>
+              </button>
+              <button type="button" class="czolko-cat-btn" data-deck="movies">
+                <span class="czolko-cat-ico">🎬</span>
+                <div class="czolko-cat-text">
+                  <strong>Filmy, Seriale & Memy</strong>
+                  <small>Kultowe postacie, cytaty, celebryci i hity internetu</small>
+                </div>
+                <span class="czolko-cat-count" id="czolko-cnt-movies">0</span>
+              </button>
+              <button type="button" class="czolko-cat-btn" data-deck="actions">
+                <span class="czolko-cat-ico">🤸</span>
+                <div class="czolko-cat-text">
+                  <strong>Kalambury (Scenki & Czynności)</strong>
+                  <small>Szalone sytuacje do opisania lub pokazania</small>
+                </div>
+                <span class="czolko-cat-count" id="czolko-cnt-actions">0</span>
+              </button>
+              <button type="button" class="czolko-cat-btn" data-deck="adult">
+                <span class="czolko-cat-ico">🌶️</span>
+                <div class="czolko-cat-text">
+                  <strong>Bez Cenzury (18+)</strong>
+                  <small>Pikantne, randkowe i późnonocne hasła bez hamulców</small>
+                </div>
+                <span class="czolko-cat-count" id="czolko-cnt-adult">0</span>
+              </button>
+            </div>
+
+            <!-- Settings -->
+            <div class="czolko-settings-wrap">
+              <div class="czolko-setting-row">
+                <div class="czolko-setting-label">
+                  <span>⏱️ Czas rundy:</span>
+                  <span class="czolko-setting-val" id="czolko-val-time">60s</span>
+                </div>
+                <div class="czolko-setting-pills" id="czolko-time-pills">
+                  <button type="button" class="czolko-pill-btn" data-time="30">30s</button>
+                  <button type="button" class="czolko-pill-btn" data-time="45">45s</button>
+                  <button type="button" class="czolko-pill-btn active" data-time="60">60s</button>
+                  <button type="button" class="czolko-pill-btn" data-time="90">90s</button>
+                  <button type="button" class="czolko-pill-btn" data-time="120">120s</button>
+                </div>
+              </div>
+
+              <div class="czolko-setting-row">
+                <div class="czolko-setting-label">
+                  <span>🎮 Sterowanie:</span>
+                  <span class="czolko-setting-val" id="czolko-val-ctrl">Czujnik + Dotyk</span>
+                </div>
+                <div class="czolko-setting-pills" id="czolko-ctrl-pills">
+                  <button type="button" class="czolko-pill-btn active" data-ctrl="motion">📱 Czujnik przechyłu + Dotyk</button>
+                  <button type="button" class="czolko-pill-btn" data-ctrl="touch">👆 Tylko Dotyk / Klawiatura</button>
+                </div>
+              </div>
+
+              <div class="czolko-toggles-row">
+                <button type="button" class="czolko-toggle-chip" id="btn-czolko-landscape" aria-pressed="false" title="Obróć ekran o 90° mimo włączonej blokady pionu w telefonie">
+                  <span>📐 Obróć 90° (Poziomo)</span>
+                </button>
+                <button type="button" class="czolko-toggle-chip" id="btn-czolko-invert" aria-pressed="false" title="Zamień kierunek przechyłu góra/dół">
+                  <span>↕️ Odwróć przechył</span>
+                </button>
+                <button type="button" class="czolko-toggle-chip active" id="btn-czolko-sound" aria-pressed="true" title="Włącz lub wycisz dźwięki gry">
+                  <span>🔊 Dźwięki</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="czolko-lobby-meta">
+              <div class="czolko-meta-pill">
+                <span>🏆 Rekord talii: <strong id="czolko-highscore-val">0</strong> pkt</span>
+              </div>
+              <div class="czolko-meta-pill">
+                <span>🃏 W talii: <strong id="czolko-deck-count-val">0</strong> haseł</span>
+              </div>
+            </div>
+
+            <button type="button" class="btn-primary btn-czolko-cta" id="btn-czolko-start">
+              <span>🚀 Przyłóż do czoła i ZAGRAJ!</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Screen 2: Round Results -->
+        <div id="czolko-screen-results" class="czolko-screen" style="display:none;">
+          <div class="czolko-result-hero">
+            <div class="czolko-result-badge-ico" id="czolko-res-ico">🎉</div>
+            <h3 id="czolko-res-title">Świetna Runda!</h3>
+            <div class="czolko-new-record-badge" id="czolko-res-record-badge" style="display:none;">🔥 NOWY REKORD TALII!</div>
+            <div class="czolko-res-score-box">
+              <span class="czolko-res-num" id="czolko-res-score">0</span>
+              <span class="czolko-res-unit">pkt</span>
+            </div>
+            <p class="czolko-res-sub" id="czolko-res-sub">Zgadnięte: 0 · Pominięte: 0</p>
+
+            <div class="czolko-unlocked-notice" id="czolko-unlocked-notice" style="display:none;">
+              <span>🎉 Odblokowano odznakę w Paszporcie: <strong>Mistrz Czółka 🎭</strong>!</span>
+            </div>
+
+            <div class="czolko-results-tip">
+              💡 Ktoś podpowiedział w ostatniej sekundzie? Dotknij hasła poniżej, aby zmienić status <strong>✅ / ⏭️</strong>:
+            </div>
+
+            <div class="czolko-results-list" id="czolko-results-list">
+              <!-- Played words injected via JS -->
+            </div>
+
+            <div class="czolko-res-actions">
+              <button type="button" class="btn-primary" id="btn-czolko-replay">
+                <span>🔄 Zagraj jeszcze raz</span>
+              </button>
+              <button type="button" class="btn-secondary" id="btn-czolko-lobby">
+                <span>🎲 Zmień talię</span>
+              </button>
+              <button type="button" class="btn-secondary" id="btn-czolko-share">
+                <span>📤 Udostępnij</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="goin-profile-footer">
+        <div class="profile-footer-bar">
+          <button type="button" class="btn-profile-back" id="btn-close-czolko-bottom">
+            <span>✕ Wróć do mapy</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Full-Screen Game Stage for Gra w Czółko (Sits above modals during countdown & play) -->
+  <div class="czolko-stage-overlay" id="czolko-stage-overlay" style="display:none;" role="dialog" aria-modal="true" aria-label="Gra w Czółko – Aktywna rozgrywka">
+    <div class="czolko-stage-inner" id="czolko-stage-inner">
+      <!-- Sub-screen A: Countdown 3-2-1 -->
+      <div class="czolko-countdown-view" id="czolko-countdown-view">
+        <div class="czolko-stage-topbar">
+          <button type="button" class="czolko-stage-btn" id="btn-czolko-countdown-abort">✕ Anuluj</button>
+          <span class="czolko-stage-deck-pill" id="czolko-countdown-deck-pill">🎲 Mix Imprezowy</span>
+          <button type="button" class="czolko-stage-btn" id="btn-czolko-countdown-rotate" title="Obróć ekran o 90°">📐 Obróć</button>
+        </div>
+        <div class="czolko-countdown-center">
+          <div class="czolko-countdown-ring">
+            <span class="czolko-countdown-num" id="czolko-countdown-num">3</span>
+          </div>
+          <h3 class="czolko-countdown-prompt">📱 Przyłóż telefon do czoła!</h3>
+          <p class="czolko-countdown-sub">Ekranem w stronę znajomych · ⬇️ W dół = Zgadłem · ⬆️ W górę = Pas</p>
+        </div>
+      </div>
+
+      <!-- Sub-screen B: Active Card Play -->
+      <div class="czolko-play-view" id="czolko-play-view" style="display:none;">
+        <div class="czolko-hud-top">
+          <div class="czolko-hud-left">
+            <span class="czolko-hud-deck" id="czolko-hud-deck">Mix Imprezowy</span>
+            <span class="czolko-hud-score">✅ <strong id="czolko-hud-score">0</strong></span>
+          </div>
+          <div class="czolko-hud-timer" id="czolko-hud-timer">01:00</div>
+          <div class="czolko-hud-tools">
+            <button type="button" class="czolko-hud-tool-btn" id="btn-czolko-stage-invert" title="Odwróć kierunek przechyłu góra/dół" aria-label="Odwróć kierunek przechyłu">↕️</button>
+            <button type="button" class="czolko-hud-tool-btn" id="btn-czolko-stage-rotate" title="Obróć ekran o 90°" aria-label="Obróć ekran o 90 stopni">📐</button>
+            <button type="button" class="czolko-hud-tool-btn" id="btn-czolko-stage-sound" title="Włącz lub wyłącz dźwięk" aria-label="Dźwięk">🔊</button>
+            <button type="button" class="czolko-hud-tool-btn stop" id="btn-czolko-stage-stop" title="Zakończ rundę i zobacz wyniki">⏹️</button>
+          </div>
+        </div>
+
+        <div class="czolko-card-arena" id="czolko-card-arena">
+          <div class="czolko-tilt-guide" id="czolko-tilt-guide">
+            <span>⬆️ Góra = PAS</span>
+            <span>·</span>
+            <span>⬇️ Dół = ZGADŁEM</span>
+          </div>
+          <div class="czolko-word-wrap">
+            <div class="czolko-active-word" id="czolko-active-word">ŁADOWANIE...</div>
+            <div class="czolko-active-hint" id="czolko-active-hint"></div>
+          </div>
+        </div>
+
+        <!-- Flash Overlay on Answer/Pass -->
+        <div class="czolko-flash-banner" id="czolko-flash-banner" aria-live="polite">
+          <span id="czolko-flash-text">✅ ZGADŁEM!</span>
+        </div>
+
+        <!-- Touch / Keyboard Bottom Controls -->
+        <div class="czolko-touch-bar">
+          <button type="button" class="czolko-touch-btn btn-pass" id="btn-czolko-pass">
+            <span class="ctb-main">⏭️ PASUJĘ</span>
+            <span class="ctb-key">Przechyl w górę / klawisz ↑ lub P</span>
+          </button>
+          <button type="button" class="czolko-touch-btn btn-correct" id="btn-czolko-correct">
+            <span class="ctb-main">✅ ZGADŁEM!</span>
+            <span class="ctb-key">Przechyl w dół / Spacja lub ↓</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Community & Friends Full-Screen Native Page View ("Piwni Znajomi") -->
   <div class="app-page-view flighty-page-view" id="community-modal" style="display:none;">
     <div class="community-page-container">
@@ -3140,6 +3425,7 @@
           <!-- Quick Jump Pills Strip (Dynamic per city + core app shortcuts) -->
           <div class="flighty-quick-pills-strip" id="feed-quick-pills-strip">
             <button type="button" class="fqp-pill" onclick="window.__triggerFeedShortcut('pubcrawl')">🗺️ Pub Crawl</button>
+            <button type="button" class="fqp-pill" onclick="window.__triggerFeedShortcut('czolko')">🎭 Czółko</button>
             <button type="button" class="fqp-pill" onclick="window.__triggerFeedShortcut('ranking')">🏆 Top 10</button>
           </div>
 
@@ -4079,6 +4365,6 @@
   <script src="moderation.js"></script>
 
   <!-- Main Application Logic -->
-  <script src="app.js?v=175"></script>
+  <script src="app.js?v=178"></script>
 </body>
 </html>
