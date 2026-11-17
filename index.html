@@ -2986,13 +2986,43 @@
         <!-- Screen 1: Lobby / Deck & Settings -->
         <div id="czolko-screen-lobby" class="czolko-screen">
           <div class="czolko-lobby-card">
-            <h3>Wybierz talię haseł:</h3>
+
+            <!-- Custom Word Input (Własne hasło na czoło) -->
+            <div class="czolko-custom-box">
+              <div class="czolko-custom-title">
+                <span>✍️ Wpisz własne hasło:</span>
+                <span class="czolko-custom-sub">Dla kogoś przy stoliku</span>
+              </div>
+              <div class="czolko-custom-row">
+                <input type="text" id="czolko-custom-input" class="czolko-custom-input" placeholder="Wpisz hasło np. Barman Krzysiek..." maxlength="50" autocomplete="off" />
+                <button type="button" class="btn-czolko-custom-play" id="btn-czolko-play-custom" title="Zagraj to jedno hasło od razu na czole!">
+                  🚀 Graj to!
+                </button>
+              </div>
+              <div class="czolko-custom-footer">
+                <button type="button" class="btn-czolko-custom-add" id="btn-czolko-add-custom">
+                  ➕ Dodaj do listy haseł
+                </button>
+                <span class="czolko-custom-count-badge" id="czolko-custom-count-badge" style="display:none;">0 haseł</span>
+              </div>
+              <div class="czolko-custom-chips-wrap" id="czolko-custom-chips-wrap" style="display:none;"></div>
+            </div>
+
+            <h3 class="czolko-section-heading">Lub wybierz gotową talię:</h3>
             <div class="czolko-cat-grid" id="czolko-deck-grid">
+              <button type="button" class="czolko-cat-btn btn-deck-custom" data-deck="custom" id="btn-czolko-deck-custom" style="display:none;">
+                <span class="czolko-cat-ico">✍️</span>
+                <div class="czolko-cat-text">
+                  <strong>Moje Własne Hasła</strong>
+                  <small id="czolko-deck-custom-sub">Hasła wpisane przez ekipę przy stoliku</small>
+                </div>
+                <span class="czolko-cat-count" id="czolko-cnt-custom">0</span>
+              </button>
               <button type="button" class="czolko-cat-btn active" data-deck="all">
                 <span class="czolko-cat-ico">🎲</span>
                 <div class="czolko-cat-text">
                   <strong>Mix Imprezowy</strong>
-                  <small>Najlepsze hasła ze wszystkich kategorii naraz</small>
+                  <small>Wszystkie kategorie naraz</small>
                 </div>
                 <span class="czolko-cat-count" id="czolko-cnt-all">0</span>
               </button>
@@ -3008,15 +3038,15 @@
                 <span class="czolko-cat-ico">📍</span>
                 <div class="czolko-cat-text">
                   <strong id="czolko-deck-venues-title">Lokale z Mapy (Warszawa)</strong>
-                  <small id="czolko-deck-venues-sub">Zgaduj prawdziwe puby i bary z naszego miasta!</small>
+                  <small id="czolko-deck-venues-sub">Zgaduj bary z naszego miasta!</small>
                 </div>
                 <span class="czolko-cat-count" id="czolko-cnt-venues">0</span>
               </button>
               <button type="button" class="czolko-cat-btn" data-deck="nightlife">
                 <span class="czolko-cat-ico">🌆</span>
                 <div class="czolko-cat-text">
-                  <strong>Nocne Życie & Polska</strong>
-                  <small>Aftery, kebaby o 3:00, koncerty i polskie klasyki</small>
+                  <strong>Nocne Życie & Klasyki</strong>
+                  <small>Aftery, kebaby o 3:00, kultowe sytuacje</small>
                 </div>
                 <span class="czolko-cat-count" id="czolko-cnt-nightlife">0</span>
               </button>
@@ -3024,15 +3054,15 @@
                 <span class="czolko-cat-ico">🎬</span>
                 <div class="czolko-cat-text">
                   <strong>Filmy, Seriale & Memy</strong>
-                  <small>Kultowe postacie, cytaty, celebryci i hity internetu</small>
+                  <small>Kultowe postacie, teksty i hity sieci</small>
                 </div>
                 <span class="czolko-cat-count" id="czolko-cnt-movies">0</span>
               </button>
               <button type="button" class="czolko-cat-btn" data-deck="actions">
                 <span class="czolko-cat-ico">🤸</span>
                 <div class="czolko-cat-text">
-                  <strong>Kalambury (Scenki & Czynności)</strong>
-                  <small>Szalone sytuacje do opisania lub pokazania</small>
+                  <strong>Kalambury (Scenki)</strong>
+                  <small>Sytuacje do opisania lub pokazania</small>
                 </div>
                 <span class="czolko-cat-count" id="czolko-cnt-actions">0</span>
               </button>
@@ -3040,7 +3070,7 @@
                 <span class="czolko-cat-ico">🌶️</span>
                 <div class="czolko-cat-text">
                   <strong>Bez Cenzury (18+)</strong>
-                  <small>Pikantne, randkowe i późnonocne hasła bez hamulców</small>
+                  <small>Pikantne hasła imprezowe bez hamulców</small>
                 </div>
                 <span class="czolko-cat-count" id="czolko-cnt-adult">0</span>
               </button>
@@ -3050,35 +3080,33 @@
             <div class="czolko-settings-wrap">
               <div class="czolko-setting-row">
                 <div class="czolko-setting-label">
-                  <span>⏱️ Czas rundy:</span>
+                  <span>⏱️ Czas:</span>
                   <span class="czolko-setting-val" id="czolko-val-time">60s</span>
                 </div>
                 <div class="czolko-setting-pills" id="czolko-time-pills">
                   <button type="button" class="czolko-pill-btn" data-time="30">30s</button>
-                  <button type="button" class="czolko-pill-btn" data-time="45">45s</button>
                   <button type="button" class="czolko-pill-btn active" data-time="60">60s</button>
                   <button type="button" class="czolko-pill-btn" data-time="90">90s</button>
-                  <button type="button" class="czolko-pill-btn" data-time="120">120s</button>
                 </div>
               </div>
 
               <div class="czolko-setting-row">
                 <div class="czolko-setting-label">
                   <span>🎮 Sterowanie:</span>
-                  <span class="czolko-setting-val" id="czolko-val-ctrl">Czujnik + Dotyk</span>
+                  <span class="czolko-setting-val" id="czolko-val-ctrl">Przechył czoła</span>
                 </div>
                 <div class="czolko-setting-pills" id="czolko-ctrl-pills">
-                  <button type="button" class="czolko-pill-btn active" data-ctrl="motion">📱 Czujnik przechyłu + Dotyk</button>
-                  <button type="button" class="czolko-pill-btn" data-ctrl="touch">👆 Tylko Dotyk / Klawiatura</button>
+                  <button type="button" class="czolko-pill-btn active" data-ctrl="motion">📱 Przechył czoła</button>
+                  <button type="button" class="czolko-pill-btn" data-ctrl="touch">👆 Przyciski na ekranie</button>
                 </div>
               </div>
 
               <div class="czolko-toggles-row">
-                <button type="button" class="czolko-toggle-chip" id="btn-czolko-landscape" aria-pressed="false" title="Obróć ekran o 90° mimo włączonej blokady pionu w telefonie">
-                  <span>📐 Obróć 90° (Poziomo)</span>
+                <button type="button" class="czolko-toggle-chip" id="btn-czolko-landscape" aria-pressed="false" title="Obróć ekran o 90°">
+                  <span>📐 Poziomo</span>
                 </button>
                 <button type="button" class="czolko-toggle-chip" id="btn-czolko-invert" aria-pressed="false" title="Zamień kierunek przechyłu góra/dół">
-                  <span>↕️ Odwróć przechył</span>
+                  <span>↕️ Odwróć</span>
                 </button>
                 <button type="button" class="czolko-toggle-chip active" id="btn-czolko-sound" aria-pressed="true" title="Włącz lub wycisz dźwięki gry">
                   <span>🔊 Dźwięki</span>
@@ -3088,15 +3116,15 @@
 
             <div class="czolko-lobby-meta">
               <div class="czolko-meta-pill">
-                <span>🏆 Rekord talii: <strong id="czolko-highscore-val">0</strong> pkt</span>
+                <span>🏆 Rekord: <strong id="czolko-highscore-val">0</strong> pkt</span>
               </div>
               <div class="czolko-meta-pill">
-                <span>🃏 W talii: <strong id="czolko-deck-count-val">0</strong> haseł</span>
+                <span>🃏 W talii: <strong id="czolko-deck-count-val">0</strong></span>
               </div>
             </div>
 
             <button type="button" class="btn-primary btn-czolko-cta" id="btn-czolko-start">
-              <span>🚀 Przyłóż do czoła i ZAGRAJ!</span>
+              <span>🚀 START (Przyłóż do czoła)</span>
             </button>
           </div>
         </div>
@@ -3118,7 +3146,7 @@
             </div>
 
             <div class="czolko-results-tip">
-              💡 Ktoś podpowiedział w ostatniej sekundzie? Dotknij hasła poniżej, aby zmienić status <strong>✅ / ⏭️</strong>:
+              💡 Dotknij hasła poniżej, aby zmienić status <strong>✅ / ⏭️</strong>:
             </div>
 
             <div class="czolko-results-list" id="czolko-results-list">
@@ -3174,24 +3202,15 @@
       <div class="czolko-play-view" id="czolko-play-view" style="display:none;">
         <div class="czolko-hud-top">
           <div class="czolko-hud-left">
-            <span class="czolko-hud-deck" id="czolko-hud-deck">Mix Imprezowy</span>
             <span class="czolko-hud-score">✅ <strong id="czolko-hud-score">0</strong></span>
           </div>
           <div class="czolko-hud-timer" id="czolko-hud-timer">01:00</div>
           <div class="czolko-hud-tools">
-            <button type="button" class="czolko-hud-tool-btn" id="btn-czolko-stage-invert" title="Odwróć kierunek przechyłu góra/dół" aria-label="Odwróć kierunek przechyłu">↕️</button>
-            <button type="button" class="czolko-hud-tool-btn" id="btn-czolko-stage-rotate" title="Obróć ekran o 90°" aria-label="Obróć ekran o 90 stopni">📐</button>
-            <button type="button" class="czolko-hud-tool-btn" id="btn-czolko-stage-sound" title="Włącz lub wyłącz dźwięk" aria-label="Dźwięk">🔊</button>
-            <button type="button" class="czolko-hud-tool-btn stop" id="btn-czolko-stage-stop" title="Zakończ rundę i zobacz wyniki">⏹️</button>
+            <button type="button" class="czolko-stage-btn-exit" id="btn-czolko-stage-stop" title="Zakończ rundę">✕ Koniec</button>
           </div>
         </div>
 
         <div class="czolko-card-arena" id="czolko-card-arena">
-          <div class="czolko-tilt-guide" id="czolko-tilt-guide">
-            <span>⬆️ Góra = PAS</span>
-            <span>·</span>
-            <span>⬇️ Dół = ZGADŁEM</span>
-          </div>
           <div class="czolko-word-wrap">
             <div class="czolko-active-word" id="czolko-active-word">ŁADOWANIE...</div>
             <div class="czolko-active-hint" id="czolko-active-hint"></div>
@@ -3206,12 +3225,10 @@
         <!-- Touch / Keyboard Bottom Controls -->
         <div class="czolko-touch-bar">
           <button type="button" class="czolko-touch-btn btn-pass" id="btn-czolko-pass">
-            <span class="ctb-main">⏭️ PASUJĘ</span>
-            <span class="ctb-key">Przechyl w górę / klawisz ↑ lub P</span>
+            <span class="ctb-main">⏭️ PAS</span>
           </button>
           <button type="button" class="czolko-touch-btn btn-correct" id="btn-czolko-correct">
             <span class="ctb-main">✅ ZGADŁEM!</span>
-            <span class="ctb-key">Przechyl w dół / Spacja lub ↓</span>
           </button>
         </div>
       </div>

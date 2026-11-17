@@ -16135,6 +16135,16 @@
     const btnBackLobby = document.getElementById("btn-czolko-lobby");
     const btnShare = document.getElementById("btn-czolko-share");
 
+    // Custom Word ("Własne hasło") controls
+    const customInput = document.getElementById("czolko-custom-input");
+    const btnPlayCustom = document.getElementById("btn-czolko-play-custom");
+    const btnAddCustom = document.getElementById("btn-czolko-add-custom");
+    const customCountBadge = document.getElementById("czolko-custom-count-badge");
+    const customChipsWrap = document.getElementById("czolko-custom-chips-wrap");
+    const btnDeckCustom = document.getElementById("btn-czolko-deck-custom");
+    const cntCustom = document.getElementById("czolko-cnt-custom");
+    let instantCustomWord = null;
+
     if (!modal || !stageOverlay) return;
 
     // Curated Party Decks tailored for bars, breweries, polish popculture & nights out
@@ -16514,13 +16524,103 @@
       return cards;
     }
 
+    function loadCustomWords() {
+      try {
+        const raw = localStorage.getItem("poilepiwko_czolko_custom_words");
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveCustomWords(words) {
+      try {
+        localStorage.setItem("poilepiwko_czolko_custom_words", JSON.stringify(words));
+      } catch (e) {}
+      renderCustomChipsUI();
+      updateSettingsUI();
+    }
+
+    function renderCustomChipsUI() {
+      const words = loadCustomWords();
+      if (customCountBadge) {
+        if (words.length > 0) {
+          customCountBadge.textContent = `${words.length} ${words.length === 1 ? "hasło" : words.length < 5 ? "hasła" : "haseł"}`;
+          customCountBadge.style.display = "inline-block";
+        } else {
+          customCountBadge.style.display = "none";
+        }
+      }
+      if (btnDeckCustom) {
+        btnDeckCustom.style.display = words.length > 0 ? "flex" : "none";
+      }
+      if (cntCustom) {
+        cntCustom.textContent = String(words.length);
+      }
+      if (customChipsWrap) {
+        if (words.length > 0) {
+          customChipsWrap.style.display = "flex";
+          customChipsWrap.innerHTML = words.map((w, idx) => {
+            const wordTxt = typeof w === "object" ? w.word : w;
+            return `
+              <span class="czolko-custom-chip">
+                <span>${escapeHtml(wordTxt)}</span>
+                <button type="button" class="czolko-custom-chip-del" data-idx="${idx}" title="Usuń to hasło">✕</button>
+              </span>
+            `;
+          }).join("");
+
+          customChipsWrap.querySelectorAll(".czolko-custom-chip-del").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+              e.stopPropagation();
+              const idx = parseInt(btn.getAttribute("data-idx"), 10);
+              const cur = loadCustomWords();
+              if (!isNaN(idx) && idx >= 0 && idx < cur.length) {
+                cur.splice(idx, 1);
+                saveCustomWords(cur);
+                if (window.poileHaptics && window.poileHaptics.tick) window.poileHaptics.tick();
+                if (selectedDeck === "custom" && cur.length === 0) {
+                  selectedDeck = "all";
+                  updateSettingsUI();
+                }
+              }
+            });
+          });
+        } else {
+          customChipsWrap.style.display = "none";
+          customChipsWrap.innerHTML = "";
+        }
+      }
+    }
+
     function getDeckCards(deckId) {
+      if (deckId === "custom_single" && instantCustomWord) {
+        return [instantCustomWord];
+      }
+      if (deckId === "custom") {
+        const customList = loadCustomWords();
+        if (customList.length > 0) {
+          return customList.map(item => (typeof item === "object" ? item : { word: item, cat: "Własne hasło", hint: "Od znajomego" }));
+        }
+        return [{ word: "Wpisz własne hasło!", cat: "Własne hasło", hint: "Wpisz hasło w lobby" }];
+      }
       if (deckId === "venues") {
         return getVenuesDeckCards();
       }
       if (deckId === "all") {
         const merged = [];
         const seen = new Set();
+        const customList = loadCustomWords();
+        customList.forEach(item => {
+          const w = typeof item === "object" ? item.word : item;
+          const norm = String(w).toLowerCase();
+          if (!seen.has(norm)) {
+            seen.add(norm);
+            merged.push(typeof item === "object" ? item : { word: item, cat: "Własne hasło", hint: "Od znajomego" });
+          }
+        });
         ["bar", "nightlife", "movies", "actions"].forEach(k => {
           const d = CZOLKO_DECKS[k];
           if (!d) return;
@@ -16548,6 +16648,8 @@
     }
 
     function getDeckLabel(deckId) {
+      if (deckId === "custom_single") return "✍️ Własne Hasło";
+      if (deckId === "custom") return "✍️ Moje Własne Hasła";
       if (deckId === "all") return "🎲 Mix Imprezowy";
       if (deckId === "venues") {
         const curCity = typeof getCurrentCity === "function" ? getCurrentCity() : { name: "Miasto" };
@@ -16570,8 +16672,9 @@
     }
 
     function updateSettingsUI() {
-      // Deck active state
-      deckBtns.forEach(btn => {
+      // Re-query deck buttons in case custom deck button appeared
+      const allDeckBtns = document.querySelectorAll("#czolko-deck-grid .czolko-cat-btn");
+      allDeckBtns.forEach(btn => {
         btn.classList.toggle("active", btn.getAttribute("data-deck") === selectedDeck);
       });
 
@@ -16585,7 +16688,7 @@
       ctrlPills.forEach(p => {
         p.classList.toggle("active", p.getAttribute("data-ctrl") === controlMode);
       });
-      if (valCtrl) valCtrl.textContent = controlMode === "motion" ? "Czujnik + Dotyk" : "Tylko Dotyk / Klawiatura";
+      if (valCtrl) valCtrl.textContent = controlMode === "motion" ? "Przechył czoła" : "Przyciski na ekranie";
 
       // Quick toggle chips
       if (btnLandscape) {
@@ -16608,9 +16711,9 @@
       const vTitle = document.getElementById("czolko-deck-venues-title");
       const vSub = document.getElementById("czolko-deck-venues-sub");
       if (vTitle) vTitle.textContent = `Lokale z Mapy (${curCity.name})`;
-      if (vSub) vSub.textContent = `Zgaduj bary i puby w mieście ${curCity.name}!`;
+      if (vSub) vSub.textContent = `Zgaduj bary w mieście ${curCity.name}!`;
 
-      const deckKeys = ["all", "bar", "venues", "nightlife", "movies", "actions", "adult"];
+      const deckKeys = ["custom", "all", "bar", "venues", "nightlife", "movies", "actions", "adult"];
       deckKeys.forEach(k => {
         const cntEl = document.getElementById(`czolko-cnt-${k}`);
         if (cntEl) cntEl.textContent = String(getDeckCards(k).length);
@@ -16661,11 +16764,15 @@
     }
 
     function prepareDeckQueue() {
+      if (selectedDeck === "custom_single" && instantCustomWord) {
+        deckQueue = [instantCustomWord];
+        return;
+      }
       const allCards = getDeckCards(selectedDeck);
       if (!usedWordsByDeck[selectedDeck]) usedWordsByDeck[selectedDeck] = new Set();
       const usedSet = usedWordsByDeck[selectedDeck];
       let fresh = allCards.filter(c => !usedSet.has(c.word));
-      if (fresh.length < 15) {
+      if (fresh.length < 5) {
         usedSet.clear();
         fresh = allCards;
       }
@@ -16673,13 +16780,22 @@
     }
 
     function drawNextCard() {
-      if (!deckQueue || deckQueue.length === 0) {
-        usedWordsByDeck[selectedDeck] = new Set();
-        deckQueue = shuffleArray(getDeckCards(selectedDeck));
+      if (selectedDeck === "custom_single") {
+        if (!currentCard && instantCustomWord) {
+          currentCard = instantCustomWord;
+        } else {
+          finishRound();
+          return;
+        }
+      } else {
+        if (!deckQueue || deckQueue.length === 0) {
+          usedWordsByDeck[selectedDeck] = new Set();
+          deckQueue = shuffleArray(getDeckCards(selectedDeck));
+        }
+        currentCard = deckQueue.pop() || { word: "Wznosimy Toast!", cat: "Bar", hint: "Na zdrowie!" };
+        if (!usedWordsByDeck[selectedDeck]) usedWordsByDeck[selectedDeck] = new Set();
+        usedWordsByDeck[selectedDeck].add(currentCard.word);
       }
-      currentCard = deckQueue.pop() || { word: "Wznosimy Toast!", cat: "Bar", hint: "Na zdrowie!" };
-      if (!usedWordsByDeck[selectedDeck]) usedWordsByDeck[selectedDeck] = new Set();
-      usedWordsByDeck[selectedDeck].add(currentCard.word);
 
       if (activeWordEl) {
         activeWordEl.textContent = currentCard.word;
@@ -16812,7 +16928,11 @@
         if (flashBanner) flashBanner.classList.remove("visible");
         isActionLocked = false;
         if (phase === "play") {
-          drawNextCard();
+          if (selectedDeck === "custom_single") {
+            finishRound();
+          } else {
+            drawNextCard();
+          }
         }
       }, 580);
     }
@@ -17056,13 +17176,79 @@
     }
 
     // Event bindings: Lobby selectors
-    deckBtns.forEach(btn => {
-      btn.addEventListener("click", () => {
+    const deckGrid = document.getElementById("czolko-deck-grid");
+    if (deckGrid) {
+      deckGrid.addEventListener("click", (e) => {
+        const btn = e.target.closest(".czolko-cat-btn");
+        if (!btn) return;
         if (window.poileHaptics && window.poileHaptics.tick) window.poileHaptics.tick();
         selectedDeck = btn.getAttribute("data-deck") || "all";
         updateSettingsUI();
       });
-    });
+    }
+
+    // Custom Word ("Własne hasło") Handlers
+    if (btnPlayCustom) {
+      btnPlayCustom.addEventListener("click", () => {
+        let raw = (customInput && customInput.value ? customInput.value : "").trim();
+        if (!raw) {
+          const saved = loadCustomWords();
+          if (saved.length > 0) {
+            selectedDeck = "custom";
+            updateSettingsUI();
+            startWithGesture();
+            return;
+          }
+          if (typeof showAppToast === "function") {
+            showAppToast("Wpisz hasło", "Wpisz słowo lub postać dla kogoś przy stoliku!", "✍️", 2500);
+          }
+          if (customInput) customInput.focus();
+          return;
+        }
+        instantCustomWord = { word: raw, cat: "Własne hasło", hint: "Hasło wymyślone przez znajomego" };
+        selectedDeck = "custom_single";
+        if (customInput) customInput.value = "";
+        startWithGesture();
+      });
+    }
+
+    if (customInput) {
+      customInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          if (btnPlayCustom) btnPlayCustom.click();
+        }
+      });
+    }
+
+    if (btnAddCustom) {
+      btnAddCustom.addEventListener("click", () => {
+        let raw = (customInput && customInput.value ? customInput.value : "").trim();
+        if (!raw) {
+          if (typeof showAppToast === "function") {
+            showAppToast("Wpisz hasło", "Wpisz słowo, które chcesz dodać do listy!", "✍️", 2200);
+          }
+          if (customInput) customInput.focus();
+          return;
+        }
+        const cur = loadCustomWords();
+        if (!cur.some(item => (typeof item === "object" ? item.word : item).toLowerCase() === raw.toLowerCase())) {
+          cur.push({ word: raw, cat: "Własne hasło", hint: "Wpisane przy stoliku" });
+          saveCustomWords(cur);
+          if (typeof showAppToast === "function") {
+            showAppToast("Dodano hasło!", `"${raw}" dodane do listy haseł!`, "✅", 2400);
+          }
+          if (window.poileHaptics && window.poileHaptics.success) window.poileHaptics.success();
+        }
+        if (customInput) {
+          customInput.value = "";
+          customInput.focus();
+        }
+        selectedDeck = "custom";
+        renderCustomChipsUI();
+        updateSettingsUI();
+      });
+    }
 
     timePills.forEach(pill => {
       pill.addEventListener("click", () => {
@@ -17201,6 +17387,7 @@
       document.body.classList.add("modal-open");
       if (screenResults) screenResults.style.display = "none";
       if (screenLobby) screenLobby.style.display = "block";
+      renderCustomChipsUI();
       updateSettingsUI();
       if (window.__clearBottomNavActive) window.__clearBottomNavActive();
       if (typeof ModalHistoryManager !== "undefined") {
@@ -17231,6 +17418,8 @@
         if (e.target === modal) window.__closeCzolko();
       });
     }
+
+    renderCustomChipsUI();
 
     window.addEventListener("resize", handleViewportRotationSync);
     window.addEventListener("orientationchange", handleViewportRotationSync);
