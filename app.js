@@ -2159,7 +2159,12 @@
   // Handle District Selection from Barometer Chart
   window.__selectDistrictFromBaro = function (districtName) {
     const modal = document.getElementById("barometer-modal");
-    if (modal) modal.classList.remove("active");
+    if (typeof window.__closeBarometer === "function") {
+      window.__closeBarometer();
+    } else if (modal) {
+      modal.classList.remove("active");
+      modal.style.display = "none";
+    }
 
     const select = document.getElementById("district-select");
     if (select) {
@@ -2443,22 +2448,36 @@
     if (drawer) {
       drawer.classList.remove("open");
     }
+    if (typeof window.__closePubCrawl === "function") window.__closePubCrawl();
     const crawlModal = document.getElementById("pubcrawl-modal");
     if (crawlModal) {
       crawlModal.classList.remove("active");
+      crawlModal.style.display = "none";
     }
+    if (typeof window.__closeHappyHours === "function") window.__closeHappyHours();
     const hhModal = document.getElementById("happyhour-modal");
     if (hhModal) {
       hhModal.classList.remove("active");
+      hhModal.style.display = "none";
     }
+    if (typeof window.__closePassport === "function") window.__closePassport();
     const passportModal = document.getElementById("passport-modal");
     if (passportModal) {
       passportModal.classList.remove("active");
+      passportModal.style.display = "none";
     }
+    if (typeof window.__closeCommunity === "function") window.__closeCommunity();
     const commModal = document.getElementById("community-modal");
-    if (commModal) commModal.style.display = "none";
+    if (commModal) {
+      commModal.classList.remove("active");
+      commModal.style.display = "none";
+    }
+    if (typeof window.__closePublicProfile === "function") window.__closePublicProfile();
     const pubProfModal = document.getElementById("public-profile-modal");
-    if (pubProfModal) pubProfModal.style.display = "none";
+    if (pubProfModal) {
+      pubProfModal.classList.remove("active");
+      pubProfModal.style.display = "none";
+    }
     const mobileSearchSheet = document.getElementById("mobile-search-sheet");
     if (mobileSearchSheet) mobileSearchSheet.style.display = "none";
 
@@ -3206,6 +3225,7 @@
         saveCrawlExpenses(activeCrawlExpenses);
 
         updateCrawlStepUI();
+        modal.classList.remove("active");
         modal.style.display = "none";
         if (window.poileHaptics) window.poileHaptics.tick();
         showAppToast("Pub Crawl 💸", `Zapisano! Tę kolejkę stawia: ${selectedPayer} (${amount.toFixed(2)} zł)`, "🍻", 2800);
@@ -3726,11 +3746,11 @@
       const drawer = document.getElementById("ranking-drawer");
       if (drawer) drawer.classList.remove("open");
       const baroModal = document.getElementById("barometer-modal");
-      if (baroModal) baroModal.classList.remove("active");
+      if (baroModal) { baroModal.classList.remove("active"); baroModal.style.display = "none"; }
       const crawlModal = document.getElementById("pubcrawl-modal");
-      if (crawlModal) crawlModal.classList.remove("active");
+      if (crawlModal) { crawlModal.classList.remove("active"); crawlModal.style.display = "none"; }
       const passportModal = document.getElementById("passport-modal");
-      if (passportModal) passportModal.classList.remove("active");
+      if (passportModal) { passportModal.classList.remove("active"); passportModal.style.display = "none"; }
 
       // Highlight current day pill by default
       selectedCalendarDay = (new Date()).getDay();
@@ -4008,6 +4028,9 @@
     }, duration);
   }
   window.showAppToast = showAppToast;
+  window.__showToast = function (msg, type) {
+    showAppToast(type === "success" ? "Gotowe!" : "Informacja", msg, type === "success" ? "✅" : "ℹ️", 3500);
+  };
 
   function showPassportToast(badge) {
     showAppToast("Odblokowano nową odznakę!", `${badge.name} (${badge.desc})`, badge.icon || "🎉", 4200);
@@ -4123,6 +4146,11 @@
           </div>
         `).join("");
       }
+    }
+
+    const btnResetPassport = document.getElementById("btn-reset-passport");
+    if (btnResetPassport) {
+      btnResetPassport.style.display = count > 0 ? "inline-flex" : "none";
     }
 
     updatePassportCounters();
@@ -4418,11 +4446,11 @@
       const drawer = document.getElementById("ranking-drawer");
       if (drawer) drawer.classList.remove("open");
       const baroModal = document.getElementById("barometer-modal");
-      if (baroModal) baroModal.classList.remove("active");
+      if (baroModal) { baroModal.classList.remove("active"); baroModal.style.display = "none"; }
       const crawlModal = document.getElementById("pubcrawl-modal");
-      if (crawlModal) crawlModal.classList.remove("active");
+      if (crawlModal) { crawlModal.classList.remove("active"); crawlModal.style.display = "none"; }
       const hhModal = document.getElementById("happyhour-modal");
-      if (hhModal) hhModal.classList.remove("active");
+      if (hhModal) { hhModal.classList.remove("active"); hhModal.style.display = "none"; }
 
       renderPassportModal();
       passportModal.classList.add("active");
@@ -4471,7 +4499,9 @@
           navigator.share({ title: `Piwny Paszport – ${curCity.name} - poilepiwko`, text: text }).catch(() => {});
         } else if (navigator.clipboard) {
           navigator.clipboard.writeText(text).then(() => {
-            alert("📋 Podsumowanie Paszportu skopiowane do schowka! Możesz wysłać je znajomym.");
+            showAppToast("Skopiowano podsumowanie!", "Podsumowanie Paszportu skopiowane do schowka! Możesz wysłać je znajomym.", "📋");
+          }).catch(() => {
+            prompt("Skopiuj tekst swojego profilu:", text);
           });
         } else {
           prompt("Skopiuj tekst swojego profilu:", text);
@@ -4481,15 +4511,17 @@
 
     // Reset Passport
     if (btnReset) {
+      btnReset.style.display = visitedVenues.length > 0 ? "inline-flex" : "none";
       btnReset.addEventListener("click", () => {
         if (confirm("Czy na pewno chcesz zresetować swój Piwny Paszport? Usunie to wszystkie zaznaczone bary i odznaki.")) {
           visitedVenues = [];
           saveVisitedVenues([]);
           saveUnlockedBadges([]);
+          if (currentUser) syncUserDataToCloud();
           renderPassportModal();
           renderMarkers();
           if (rankingMode === "visited") renderRankingList(getFilteredVenues());
-          alert("Paszport został zresetowany.");
+          showAppToast("Paszport zresetowany", "Wyczyszczono historię odwiedzonych lokali.", "🗑️");
         }
       });
     }
@@ -4870,11 +4902,11 @@
       const drawer = document.getElementById("ranking-drawer");
       if (drawer) drawer.classList.remove("open");
       const baroModal = document.getElementById("barometer-modal");
-      if (baroModal) baroModal.classList.remove("active");
+      if (baroModal) { baroModal.classList.remove("active"); baroModal.style.display = "none"; }
       const crawlModal = document.getElementById("pubcrawl-modal");
-      if (crawlModal) crawlModal.classList.remove("active");
+      if (crawlModal) { crawlModal.classList.remove("active"); crawlModal.style.display = "none"; }
       const hhModal = document.getElementById("happyhour-modal");
-      if (hhModal) hhModal.classList.remove("active");
+      if (hhModal) { hhModal.classList.remove("active"); hhModal.style.display = "none"; }
       const passModal = document.getElementById("passport-modal");
       if (passModal) { passModal.classList.remove("active"); passModal.style.display = "none"; }
       if (window.__closeAuth) window.__closeAuth();
@@ -5371,7 +5403,7 @@
       if (e.key === "Escape") {
         if (window.__closeVenueSheet) window.__closeVenueSheet();
         window.__closeLightbox();
-        if (baroModal) baroModal.classList.remove("active");
+        if (baroModal) { baroModal.classList.remove("active"); baroModal.style.display = "none"; }
         if (window.__closePubCrawl) window.__closePubCrawl();
         if (window.__closeIosInstall) window.__closeIosInstall();
         if (window.__closeHappyHours) window.__closeHappyHours();
@@ -5733,7 +5765,7 @@
       setModalMode("add");
 
       if (drawer) drawer.classList.remove("open");
-      if (baroModal) baroModal.classList.remove("active");
+      if (baroModal) { baroModal.classList.remove("active"); baroModal.style.display = "none"; }
       if (window.__closePubCrawl) window.__closePubCrawl();
       if (window.__closeHappyHours) window.__closeHappyHours();
       if (window.__closePassport) window.__closePassport();
@@ -5809,7 +5841,7 @@
       if (hhInput) hhInput.value = venue.happy_hour || "";
 
       if (drawer) drawer.classList.remove("open");
-      if (baroModal) baroModal.classList.remove("active");
+      if (baroModal) { baroModal.classList.remove("active"); baroModal.style.display = "none"; }
       if (window.__closePubCrawl) window.__closePubCrawl();
       if (window.__closeHappyHours) window.__closeHappyHours();
       if (window.__closePassport) window.__closePassport();
@@ -6974,7 +7006,7 @@
         b.classList.remove("active");
         b.style.display = "none";
       });
-      document.querySelectorAll(".modal-backdrop").forEach(m => {
+      document.querySelectorAll(".modal-backdrop:not(#age-gate-modal):not(#onboarding-username-modal)").forEach(m => {
         m.classList.remove("active");
         m.style.display = "none";
       });
@@ -7048,10 +7080,14 @@
           const isActionOpen = actionSheet && actionSheet.getAttribute("data-state") !== "closed" && actionSheet.style.display !== "none";
           if (isActionOpen) {
             if (window.__closeActionSheet) window.__closeActionSheet();
-          } else if (window.__openActionSheet) {
-            window.__openActionSheet();
-          } else if (actionSheet && typeof window.__setBottomSheetState === "function") {
-            window.__setBottomSheetState(actionSheet, "full");
+          } else {
+            closeAllModalsAndSheets();
+            clearBottomNavActive();
+            if (window.__openActionSheet) {
+              window.__openActionSheet();
+            } else if (actionSheet && typeof window.__setBottomSheetState === "function") {
+              window.__setBottomSheetState(actionSheet, "full");
+            }
           }
           return;
         }
@@ -7787,12 +7823,16 @@
       const btnCloseExpense = document.getElementById("btn-close-crawl-expense");
       if (btnCloseExpense && expenseModal) {
         btnCloseExpense.addEventListener("click", () => {
+          expenseModal.classList.remove("active");
           expenseModal.style.display = "none";
         });
       }
       if (expenseModal) {
         expenseModal.addEventListener("click", (e) => {
-          if (e.target === expenseModal) expenseModal.style.display = "none";
+          if (e.target === expenseModal) {
+            expenseModal.classList.remove("active");
+            expenseModal.style.display = "none";
+          }
         });
       }
 
@@ -7804,12 +7844,16 @@
 
       if (btnCloseComplete && completeModal) {
         btnCloseComplete.addEventListener("click", () => {
+          completeModal.classList.remove("active");
           completeModal.style.display = "none";
         });
       }
       if (completeModal) {
         completeModal.addEventListener("click", (e) => {
-          if (e.target === completeModal) completeModal.style.display = "none";
+          if (e.target === completeModal) {
+            completeModal.classList.remove("active");
+            completeModal.style.display = "none";
+          }
         });
       }
       if (btnFinishShare) {
@@ -7819,7 +7863,10 @@
       }
       if (btnFinishStory) {
         btnFinishStory.addEventListener("click", () => {
-          if (completeModal) completeModal.style.display = "none";
+          if (completeModal) {
+            completeModal.classList.remove("active");
+            completeModal.style.display = "none";
+          }
           if (window.__openStoryCardModal) window.__openStoryCardModal();
         });
       }
@@ -8329,6 +8376,9 @@
       commFollowingBadge.textContent = myFollowingIds.length;
     }
     updateNotificationBadges();
+    if (typeof window.__renderMyProfile === "function") {
+      window.__renderMyProfile();
+    }
   }
 
   // Activity & Notifications Handlers
@@ -9345,6 +9395,9 @@
       const btnToggleEdit = document.getElementById("btn-toggle-edit-profile");
       const btnOpenClub = document.getElementById("btn-open-club-card");
       const btnOpenStory = document.getElementById("btn-open-story-card");
+      const btnShareHeader = document.getElementById("btn-share-profile-header");
+      const dangerZone = document.getElementById("profile-danger-zone") || document.querySelector(".profile-danger-zone");
+      const btnDeleteTriggerEl = document.getElementById("btn-delete-account-trigger");
       let guestLoginBtn = document.getElementById("btn-hero-guest-login");
 
       if (capsCountEl) {
@@ -9376,11 +9429,14 @@
       if (statBadges) statBadges.textContent = isGuest ? "0" : String(loadUnlockedBadges().length);
       if (statFavorites) statFavorites.textContent = isGuest ? "0" : String(favoriteVenues.length);
 
-      // Hero action buttons
+      // Hero action buttons & account danger zone
       if (isGuest) {
         if (btnToggleEdit) btnToggleEdit.style.display = "none";
         if (btnOpenStory) btnOpenStory.style.display = "none";
         if (btnOpenClub) btnOpenClub.style.display = "none";
+        if (btnShareHeader) btnShareHeader.style.display = "none";
+        if (dangerZone) dangerZone.style.display = "none";
+        if (btnDeleteTriggerEl) btnDeleteTriggerEl.style.display = "none";
         if (tagsWrap) tagsWrap.style.display = "none";
 
         if (!guestLoginBtn) {
@@ -9393,7 +9449,7 @@
             window.__closeMyProfile();
             if (window.__openAuth) window.__openAuth("login");
           });
-          const actionsBar = document.getElementById("profile-hero-actions-bar");
+          const actionsBar = document.getElementById("profile-hero-actions-bar") || document.querySelector(".profile-hero-actions-bar");
           if (actionsBar) actionsBar.appendChild(guestLoginBtn);
         } else {
           guestLoginBtn.style.display = "flex";
@@ -9402,6 +9458,9 @@
         if (btnToggleEdit) btnToggleEdit.style.display = "inline-flex";
         if (btnOpenStory) btnOpenStory.style.display = "inline-flex";
         if (btnOpenClub) btnOpenClub.style.display = "inline-flex";
+        if (btnShareHeader) btnShareHeader.style.display = "inline-flex";
+        if (dangerZone) dangerZone.style.display = "block";
+        if (btnDeleteTriggerEl) btnDeleteTriggerEl.style.display = "inline-flex";
         if (tagsWrap) tagsWrap.style.display = "flex";
         if (guestLoginBtn) guestLoginBtn.style.display = "none";
       }
@@ -9501,14 +9560,15 @@
           allVenues.forEach(v => { vMap[v.id] = v; });
         }
         let unlockedCount = 0;
+        const achVisited = isGuest ? [] : visitedVenues;
         achievementsList.innerHTML = PASSPORT_BADGES.map(badge => {
           let evaluation = { unlocked: false, progress: "0/1" };
           try {
             if (typeof badge.check === "function") {
-              evaluation = badge.check(visitedVenues, vMap);
+              evaluation = badge.check(achVisited, vMap);
             }
           } catch (e) {}
-          const isUnlocked = evaluation.unlocked;
+          const isUnlocked = !isGuest && evaluation.unlocked;
           if (isUnlocked) unlockedCount++;
 
           return `
@@ -9527,6 +9587,9 @@
         const countBadge = document.getElementById("prof-achievements-count");
         if (countBadge) {
           countBadge.textContent = `${unlockedCount}/${PASSPORT_BADGES.length}`;
+        }
+        if (statBadges) {
+          statBadges.textContent = isGuest ? "0" : String(unlockedCount);
         }
       }
 
@@ -9550,11 +9613,16 @@
       updateEditModalAvatarPreview();
     }
 
+    window.__renderMyProfile = renderMyProfile;
+
     window.__openMyProfile = function () {
       renderMyProfile();
       if (modal) {
         modal.classList.add("active");
         modal.style.display = "flex";
+      }
+      if (typeof ModalHistoryManager !== "undefined") {
+        ModalHistoryManager.push("profile-modal", window.__closeMyProfile);
       }
     };
 
@@ -9562,6 +9630,10 @@
       if (modal) {
         modal.classList.remove("active");
         modal.style.display = "none";
+      }
+      if (window.__clearBottomNavActive) window.__clearBottomNavActive();
+      if (typeof ModalHistoryManager !== "undefined") {
+        ModalHistoryManager.pop("profile-modal");
       }
     };
 
@@ -9594,12 +9666,17 @@
       });
     }
 
-    // Avatar Click -> Quick Edit Profile
+    // Avatar Click -> Quick Edit Profile (only if logged in)
     const heroAvatarEl = document.getElementById("prof-hero-avatar");
     if (heroAvatarEl) {
       heroAvatarEl.style.cursor = "pointer";
       heroAvatarEl.title = "Kliknij, aby edytować profil";
       heroAvatarEl.addEventListener("click", () => {
+        if (!currentUser) {
+          window.__closeMyProfile();
+          if (window.__openAuth) window.__openAuth("login");
+          return;
+        }
         if (window.__openEditProfileModal) window.__openEditProfileModal();
       });
     }
@@ -9655,8 +9732,14 @@
 
     // Share profile helper function (reused by multiple buttons)
     function shareMyProfileLink() {
+      if (!currentUser) {
+        showAppToast("Zaloguj się!", "Zaloguj się, aby udostępnić swój profil znajomym.", "🔒");
+        window.__closeMyProfile();
+        if (window.__openAuth) window.__openAuth("login");
+        return;
+      }
       const prof = getEffectiveProfile();
-      const url = `${window.location.origin}/#@${prof.username || "krystian"}`;
+      const url = `${window.location.origin}/#@${prof.username || "piwosz"}`;
       if (navigator.share) {
         navigator.share({ title: `${prof.display_name || prof.username} na poilepiwko`, url: url }).catch(() => {});
       } else if (navigator.clipboard) {
@@ -9750,6 +9833,15 @@
     const btnStatFavs = document.getElementById("prof-stat-btn-favorites");
     if (btnStatFavs) {
       btnStatFavs.addEventListener("click", () => {
+        if (!currentUser) {
+          window.__closeMyProfile();
+          if (window.__openAuth) window.__openAuth("login");
+          return;
+        }
+        if (favoriteVenues.length === 0) {
+          showAppToast("Brak ulubionych lokali ❤️", "Kliknij serduszko na karcie dowolnego baru, aby dodać go do ulubionych!", "🤍");
+          return;
+        }
         window.__closeMyProfile();
         const favFilterBtn = document.querySelector('[data-filter="favorites"]');
         if (favFilterBtn) {
@@ -9763,10 +9855,18 @@
     const btnStatVisited = document.getElementById("prof-stat-btn-visited");
     if (btnStatVisited) {
       btnStatVisited.addEventListener("click", () => {
+        if (!currentUser) {
+          window.__closeMyProfile();
+          if (window.__openAuth) window.__openAuth("login");
+          return;
+        }
+        if (visitedVenues.length === 0) {
+          showAppToast("Brak odwiedzonych barów 🍺", "Zrób Check-in BeReal lub kliknij 'Wbij do Paszportu' na karcie lokalu!", "🍺");
+          return;
+        }
         window.__closeMyProfile();
-        const visitedFilterBtn = document.querySelector('[data-filter="visited"]');
-        if (visitedFilterBtn) {
-          visitedFilterBtn.click();
+        if (typeof window.__openPassport === "function") {
+          window.__openPassport();
         } else if (typeof showAppToast === "function") {
           showAppToast("Odwiedzone bary 🍺", `Odwiedziłeś już ${visitedVenues.length} barów!`, "🍻");
         }
@@ -10360,7 +10460,8 @@
         knownNotificationIds.clear();
         try { localStorage.removeItem("poilepiwko_user_profile"); } catch (e) {}
         updateAuthUI();
-        if (modal) modal.style.display = "none";
+        renderMyProfile();
+        if (typeof window.__closeMyProfile === "function") window.__closeMyProfile();
         showAppToast("Wylogowano.", "Do zobaczenia na mieście!", "👋");
       });
     }
@@ -10380,11 +10481,13 @@
         btnConfirmDelete.disabled = true;
         btnConfirmDelete.innerHTML = "<span>🗑️ Trwale usuń moje konto</span>";
       }
+      deleteModal.classList.add("active");
       deleteModal.style.display = "flex";
     }
 
     function closeDeleteAccountModal() {
       if (!deleteModal) return;
+      deleteModal.classList.remove("active");
       deleteModal.style.display = "none";
       if (inputConfirmDelete) inputConfirmDelete.value = "";
     }
@@ -10462,7 +10565,8 @@
           updateFavoriteCounters();
 
           closeDeleteAccountModal();
-          if (modal) modal.style.display = "none";
+          renderMyProfile();
+          if (typeof window.__closeMyProfile === "function") window.__closeMyProfile();
 
           showAppToast("Konto zostało usunięte", "Wszystkie Twoje dane zostały bezpowrotnie wykasowane.", "🗑️", 5000);
         } catch (err) {
@@ -10536,7 +10640,8 @@
     let friendsMarkersLayer = null;
 
     function getInviteUrl() {
-      const myHandle = (currentUser && currentUser.user_metadata && currentUser.user_metadata.username)
+      const myHandle = (currentProfile && currentProfile.username)
+        || (currentUser && currentUser.user_metadata && currentUser.user_metadata.username)
         || (currentUser ? currentUser.id.slice(0, 8) : "ekipa");
       return `https://poilepiwko.pl/?ref=${encodeURIComponent(myHandle)}`;
     }
@@ -10652,21 +10757,31 @@
 
     function openQrModal() {
       const url = getInviteUrl();
-      const myHandle = (currentUser && currentUser.user_metadata && currentUser.user_metadata.username) || "piwosz";
+      const myHandle = (currentProfile && currentProfile.username)
+        || (currentUser && currentUser.user_metadata && currentUser.user_metadata.username);
       if (qrImage) {
         qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(url)}`;
       }
-      if (qrHandle) qrHandle.textContent = `@${myHandle}`;
-      if (qrModal) qrModal.style.display = "flex";
+      if (qrHandle) qrHandle.textContent = (currentUser && myHandle) ? `@${myHandle}` : "poilepiwko.pl";
+      if (qrModal) {
+        qrModal.classList.add("active");
+        qrModal.style.display = "flex";
+      }
     }
 
     if (btnShowQr) btnShowQr.addEventListener("click", openQrModal);
     if (btnHeaderQr) btnHeaderQr.addEventListener("click", openQrModal);
 
     if (qrCloseBtn && qrModal) {
-      qrCloseBtn.addEventListener("click", () => { qrModal.style.display = "none"; });
+      qrCloseBtn.addEventListener("click", () => {
+        qrModal.classList.remove("active");
+        qrModal.style.display = "none";
+      });
       qrModal.addEventListener("click", (e) => {
-        if (e.target === qrModal) qrModal.style.display = "none";
+        if (e.target === qrModal) {
+          qrModal.classList.remove("active");
+          qrModal.style.display = "none";
+        }
       });
     }
 
@@ -10883,6 +10998,7 @@
             <div class="empty-icon">🔒</div>
             <div class="empty-title">Zaloguj się</div>
             <p class="empty-sub">Zaloguj się na swoje konto, aby widzieć listę obserwowanych piwoszy!</p>
+            <button type="button" class="btn-primary" style="margin-top:12px; font-size:0.84rem; padding:9px 18px;" onclick="window.__openAuth && window.__openAuth('login')">🚀 Zaloguj się / Załóż konto</button>
           </div>
         `;
         return;
@@ -11007,6 +11123,7 @@
             <div class="empty-icon">🔒</div>
             <div class="empty-title">Zaloguj się</div>
             <p class="empty-sub">Zaloguj się na swoje konto, aby widzieć listę obserwowanych piwoszy!</p>
+            <button type="button" class="btn-primary" style="margin-top:12px; font-size:0.84rem; padding:9px 18px;" onclick="window.__openAuth && window.__openAuth('login')">🚀 Zaloguj się / Załóż konto</button>
           </div>
         `;
         renderStoriesRail();
@@ -11414,20 +11531,18 @@
       }
       if (type === "ranking") {
         if (typeof window.__closeCommunity === "function") window.__closeCommunity();
-        const rankBtn = document.getElementById("nav-btn-ranking");
-        if (rankBtn) rankBtn.click();
+        if (typeof window.__openRankingDrawer === "function") window.__openRankingDrawer();
+        if (typeof window.__setActiveBottomTab === "function") window.__setActiveBottomTab("ranking");
         return;
       }
       if (type === "pubcrawl") {
         if (typeof window.__closeCommunity === "function") window.__closeCommunity();
-        const pcBtn = document.getElementById("btn-pubcrawl");
-        if (pcBtn) pcBtn.click();
+        if (typeof window.__openPubCrawl === "function") window.__openPubCrawl();
         return;
       }
       if (type === "roulette") {
         if (typeof window.__closeCommunity === "function") window.__closeCommunity();
-        const roulBtn = document.getElementById("btn-roulette") || document.getElementById("bento-btn-roulette");
-        if (roulBtn) roulBtn.click();
+        if (typeof window.__openRoulette === "function") window.__openRoulette();
         return;
       }
       if (type === "czolko") {
@@ -11437,25 +11552,30 @@
       }
       if (type === "compass") {
         if (typeof window.__closeCommunity === "function") window.__closeCommunity();
-        const compBtn = document.getElementById("bento-btn-compass") || document.getElementById("btn-compass");
-        if (compBtn) compBtn.click();
+        if (typeof window.__openPubCrawl === "function") window.__openPubCrawl();
         return;
       }
       if (type === "happy-hours") {
         if (typeof window.__closeCommunity === "function") window.__closeCommunity();
-        const hhChip = document.getElementById("FilterHappyHour") || document.querySelector('[data-quick-filter="happyhour"]');
-        if (hhChip) {
-          if (!hhChip.classList.contains("active")) hhChip.click();
-        }
-        showAppToast("Promocje & Happy Hours ⏱️", "Pokazuję lokale z aktywnymi promocjami na mapie!", "🍻", 3000);
+        if (typeof window.__openHappyHours === "function") window.__openHappyHours();
         return;
       }
       if (type === "cheap-open") {
         if (typeof window.__closeCommunity === "function") window.__closeCommunity();
-        const openChip = document.getElementById("FilterOpenNow");
-        if (openChip && !openChip.classList.contains("active")) openChip.click();
-        const cheapChip = document.querySelector('.qf-chip[data-tier="green"]');
-        if (cheapChip && !cheapChip.classList.contains("active")) cheapChip.click();
+        if (typeof filterState === "object" && filterState) {
+          filterState.openNow = true;
+          filterState.priceTier = "tier-low";
+          filterState.maxPrice = null;
+          filterState.craftOnly = false;
+          filterState.happyHourOnly = false;
+          filterState.favoritesOnly = false;
+          filterState.nonAlcoholicOnly = false;
+          filterState.passOnly = false;
+          currentFilter = "tier-low";
+          if (typeof syncFilterModalUI === "function") syncFilterModalUI();
+          if (typeof syncQuickChipsWithFilterState === "function") syncQuickChipsWithFilterState();
+          if (typeof renderMarkers === "function") renderMarkers();
+        }
         showAppToast("Tanie & Otwarte 🟢", "Filtr na głównej mapie: otwarte teraz lokale ≤12 zł!", "🍺", 3000);
         return;
       }
@@ -11466,8 +11586,15 @@
       btnCheckinDirect.addEventListener("click", () => {
         if (!currentUser) {
           showAppToast("Zaloguj się!", "Zaloguj się, aby zrobić Check-in BeReal w barze 📸🍻", "🔒");
-          const authModal = document.getElementById("auth-modal");
-          if (authModal) authModal.style.display = "flex";
+          if (typeof window.__openAuth === "function") {
+            window.__openAuth("login");
+          } else {
+            const authModal = document.getElementById("auth-modal");
+            if (authModal) {
+              authModal.classList.add("active");
+              authModal.style.display = "flex";
+            }
+          }
           return;
         }
         showAppToast("Check-in = Piwny BeReal 📸", "Zrób zdjęcie kufla w barze, aby zaliczyć Check-in i pojawić się na mapie znajomych!", "📍", 4200);
@@ -12429,7 +12556,10 @@
 
     window.__closeUgcReportModal = function() {
       activeUgcReport = null;
-      if (ugcModal) ugcModal.style.display = "none";
+      if (ugcModal) {
+        ugcModal.classList.remove("active");
+        ugcModal.style.display = "none";
+      }
       if (ugcDetails) ugcDetails.value = "";
       if (typeof ModalHistoryManager !== "undefined") {
         ModalHistoryManager.pop("ugc-report-modal");
@@ -12589,7 +12719,7 @@
         }
       } catch (err) {
         console.warn("Camera stream access failed:", err);
-        showAppToast("Kamera niedostępna", "Nie udało się uruchomić aparatu. Możesz wybrać zdjęcie z galerii.", "📷", 4000);
+        showAppToast("Kamera niedostępna", "Nie udało się uruchomić aparatu. Sprawdź uprawnienia kamery w przeglądarce.", "📷", 4000);
       }
     }
 
@@ -12616,8 +12746,15 @@
 
       if (!currentUser) {
         showAppToast("Zaloguj się!", "Musisz być zalogowany, aby zrobić Check-in BeReal 📸", "🔒");
-        const authModal = document.getElementById("auth-modal");
-        if (authModal) authModal.style.display = "flex";
+        if (typeof window.__openAuth === "function") {
+          window.__openAuth("login");
+        } else {
+          const authModal = document.getElementById("auth-modal");
+          if (authModal) {
+            authModal.classList.add("active");
+            authModal.style.display = "flex";
+          }
+        }
         return;
       }
 
@@ -12642,7 +12779,10 @@
 
     function closeBerealCameraModal() {
       stopBerealCameraStream();
-      if (berealModal) berealModal.style.display = "none";
+      if (berealModal) {
+        berealModal.classList.remove("active");
+        berealModal.style.display = "none";
+      }
       if (typeof ModalHistoryManager !== "undefined") {
         ModalHistoryManager.pop("bereal-camera-modal");
       }
@@ -12876,7 +13016,10 @@
 
     function closeBerealVenuePicker() {
       const pickerModal = document.getElementById("bereal-venue-picker-modal");
-      if (pickerModal) pickerModal.style.display = "none";
+      if (pickerModal) {
+        pickerModal.classList.remove("active");
+        pickerModal.style.display = "none";
+      }
       if (typeof ModalHistoryManager !== "undefined") {
         ModalHistoryManager.pop("bereal-venue-picker-modal");
       }
@@ -13062,7 +13205,7 @@
 
     // Wiring up BeReal Camera Event Listeners
     if (btnOpenBereal) {
-      btnOpenBereal.addEventListener("click", openBerealCameraModal);
+      btnOpenBereal.addEventListener("click", () => openBerealCameraModal());
     }
 
     if (btnCloseBereal) {
@@ -13416,6 +13559,7 @@
             <div class="empty-icon">🔒</div>
             <div class="empty-title">Zaloguj się</div>
             <p class="empty-sub">Zaloguj się na swoje konto, aby widzieć aktywność znajomych!</p>
+            <button type="button" class="btn-primary" style="margin-top:12px; font-size:0.84rem; padding:9px 18px;" onclick="window.__openAuth && window.__openAuth('login')">🚀 Zaloguj się / Załóż konto</button>
           </div>
         `;
         return;
@@ -13474,8 +13618,14 @@
     window.__renderNotificationsList = renderNotificationsList;
 
     window.__flyToSosLocation = function(lat, lng, name, venue) {
+      if (typeof window.__closeCommunity === "function") {
+        window.__closeCommunity();
+      }
       const commModal = document.getElementById("community-modal");
-      if (commModal) commModal.style.display = "none";
+      if (commModal) {
+        commModal.classList.remove("active");
+        commModal.style.display = "none";
+      }
       document.body.classList.remove("modal-open");
       if (map) {
         map.flyTo([lat, lng], 17, { duration: 1.2 });
@@ -13498,8 +13648,15 @@
   window.__toggleFollowUser = async function (targetUserId, btnEl) {
     if (!currentUser) {
       showAppToast("Zaloguj się!", "Musisz mieć konto, aby obserwować znajomych.", "🔒");
-      const authModal = document.getElementById("auth-modal");
-      if (authModal) authModal.style.display = "flex";
+      if (typeof window.__openAuth === "function") {
+        window.__openAuth("login");
+      } else {
+        const authModal = document.getElementById("auth-modal");
+        if (authModal) {
+          authModal.classList.add("active");
+          authModal.style.display = "flex";
+        }
+      }
       return;
     }
 
@@ -13786,14 +13943,22 @@
     if (btnFollow) {
       btnFollow.addEventListener("click", async () => {
         if (!currentViewedProfile) return;
+        if (!currentUser) {
+          showAppToast("Zaloguj się!", "Musisz mieć konto, aby obserwować znajomych.", "🔒");
+          if (typeof window.__openAuth === "function") window.__openAuth("login");
+          return;
+        }
+        const wasFollowing = myFollowingIds.includes(currentViewedProfile.id);
         await window.__toggleFollowUser(currentViewedProfile.id, null);
         const isFollowing = myFollowingIds.includes(currentViewedProfile.id);
         btnFollow.className = isFollowing ? "btn-pubprof-follow following" : "btn-pubprof-follow";
         btnFollow.innerHTML = isFollowing ? "<span>✓ Obserwujesz</span>" : "<span>➕ Obserwuj znajomego</span>";
-        const statFollowers = document.getElementById("pubprof-stat-followers");
-        if (statFollowers) {
-          const cur = parseInt(statFollowers.textContent, 10) || 0;
-          statFollowers.textContent = isFollowing ? cur + 1 : Math.max(0, cur - 1);
+        if (wasFollowing !== isFollowing) {
+          const statFollowers = document.getElementById("pubprof-stat-followers");
+          if (statFollowers) {
+            const cur = parseInt(statFollowers.textContent, 10) || 0;
+            statFollowers.textContent = isFollowing ? cur + 1 : Math.max(0, cur - 1);
+          }
         }
       });
     }
@@ -26476,7 +26641,7 @@
   function renderMapBottomSheetVenues(venues) {
     cachedFilteredVenues = venues || [];
     const listEl = document.getElementById("map-sheet-venues-list");
-    const countEl = document.getElementById("map-sheet-count");
+    const countEl = document.getElementById("map-sheet-count") || document.getElementById("sheet-venues-count");
     if (!listEl) return;
 
     let items = [...cachedFilteredVenues].filter(v => typeof v.beer_price_pln === "number" && v.beer_price_pln > 0);
@@ -26656,7 +26821,7 @@
     }
 
     // 3. Map Sheet Toggle Button (Chevron)
-    const btnMapSheetToggle = document.getElementById("btn-map-sheet-toggle");
+    const btnMapSheetToggle = document.getElementById("btn-map-sheet-toggle") || document.getElementById("btn-toggle-map-sheet");
     if (btnMapSheetToggle && mapSheet) {
       btnMapSheetToggle.addEventListener("click", () => {
         poileHaptics.tick();
@@ -26667,8 +26832,8 @@
     }
 
     // 4. Map Sheet Sort Controls
-    const btnSortCheap = document.getElementById("btn-sheet-sort-cheap");
-    const btnSortDist = document.getElementById("btn-sheet-sort-dist");
+    const btnSortCheap = document.getElementById("btn-sheet-sort-cheap") || document.getElementById("btn-sort-price");
+    const btnSortDist = document.getElementById("btn-sheet-sort-dist") || document.getElementById("btn-sort-dist");
 
     if (btnSortCheap && btnSortDist) {
       btnSortCheap.addEventListener("click", () => {
@@ -27270,7 +27435,7 @@
             badge: "☀️ Dzień i Plany",
             icon: "☀️",
             tagline: "Dzień dobry! Zaplanuj wieczór lub zobacz wczorajsze podsumowanie",
-            highlightBentoId: "bento-btn-compass"
+            highlightBentoId: "bento-btn-barometer"
           };
       }
     },
@@ -27429,8 +27594,8 @@
       setTimeout(() => {
         switch (action) {
           case "compass":
-            if (typeof window.__openBeerCompass === "function") {
-              window.__openBeerCompass();
+            if (typeof window.__openPubCrawl === "function") {
+              window.__openPubCrawl();
             }
             break;
           case "roulette":

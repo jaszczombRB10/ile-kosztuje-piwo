@@ -100,7 +100,7 @@
   <script defer src="https://cloud.umami.is/script.js" data-website-id="auto" id="umami-analytics-script"></script>
 
   <!-- Custom Styles -->
-  <link rel="stylesheet" href="styles.css?v=178">
+  <link rel="stylesheet" href="styles.css?v=180">
 </head>
 <body>
 
@@ -2395,7 +2395,7 @@
           </div>
 
           <!-- Profile Actions Bar: Clean 3-Button Row -->
-          <div class="profile-hero-actions-bar">
+          <div class="profile-hero-actions-bar" id="profile-hero-actions-bar">
             <button type="button" class="btn-hero-action btn-hero-edit" id="btn-toggle-edit-profile" title="Edytuj profil i preferencje">
               <span class="btn-hero-action-icon">✏️</span>
               <span>Edytuj</span>
@@ -2530,7 +2530,7 @@
         </div>
 
         <!-- Account Deletion Trigger (Apple App Store Guideline 5.1.1(v)) -->
-        <div class="profile-danger-zone" style="margin:0;">
+        <div class="profile-danger-zone" id="profile-danger-zone" style="margin:0; display:none;">
           <button type="button" class="btn-delete-account-trigger" id="btn-delete-account-trigger" title="Trwale usuń konto i powiązane dane z bazy serwisu">
             🗑️ Usuń konto i dane
           </button>
@@ -3392,7 +3392,7 @@
                   <span>🎯</span>
                   <span>Całe miasto</span>
                 </button>
-                <button type="button" class="findmy-map-ctrl-btn checkin-accent" id="btn-open-bereal-camera" onclick="window.__openBerealCamera()">
+                <button type="button" class="findmy-map-ctrl-btn checkin-accent" id="btn-open-bereal-camera">
                   <span>📸</span>
                   <span>+ BeReal</span>
                 </button>
@@ -4382,6 +4382,6 @@
   <script src="moderation.js"></script>
 
   <!-- Main Application Logic -->
-  <script src="app.js?v=178"></script>
+  <script src="app.js?v=180"></script>
 </body>
 </html>
