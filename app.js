@@ -27838,11 +27838,22 @@
           }
         }
 
-        // Extract explicit (volume_ml, price_pln) pairs like "500 ml 25 zł" or "300 ml 19 zl" or "0,5 l 25 zł"
-        const pairRegex = /(?:(\d{3})\s*m[l1i]|0[.,]([345])\s*l)\D{0,10}(\d{1,3}(?:[.,]\d{1,2})?)/gi;
+        // Extract paired slash volumes & prices like "300/500 ml 4,9% 18/20"
         const foundPairs = [];
+        const slashPairMatch = preCleaned.match(/(\d{3})\s*\/\s*(\d{3})\s*m[l1i].*?(\d{1,2}(?:[.,]\d{1,2})?)\s*\/\s*(\d{1,2}(?:[.,]\d{1,2})?)/i);
+        if (slashPairMatch) {
+          const v1 = parseInt(slashPairMatch[1], 10);
+          const v2 = parseInt(slashPairMatch[2], 10);
+          const p1 = parseFloat(slashPairMatch[3].replace(",", "."));
+          const p2 = parseFloat(slashPairMatch[4].replace(",", "."));
+          if (v1 >= 200 && v1 <= 600 && p1 >= 6 && p1 <= 48) foundPairs.push({ volMl: v1, price: p1 });
+          if (v2 >= 200 && v2 <= 600 && p2 >= 6 && p2 <= 48) foundPairs.push({ volMl: v2, price: p2 });
+        }
+
+        // Extract explicit (volume_ml, price_pln) pairs like "500 ml 25 zł" or "300 ml 19 zl" or "0,5 l 25 zł"
+        const pairRegex = /(?:(\d{3})\s*m[l1i]|0[.,]([345])\s*l)\D{0,12}(\d{1,3}(?:[.,]\d{1,2})?)(?!\s*\/)/gi;
         let pm;
-        while ((pm = pairRegex.exec(preCleaned)) !== null) {
+        while (!slashPairMatch && (pm = pairRegex.exec(preCleaned)) !== null) {
           const volMl = pm[1] ? parseInt(pm[1], 10) : parseInt(pm[2], 10) * 100;
           const price = parseFloat(pm[3].replace(",", "."));
           if (volMl >= 250 && volMl <= 568 && price >= 6 && price <= 48) {
