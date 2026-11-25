@@ -5880,6 +5880,7 @@
 
     window.__editVenuePrice = openEditModal;
     window.__openAddModal = openAddModal;
+    window.__getReportModalMode = () => currentModalMode;
 
     function closeModal() {
       if (modal) {
@@ -6101,11 +6102,11 @@
         }
       }
 
-      if (currentOcrMetadata && currentOcrMetadata.is_valid_image) {
+      if (currentOcrMetadata && currentOcrMetadata.is_valid_image && Number(currentOcrMetadata.cheapest_beer_05l_pln) > 0) {
         existing.is_verified = true;
         existing.verified_by_receipt = true;
         existing.receipt_date = currentOcrMetadata.receipt_date_iso || new Date().toISOString().split("T")[0];
-        existing.receipt_confidence = currentOcrMetadata.confidence_score || 90;
+        existing.receipt_confidence = currentOcrMetadata.confidence_score || 85;
         saveLocalVenue(existing);
       }
 
@@ -21706,16 +21707,17 @@
     "address": "Żwirki i Wigury 18",
     "latitude": 52.19046,
     "longitude": 20.98188,
-    "beer_name": "Namysłów / Kasztelan",
-    "beer_price_pln": 14.5,
+    "beer_name": "Książęce Lager (beczka)",
+    "beer_price_pln": 25,
     "beer_size_ml": 500,
     "is_craft": false,
-    "shot_price_pln": 8.5,
+    "has_zero_alcohol": true,
+    "shot_price_pln": 25,
     "happy_hour": null,
     "hours": "16:00 - 01:00",
-    "is_verified": false,
-    "last_updated": "2026-09-06T21:00:56.449082+00:00",
-    "votes_confirm": 0
+    "is_verified": true,
+    "last_updated": "2026-11-25T20:58:00+00:00",
+    "votes_confirm": 1
   },
   {
     "id": "osm-node-11029954968",
@@ -26838,7 +26840,7 @@
         </div>
         <div class="apple-spec-tile" style="grid-column: 1 / -1; display: flex; flex-direction: row; align-items: center; justify-content: space-between; padding: 10px 14px;">
           <span class="spec-label" style="margin: 0;">🛡️ STATUS CENY</span>
-          <strong class="spec-val" id="venue-spec-status-${venue.id}" style="margin: 0;">${venue.verified_by_receipt ? '🧾 Paragon AI' : (venue.is_verified ? '✓ Zweryfikowana (bez paragonu)' : '📊 Orientacyjna')}</strong>
+          <strong class="spec-val" id="venue-spec-status-${venue.id}" style="margin: 0;">${venue.verified_by_receipt ? '🧾 Skan AI (menu/paragon)' : (venue.is_verified ? '✓ Zweryfikowana (bez paragonu)' : '📊 Orientacyjna')}</strong>
         </div>
       </div>
     `;
@@ -26911,7 +26913,7 @@
         // Update status tile in DOM immediately
         const specStatusEl = document.getElementById(`venue-spec-status-${venue.id}`);
         if (specStatusEl) {
-          specStatusEl.textContent = venue.verified_by_receipt ? "🧾 Paragon AI" : "✓ Zweryfikowana (bez paragonu)";
+          specStatusEl.textContent = venue.verified_by_receipt ? "🧾 Skan AI (menu/paragon)" : "✓ Zweryfikowana (bez paragonu)";
         }
 
         // Persist to backend or queue offline
@@ -27656,8 +27658,301 @@
       } catch (e) {}
     }
 
+    let tesseractLoadPromise = null;
+    function ensureTesseractLoaded() {
+      if (window.Tesseract && typeof window.Tesseract.recognize === "function") {
+        return Promise.resolve(window.Tesseract);
+      }
+      if (tesseractLoadPromise) return tesseractLoadPromise;
+      tesseractLoadPromise = new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+        script.async = true;
+        script.onload = () => {
+          if (window.Tesseract) resolve(window.Tesseract);
+          else reject(new Error("Tesseract unavailable after script load"));
+        };
+        script.onerror = () => reject(new Error("Nie udało się pobrać silnika OCR"));
+        document.head.appendChild(script);
+      });
+      return tesseractLoadPromise;
+    }
+
+    // Prepare menu/receipt bitmap for OCR (auto-invert dark chalkboards / black hotel menus + boost contrast)
+    async function preprocessMenuImageForOcr(imageDataUrl) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const canvas = document.createElement("canvas");
+            const scale = img.width < 1100 ? Math.min(2, 1400 / Math.max(1, img.width)) : 1;
+            const w = Math.round(img.width * scale);
+            const h = Math.round(img.height * scale);
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, w, h);
+
+            const imgData = ctx.getImageData(0, 0, w, h);
+            const data = imgData.data;
+            let lumSum = 0;
+            let samples = 0;
+            const lumArr = new Uint8Array(w * h);
+
+            for (let i = 0, p = 0; i < data.length; i += 4, p++) {
+              const lum = Math.round(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
+              lumArr[p] = lum;
+              if (p % 16 === 0) {
+                lumSum += lum;
+                samples++;
+              }
+            }
+            const avgLum = samples ? lumSum / samples : 128;
+            const isDarkBg = avgLum < 125;
+
+            for (let p = 0, i = 0; p < lumArr.length; p++, i += 4) {
+              let v = lumArr[p];
+              if (isDarkBg) v = 255 - v;
+              // Linear contrast stretch focusing on legible midtones
+              v = Math.max(0, Math.min(255, Math.round((v - 38) * 1.45)));
+              data[i] = v;
+              data[i + 1] = v;
+              data[i + 2] = v;
+            }
+            ctx.putImageData(imgData, 0, 0);
+            resolve(canvas.toDataURL("image/png"));
+          } catch (err) {
+            resolve(imageDataUrl);
+          }
+        };
+        img.onerror = () => resolve(imageDataUrl);
+        img.src = imageDataUrl;
+      });
+    }
+
+    function normalizePolishOcrText(str) {
+      return String(str || "")
+        .replace(/[łŁ]/g, "l")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase();
+    }
+
+    function parsePolishMenuOrReceiptOcr(rawText) {
+      const normalizedFull = normalizePolishOcrText(rawText);
+      const isReceipt = /(paragon\s*fiskalny|sprzedaz\s*opodatkowana|nip\s*[:\d-]|ptu\s*[a-z]|reszta\s*pln)/.test(normalizedFull);
+      const rawLines = String(rawText || "").split(/\r?\n+/).map(l => l.trim()).filter(Boolean);
+
+      const KNOWN_BEERS = [
+        [/ksi[aą]ż[eę]c\w*(?:\s+(?:lager\s+)?(?:z[łl]ot\w*|zielon\w*|czerwon\w*|pszeniczn\w*|ipa|ciemne))?/i, "Książęce"],
+        [/pilsner\s*urquell/i, "Pilsner Urquell"],
+        [/namys[łl][oó]w(?:\s+pils)?/i, "Namysłów Pils"],
+        [/[żz]ywiec(?:\s+(?:jasne|bia[łl]y|ipa|apa))?/i, "Żywiec"],
+        [/tyskie(?:\s+gronie)?/i, "Tyskie"],
+        [/kozel(?:\s+(?:le[żz][aá]k|cerny|sv[eě]tl[yý]))?/i, "Kozel"],
+        [/per[łl]a(?:\s+chmielowa|\s+export)?/i, "Perła"],
+        [/kasztelan(?:\s+niepasteryzowany)?/i, "Kasztelan"],
+        [/paulaner(?:\s+pszeniczn\w*)?/i, "Paulaner"],
+        [/corona\s+extra/i, "Corona Extra"],
+        [/[łl]om[żz]a/i, "Łomża"],
+        [/heineken/i, "Heineken"],
+        [/carlsberg/i, "Carlsberg"],
+        [/okocim/i, "Okocim"],
+        [/lech(?:\s+premium)?/i, "Lech"],
+        [/warka/i, "Warka"],
+        [/harna[śs]/i, "Harnaś"],
+        [/[żz]ubr/i, "Żubr"],
+        [/mi[łl]os[łl]aw/i, "Miłosław"],
+        [/komes/i, "Komes"],
+        [/holba/i, "Holba"],
+        [/litovel/i, "Litovel"],
+        [/svijany/i, "Svijany"],
+        [/pinta/i, "Pinta"],
+        [/trzech\s+kumpli/i, "Trzech Kumpli"],
+        [/artezan/i, "Artezan"],
+        [/funky\s+fluid/i, "Funky Fluid"],
+        [/hazy\s+ipa|west\s+coast\s+ipa|american\s+ipa|\bipa\b|\bapa\b/i, "Craft IPA/APA"],
+        [/lager/i, "Lager"],
+        [/pils/i, "Pils"]
+      ];
+
+      let section = isReceipt ? "beer_generic" : "unknown";
+      const candidates = [];
+      const vodkaCandidates = [];
+      let craftHits = 0;
+
+      for (const rawLine of rawLines) {
+        // Fix common OCR swaps on capacities & currency (5OO ml -> 500 ml, 3OO ml -> 300 ml, 4O ml -> 40 ml)
+        const preCleaned = rawLine
+          .replace(/\b([1-7])[oO]{2}\s*m[l1i]\b/g, "$100 ml")
+          .replace(/\b([345])0[oO]\s*m[l1i]\b/g, "$100 ml")
+          .replace(/\b([45])[oO]\s*m[l1i]\b/g, "$10 ml");
+
+        const normLine = normalizePolishOcrText(preCleaned);
+
+        const hasPriceDigits = /\d+(?:[.,]\d{1,2})?\s*(?:z[łl1]|pln)|\d+[.,]\d{2}\s*(?:[abc]\b)?|\b\d{3}\s*ml/i.test(normLine);
+
+        // Update current menu section (only treat as section header when line has no price digits)
+        if (/(piwa\s+bezalkoholow|piwo\s+bezalkoholow|bezalkoholowe)/.test(normLine) && !hasPriceDigits) {
+          section = "non_alc";
+          continue;
+        }
+        if (/(piwa\s+beczkow|beczkowe|piwa\s+lan[ea]|z\s+nalewak|z\s+kranu|na\s+kran|on\s+tap)/.test(normLine) && !hasPriceDigits) {
+          section = "draft";
+          continue;
+        }
+        if (/(piwa\s+butelkow|butelkowe)/.test(normLine) && !hasPriceDigits) {
+          section = "bottle";
+          continue;
+        }
+        if (/\b(wodka|shoty|szoty|pure\s+vodka)\b/.test(normLine) && !hasPriceDigits) {
+          section = "vodka";
+          continue;
+        }
+        if (/^(piwa|piwo|craft\s*beer|piwa\s*rzemieslnicz)\s*[:\-–—]*$/i.test(normLine)) {
+          section = "beer_generic";
+          continue;
+        }
+        if (/\b(wina|wino|prosecco|spumante|szampan|whisky|whisk|gin\b|koktajl|drinki|aperitif|rum\b|tequila|deser|przekask|przystawk|salatk|burgery)/.test(normLine) && !/piw/.test(normLine) && !hasPriceDigits) {
+          section = "other";
+          continue;
+        }
+
+        if (/pinta|trzech\s+kumpli|artezan|funky\s+fluid|nepomucen|multitap|imperial\s+stout|\bsour\b/.test(normLine)) {
+          craftHits++;
+        }
+
+        const isNonAlcLine = /(0[.,]0\s*%|lech\s+free|\bfree\b|bezalkohol|0%)/.test(normLine);
+        if (section === "non_alc" || isNonAlcLine) continue;
+
+        let brand = null;
+        for (const [rx, label] of KNOWN_BEERS) {
+          const m = preCleaned.match(rx) || normLine.match(rx);
+          if (m) {
+            brand = (label === "Książęce" && /zlot/i.test(normLine)) ? "Książęce Złoty Lager"
+              : (label === "Książęce" && /zielon/i.test(normLine)) ? "Książęce Zielony Lager"
+              : (label === "Książęce" && /ipa/i.test(normLine)) ? "Książęce IPA"
+              : (label === "Książęce" && /pszeniczn/i.test(normLine)) ? "Książęce Pszeniczne"
+              : label;
+            break;
+          }
+        }
+
+        // Extract explicit (volume_ml, price_pln) pairs like "500 ml 25 zł" or "300 ml 19 zl" or "0,5 l 25 zł"
+        const pairRegex = /(?:(\d{3})\s*m[l1i]|0[.,]([345])\s*l)\D{0,10}(\d{1,3}(?:[.,]\d{1,2})?)/gi;
+        const foundPairs = [];
+        let pm;
+        while ((pm = pairRegex.exec(preCleaned)) !== null) {
+          const volMl = pm[1] ? parseInt(pm[1], 10) : parseInt(pm[2], 10) * 100;
+          const price = parseFloat(pm[3].replace(",", "."));
+          if (volMl >= 250 && volMl <= 568 && price >= 6 && price <= 48) {
+            foundPairs.push({ volMl, price });
+          }
+        }
+
+        if (section === "vodka" || /\b[45]0\s*m[l1i]\b/.test(normLine)) {
+          const shotPair = preCleaned.match(/\b([45]0)\s*m[l1i]\D{0,8}(\d{1,2}(?:[.,]\d{1,2})?)/i);
+          if (shotPair) {
+            const sp = parseFloat(shotPair[2].replace(",", "."));
+            if (sp >= 7 && sp <= 40) vodkaCandidates.push(sp);
+          } else if (section === "vodka") {
+            const pricesInLine = [...preCleaned.matchAll(/(\d{1,3}(?:[.,]\d{1,2})?)\s*(?:z[łl1]|pln)/gi)]
+              .map(m => parseFloat(m[1].replace(",", ".")))
+              .filter(v => v >= 7 && v <= 40);
+            if (pricesInLine.length) vodkaCandidates.push(Math.min(...pricesInLine));
+          }
+        }
+
+        if (section === "other" && !brand) continue;
+
+        if (foundPairs.length > 0) {
+          for (const pair of foundPairs) {
+            candidates.push({ section, volMl: pair.volMl, price: pair.price, brand: brand || "Piwo z nalewaka" });
+          }
+        } else if ((section === "draft" || section === "beer_generic" || section === "bottle" || brand) && !/750\s*m[l1i]/i.test(normLine)) {
+          // Fallback line price when OCR dropped "ml" (e.g. receipt "TYSKIE 0,5 ... 15,00")
+          const volFallback = /\b500\b|0[.,]5/.test(normLine) ? 500
+            : (/\b400\b|0[.,]4/.test(normLine) ? 400
+            : (/\b300\b|0[.,]3/.test(normLine) ? 300 : null));
+          const priceMatches = [...preCleaned.matchAll(/(?:\s|^)(\d{1,2}(?:[.,]\d{1,2})?)\s*(?:z[łl1]|pln|[abc]\b)?(?:\s|$)/gi)]
+            .map(m => parseFloat(m[1].replace(",", ".")))
+            .filter(v => v >= 6 && v <= 48 && v !== 500 && v !== 300 && v !== 400);
+          if (priceMatches.length > 0) {
+            const pickedPrice = priceMatches[priceMatches.length - 1];
+            if (brand || section === "draft" || section === "bottle") {
+              candidates.push({ section, volMl: volFallback, price: pickedPrice, brand: brand || "Piwo z nalewaka" });
+            }
+          }
+        }
+      }
+
+      const pickCheapest = (list, scaleTo500 = false) => {
+        if (!list.length) return null;
+        let best = null;
+        for (const item of list) {
+          const p500 = (scaleTo500 && item.volMl && item.volMl !== 500)
+            ? Math.round((item.price * 500 / item.volMl) * 2) / 2
+            : item.price;
+          if (!best || p500 < best.price500) {
+            best = { ...item, price500: p500 };
+          }
+        }
+        return best;
+      };
+
+      // Strict priority: 1) draft 500ml -> 2) draft 400ml -> 3) draft 300ml/unknown -> 4) generic beer 500ml -> 5) bottled 500ml
+      const draft500 = candidates.filter(c => c.section === "draft" && c.volMl >= 480 && c.volMl <= 520);
+      const draft400 = candidates.filter(c => c.section === "draft" && c.volMl >= 380 && c.volMl < 480);
+      const draft300 = candidates.filter(c => c.section === "draft" && c.volMl && c.volMl < 380);
+      const draftNoVol = candidates.filter(c => c.section === "draft" && !c.volMl);
+      const generic500 = candidates.filter(c => c.section === "beer_generic" && (!c.volMl || c.volMl >= 450));
+      const bottle500 = candidates.filter(c => c.section === "bottle" && c.volMl >= 450);
+
+      const chosen = pickCheapest(draft500, false)
+        || pickCheapest(draft400, true)
+        || pickCheapest(generic500, false)
+        || pickCheapest(draft300, true)
+        || pickCheapest(draftNoVol, false)
+        || pickCheapest(bottle500, false);
+
+      return {
+        is_valid_image: true,
+        rejection_reason: null,
+        document_type: isReceipt ? "receipt" : "paper_menu",
+        bar_name_detected: null,
+        street_or_city_hint: null,
+        cheapest_beer_05l_pln: chosen ? chosen.price500 : null,
+        original_volume_detected_ml: chosen ? (chosen.volMl || 500) : null,
+        beer_brand_or_type: chosen ? chosen.brand : null,
+        shot_price_pln: vodkaCandidates.length ? Math.min(...vodkaCandidates) : null,
+        is_craft_or_multitap: craftHits >= 2,
+        happy_hour_info: null,
+        receipt_date_iso: isReceipt ? new Date().toISOString().split("T")[0] : null,
+        is_fresh_receipt: true,
+        confidence_score: chosen ? (chosen.section === "draft" ? 86 : 78) : 50,
+        source: "client-ocr-pl"
+      };
+    }
+    window.__parsePolishMenuOrReceiptOcr = parsePolishMenuOrReceiptOcr;
+
+    async function runClientSidePolishOcr(imageDataUrl, onProgress) {
+      if (typeof onProgress === "function") onProgress("🔍 Uruchamiam polski silnik OCR dla menu...");
+      const Tesseract = await ensureTesseractLoaded();
+      const preppedUrl = await preprocessMenuImageForOcr(imageDataUrl);
+      const res = await Tesseract.recognize(preppedUrl, "pol+eng", {
+        logger: (m) => {
+          if (m && m.status === "recognizing text" && typeof m.progress === "number" && typeof onProgress === "function") {
+            const pct = Math.round(m.progress * 100);
+            onProgress(`🔍 Odczytuję menu / paragon (OCR PL)... ${pct}%`);
+          }
+        }
+      });
+      const text = (res && res.data && res.data.text) ? res.data.text : "";
+      return parsePolishMenuOrReceiptOcr(text);
+    }
+
     const receiptScannerService = {
-      async compressImage(file, maxDimension = 1280, quality = 0.8) {
+      async compressImage(file, maxDimension = 1600, quality = 0.86) {
         return new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = (e) => {
@@ -27700,33 +27995,33 @@
         });
       },
 
-      async scanReceipt(base64Data) {
+      async scanReceipt(base64Data, onProgress) {
         try {
           const res = await fetch("/api/scan-receipt", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ imageBase64: base64Data })
           });
-          if (!res.ok) throw new Error("HTTP " + res.status);
-          const json = await res.json();
-          return json.data || {};
+          if (res.ok) {
+            const json = await res.json();
+            if (json && json.data && !json.requiresClientOcr) {
+              return json.data;
+            }
+          }
         } catch (err) {
-          console.warn("Receipt scanner service error:", err);
+          console.warn("Cloud vision endpoint note, falling back to local PL OCR:", err);
+        }
+
+        // Run real on-device Polish OCR instead of returning fake mock data
+        try {
+          return await runClientSidePolishOcr(base64Data, onProgress);
+        } catch (ocrErr) {
+          console.warn("Client OCR fallback error:", ocrErr);
           return {
             is_valid_image: true,
-            rejection_reason: null,
-            document_type: "receipt",
-            bar_name_detected: "",
-            street_or_city_hint: null,
-            cheapest_beer_05l_pln: 14.0,
-            original_volume_detected_ml: 500,
-            beer_brand_or_type: "Piwo z nalewaka",
-            shot_price_pln: 8.0,
-            is_craft_or_multitap: false,
-            happy_hour_info: null,
-            receipt_date_iso: new Date().toISOString().split("T")[0],
-            is_fresh_receipt: true,
-            confidence_score: 85
+            document_type: "paper_menu",
+            cheapest_beer_05l_pln: null,
+            confidence_score: 0
           };
         }
       }
@@ -27769,14 +28064,16 @@
         if (ocrResultBadge) ocrResultBadge.style.display = "none";
 
         try {
-          // 1. Client-side compression to max 1280px (150-300 KB) & bind as venue proof photo
-          const compressed = await receiptScannerService.compressImage(file, 1280, 0.8);
+          // 1. Client-side compression up to 1600px so small volume labels (300ml/500ml) stay sharp
+          const compressed = await receiptScannerService.compressImage(file, 1600, 0.86);
           if (ocrPreviewImg) ocrPreviewImg.src = compressed;
           currentPhotoBase64 = compressed;
           currentPhotoContentType = compressed.startsWith("data:image/webp") ? "image/webp" : "image/jpeg";
 
-          // 2. Call Vision AI endpoint
-          const result = await receiptScannerService.scanReceipt(compressed);
+          // 2. Call Vision AI or local Polish OCR
+          const result = await receiptScannerService.scanReceipt(compressed, (statusMsg) => {
+            if (ocrLaserStatusText) ocrLaserStatusText.textContent = statusMsg;
+          });
 
           // Stop laser animation
           if (ocrLaserBeam) ocrLaserBeam.style.display = "none";
@@ -27784,40 +28081,68 @@
 
           if (result && result.is_valid_image === false) {
             const reason = result.rejection_reason || "Zdjęcie jest nieczytelne lub nie przedstawia paragonu ani cennika baru.";
+            currentOcrMetadata = null;
             showAppToast("Skaner AI ⚠️", reason, "⚠️", 4500);
             return;
           }
 
           if (result) {
-            // Show verification badge over photo
+            const detectedPrice = Number(result.cheapest_beer_05l_pln);
+            const hasDetectedPrice = Number.isFinite(detectedPrice) && detectedPrice > 0;
+
+            if (!hasDetectedPrice) {
+              if (ocrResultBadge) {
+                ocrResultBadge.innerHTML = `<span>📸 Zdjęcie cennika dodane</span> <span style="background:rgba(0,0,0,0.28);padding:2px 7px;border-radius:6px;font-size:0.68rem;">Wpisz cenę ręcznie ↓</span>`;
+                ocrResultBadge.style.display = "flex";
+              }
+              currentOcrMetadata = null;
+              const photoPreviewBox = document.getElementById("photo-preview-box");
+              const photoPreviewImg = document.getElementById("photo-preview-img");
+              const photoUploadText = document.getElementById("photo-upload-text");
+              if (photoPreviewImg && photoPreviewBox) {
+                photoPreviewImg.src = compressed;
+                photoPreviewBox.style.display = "inline-block";
+              }
+              if (photoUploadText) photoUploadText.textContent = "Zdjęcie załączone do formularza ✓";
+              showAppToast("Dodano zdjęcie cennika 📸", "Nie udało się automatycznie odczytać ceny 0.5L — wpisz ją ręcznie poniżej.", "✏️", 4500);
+              return;
+            }
+
+            // Show accurate verification badge over bottom of scanned photo
             if (ocrResultBadge) {
               const isReceipt = result.document_type === "receipt";
-              const badgeTitle = isReceipt ? "🧾 Zweryfikowano paragonem" : "📋 Zweryfikowano cennik AI";
-              const conf = result.confidence_score || 90;
-              ocrResultBadge.innerHTML = `<span>${badgeTitle}</span> <span style="background:rgba(0,0,0,0.25);padding:2px 7px;border-radius:6px;font-size:0.70rem;">${conf}% pewności</span>`;
+              const badgeTitle = isReceipt
+                ? `🧾 Paragon: ${detectedPrice.toFixed(detectedPrice % 1 ? 2 : 0)} zł`
+                : `📋 Menu AI: ${detectedPrice.toFixed(detectedPrice % 1 ? 2 : 0)} zł (0.5L)`;
+              const conf = result.confidence_score || 85;
+              ocrResultBadge.innerHTML = `<span>${badgeTitle}</span> <span style="background:rgba(0,0,0,0.25);padding:2px 7px;border-radius:6px;font-size:0.68rem;">${conf}% pewności</span>`;
               ocrResultBadge.style.display = "flex";
             }
 
-            // Auto-populate form fields
-            if (result.bar_name_detected) {
-              populateOcrField("report-name", result.bar_name_detected);
-            }
-            if (result.street_or_city_hint) {
-              populateOcrField("report-address", result.street_or_city_hint);
-              const distSelect = document.getElementById("report-district");
-              if (distSelect) {
-                const lowerAddr = result.street_or_city_hint.toLowerCase();
-                for (const dName of Object.keys(DISTRICT_CENTERS || {})) {
-                  if (dName !== "all" && lowerAddr.includes(dName.toLowerCase())) {
-                    distSelect.value = dName;
-                    break;
+            // NEVER overwrite bar name / address / district when editing an existing bar!
+            const modalMode = (typeof window.__getReportModalMode === "function") ? window.__getReportModalMode() : "add";
+            const nameInputEl = document.getElementById("report-name");
+            const addrInputEl = document.getElementById("report-address");
+            if (modalMode === "add") {
+              if (result.bar_name_detected && nameInputEl && !nameInputEl.readOnly && !nameInputEl.value.trim()) {
+                populateOcrField("report-name", result.bar_name_detected);
+              }
+              if (result.street_or_city_hint && addrInputEl && !addrInputEl.value.trim()) {
+                populateOcrField("report-address", result.street_or_city_hint);
+                const distSelect = document.getElementById("report-district");
+                if (distSelect) {
+                  const lowerAddr = result.street_or_city_hint.toLowerCase();
+                  for (const dName of Object.keys(DISTRICT_CENTERS || {})) {
+                    if (dName !== "all" && lowerAddr.includes(dName.toLowerCase())) {
+                      distSelect.value = dName;
+                      break;
+                    }
                   }
                 }
               }
             }
-            if (result.cheapest_beer_05l_pln) {
-              populateOcrField("report-price", result.cheapest_beer_05l_pln);
-            }
+
+            populateOcrField("report-price", detectedPrice);
             if (result.beer_brand_or_type) {
               populateOcrField("report-beer-name", result.beer_brand_or_type);
             }
@@ -27838,7 +28163,7 @@
 
             // Store current OCR and photo proof
             currentPhotoBase64 = compressed;
-            currentPhotoContentType = "image/jpeg";
+            currentPhotoContentType = compressed.startsWith("data:image/webp") ? "image/webp" : "image/jpeg";
             currentOcrMetadata = result;
 
             // Sync photo preview in photo-upload-box
@@ -27865,7 +28190,7 @@
 
             poileHaptics.success();
             const docLabel = result.document_type === "receipt" ? "paragonu" : "cennika";
-            showAppToast("AI Skaner Cennika 🧾", `Odczytano dane z ${docLabel}! Ceny lokalu zostały zaktualizowane.`, "✨", 5000);
+            showAppToast("AI Skaner Cennika 🧾", `Odczytano z ${docLabel}: ${detectedPrice} zł (${result.beer_brand_or_type || "piwo 0.5L"})!`, "✨", 5000);
           }
         } catch (err) {
           console.warn("OCR scanner error:", err);

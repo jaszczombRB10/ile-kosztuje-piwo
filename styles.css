@@ -20290,26 +20290,28 @@ body.theme-light .ocr-fast-track-info span {
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
 }
 
-/* Success verification badge over scanned photo */
+/* Success verification badge over scanned photo (anchored at bottom so top menu header stays visible) */
 .ocr-result-badge {
   position: absolute;
-  top: 10px;
-  left: 10px;
-  right: 10px;
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.95), rgba(5, 150, 105, 0.95));
+  top: auto;
+  bottom: 8px;
+  left: 8px;
+  right: 8px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.94), rgba(5, 150, 105, 0.94));
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: 10px;
-  padding: 7px 12px;
-  font-size: 0.75rem;
+  padding: 6px 10px;
+  font-size: 0.72rem;
   font-weight: 800;
   color: #ffffff;
   z-index: 6;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+  gap: 8px;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
   animation: badgePop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 

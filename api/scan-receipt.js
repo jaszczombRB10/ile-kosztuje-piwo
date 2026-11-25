@@ -25,18 +25,24 @@ Musisz wyodrębnić informacje i ZAWSZE zwrócić poprawny obiekt JSON o następ
 }
 
 SZCZEGÓŁOWE ZASADY ANALIZY:
-1. is_valid_image: true jeśli na zdjęciu widać paragon z baru, tablicę kredową z piwami, ekran z kranami lub papierowe menu piwne. Jeśli zdjęcie przedstawia selfie, zwierzę, pustą podłogę, rozmyte tło lub coś niezwiązanego z gastronomią, ustaw false i wpisz rejection_reason (np. "Zdjęcie jest nieczytelne lub nie przedstawia paragonu ani menu baru").
-2. bar_name_detected: odczytaj nazwę lokalu (z nagłówka paragonu fiskalnego, logo pubu, nazwy spółki/lokalu, szyldu lub nagłówka karty menu).
-3. street_or_city_hint: adres lokalu jeśli jest widoczny (np. "Nowogrodzka 12, Warszawa" lub ulica z nagłówka paragonu).
-4. cheapest_beer_05l_pln: znajdź najtańsze piwo z kranu / nalewaka (draft) i podaj cenę przeliczoną proporcjonalnie na kufel 0.5L (np. jeśli 0.4L kosztuje 12 zł, przelicz na 15.0; jeśli 0.5L kosztuje 13 zł, podaj 13.0). Jeśli na paragonie jest piwo z kranu, podaj jego jednostkową cenę.
-5. original_volume_detected_ml: objętość najtańszego piwa w ml (np. 500, 400, 300).
-6. beer_brand_or_type: nazwa piwa lub styl (np. "Namysłów Pils", "Kozel Ležák", "Perła Chmielowa", "Złote Lwy", "Hazy IPA", "Lager").
-7. shot_price_pln: najniższa cena wódki / shota (40ml) w PLN jeśli występuje w menu.
-8. is_craft_or_multitap: true jeśli to multitap kraftowy (bary rzemieślnicze, browary rzemieślnicze np. Pinta, Trzech Kumpli, Artezan, duży wybór styli typu IPA, Sour, Imperial Stout), false dla zwykłych pubów z piwem koncernowym.
-9. happy_hour_info: opis promocji happy hour jeśli jest widoczny na tablicy lub w menu (np. "Pn-Pt do 18:00 piwo 10 zł").
-10. receipt_date_iso: data transakcji z paragonu w formacie YYYY-MM-DD. Jeśli brak daty (tablica/menu), ustaw null.
-11. is_fresh_receipt: true jeśli data paragonu mieści się w ostatnich 30 dniach od dzisiejszej daty, lub true dla menu/tablicy.
-12. confidence_score: całkowita liczba od 0 do 100 określająca pewność odczytu.
+1. is_valid_image: true jeśli na zdjęciu widać paragon z baru, tablicę kredową z piwami, ekran z kranami lub papierowe menu piwne. Jeśli zdjęcie nie przedstawia paragonu ani menu/cennika napojów, ustaw false i wpisz rejection_reason.
+2. bar_name_detected: odczytaj nazwę lokalu TYLKO jeśli faktycznie jest widoczna na zdjęciu (z nagłówka paragonu, logo, nazwy baru/spółki). Jeśli jej nie widać, ZWRÓĆ null (nigdy nie zgaduj ani nie zmyślaj nazwy baru!).
+3. street_or_city_hint: adres lokalu TYLKO jeśli jest wyraźnie widoczny na zdjęciu; w przeciwnym razie null.
+4. PRIORYTET SEKCJI W KARTACH MENU:
+   - ZAWSZE najpierw szukaj sekcji "PIWA BECZKOWE" / "PIWA LANE" / "Z NALEWAKA" / "Z KRANU" / "ON TAP".
+   - CAŁKOWICIE IGNORUJ ceny w sekcjach "PIWA BEZALKOHOLOWE" (0,0%, Free), "WINO / PROSECCO" (np. 750ml), "KOKTAJLE", "WHISKY" przy szukaniu ceny piwa!
+   - Sekcję "PIWA BUTELKOWE" bierz pod uwagę WYŁĄCZNIE wtedy, gdy na zdjęciu w ogóle nie ma piw beczkowych/lanych.
+5. KRYTYCZNA ZASADA POJEMNOŚCI (0.5L = 500 ml):
+   - Jeśli to samo piwo beczkowe ma dwie pojemności (np. 300 ml = 19 zł oraz 500 ml = 25 zł), ZAWSZE podaj bezpośrednią cenę za 500 ml (np. 25.0) i original_volume_detected_ml = 500! NIGDY nie przeliczaj proporcjonalnie małego piwa 300 ml, jeśli na karcie podano cenę 500 ml!
+   - Przeliczaj na 0.5L proporcjonalnie WYŁĄCZNIE wtedy, gdy w całej sekcji beczkowej istnieje tylko mniejsza objętość (np. 400 ml za 16 zł -> 20.0).
+   - Jeśli na paragonie lub karcie nie widać żadnej ceny piwa alkoholowego, ustaw cheapest_beer_05l_pln = null (nigdy nie zmyślaj kwoty!).
+6. beer_brand_or_type: nazwa najtańszego wybranego piwa beczkowego 0.5L (np. "Książęce Złote", "Namysłów Pils", "Kozel Ležák", "Żywiec").
+7. shot_price_pln: najniższa cena shota/wódki (40ml lub 50ml) w sekcji "WÓDKA" / "SHOTY" jeśli widoczna na zdjęciu; inaczej null.
+8. is_craft_or_multitap: true wyłącznie jeśli to multitap / bar kraftowy z wieloma stylami rzemieślniczymi (Pinta, Trzech Kumpli, Artezan, IPA/Sour/Stout), false dla standardowych kart z piwem koncernowym.
+9. happy_hour_info: opis promocji happy hour jeśli widoczny, inaczej null.
+10. receipt_date_iso: data z paragonu YYYY-MM-DD lub null dla menu.
+11. is_fresh_receipt: true dla menu/tablicy lub paragonu z ostatnich 30 dni.
+12. confidence_score: całkowita liczba 0-100.
 
 Zwróć WYŁĄCZNIE czysty JSON.`;
 
@@ -68,12 +74,13 @@ const JSON_SCHEMA_GEMINI = {
 };
 
 async function callGeminiVision(cleanBase64, mimeType = "image/jpeg") {
-  const geminiKey = process.env.GEMINI_API_KEY;
+  const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
   if (!geminiKey) return null;
 
   const modelsToTry = [
     process.env.GEMINI_MODEL || "gemini-2.5-flash",
-    "gemini-1.5-flash"
+    "gemini-2.0-flash",
+    "gemini-flash-latest"
   ];
 
   for (const model of modelsToTry) {
@@ -179,24 +186,42 @@ async function callOpenAIVision(cleanBase64, mimeType = "image/jpeg") {
   return null;
 }
 
-function getFallbackHeuristicData() {
-  const today = new Date().toISOString().split("T")[0];
-  return {
-    is_valid_image: true,
-    rejection_reason: null,
-    document_type: "receipt",
-    bar_name_detected: "Bar Pacyfik",
-    street_or_city_hint: "Hoża 61, Warszawa",
-    cheapest_beer_05l_pln: 14.0,
-    original_volume_detected_ml: 500,
-    beer_brand_or_type: "Pacyfik Lager",
-    shot_price_pln: 9.0,
-    is_craft_or_multitap: false,
-    happy_hour_info: "Pn-Pt do 18:00 piwo z kranu -20%",
-    receipt_date_iso: today,
-    is_fresh_receipt: true,
-    confidence_score: 92
-  };
+async function callVercelAiGateway(cleanBase64, mimeType = "image/jpeg") {
+  const gatewayKey = process.env.AI_GATEWAY_API_KEY;
+  if (!gatewayKey) return null;
+
+  const model = process.env.AI_GATEWAY_VISION_MODEL || "google/gemini-2.5-flash";
+  try {
+    const response = await fetch("https://ai-gateway.vercel.sh/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${gatewayKey}`
+      },
+      body: JSON.stringify({
+        model,
+        response_format: { type: "json_object" },
+        temperature: 0.1,
+        messages: [
+          { role: "system", content: STRUCTURED_PROMPT },
+          {
+            role: "user",
+            content: [
+              { type: "text", text: "Przeanalizuj to zdjęcie paragonu lub menu i wyodrębnij dane w formacie JSON." },
+              { type: "image_url", image_url: { url: `data:${mimeType};base64,${cleanBase64}` } }
+            ]
+          }
+        ]
+      })
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    const rawAnswer = data.choices?.[0]?.message?.content;
+    if (rawAnswer) return JSON.parse(rawAnswer);
+  } catch (err) {
+    console.warn("AI Gateway Vision error:", err.message);
+  }
+  return null;
 }
 
 async function handler(req, res) {
@@ -231,30 +256,42 @@ async function handler(req, res) {
     let result = null;
     let source = "unknown";
 
-    // 1. Try preferred or Gemini
-    if (providerPref === "openai") {
-      result = await callOpenAIVision(cleanBase64, mimeType);
-      if (result) source = "openai-vision";
-    } else {
-      result = await callGeminiVision(cleanBase64, mimeType);
-      if (result) {
-        source = "gemini-vision";
-      } else if (process.env.OPENAI_API_KEY) {
+    // 1. Try Vercel AI Gateway if configured
+    if (!result && process.env.AI_GATEWAY_API_KEY) {
+      result = await callVercelAiGateway(cleanBase64, mimeType);
+      if (result) source = "vercel-ai-gateway";
+    }
+
+    // 2. Try preferred Gemini / OpenAI direct provider
+    if (!result) {
+      if (providerPref === "openai") {
         result = await callOpenAIVision(cleanBase64, mimeType);
         if (result) source = "openai-vision";
+      } else {
+        result = await callGeminiVision(cleanBase64, mimeType);
+        if (result) {
+          source = "gemini-vision";
+        } else if (process.env.OPENAI_API_KEY) {
+          result = await callOpenAIVision(cleanBase64, mimeType);
+          if (result) source = "openai-vision";
+        }
       }
     }
 
-    // 2. If provider was openai and failed, try Gemini as failover
-    if (!result && providerPref === "openai" && process.env.GEMINI_API_KEY) {
+    // 3. Failover to Gemini if OpenAI failed
+    if (!result && providerPref === "openai" && (process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY)) {
       result = await callGeminiVision(cleanBase64, mimeType);
       if (result) source = "gemini-vision";
     }
 
-    // 3. Fallback heuristic/mock if no API keys are present (development & preview modes)
+    // 4. Never fabricate fake venue/price data -> let client run real local Polish OCR
     if (!result) {
-      result = getFallbackHeuristicData();
-      source = "fallback-heuristic";
+      return res.status(200).json({
+        success: true,
+        source: "client-ocr-needed",
+        requiresClientOcr: true,
+        data: null
+      });
     }
 
     // Ensure schema validity
