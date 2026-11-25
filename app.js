@@ -1355,7 +1355,7 @@
             : (venue.verified_by_venue)
             ? `<span class="venue-verified-pill" title="Cennik zaktualizowany bezpośrednio przez personel lokalu"><span class="ver-dot"></span> Cennik z lokalu${venue.venue_updated_at ? ` (${escapeHtml(venue.venue_updated_at)})` : ''}</span>`
             : (venue.is_verified
-                ? `<span class="venue-verified-pill" title="Cena zweryfikowana w lokalu"><span class="ver-dot"></span> Zweryfikowana</span>`
+                ? `<span class="venue-verified-pill" title="Cena potwierdzona przez społeczność (bez paragonu)"><span class="ver-dot"></span> Zweryfikowana (bez paragonu)</span>`
                 : `<span class="venue-unverified-pill" title="Cena orientacyjna – pomóż zaktualizować!"><span class="unver-dot"></span> Orientacyjna</span>`
               )
           }
@@ -6007,25 +6007,43 @@
         }
         existing.district = district;
         existing.address = address;
+        const prevPrice = existing.beer_price_pln;
         existing.beer_name = beerName;
         existing.beer_price_pln = price;
         if (shotPrice !== null) existing.shot_price_pln = shotPrice;
         existing.is_craft = isCraft;
         if (happyHour) existing.happy_hour = happyHour;
         if (uploadedPhotoUrl) existing.photo_url = uploadedPhotoUrl;
-        existing.last_updated = new Date().toISOString().split("T")[0];
+        existing.is_verified = true;
+        existing.verified_by_community = true;
+        if (price !== prevPrice && !(currentOcrMetadata && currentOcrMetadata.is_valid_image)) {
+          existing.verified_by_receipt = false;
+          existing.receipt_date = null;
+        }
+        const nowIso = new Date().toISOString();
+        existing.last_updated = nowIso.split("T")[0];
+        existing.last_verified_at = nowIso;
         existing.votes_confirm = (existing.votes_confirm || 1) + 1;
         saveLocalVenue(existing);
       } else {
         // Mode "add"
         existing = allVenues.find(v => v.name.toLowerCase() === name.toLowerCase());
         if (existing) {
+          const prevPrice = existing.beer_price_pln;
           existing.beer_name = beerName;
           existing.beer_price_pln = price;
           if (shotPrice !== null) existing.shot_price_pln = shotPrice;
           if (happyHour) existing.happy_hour = happyHour;
           if (uploadedPhotoUrl) existing.photo_url = uploadedPhotoUrl;
-          existing.last_updated = new Date().toISOString().split("T")[0];
+          existing.is_verified = true;
+          existing.verified_by_community = true;
+          if (price !== prevPrice && !(currentOcrMetadata && currentOcrMetadata.is_valid_image)) {
+            existing.verified_by_receipt = false;
+            existing.receipt_date = null;
+          }
+          const nowIso = new Date().toISOString();
+          existing.last_updated = nowIso.split("T")[0];
+          existing.last_verified_at = nowIso;
           existing.votes_confirm = (existing.votes_confirm || 1) + 1;
           saveLocalVenue(existing);
         } else {
@@ -6069,7 +6087,8 @@
             happy_hour: happyHour,
             photo_url: uploadedPhotoUrl,
             hours: "16:00 - 02:00",
-            is_verified: currentOcrMetadata && currentOcrMetadata.is_valid_image ? true : false,
+            is_verified: true,
+            verified_by_community: true,
             verified_by_receipt: currentOcrMetadata && currentOcrMetadata.is_valid_image ? true : false,
             receipt_date: currentOcrMetadata && currentOcrMetadata.is_valid_image ? (currentOcrMetadata.receipt_date_iso || new Date().toISOString().split("T")[0]) : null,
             receipt_confidence: currentOcrMetadata && currentOcrMetadata.is_valid_image ? (currentOcrMetadata.confidence_score || 90) : null,
@@ -26819,7 +26838,7 @@
         </div>
         <div class="apple-spec-tile" style="grid-column: 1 / -1; display: flex; flex-direction: row; align-items: center; justify-content: space-between; padding: 10px 14px;">
           <span class="spec-label" style="margin: 0;">🛡️ STATUS CENY</span>
-          <strong class="spec-val" id="venue-spec-status-${venue.id}" style="margin: 0;">${venue.verified_by_receipt ? '🧾 Paragon AI' : (venue.is_verified ? '✓ Zweryfikowana' : '📊 Orientacyjna')}</strong>
+          <strong class="spec-val" id="venue-spec-status-${venue.id}" style="margin: 0;">${venue.verified_by_receipt ? '🧾 Paragon AI' : (venue.is_verified ? '✓ Zweryfikowana (bez paragonu)' : '📊 Orientacyjna')}</strong>
         </div>
       </div>
     `;
@@ -26892,7 +26911,7 @@
         // Update status tile in DOM immediately
         const specStatusEl = document.getElementById(`venue-spec-status-${venue.id}`);
         if (specStatusEl) {
-          specStatusEl.textContent = "✓ Zweryfikowana";
+          specStatusEl.textContent = venue.verified_by_receipt ? "🧾 Paragon AI" : "✓ Zweryfikowana (bez paragonu)";
         }
 
         // Persist to backend or queue offline
