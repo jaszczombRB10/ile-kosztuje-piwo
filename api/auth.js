@@ -1,6 +1,87 @@
 // Vercel Serverless Function: Poilepiwko Social & Auth API
+const crypto = require("crypto");
 const SUPABASE_URL = process.env.SUPABASE_URL || "https://agsodpzkytdgicpmphxz.supabase.co";
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFnc29kcHpreXRkZ2ljcG1waHh6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4ODcxODI3MywiZXhwIjoyMTA0Mjk0MjczfQ.nXVSigEdTUqxVcIOAic59j47lUNn_qI61NQRxs3Deho";
+const PASS_HMAC_SECRET = crypto
+  .createHash("sha256")
+  .update("poilepiwko-pass-v1:" + (process.env.PASS_TOKEN_SECRET || SUPABASE_SERVICE_ROLE_KEY))
+  .digest();
+
+function toBase64Url(buf) {
+  return Buffer.from(buf).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+function fromBase64Url(str) {
+  let b64 = String(str || "").replace(/-/g, "+").replace(/_/g, "/");
+  while (b64.length % 4) b64 += "=";
+  return Buffer.from(b64, "base64");
+}
+
+function signPassToken(payloadStr) {
+  const b64Payload = toBase64Url(Buffer.from(payloadStr, "utf8"));
+  const sigBuf = crypto.createHmac("sha256", PASS_HMAC_SECRET).update(b64Payload).digest().subarray(0, 12);
+  const b64Sig = toBase64Url(sigBuf);
+  const codeHash = crypto.createHash("sha256").update(b64Sig).digest("hex").slice(0, 4).toUpperCase();
+  return { token: `${b64Payload}.${b64Sig}`, securityCode: codeHash };
+}
+
+function verifySignedPassToken(tokenStr) {
+  const parts = String(tokenStr || "").trim().split(".");
+  if (parts.length !== 2 || !parts[0] || !parts[1]) {
+    return { valid: false, reason: "INVALID", message: "Nieprawidłowy format kodu weryfikacyjnego." };
+  }
+  const [b64Payload, b64Sig] = parts;
+  let sigBuf;
+  try {
+    sigBuf = fromBase64Url(b64Sig);
+  } catch (e) {
+    return { valid: false, reason: "INVALID", message: "Uszkodzony podpis kodu QR." };
+  }
+  const expectedSigBuf = crypto.createHmac("sha256", PASS_HMAC_SECRET).update(b64Payload).digest().subarray(0, 12);
+  if (sigBuf.length !== expectedSigBuf.length || !crypto.timingSafeEqual(sigBuf, expectedSigBuf)) {
+    return { valid: false, reason: "INVALID", message: "Nieprawidłowy podpis kryptograficzny — podejrzenie fałszywego kodu." };
+  }
+  let raw = "";
+  try {
+    raw = fromBase64Url(b64Payload).toString("utf8");
+  } catch (e) {
+    return { valid: false, reason: "INVALID", message: "Błąd dekodowania danych karty." };
+  }
+  const fields = raw.split("|");
+  if (fields.length < 5) {
+    return { valid: false, reason: "INVALID", message: "Niekompletne dane tokenu karty." };
+  }
+  const [numDigits, expSecStr, redeemFlag, devShort, ...nameRest] = fields;
+  const expSec = parseInt(expSecStr, 10) || 0;
+  const nowSec = Math.floor(Date.now() / 1000);
+  const userNumber = `#${numDigits}`;
+  const memberName = nameRest.join("|") || "PIWOSZ";
+  const securityCode = crypto.createHash("sha256").update(b64Sig).digest("hex").slice(0, 4).toUpperCase();
+
+  if (nowSec > expSec) {
+    const expiredAgo = nowSec - expSec;
+    return {
+      valid: false,
+      reason: "EXPIRED",
+      userNumber,
+      memberName,
+      expiredSecondsAgo: expiredAgo,
+      securityCode,
+      message: `Kod QR wygasł ${expiredAgo} s temu (ważność max 90 s). To zrzut ekranu lub nieaktualny kod!`
+    };
+  }
+
+  return {
+    valid: true,
+    userNumber,
+    memberName,
+    isRedeemActive: redeemFlag === "1",
+    deviceTag: devShort,
+    secondsLeft: expSec - nowSec,
+    securityCode
+  };
+}
+
 const { isOffensive, validateUsername, validateDisplayName, validateBio } = require("./moderation");
 
 module.exports = async (req, res) => {
@@ -1419,6 +1500,139 @@ module.exports = async (req, res) => {
         console.error("report-content error:", err);
         return res.status(200).json({ success: true, message: "Zgłoszenie zarejestrowane." });
       }
+    }
+
+    // =========================================================================
+    // 15. Issue Dynamic Anti-Screenshot Club Pass Token (v182)
+    // =========================================================================
+    if (action === "issue-pass-token") {
+      const { accessToken, deviceId, redeem } = payload || {};
+      if (!accessToken) {
+        return res.status(401).json({ error: "UNAUTHORIZED", message: "Brak aktywnej sesji logowania." });
+      }
+
+      const authRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+        headers: {
+          "apikey": SUPABASE_SERVICE_ROLE_KEY,
+          "Authorization": "Bearer " + accessToken
+        }
+      });
+      if (!authRes.ok) {
+        return res.status(401).json({ error: "UNAUTHORIZED", message: "Sesja wygasła. Zaloguj się ponownie." });
+      }
+      const authedUser = await authRes.json();
+      if (!authedUser || !authedUser.id) {
+        return res.status(401).json({ error: "UNAUTHORIZED", message: "Nieprawidłowa sesja użytkownika." });
+      }
+
+      const adminUserRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(authedUser.id)}`, { headers });
+      const adminUser = adminUserRes.ok ? await adminUserRes.json() : authedUser;
+      const meta = (adminUser && adminUser.user_metadata) ? { ...adminUser.user_metadata } : {};
+
+      const now = Date.now();
+      const nowMonth = new Date(now).toISOString().slice(0, 7);
+      const todayStr = new Date(now).toISOString().slice(0, 10);
+      const cleanDev = String(deviceId || "").replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 48);
+
+      let switches = meta.pass_device_month === nowMonth ? (Number(meta.pass_device_switches) || 0) : 0;
+      let metadataChanged = false;
+
+      // One-device lock per Club Pass account (max 2 device switches/month)
+      if (cleanDev) {
+        if (!meta.pass_device_id) {
+          meta.pass_device_id = cleanDev;
+          meta.pass_device_month = nowMonth;
+          meta.pass_device_switches = switches;
+          metadataChanged = true;
+        } else if (meta.pass_device_id !== cleanDev) {
+          if (switches >= 2) {
+            return res.status(403).json({
+              error: "DEVICE_LIMIT",
+              message: "Ta Karta Pass jest powiązana z innym telefonem (limit 2 zmian urządzenia w miesiącu został wyczerpany)."
+            });
+          }
+          switches += 1;
+          meta.pass_device_id = cleanDev;
+          meta.pass_device_month = nowMonth;
+          meta.pass_device_switches = switches;
+          metadataChanged = true;
+        }
+      }
+
+      // 2-minute live Barman Redeem Mode + 20-minute anti-group-sharing cooldown
+      const COOLDOWN_MS = 20 * 60 * 1000;
+      const REDEEM_TTL_MS = 120 * 1000;
+      let redeemExpiresAt = Number(meta.pass_redeem_expires_at || 0);
+      let lastRedeemedAt = Number(meta.pass_last_redeemed_at || 0);
+      let redeemedToday = meta.pass_redeem_day === todayStr ? (Number(meta.pass_redeem_count_today) || 0) : 0;
+
+      if (redeem === true) {
+        if (redeemExpiresAt > now) {
+          // Reuse active 2-minute barman window
+        } else if (lastRedeemedAt && (now - lastRedeemedAt) < COOLDOWN_MS) {
+          const remainingMinutes = Math.max(1, Math.ceil((COOLDOWN_MS - (now - lastRedeemedAt)) / 60000));
+          return res.status(429).json({
+            error: "COOLDOWN",
+            remainingMinutes,
+            message: `Ochrona przed dzieleniem rabatu: ponowna aktywacja przy barze możliwa za ${remainingMinutes} min.`
+          });
+        } else {
+          redeemExpiresAt = now + REDEEM_TTL_MS;
+          lastRedeemedAt = now;
+          redeemedToday += 1;
+          meta.pass_redeem_expires_at = redeemExpiresAt;
+          meta.pass_last_redeemed_at = lastRedeemedAt;
+          meta.pass_redeem_day = todayStr;
+          meta.pass_redeem_count_today = redeemedToday;
+          metadataChanged = true;
+        }
+      }
+
+      if (metadataChanged) {
+        await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(authedUser.id)}`, {
+          method: "PUT",
+          headers,
+          body: JSON.stringify({ user_metadata: meta })
+        }).catch(err => console.warn("pass metadata update note:", err));
+      }
+
+      let userNumber = meta.user_number;
+      if (!userNumber || userNumber === "-" || userNumber === "null") {
+        const allUsers = await getAllAuthUsers();
+        userNumber = getUserNumber(adminUser, allUsers);
+      }
+
+      const rawName = String(meta.display_name || meta.username || "PIWOSZ").replace(/[|\r\n]/g, " ").trim().toUpperCase().slice(0, 14) || "PIWOSZ";
+      const numDigits = String(userNumber || "#000001").replace(/^#/, "").replace(/[^a-zA-Z0-9]/g, "").slice(0, 10) || "000001";
+      const expSec = Math.floor(now / 1000) + 90; // 90s validity window (QR refreshes every 60s)
+      const isRedeemActive = redeemExpiresAt > now;
+      const devShort = (cleanDev.replace(/[^a-zA-Z0-9]/g, "") || "web").slice(0, 6);
+
+      const payloadStr = `${numDigits}|${expSec}|${isRedeemActive ? "1" : "0"}|${devShort}|${rawName}`;
+      const { token, securityCode } = signPassToken(payloadStr);
+
+      return res.status(200).json({
+        success: true,
+        token,
+        expiresAt: expSec * 1000,
+        redeemExpiresAt: isRedeemActive ? redeemExpiresAt : 0,
+        isRedeemActive,
+        redeemedToday,
+        securityCode,
+        switchesRemaining: Math.max(0, 2 - switches)
+      });
+    }
+
+    // =========================================================================
+    // 16. Verify Scanned Club Pass QR Token for Barmen (v182)
+    // =========================================================================
+    if (action === "verify-pass-token") {
+      const { token } = payload || {};
+      const result = verifySignedPassToken(token);
+      return res.status(200).json({
+        ...result,
+        verifiedAt: Date.now()
+      });
     }
 
     return res.status(400).json({ error: `Nieznana akcja API: ${action}` });

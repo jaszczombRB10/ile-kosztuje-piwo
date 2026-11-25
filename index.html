@@ -100,7 +100,7 @@
   <script defer src="https://cloud.umami.is/script.js" data-website-id="auto" id="umami-analytics-script"></script>
 
   <!-- Custom Styles -->
-  <link rel="stylesheet" href="styles.css?v=181">
+  <link rel="stylesheet" href="styles.css?v=182">
 </head>
 <body>
 
@@ -1549,7 +1549,7 @@
   <!-- Age Gate Verification Modal (18+ Wymóg Prawa Polskiego) -->
   <div class="modal-backdrop age-gate-backdrop" id="age-gate-modal">
     <div class="modal-card age-gate-card flighty-edit-profile-sheet">
-      <div class="flighty-edit-form" style="align-items:center;text-align:center;padding-top:22px;">
+      <div class="flighty-edit-form" style="align-items:center;text-align:center;">
         <div class="age-gate-icon">🔞</div>
         <span class="flighty-edit-eyebrow">PO ILE PIWKO · 18+</span>
         <h2 class="age-gate-title" style="margin:2px 0 4px;">Weryfikacja wieku (18+)</h2>
@@ -3680,6 +3680,7 @@
           <div class="club-card-flipper" id="club-card-flipper">
             <!-- Card Front (Awers) -->
             <div class="club-card-side club-card-front">
+              <div class="card-touch-seal-layer" id="club-card-touch-layer" aria-hidden="true"></div>
               <div class="card-front-top">
                 <div class="card-brand-wrap">
                   <span class="card-beer-icon">🍺</span>
@@ -3688,7 +3689,7 @@
                     <span class="card-brand-sub" id="club-card-brand-sub">OFICJALNY KLUB PIWOSZA</span>
                   </div>
                 </div>
-                <span class="card-discount-pill">-10% RABAT</span>
+                <span class="card-discount-pill is-preview" id="club-card-discount-pill">🔒 PODGLĄD -10%</span>
               </div>
 
               <!-- Dynamic glowing beer wave -->
@@ -3708,22 +3709,23 @@
 
                 <div class="card-bottom-row">
                   <div class="card-validity">
-                    <span class="card-valid-lbl">Ważna do</span>
-                    <span class="card-valid-val" id="club-card-validity">12/2027</span>
+                    <span class="card-valid-lbl" id="club-card-valid-lbl">Kod kontrolny (60s)</span>
+                    <span class="card-valid-val" id="club-card-validity">---- • AKTYWUJ</span>
                   </div>
-                  <div class="card-qr-box" id="club-card-qr">
-                    <svg viewBox="0 0 100 100" class="card-qr-svg" aria-label="Kod QR karty klubowej">
-                      <rect width="100" height="100" fill="#ffffff" rx="8"/>
-                      <path d="M10 10h30v30h-30z M16 16h18v18h-18z M22 22h6v6h-6z M60 10h30v30h-30z M66 16h18v18h-18z M72 22h6v6h-6z M10 60h30v30h-30z M16 66h18v18h-18z M22 72h6v6h-6z M46 12h6v6h-6z M46 24h6v12h-6z M52 30h6v6h-6z M46 60h6v18h-6z M60 60h12v6h-12z M78 60h12v12h-12z M60 72h6v18h-6z M72 78h18v12h-18z M46 84h12v6h-12z" fill="#0f172a"/>
-                    </svg>
+                  <div class="card-qr-wrap">
+                    <div class="card-qr-box" id="club-card-qr" title="Rotujący kod QR dla barmana (ważny 90s)"></div>
+                    <span class="card-qr-ttl" id="club-card-qr-ttl">QR 60s</span>
                   </div>
                 </div>
               </div>
 
-              <!-- Live Anti-screenshot Clock for Barmen -->
+              <!-- Live Anti-screenshot Clock & 2-min Barman Countdown -->
               <div class="card-security-clock" id="club-card-live-clock">
                 <span class="clock-live-dot"></span>
                 <span class="clock-live-text" id="club-card-clock-text">🟢 AKTYWNA TERAZ · Ładowanie...</span>
+              </div>
+              <div class="card-barman-progress" id="club-card-progress" aria-hidden="true">
+                <div class="card-barman-progress-fill" id="club-card-progress-fill"></div>
               </div>
 
               <!-- Glare effect on tilt & dynamic holographic foil shimmer -->
@@ -3764,20 +3766,20 @@
         </div>
 
         <!-- Instructions & Action Controls -->
-        <p class="club-card-hint" style="margin:0;">Dotknij karty, aby ją obrócić i sprawdzić warunki zniżki</p>
+        <p class="club-card-hint" id="club-card-hint" style="margin:0;">Zabezpieczenie anty-screenshot: aktywuj rabat przy barmanie tuż przed zamówieniem (ważny 2:00 min).</p>
 
         <div class="club-card-actions" style="margin:0;">
           <button type="button" class="btn-card-action btn-card-venues" id="btn-club-filter-venues" title="Filtruj mapę do lokali honorujących rabat">
             <span>🗺️ Lokale z rabatem (-10%)</span>
           </button>
           <button type="button" class="btn-card-action btn-card-flip" id="btn-action-flip-card">
-            <span>🔄 Obróć</span>
+            <span>🔄 Zasady</span>
           </button>
           <button type="button" class="btn-card-action btn-card-show" id="btn-action-show-barman">
-            <span>📱 Pokaż w barze</span>
+            <span>🔥 Aktywuj przy barze (2:00)</span>
           </button>
-          <button type="button" class="btn-card-action btn-card-download" id="btn-action-save-pass" title="Zapisz kartę w plikach lub udostępnij">
-            <span>📥 Pobierz / Udostępnij</span>
+          <button type="button" class="btn-card-action btn-card-download" id="btn-action-save-pass" title="Zaproś znajomych do PoIlePiwko">
+            <span>🔗 Poleć Klub</span>
           </button>
         </div>
       </div>
@@ -4383,6 +4385,51 @@
     </div>
   </div>
 
+  <!-- Modal: Weryfikacja Karty Klubowej przez Barmana (Skan QR ?vp=...) -->
+  <div class="modal-backdrop pass-verify-backdrop" id="pass-verify-modal" style="display:none; z-index: 26000;">
+    <div class="modal-card pass-verify-card flighty-edit-profile-sheet">
+      <div class="flighty-edit-topbar">
+        <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-pass-verify-top" aria-label="Zamknij">Zamknij</button>
+        <div class="flighty-edit-topbar-title">
+          <span class="flighty-edit-eyebrow">WERYFIKACJA DLA BARMANA</span>
+          <h2>🛡️ PoIlePiwko Pass</h2>
+        </div>
+        <span style="min-width:56px;text-align:right;font-size:1.1rem;">🔍</span>
+      </div>
+
+      <div class="pass-verify-body">
+        <div class="pass-verify-status-box is-loading" id="pass-verify-status-box">
+          <div class="pass-verify-status-icon" id="pass-verify-status-icon">⏳</div>
+          <div class="pass-verify-status-title" id="pass-verify-status-title">Sprawdzam kod QR...</div>
+          <div class="pass-verify-status-sub" id="pass-verify-status-sub">Weryfikacja podpisu kryptograficznego i ważności sesji</div>
+        </div>
+
+        <div class="pass-verify-meta-grid">
+          <div class="pass-verify-meta-item">
+            <span class="pv-lbl">Członek Klubu</span>
+            <strong class="pv-val" id="pass-verify-member">-</strong>
+          </div>
+          <div class="pass-verify-meta-item">
+            <span class="pv-lbl">Numer Karty</span>
+            <strong class="pv-val" id="pass-verify-number">-</strong>
+          </div>
+          <div class="pass-verify-meta-item">
+            <span class="pv-lbl">Tryb przy barze</span>
+            <strong class="pv-val" id="pass-verify-redeem-state">-</strong>
+          </div>
+          <div class="pass-verify-meta-item">
+            <span class="pv-lbl">Sprawdzono</span>
+            <strong class="pv-val" id="pass-verify-time">-</strong>
+          </div>
+        </div>
+
+        <button type="button" class="flighty-edit-submit-btn" id="btn-close-pass-verify" style="width:100%;">
+          Przejdź do aplikacji →
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Interaktywny Samouczek / Przewodnik z Warszawską Syrenką z piwem -->
   <div class="syrenka-tutorial-overlay" id="syrenka-tutorial-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="tutorial-step-title">
     <div class="tutorial-spotlight" id="tutorial-spotlight" aria-hidden="true"></div>
@@ -4426,6 +4473,6 @@
   <script src="moderation.js"></script>
 
   <!-- Main Application Logic -->
-  <script src="app.js?v=181"></script>
+  <script src="app.js?v=182"></script>
 </body>
 </html>

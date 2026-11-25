@@ -843,9 +843,13 @@
     );
   }
 
-  // Auto-detect Geolocation on application boot (never force camera jump if user selected city)
+  // Auto-detect Geolocation on application boot (deferred until 18+ age gate is confirmed on iOS/Web)
+  let geolocationStarted = false;
   function initUserGeolocation() {
-    if (!navigator.geolocation) return;
+    if (geolocationStarted || !navigator.geolocation) return;
+    const ageModal = document.getElementById("age-gate-modal");
+    if (ageModal && ageModal.classList.contains("active")) return;
+    geolocationStarted = true;
 
     if (navigator.permissions && navigator.permissions.query) {
       navigator.permissions.query({ name: "geolocation" }).then((perm) => {
@@ -860,6 +864,7 @@
       requestUserLocation({ flyTo: false, silent: true });
     }
   }
+  window.__initUserGeolocation = initUserGeolocation;
 
   // Exact Bounding Box of Poland (South-West to North-East)
   const POLAND_BOUNDS = [
@@ -7000,6 +7005,7 @@
       if (typeof window.__closePublicProfile === "function") window.__closePublicProfile();
       if (typeof window.__closeEditProfileModal === "function") window.__closeEditProfileModal();
       if (typeof window.__closeMapLegend === "function") window.__closeMapLegend();
+      if (typeof window.__closeClubCard === "function") window.__closeClubCard();
 
       const drawer = document.getElementById("ranking-drawer");
       if (drawer) drawer.classList.remove("open");
@@ -7222,10 +7228,15 @@
         } catch (e) {}
         if (ageModal) ageModal.classList.remove("active");
         setTimeout(() => {
+          if (typeof window.__initUserGeolocation === "function") {
+            window.__initUserGeolocation();
+          }
+        }, 250);
+        setTimeout(() => {
           if (typeof window.__maybeAutoStartTutorial === "function") {
             window.__maybeAutoStartTutorial();
           }
-        }, 550);
+        }, 650);
       }
 
       if (btnAgeYes && ageModal) {
@@ -18202,6 +18213,288 @@
   // ==========================================================================
   // Wirtualna Karta Klubowa (PoIlePiwko Pass 3D & Hologram Security)
   // ==========================================================================
+  // Pure-JS ISO/IEC 18004 QR Code SVG Generator (Versions 1-8, ECC-L, Byte Mode)
+  const QR_GF_EXP = new Uint8Array(512);
+  const QR_GF_LOG = new Uint8Array(256);
+  (function initQrGaloisTables() {
+    let x = 1;
+    for (let i = 0; i < 255; i++) {
+      QR_GF_EXP[i] = x;
+      QR_GF_LOG[x] = i;
+      x <<= 1;
+      if (x & 0x100) x ^= 0x11d;
+    }
+    for (let i = 255; i < 512; i++) QR_GF_EXP[i] = QR_GF_EXP[i - 255];
+  })();
+
+  function qrRsPoly(ecLen) {
+    let poly = [1];
+    for (let i = 0; i < ecLen; i++) {
+      const next = new Array(poly.length + 1).fill(0);
+      const factor = QR_GF_EXP[i];
+      for (let j = 0; j < poly.length; j++) {
+        next[j] ^= poly[j];
+        if (poly[j]) {
+          next[j + 1] ^= QR_GF_EXP[(QR_GF_LOG[poly[j]] + QR_GF_LOG[factor]) % 255];
+        }
+      }
+      poly = next;
+    }
+    return poly;
+  }
+
+  function qrRsEncode(data, ecLen) {
+    const gen = qrRsPoly(ecLen);
+    const res = new Uint8Array(data.length + ecLen);
+    res.set(data);
+    for (let i = 0; i < data.length; i++) {
+      const coef = res[i];
+      if (coef !== 0) {
+        const logCoef = QR_GF_LOG[coef];
+        for (let j = 0; j < gen.length; j++) {
+          if (gen[j] !== 0) {
+            res[i + j] ^= QR_GF_EXP[(logCoef + QR_GF_LOG[gen[j]]) % 255];
+          }
+        }
+      }
+    }
+    return res.slice(data.length);
+  }
+
+  function buildQrSvg(text, className = "card-qr-svg") {
+    const bytes = new TextEncoder().encode(String(text || ""));
+    // Version configs for ECC-L: [ver, totalDataBytes, blocks, ecPerBlock, alignCenters]
+    const VERSIONS = [
+      [1, 19, 1, 7, []],
+      [2, 34, 1, 10, [6, 18]],
+      [3, 55, 1, 15, [6, 22]],
+      [4, 80, 1, 20, [6, 26]],
+      [5, 108, 1, 26, [6, 30]],
+      [6, 136, 2, 18, [6, 34]],
+      [7, 156, 2, 20, [6, 22, 38]],
+      [8, 194, 2, 24, [6, 24, 42]]
+    ];
+    let spec = VERSIONS[VERSIONS.length - 1];
+    for (const s of VERSIONS) {
+      if (bytes.length <= s[1] - 2) {
+        spec = s;
+        break;
+      }
+    }
+    const [ver, totalData, blocks, ecLen, alignCenters] = spec;
+    const size = 17 + ver * 4;
+
+    // 1. Encode bit stream (Mode 0100 + 8-bit length + bytes + terminator + pad)
+    const bits = [];
+    const pushBits = (val, len) => {
+      for (let i = len - 1; i >= 0; i--) bits.push((val >> i) & 1);
+    };
+    pushBits(0b0100, 4);
+    pushBits(Math.min(bytes.length, totalData - 2), 8);
+    for (let i = 0; i < Math.min(bytes.length, totalData - 2); i++) pushBits(bytes[i], 8);
+    for (let i = 0; i < 4 && bits.length < totalData * 8; i++) bits.push(0);
+    while (bits.length % 8 !== 0) bits.push(0);
+    const dataBytes = [];
+    for (let i = 0; i < bits.length; i += 8) {
+      let b = 0;
+      for (let j = 0; j < 8; j++) b = (b << 1) | bits[i + j];
+      dataBytes.push(b);
+    }
+    let padIdx = 0;
+    while (dataBytes.length < totalData) {
+      dataBytes.push(padIdx++ % 2 === 0 ? 0xEC : 0x11);
+    }
+
+    // 2. Split into RS blocks & interleave codewords
+    const blockDataLen = Math.floor(totalData / blocks);
+    const dataBlocks = [];
+    const ecBlocks = [];
+    for (let b = 0; b < blocks; b++) {
+      const slice = Uint8Array.from(dataBytes.slice(b * blockDataLen, (b + 1) * blockDataLen));
+      dataBlocks.push(slice);
+      ecBlocks.push(qrRsEncode(slice, ecLen));
+    }
+    const codewords = [];
+    for (let i = 0; i < blockDataLen; i++) {
+      for (let b = 0; b < blocks; b++) codewords.push(dataBlocks[b][i]);
+    }
+    for (let i = 0; i < ecLen; i++) {
+      for (let b = 0; b < blocks; b++) codewords.push(ecBlocks[b][i]);
+    }
+
+    // 3. Matrix & Function patterns
+    const grid = Array.from({ length: size }, () => new Uint8Array(size));
+    const fixed = Array.from({ length: size }, () => new Uint8Array(size));
+    const setMod = (r, c, v, isFixed = true) => {
+      if (r < 0 || c < 0 || r >= size || c >= size) return;
+      grid[r][c] = v ? 1 : 0;
+      if (isFixed) fixed[r][c] = 1;
+    };
+
+    const drawFinder = (top, left) => {
+      for (let dr = -1; dr <= 7; dr++) {
+        for (let dc = -1; dc <= 7; dc++) {
+          const r = top + dr;
+          const c = left + dc;
+          if (r < 0 || c < 0 || r >= size || c >= size) continue;
+          const inOuter = dr >= 0 && dr <= 6 && dc >= 0 && dc <= 6;
+          const isBorder = dr === 0 || dr === 6 || dc === 0 || dc === 6;
+          const isInner = dr >= 2 && dr <= 4 && dc >= 2 && dc <= 4;
+          setMod(r, c, (inOuter && (isBorder || isInner)) ? 1 : 0, true);
+        }
+      }
+    };
+    drawFinder(0, 0);
+    drawFinder(0, size - 7);
+    drawFinder(size - 7, 0);
+
+    // Alignment patterns
+    for (const ar of alignCenters) {
+      for (const ac of alignCenters) {
+        if ((ar === 6 && ac === 6) || (ar === 6 && ac === size - 7) || (ar === size - 7 && ac === 6)) continue;
+        for (let dr = -2; dr <= 2; dr++) {
+          for (let dc = -2; dc <= 2; dc++) {
+            const onEdge = Math.abs(dr) === 2 || Math.abs(dc) === 2 || (dr === 0 && dc === 0);
+            setMod(ar + dr, ac + dc, onEdge ? 1 : 0, true);
+          }
+        }
+      }
+    }
+
+    // Timing patterns
+    for (let i = 8; i < size - 8; i++) {
+      setMod(6, i, i % 2 === 0 ? 1 : 0, true);
+      setMod(i, 6, i % 2 === 0 ? 1 : 0, true);
+    }
+
+    // Dark module + reserve format areas + optional version areas
+    setMod(size - 8, 8, 1, true);
+    for (let i = 0; i < 9; i++) {
+      if (i !== 6) {
+        if (!fixed[8][i]) setMod(8, i, 0, true);
+        if (!fixed[i][8]) setMod(i, 8, 0, true);
+      }
+    }
+    for (let i = 0; i < 8; i++) {
+      if (!fixed[8][size - 8 + i]) setMod(8, size - 8 + i, 0, true);
+      if (i < 7 && !fixed[size - 7 + i][8]) setMod(size - 7 + i, 8, 0, true);
+    }
+    if (ver >= 7) {
+      let vd = ver << 12;
+      let vrem = vd;
+      for (let i = 17; i >= 12; i--) if ((vrem >> i) & 1) vrem ^= (0x1F25 << (i - 12));
+      const verBits = vd | vrem;
+      for (let i = 0; i < 18; i++) {
+        const bit = (verBits >> i) & 1;
+        const r = Math.floor(i / 3);
+        const c = size - 11 + (i % 3);
+        setMod(r, c, bit, true);
+        setMod(c, r, bit, true);
+      }
+    }
+
+    // 4. Zigzag data placement
+    const allDataBits = [];
+    for (const cw of codewords) {
+      for (let b = 7; b >= 0; b--) allDataBits.push((cw >> b) & 1);
+    }
+    let bitIdx = 0;
+    let dirUp = true;
+    for (let col = size - 1; col >= 1; col -= 2) {
+      if (col === 6) col--;
+      for (let step = 0; step < size; step++) {
+        const row = dirUp ? (size - 1 - step) : step;
+        for (let dc = 0; dc < 2; dc++) {
+          const cc = col - dc;
+          if (!fixed[row][cc]) {
+            grid[row][cc] = bitIdx < allDataBits.length ? allDataBits[bitIdx++] : 0;
+          }
+        }
+      }
+      dirUp = !dirUp;
+    }
+
+    // 5. Try all 8 masks & pick lowest penalty (Mask 0..7)
+    const applyMask = (m, r, c) => {
+      switch (m) {
+        case 0: return (r + c) % 2 === 0;
+        case 1: return r % 2 === 0;
+        case 2: return c % 3 === 0;
+        case 3: return (r + c) % 3 === 0;
+        case 4: return (Math.floor(r / 2) + Math.floor(c / 3)) % 2 === 0;
+        case 5: return ((r * c) % 2 + (r * c) % 3) === 0;
+        case 6: return (((r * c) % 2 + (r * c) % 3) % 2) === 0;
+        default: return (((r + c) % 2 + (r * c) % 3) % 2) === 0;
+      }
+    };
+
+    const scoreMatrix = (mat) => {
+      let pen = 0;
+      for (let r = 0; r < size; r++) {
+        let run = 1;
+        for (let c = 1; c < size; c++) {
+          if (mat[r][c] === mat[r][c - 1]) run++;
+          else { if (run >= 5) pen += 3 + (run - 5); run = 1; }
+        }
+        if (run >= 5) pen += 3 + (run - 5);
+      }
+      for (let c = 0; c < size; c++) {
+        let run = 1;
+        for (let r = 1; r < size; r++) {
+          if (mat[r][c] === mat[r - 1][c]) run++;
+          else { if (run >= 5) pen += 3 + (run - 5); run = 1; }
+        }
+        if (run >= 5) pen += 3 + (run - 5);
+      }
+      for (let r = 0; r < size - 1; r++) {
+        for (let c = 0; c < size - 1; c++) {
+          const s = mat[r][c] + mat[r][c + 1] + mat[r + 1][c] + mat[r + 1][c + 1];
+          if (s === 0 || s === 4) pen += 3;
+        }
+      }
+      return pen;
+    };
+
+    let bestMask = 0;
+    let bestMat = null;
+    let bestScore = Infinity;
+
+    for (let mask = 0; mask < 8; mask++) {
+      const mat = grid.map((row, r) => row.map((v, c) => (!fixed[r][c] && applyMask(mask, r, c)) ? (v ^ 1) : v));
+      // Write ECC-L format bits
+      const fd = ((1 << 3) | mask) << 10;
+      let rem = fd;
+      for (let i = 14; i >= 10; i--) if ((rem >> i) & 1) rem ^= (0x537 << (i - 10));
+      const fmt = (fd | rem) ^ 0x5412;
+      const bAt = i => (fmt >> i) & 1;
+
+      const c1 = [0, 1, 2, 3, 4, 5, 7, 8];
+      c1.forEach((cc, idx) => { mat[8][cc] = bAt(14 - idx); });
+      mat[7][8] = bAt(6);
+      for (let idx = 0; idx < 6; idx++) mat[5 - idx][8] = bAt(5 - idx);
+      for (let idx = 0; idx < 7; idx++) mat[size - 1 - idx][8] = bAt(14 - idx);
+      for (let idx = 0; idx < 8; idx++) mat[8][size - 8 + idx] = bAt(7 - idx);
+
+      const sc = scoreMatrix(mat);
+      if (sc < bestScore) {
+        bestScore = sc;
+        bestMat = mat;
+        bestMask = mask;
+      }
+    }
+
+    const qz = 2;
+    const vb = size + qz * 2;
+    let paths = "";
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        if (bestMat[r][c]) paths += `M${c + qz},${r + qz}h1v1h-1z`;
+      }
+    }
+    return `<svg viewBox="0 0 ${vb} ${vb}" class="${className}" shape-rendering="crispEdges" role="img" aria-label="Dynamiczny kod QR PoIlePiwko Pass (maska ${bestMask})"><rect width="${vb}" height="${vb}" fill="#ffffff"/><path d="${paths}" fill="#090d14"/></svg>`;
+  }
+  window.__buildQrSvg = buildQrSvg;
+
   function initClubCardModal() {
     const modal = document.getElementById("club-card-modal");
     const btnClose = document.getElementById("btn-close-club-modal");
@@ -18212,32 +18505,232 @@
     const btnFlip = document.getElementById("btn-action-flip-card");
     const btnFlipBack = document.getElementById("btn-flip-back");
     const btnShow = document.getElementById("btn-action-show-barman");
-    const btnDownload = document.getElementById("btn-action-save-pass");
+    const btnShare = document.getElementById("btn-action-save-pass");
     const btnFilterVenues = document.getElementById("btn-club-filter-venues");
 
     const elName = document.getElementById("club-card-name");
     const elNum = document.getElementById("club-card-number");
     const elValidity = document.getElementById("club-card-validity");
+    const elValidLbl = document.getElementById("club-card-valid-lbl");
     const elBackId = document.getElementById("club-card-back-id");
+    const elDiscountPill = document.getElementById("club-card-discount-pill");
+    const elQrBox = document.getElementById("club-card-qr");
+    const elQrTtl = document.getElementById("club-card-qr-ttl");
+    const elProgressFill = document.getElementById("club-card-progress-fill");
+    const elTouchLayer = document.getElementById("club-card-touch-layer");
+    const elHint = document.getElementById("club-card-hint");
 
     let securityClockTimer = null;
+    let qrRefreshTimer = null;
     let cardOrientationAttached = false;
+    let activeRedeemExpiresAt = 0;
+    let currentSecurityCode = "----";
+    let qrExpiresAt = 0;
+    let isFetchingToken = false;
+
+    function getOrCreatePassDeviceId() {
+      const KEY = "poilepiwko_pass_device_id_v1";
+      try {
+        let id = localStorage.getItem(KEY);
+        if (!id || id.length < 8) {
+          const rand = (crypto && crypto.getRandomValues)
+            ? Array.from(crypto.getRandomValues(new Uint8Array(8)), b => b.toString(16).padStart(2, "0")).join("")
+            : (Math.random().toString(36).slice(2) + Date.now().toString(36));
+          id = "dev_" + rand.slice(0, 16);
+          localStorage.setItem(KEY, id);
+        }
+        return id;
+      } catch (e) {
+        return "dev_web_session";
+      }
+    }
+
+    function updateBarmanSessionUI() {
+      const now = Date.now();
+      const isBarmanActive = activeRedeemExpiresAt > now;
+      if (stage) stage.classList.toggle("barman-mode", isBarmanActive);
+      if (btnShow) {
+        btnShow.classList.toggle("active", isBarmanActive);
+        btnShow.classList.toggle("is-active-session", isBarmanActive);
+        const span = btnShow.querySelector("span");
+        if (span) {
+          if (isBarmanActive) {
+            const remS = Math.max(0, Math.ceil((activeRedeemExpiresAt - now) / 1000));
+            const mm = Math.floor(remS / 60);
+            const ss = String(remS % 60).padStart(2, "0");
+            span.textContent = `🟢 Aktywna przy barze (${mm}:${ss})`;
+          } else {
+            span.textContent = "🔥 Aktywuj przy barze (2:00)";
+          }
+        }
+      }
+      if (elDiscountPill) {
+        elDiscountPill.classList.toggle("is-live-redeem", isBarmanActive);
+        elDiscountPill.classList.toggle("is-preview", !isBarmanActive);
+        elDiscountPill.textContent = isBarmanActive ? "🟢 -10% AKTYWNY" : "🔒 PODGLĄD -10%";
+      }
+      if (elProgressFill) {
+        const pct = isBarmanActive ? Math.max(0, Math.min(100, ((activeRedeemExpiresAt - now) / 120000) * 100)) : 0;
+        elProgressFill.style.width = `${pct.toFixed(1)}%`;
+      }
+      if (elValidLbl) {
+        elValidLbl.textContent = isBarmanActive ? "Kod barmana (na żywo)" : "Kod kontrolny (60s)";
+      }
+      if (elValidity) {
+        const remQr = qrExpiresAt > now ? Math.max(1, Math.ceil((qrExpiresAt - now) / 1000)) : 60;
+        elValidity.textContent = isBarmanActive ? `${currentSecurityCode} • OK` : `${currentSecurityCode} • ${remQr}s`;
+      }
+      if (elQrTtl) {
+        const remQr = qrExpiresAt > now ? Math.max(1, Math.ceil((qrExpiresAt - now) / 1000)) : 60;
+        elQrTtl.textContent = `QR ${remQr}s`;
+      }
+      if (elHint) {
+        elHint.textContent = isBarmanActive
+          ? "Stuknij w kartę palcem barmana, aby wywołać żywą pieczęć dotyku (nie do podrobienia na screenshotcie)."
+          : "Zabezpieczenie anty-screenshot: aktywuj rabat przy barmanie tuż przed zamówieniem (ważny 2:00 min).";
+      }
+    }
 
     function updateSecurityClock() {
       const clockEl = document.getElementById("club-card-clock-text");
-      if (!clockEl) return;
       const now = new Date();
       const days = ["Nd", "Pn", "Wt", "Śr", "Czw", "Pt", "Sob"];
       const dayName = days[now.getDay()];
       const dateStr = `${String(now.getDate()).padStart(2, "0")}.${String(now.getMonth() + 1).padStart(2, "0")}`;
-      const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
-      clockEl.textContent = `🟢 AKTYWNA TERAZ · ${dayName}, ${dateStr} · ${timeStr}`;
+      const isBarmanActive = activeRedeemExpiresAt > now.getTime();
+      const tenths = Math.floor(now.getMilliseconds() / 100);
+      const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}${isBarmanActive ? "." + tenths : ""}`;
+
+      if (clockEl) {
+        clockEl.textContent = isBarmanActive
+          ? `🟢 NA ŻYWO · ${dayName}, ${dateStr} · ${timeStr}`
+          : `🔒 PODGLĄD · ${dayName}, ${dateStr} · ${timeStr}`;
+      }
+
+      if (activeRedeemExpiresAt && activeRedeemExpiresAt <= now.getTime()) {
+        activeRedeemExpiresAt = 0;
+        stopFastClock();
+        startClock(false);
+        showAppToast("Sesja rabatu wygasła ⏱️", "Kliknij ponownie przy barze, aby otworzyć nową (po krótkiej przerwie).", "💳", 3200);
+      }
+      updateBarmanSessionUI();
+    }
+
+    function stopFastClock() {
+      if (securityClockTimer) {
+        clearInterval(securityClockTimer);
+        securityClockTimer = null;
+      }
+    }
+
+    function startClock(fast = false) {
+      stopFastClock();
+      securityClockTimer = setInterval(updateSecurityClock, fast ? 100 : 1000);
+    }
+
+    function renderFallbackOfflineQr(memberName, memberNum) {
+      const ts = Math.floor(Date.now() / 1000);
+      const code = Math.abs((ts * 2654435761) >>> 0).toString(36).toUpperCase().slice(0, 4).padStart(4, "X");
+      currentSecurityCode = code;
+      qrExpiresAt = Date.now() + 60000;
+      const baseOrigin = (window.location.origin && window.location.origin.startsWith("http"))
+        ? window.location.origin
+        : "https://www.poilepiwko.pl";
+      const offlineUrl = `${baseOrigin}/?vp_offline=${encodeURIComponent(String(memberNum || "#000001"))}_${ts}`;
+      if (elQrBox) {
+        elQrBox.innerHTML = buildQrSvg(offlineUrl);
+      }
+      updateBarmanSessionUI();
+    }
+
+    async function refreshSignedPassQr(requestRedeem = false) {
+      if (!currentUser || isFetchingToken) return false;
+      isFetchingToken = true;
+      try {
+        let accessToken = "";
+        if (supabaseClient && supabaseClient.auth && typeof supabaseClient.auth.getSession === "function") {
+          const { data } = await supabaseClient.auth.getSession();
+          accessToken = data && data.session ? data.session.access_token : "";
+        }
+        if (!accessToken) {
+          renderFallbackOfflineQr(elName ? elName.textContent : "PIWOSZ", elNum ? elNum.textContent : "#000001");
+          return false;
+        }
+
+        const res = await fetch("/api/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "issue-pass-token",
+            payload: {
+              accessToken,
+              deviceId: getOrCreatePassDeviceId(),
+              redeem: Boolean(requestRedeem)
+            }
+          })
+        });
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          if (data.error === "DEVICE_LIMIT") {
+            showAppToast("Limit urządzeń 🔒", data.message || "Karta przypisana do innego telefonu.", "🛡️", 4800);
+            return false;
+          }
+          if (data.error === "COOLDOWN") {
+            showAppToast("Chwila przerwy ⏱️", data.message || "Odczekaj chwilę przed kolejnym rabatem.", "🛡️", 4200);
+            return false;
+          }
+          renderFallbackOfflineQr(elName ? elName.textContent : "PIWOSZ", elNum ? elNum.textContent : "#000001");
+          return false;
+        }
+
+        if (data && data.token) {
+          currentSecurityCode = data.securityCode || "PASS";
+          qrExpiresAt = data.expiresAt || (Date.now() + 90000);
+          if (data.redeemExpiresAt && data.redeemExpiresAt > Date.now()) {
+            activeRedeemExpiresAt = data.redeemExpiresAt;
+            startClock(true);
+          }
+          const baseOrigin = (window.location.origin && window.location.origin.startsWith("http"))
+            ? window.location.origin
+            : "https://www.poilepiwko.pl";
+          const verifyUrl = `${baseOrigin}/?vp=${encodeURIComponent(data.token)}`;
+          if (elQrBox) {
+            elQrBox.innerHTML = buildQrSvg(verifyUrl);
+          }
+          updateBarmanSessionUI();
+          return true;
+        }
+      } catch (e) {
+        renderFallbackOfflineQr(elName ? elName.textContent : "PIWOSZ", elNum ? elNum.textContent : "#000001");
+      } finally {
+        isFetchingToken = false;
+      }
+      return false;
+    }
+
+    function spawnTouchSealStamp(clientX, clientY) {
+      if (!stage || !elTouchLayer || !stage.classList.contains("barman-mode")) return;
+      const rect = stage.getBoundingClientRect();
+      const x = Math.max(46, Math.min(rect.width - 46, clientX - rect.left));
+      const y = Math.max(22, Math.min(rect.height - 22, clientY - rect.top));
+      const now = new Date();
+      const ts = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+
+      const badge = document.createElement("div");
+      badge.className = "card-touch-stamp";
+      badge.style.left = `${x}px`;
+      badge.style.top = `${y}px`;
+      badge.textContent = `🍻 DOTYK OK · ${ts}`;
+      elTouchLayer.appendChild(badge);
+      if (window.poileHaptics) window.poileHaptics.tick();
+      setTimeout(() => badge.remove(), 1450);
     }
 
     function handleCardOrientation(e) {
       if (!modal || !modal.classList.contains("active")) return;
-      const gamma = e.gamma || 0; // [-90, 90]
-      const beta = e.beta || 0;   // [-180, 180]
+      const gamma = e.gamma || 0;
+      const beta = e.beta || 0;
       const xPct = Math.min(100, Math.max(0, 50 + (gamma / 45) * 50));
       const yPct = Math.min(100, Math.max(0, 50 + ((beta - 45) / 45) * 50));
       const angle = (135 + gamma) % 360;
@@ -18267,9 +18760,26 @@
       }
     }
 
+    function handlePrivacyBlur() {
+      if (stage && modal && modal.classList.contains("active")) {
+        stage.classList.add("privacy-shield");
+      }
+    }
+
+    function handlePrivacyFocus() {
+      if (stage) {
+        stage.classList.remove("privacy-shield");
+      }
+    }
+
+    function handleVisibilityShield() {
+      if (document.visibilityState === "hidden") handlePrivacyBlur();
+      else handlePrivacyFocus();
+    }
+
     window.__openClubCard = function () {
       if (!currentUser) {
-        showAppToast("Karta Pass 💳", "Zaloguj się lub załóż bezpłatne konto, aby odebrać Kartę Klubu z numerem członkowskim!", "🔒", 3500);
+        showAppToast("Karta Pass 💳", "Zaloguj się lub załóż bezpłatne konto, aby odebrać imienną Kartę Klubu!", "🔒", 3500);
         if (window.__openAuth) window.__openAuth("login");
         return;
       }
@@ -18278,7 +18788,7 @@
         flipper.style.transform = "";
         flipper.classList.remove("flipped");
       }
-      if (stage) stage.classList.remove("barman-mode");
+      if (stage) stage.classList.remove("privacy-shield");
       if (modal) {
         modal.classList.add("active");
         modal.style.display = "flex";
@@ -18287,13 +18797,20 @@
         ModalHistoryManager.push("club-card-modal", window.__closeClubCard);
       }
 
-      // Start live clock & gyro sensor
-      updateSecurityClock();
-      if (securityClockTimer) clearInterval(securityClockTimer);
-      securityClockTimer = setInterval(updateSecurityClock, 1000);
+      startClock(activeRedeemExpiresAt > Date.now());
+      refreshSignedPassQr(false);
+      if (qrRefreshTimer) clearInterval(qrRefreshTimer);
+      qrRefreshTimer = setInterval(() => {
+        if (modal && modal.classList.contains("active")) {
+          refreshSignedPassQr(false);
+        }
+      }, 55000);
 
       if (!cardOrientationAttached && typeof window !== "undefined") {
         window.addEventListener("deviceorientation", handleCardOrientation, true);
+        window.addEventListener("blur", handlePrivacyBlur);
+        window.addEventListener("focus", handlePrivacyFocus);
+        document.addEventListener("visibilitychange", handleVisibilityShield);
         cardOrientationAttached = true;
       }
     };
@@ -18306,13 +18823,17 @@
       if (typeof ModalHistoryManager !== "undefined") {
         ModalHistoryManager.pop("club-card-modal");
       }
-      if (stage) stage.classList.remove("barman-mode");
-      if (securityClockTimer) {
-        clearInterval(securityClockTimer);
-        securityClockTimer = null;
+      if (stage) stage.classList.remove("privacy-shield");
+      stopFastClock();
+      if (qrRefreshTimer) {
+        clearInterval(qrRefreshTimer);
+        qrRefreshTimer = null;
       }
       if (cardOrientationAttached && typeof window !== "undefined") {
         window.removeEventListener("deviceorientation", handleCardOrientation, true);
+        window.removeEventListener("blur", handlePrivacyBlur);
+        window.removeEventListener("focus", handlePrivacyFocus);
+        document.removeEventListener("visibilitychange", handleVisibilityShield);
         cardOrientationAttached = false;
       }
     };
@@ -18333,22 +18854,24 @@
     if (stage) {
       stage.addEventListener("click", (e) => {
         if (e.target.closest("button")) return;
+        if (stage.classList.contains("barman-mode") && (!flipper || !flipper.classList.contains("flipped"))) {
+          spawnTouchSealStamp(e.clientX, e.clientY);
+          return;
+        }
         toggleFlip();
       });
 
-      // 3D Tilt effect & dynamic holographic sheen on mousemove
       stage.addEventListener("mousemove", (e) => {
-        if (stage.classList.contains("barman-mode")) return;
         const rect = stage.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
         const centerX = rect.width / 2;
         const centerY = rect.height / 2;
-        const rotateX = ((y - centerY) / centerY) * -12;
-        const rotateY = ((x - centerX) / centerX) * 12;
+        const rotateX = ((y - centerY) / centerY) * -10;
+        const rotateY = ((x - centerX) / centerX) * 10;
 
         const isFlipped = flipper && flipper.classList.contains("flipped");
-        if (flipper) {
+        if (flipper && !stage.classList.contains("barman-mode")) {
           flipper.style.transform = `rotateY(${isFlipped ? 180 + rotateY : rotateY}deg) rotateX(${rotateX}deg)`;
         }
         if (glare) {
@@ -18380,12 +18903,19 @@
     if (btnFlipBack) btnFlipBack.addEventListener("click", toggleFlip);
 
     if (btnShow) {
-      btnShow.addEventListener("click", () => {
+      btnShow.addEventListener("click", async () => {
         if (!stage) return;
-        const isBarman = stage.classList.toggle("barman-mode");
-        btnShow.classList.toggle("active", isBarman);
-        if (isBarman) {
-          showAppToast("Tryb przy barze 🍺", "Karta powiększona i rozjaśniona do pokazania barmanowi!", "📱", 2500);
+        if (activeRedeemExpiresAt > Date.now()) {
+          showAppToast("Karta już aktywna przy barze 🟢", "Pokaż żywy licznik barmanowi lub pozwól mu dotknąć ekranu.", "🍺", 2600);
+          return;
+        }
+        if (flipper && flipper.classList.contains("flipped")) {
+          flipper.classList.remove("flipped");
+        }
+        const ok = await refreshSignedPassQr(true);
+        if (ok) {
+          if (window.poileHaptics) window.poileHaptics.success();
+          showAppToast("Rabat aktywny przez 2:00 min 🟢", "Pokaż zegar i kod QR barmanowi — ważność potwierdzona na serwerze.", "🍺", 3400);
         }
       });
     }
@@ -18423,114 +18953,128 @@
       });
     }
 
-    async function generateAndShareClubCard(memberName, memberId) {
-      const canvas = document.createElement("canvas");
-      canvas.width = 960;
-      canvas.height = 600;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-
-      // Dark Obsidian Pass background
-      const grad = ctx.createLinearGradient(0, 0, 960, 600);
-      grad.addColorStop(0, "#1c1c28");
-      grad.addColorStop(0.5, "#12121a");
-      grad.addColorStop(1, "#09090e");
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, 960, 600);
-
-      // Gold hairline border
-      ctx.strokeStyle = "rgba(251, 191, 36, 0.4)";
-      ctx.lineWidth = 4;
-      ctx.strokeRect(8, 8, 944, 584);
-
-      // Top brand header
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "bold 34px -apple-system, BlinkMacSystemFont, sans-serif";
-      ctx.fillText("PoIlePiwko Pass · Karta Klubowa", 50, 75);
-
-      // Discount badge
-      ctx.fillStyle = "#fbbf24";
-      ctx.font = "900 28px -apple-system, BlinkMacSystemFont, sans-serif";
-      ctx.fillText("-10% RABAT NA PIWO LANE", 50, 130);
-
-      // Divider line
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.12)";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(50, 160);
-      ctx.lineTo(910, 160);
-      ctx.stroke();
-
-      // Member name & number
-      ctx.fillStyle = "rgba(235, 235, 245, 0.6)";
-      ctx.font = "bold 20px -apple-system, BlinkMacSystemFont, sans-serif";
-      ctx.fillText("CZŁONEK KLUBU", 50, 210);
-      ctx.fillText("NUMER KARTY", 550, 210);
-
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "900 36px ui-monospace, Menlo, Consolas, monospace";
-      ctx.fillText(String(memberName).toUpperCase(), 50, 260);
-      ctx.fillText(String(memberId), 550, 260);
-
-      // Info
-      ctx.fillStyle = "#30D158";
-      ctx.font = "bold 24px -apple-system, BlinkMacSystemFont, sans-serif";
-      ctx.fillText("📶 Pokaż barmanowi przed złożeniem zamówienia", 50, 360);
-
-      ctx.fillStyle = "rgba(235, 235, 245, 0.7)";
-      ctx.font = "22px -apple-system, BlinkMacSystemFont, sans-serif";
-      ctx.fillText("⚡ Aktywna w sieci lokali partnerskich poilepiwko.pl", 50, 420);
-
-      // Bottom footer bar
-      ctx.fillStyle = "rgba(255, 255, 255, 0.05)";
-      ctx.fillRect(0, 520, 960, 80);
-      ctx.fillStyle = "rgba(235, 235, 245, 0.65)";
-      ctx.font = "bold 20px -apple-system, BlinkMacSystemFont, sans-serif";
-      ctx.fillText("poilepiwko.pl · Oficjalna Karta Klubowicza VIP", 50, 568);
-
-      canvas.toBlob(async (blob) => {
-        if (!blob) return;
-        const cleanNum = String(memberId).replace(/[^a-zA-Z0-9]/g, "") || "000001";
-        const file = new File([blob], `poilepiwko-pass-${cleanNum}.png`, { type: "image/png" });
-
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({
-              title: "PoIlePiwko Pass",
-              text: `Moja Karta Klubowa PoIlePiwko Pass (-10% na lane)!`,
-              files: [file]
-            });
-            if (window.poileHaptics) window.poileHaptics.success();
-            showAppToast("Karta Pass 📸", "Udostępniono lub zapisano kartę w Zdjęciach!", "✅", 4000);
-            return;
-          } catch (e) {}
-        }
-
-        // Direct PNG download fallback
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `poilepiwko-pass-${cleanNum}.png`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 4000);
-        showAppToast("Pobrano kartę Pass! 📸", "Zapisano kartę w pobranych plikach / Zdjęciach!", "📥", 4000);
-      }, "image/png");
+    // Share Club invite link ONLY (never export static card PNG that could be abused as screenshot)
+    function shareClubReferral() {
+      const inviteUrl = "https://www.poilepiwko.pl/#pass";
+      const shareData = {
+        title: "PoIlePiwko Pass – Mapa taniego piwa i klub -10%",
+        text: "Sprawdź poilepiwko.pl – znajdź najtańsze piwo z kranu w okolicy i odbierz swoją Kartę Klubową Pass!",
+        url: inviteUrl
+      };
+      if (navigator.share) {
+        navigator.share(shareData).catch(() => {});
+        return;
+      }
+      copyShareLink(inviteUrl, "Link do Klubu PoIlePiwko skopiowany!");
     }
 
-    if (btnDownload) {
-      btnDownload.addEventListener("click", () => {
-        if (!currentUser) {
-          showAppToast("Karta Pass 💳", "Zaloguj się, aby pobrać swoją imienną Kartę Klubu!", "🔒");
-          if (window.__openAuth) window.__openAuth("login");
-          return;
-        }
-        const mName = (currentProfile && (currentProfile.display_name || currentProfile.username)) || "PIWOSZ";
-        const mNum = (currentProfile && currentProfile.user_number) || "#000001";
-        generateAndShareClubCard(mName, mNum);
-      });
+    if (btnShare) {
+      btnShare.addEventListener("click", shareClubReferral);
     }
+  }
+
+  // Barman QR Scanner Verification Modal (?vp=... / ?vp_offline=...) (v182)
+  function initPassVerifyModal(initialPassToken = "", initialOfflineTag = "") {
+    const modal = document.getElementById("pass-verify-modal");
+    const statusBox = document.getElementById("pass-verify-status-box");
+    const statusIcon = document.getElementById("pass-verify-status-icon");
+    const statusTitle = document.getElementById("pass-verify-status-title");
+    const statusSub = document.getElementById("pass-verify-status-sub");
+    const elMember = document.getElementById("pass-verify-member");
+    const elNumber = document.getElementById("pass-verify-number");
+    const elRedeemState = document.getElementById("pass-verify-redeem-state");
+    const elTime = document.getElementById("pass-verify-time");
+    const btnCloseTop = document.getElementById("btn-close-pass-verify-top");
+    const btnCloseBottom = document.getElementById("btn-close-pass-verify");
+
+    if (!modal) return;
+
+    function closeVerifyModal() {
+      modal.classList.remove("active");
+      modal.style.display = "none";
+      if (typeof ModalHistoryManager !== "undefined") {
+        ModalHistoryManager.pop("pass-verify-modal");
+      }
+    }
+
+    if (btnCloseTop) btnCloseTop.addEventListener("click", closeVerifyModal);
+    if (btnCloseBottom) btnCloseBottom.addEventListener("click", closeVerifyModal);
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeVerifyModal();
+    });
+
+    async function verifyToken(token, offlineTag) {
+      modal.style.display = "flex";
+      modal.classList.add("active");
+      if (typeof ModalHistoryManager !== "undefined") {
+        ModalHistoryManager.push("pass-verify-modal", closeVerifyModal);
+      }
+      const nowStr = new Date().toLocaleTimeString("pl-PL");
+      if (elTime) elTime.textContent = nowStr;
+
+      if (offlineTag && !token) {
+        const parts = String(offlineTag).split("_");
+        const num = parts[0] || "#?";
+        const ts = parseInt(parts[1] || "0", 10);
+        const ageSec = ts ? Math.round(Date.now() / 1000) - ts : 9999;
+        const isFresh = ageSec >= -5 && ageSec <= 120;
+        if (statusBox) {
+          statusBox.className = "pass-verify-status-box " + (isFresh ? "is-valid" : "is-invalid");
+        }
+        if (statusIcon) statusIcon.textContent = isFresh ? "⚠️" : "🔴";
+        if (statusTitle) statusTitle.textContent = isFresh ? "TRYB OFFLINE (PIWNICA)" : "KOD OFFLINE WYGASŁ (SCREENSHOT!)";
+        if (statusSub) statusSub.textContent = isFresh
+          ? "Wygenerowano bez zasięgu. Poproś gościa o stuknięcie karty na żywo (pieczęć dotyku)."
+          : `Kod offline ma już ${ageSec} s — poproś o otwarcie żywej aplikacji.`;
+        if (elMember) elMember.textContent = "Gość offline";
+        if (elNumber) elNumber.textContent = num;
+        if (elRedeemState) elRedeemState.textContent = isFresh ? "Wymaga dotyku ekranu" : "Nieważny";
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "verify-pass-token", payload: { token } })
+        });
+        const data = await res.json();
+        const isValid = Boolean(data && data.valid);
+        if (statusBox) {
+          statusBox.className = "pass-verify-status-box " + (isValid ? "is-valid" : "is-invalid");
+        }
+        if (statusIcon) statusIcon.textContent = isValid ? "🟢" : "🔴";
+        if (statusTitle) {
+          statusTitle.textContent = isValid
+            ? (data.isRedeemActive ? "KARTA AKTYWNA — UDZIEL -10%" : "PODGLĄD KARTY OK (NIEAKTYWOWANA)")
+            : (data.reason === "EXPIRED" ? "KOD WYGASŁ — PRAWDOPODOBNIE SCREENSHOT!" : "NIEPRAWIDŁOWY KOD!");
+        }
+        if (statusSub) {
+          statusSub.textContent = isValid
+            ? (data.isRedeemActive
+                ? `Zweryfikowano podpis kryptograficzny · Kod sesji: ${data.securityCode} (ważny jeszcze ${data.secondsLeft}s)`
+                : `Konto istnieje, ale gość nie kliknął „Aktywuj przy barze (2:00)”. Poproś o aktywację teraz!`)
+            : (data.message || "Nie udało się zweryfikować karty.");
+        }
+        if (elMember) elMember.textContent = data.memberName || "-";
+        if (elNumber) elNumber.textContent = data.userNumber || "-";
+        if (elRedeemState) {
+          elRedeemState.textContent = isValid
+            ? (data.isRedeemActive ? "🟢 Aktywna przy barze" : "🔒 Tylko podgląd")
+            : "⛔ Odrzucono";
+        }
+      } catch (e) {
+        if (statusBox) statusBox.className = "pass-verify-status-box is-invalid";
+        if (statusIcon) statusIcon.textContent = "⚠️";
+        if (statusTitle) statusTitle.textContent = "Błąd połączenia przy weryfikacji";
+        if (statusSub) statusSub.textContent = "Sprawdź internet lub poproś o dotknięcie karty palcem (pieczęć dotyku na żywo).";
+      }
+    }
+
+    if (initialPassToken || initialOfflineTag) {
+      verifyToken(initialPassToken, initialOfflineTag);
+    }
+    window.__verifyClubPassToken = verifyToken;
   }
 
   // ==========================================================================
@@ -28068,15 +28612,25 @@
   // Boot Application
   function boot() {
     let hadInitialDeepLink = false;
+    let initialPassToken = "";
+    let initialOfflineTag = "";
     try {
       const sp = new URLSearchParams(window.location.search);
+      initialPassToken = sp.get("vp") || sp.get("verify_pass") || "";
+      initialOfflineTag = sp.get("vp_offline") || "";
       hadInitialDeepLink = Boolean(
         (window.location.hash && window.location.hash.length > 1) ||
         sp.get("action") ||
         sp.get("bar") ||
         sp.get("venue") ||
-        sp.get("id")
+        sp.get("id") ||
+        initialPassToken ||
+        initialOfflineTag
       );
+      if (initialPassToken || initialOfflineTag) {
+        const cleanUrl = window.location.pathname + (window.location.hash || "");
+        window.history.replaceState({}, document.title, cleanUrl);
+      }
     } catch (e) {}
 
     if (typeof ModalHistoryManager !== "undefined") {
@@ -28093,6 +28647,7 @@
     initTimeContextEngine();
     initSyrenkaTutorial(hadInitialDeepLink);
     handleInitialUrlAction();
+    initPassVerifyModal(initialPassToken, initialOfflineTag);
 
     // Register Service Worker for PWA with automatic update detection
     if ("serviceWorker" in navigator) {

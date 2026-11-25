@@ -27572,11 +27572,23 @@ body.theme-light #beer-compass-modal .compass-venue-panel {
     box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.08) !important;
   }
 
-  /* Age Gate Splash Screen Centered Cleanly Inside Full Page */
+  /* Age Gate Splash Screen Centered Cleanly Inside Full Page (iOS Dynamic Island safe) */
   #age-gate-modal .age-gate-card.flighty-edit-profile-sheet .flighty-edit-form {
-    padding-top: calc(28px + env(safe-area-inset-top, 20px)) !important;
-    justify-content: center !important;
-    min-height: calc(100dvh - 60px) !important;
+    justify-content: flex-start !important;
+    padding: calc(18px + env(safe-area-inset-top, 44px)) 20px calc(26px + env(safe-area-inset-bottom, 24px)) 20px !important;
+    min-height: 100dvh !important;
+    box-sizing: border-box !important;
+  }
+
+  #age-gate-modal .age-gate-icon {
+    margin-top: auto !important;
+    font-size: 2.6rem !important;
+    margin-bottom: 6px !important;
+  }
+
+  #age-gate-modal .age-gate-footer {
+    margin-bottom: auto !important;
+    padding-bottom: 8px !important;
   }
 
   /* Convert #discover-sheet, #action-sheet, #venue-sheet, #ranking-drawer into Full-Page Views */
@@ -29823,6 +29835,279 @@ body.theme-light .tutorial-syrenka-skip-pill {
     font-size: 12.2px;
   }
 }
+
+/* ============================================================================
+   ANTI-SCREENSHOT & BARMAN VERIFICATION SYSTEM FOR POILEPIWKO PASS (v182)
+   ============================================================================ */
+
+.club-card-stage {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.club-card-front {
+  overflow: hidden;
+}
+
+.card-discount-pill.is-preview {
+  background: rgba(148, 163, 184, 0.16);
+  border-color: rgba(148, 163, 184, 0.45);
+  color: #e2e8f0;
+  box-shadow: none;
+}
+
+.card-discount-pill.is-live-redeem {
+  background: rgba(34, 197, 94, 0.24);
+  border-color: #22c55e;
+  color: #bbf7d0;
+  box-shadow: 0 0 18px rgba(34, 197, 94, 0.5);
+  animation: liveDiscountPulse 1.15s ease-in-out infinite;
+}
+
+@keyframes liveDiscountPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+
+.card-qr-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.card-qr-box {
+  width: 52px;
+  height: 52px;
+  padding: 2px;
+  border-radius: 8px;
+  background: #ffffff;
+  overflow: hidden;
+  transition: transform 0.24s ease, box-shadow 0.24s ease;
+}
+
+.club-card-stage.barman-mode .card-qr-box {
+  transform: scale(1.08);
+  box-shadow: 0 0 18px rgba(34, 197, 94, 0.55);
+}
+
+.card-qr-ttl {
+  position: absolute;
+  top: -7px;
+  right: -6px;
+  background: #0f172a;
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.6);
+  font-size: 0.52rem;
+  font-weight: 800;
+  padding: 1px 4px;
+  border-radius: 999px;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.card-barman-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  z-index: 7;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.club-card-stage.barman-mode .card-barman-progress {
+  opacity: 1;
+}
+
+.card-barman-progress-fill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #22c55e, #fbbf24);
+  transition: width 0.12s linear;
+}
+
+.club-card-stage.barman-mode .club-card-front {
+  border-color: rgba(34, 197, 94, 0.78) !important;
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.8), 0 0 28px rgba(34, 197, 94, 0.35) !important;
+}
+
+.club-card-stage.barman-mode .card-security-clock {
+  background: rgba(6, 78, 59, 0.85);
+  border-color: #22c55e;
+  color: #ecfdf5;
+}
+
+.club-card-stage.privacy-shield .club-card-front {
+  filter: blur(16px);
+  transition: filter 0.12s ease;
+}
+
+.card-touch-seal-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: 17px;
+}
+
+.card-touch-stamp {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.94);
+  border: 1.5px solid #ffffff;
+  color: #042f2e;
+  font-size: 0.64rem;
+  font-weight: 900;
+  white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.7);
+  animation: touchSealPop 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes touchSealPop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.55);
+  }
+  18% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.06);
+  }
+  75% {
+    opacity: 1;
+    transform: translate(-50%, -55%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -75%) scale(0.95);
+  }
+}
+
+.btn-card-show.is-active-session {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important;
+  color: #022c22 !important;
+  box-shadow: 0 4px 16px rgba(34, 197, 94, 0.45) !important;
+}
+
+/* Barman QR Verification Modal */
+.pass-verify-backdrop {
+  z-index: 26000 !important;
+}
+
+.pass-verify-card {
+  max-width: 440px;
+  width: 92%;
+  padding: 0;
+  overflow: hidden;
+  background: #0b0f19;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.pass-verify-body {
+  padding: 18px 18px calc(22px + env(safe-area-inset-bottom, 16px));
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.pass-verify-status-box {
+  padding: 20px 16px;
+  border-radius: 18px;
+  text-align: center;
+  border: 1.5px solid rgba(148, 163, 184, 0.25);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.pass-verify-status-box.is-valid {
+  background: rgba(16, 185, 129, 0.14);
+  border-color: #22c55e;
+  box-shadow: 0 0 30px rgba(34, 197, 94, 0.2);
+}
+
+.pass-verify-status-box.is-invalid {
+  background: rgba(239, 68, 68, 0.14);
+  border-color: #ef4444;
+  box-shadow: 0 0 30px rgba(239, 68, 68, 0.2);
+}
+
+.pass-verify-status-icon {
+  font-size: 2.6rem;
+  line-height: 1.1;
+  margin-bottom: 8px;
+}
+
+.pass-verify-status-title {
+  font-size: 1.08rem;
+  font-weight: 900;
+  color: #ffffff;
+  margin-bottom: 5px;
+}
+
+.pass-verify-status-sub {
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: #cbd5e1;
+}
+
+.pass-verify-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.pass-verify-meta-item {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.pv-lbl {
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+  font-weight: 700;
+}
+
+.pv-val {
+  font-size: 0.88rem;
+  color: #f8fafc;
+  font-weight: 800;
+  word-break: break-word;
+}
+
+body.theme-light .pass-verify-card {
+  background: #ffffff !important;
+}
+
+body.theme-light .pass-verify-status-title,
+body.theme-light .pv-val {
+  color: #0f172a !important;
+}
+
+body.theme-light .pass-verify-status-sub {
+  color: #475569 !important;
+}
+
+body.theme-light .pass-verify-meta-item {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
 
 
 
