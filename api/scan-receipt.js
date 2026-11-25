@@ -73,56 +73,130 @@ const JSON_SCHEMA_GEMINI = {
   ]
 };
 
+let cachedDiscoveredFlashModels = null;
+let cachedDiscoveredAt = 0;
+const MODEL_DISCOVERY_TTL_MS = 6 * 60 * 60 * 1000;
+
+function pickBestFlashModels(modelsList = [], excludeSet = new Set()) {
+  const candidates = [];
+  for (const item of modelsList) {
+    const id = String(typeof item === "string" ? item : (item && item.name) || "").replace(/^models\//, "").trim();
+    if (!id || excludeSet.has(id)) continue;
+    if (Array.isArray(item && item.supportedGenerationMethods) && !item.supportedGenerationMethods.includes("generateContent")) {
+      continue;
+    }
+    if (!/flash/i.test(id)) continue;
+    if (/(tts|audio|image|embedding|live|robotics|computer-use|customtools|-latest$)/i.test(id)) continue;
+
+    const verMatch = id.match(/gemini-(\d+)(?:\.(\d+))?/i);
+    const major = verMatch ? parseInt(verMatch[1], 10) : 0;
+    const minor = (verMatch && verMatch[2]) ? parseInt(verMatch[2], 10) : 0;
+    const scoreVer = major * 100 + minor;
+    const isLite = /flash-lite/i.test(id) ? 1 : 0;
+    const isStable = /(preview|exp)/i.test(id) ? 0 : 1;
+
+    candidates.push({ id, scoreVer, isLite, isStable });
+  }
+
+  candidates.sort((a, b) => (b.scoreVer - a.scoreVer) || (b.isLite - a.isLite) || (b.isStable - a.isStable));
+  return candidates.map(c => c.id);
+}
+
+async function discoverCheapestFastestGeminiModels(geminiKey, excludeSet = new Set()) {
+  const now = Date.now();
+  if (cachedDiscoveredFlashModels && (now - cachedDiscoveredAt) < MODEL_DISCOVERY_TTL_MS) {
+    return cachedDiscoveredFlashModels.filter(id => !excludeSet.has(id)).slice(0, 3);
+  }
+  try {
+    const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${geminiKey}`;
+    const res = await fetch(listUrl);
+    if (!res.ok) return [];
+    const data = await res.json();
+    const ranked = pickBestFlashModels(data && data.models ? data.models : [], new Set());
+    if (ranked.length > 0) {
+      cachedDiscoveredFlashModels = ranked;
+      cachedDiscoveredAt = now;
+    }
+    return ranked.filter(id => !excludeSet.has(id)).slice(0, 3);
+  } catch (err) {
+    console.warn("Gemini model discovery note:", err.message);
+    return [];
+  }
+}
+
+async function invokeGeminiSingleModel(model, geminiKey, cleanBase64, mimeType) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [
+        {
+          parts: [
+            { text: STRUCTURED_PROMPT },
+            {
+              inlineData: {
+                mimeType: mimeType,
+                data: cleanBase64
+              }
+            }
+          ]
+        }
+      ],
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: JSON_SCHEMA_GEMINI,
+        temperature: 0.1
+      }
+    })
+  });
+
+  if (!response.ok) {
+    console.warn(`Gemini (${model}) returned HTTP ${response.status}`);
+    return null;
+  }
+
+  const geminiData = await response.json();
+  const rawAnswer = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (rawAnswer) {
+    return { data: JSON.parse(rawAnswer), model };
+  }
+  return null;
+}
+
 async function callGeminiVision(cleanBase64, mimeType = "image/jpeg") {
   const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
   if (!geminiKey) return null;
 
-  const modelsToTry = [
-    process.env.GEMINI_MODEL || "gemini-2.5-flash",
-    "gemini-2.0-flash",
+  // Rolling Google aliases auto-route to the newest Flash-Lite (fastest/cheapest) & Flash tiers
+  const rawPrimary = [
+    process.env.GEMINI_MODEL || null,
+    "gemini-flash-lite-latest",
+    "gemini-3.5-flash-lite",
     "gemini-flash-latest"
-  ];
+  ].filter(Boolean);
+
+  const modelsToTry = [...new Set(rawPrimary)];
+  const tried = new Set();
 
   for (const model of modelsToTry) {
+    tried.add(model);
     try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`;
-      const response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                { text: STRUCTURED_PROMPT },
-                {
-                  inlineData: {
-                    mimeType: mimeType,
-                    data: cleanBase64
-                  }
-                }
-              ]
-            }
-          ],
-          generationConfig: {
-            responseMimeType: "application/json",
-            responseSchema: JSON_SCHEMA_GEMINI,
-            temperature: 0.1
-          }
-        })
-      });
-
-      if (!response.ok) {
-        console.warn(`Gemini (${model}) returned HTTP ${response.status}`);
-        continue;
-      }
-
-      const geminiData = await response.json();
-      const rawAnswer = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (rawAnswer) {
-        return JSON.parse(rawAnswer);
-      }
+      const hit = await invokeGeminiSingleModel(model, geminiKey, cleanBase64, mimeType);
+      if (hit) return hit;
     } catch (err) {
       console.warn(`Gemini (${model}) invocation note:`, err.message);
+    }
+  }
+
+  // Dynamic self-healing discovery if all hardcoded aliases/versions failed or were retired
+  const discovered = await discoverCheapestFastestGeminiModels(geminiKey, tried);
+  for (const model of discovered) {
+    try {
+      const hit = await invokeGeminiSingleModel(model, geminiKey, cleanBase64, mimeType);
+      if (hit) return hit;
+    } catch (err) {
+      console.warn(`Gemini discovered (${model}) note:`, err.message);
     }
   }
 
@@ -190,36 +264,43 @@ async function callVercelAiGateway(cleanBase64, mimeType = "image/jpeg") {
   const gatewayKey = process.env.AI_GATEWAY_API_KEY;
   if (!gatewayKey) return null;
 
-  const model = process.env.AI_GATEWAY_VISION_MODEL || "google/gemini-2.5-flash";
-  try {
-    const response = await fetch("https://ai-gateway.vercel.sh/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${gatewayKey}`
-      },
-      body: JSON.stringify({
-        model,
-        response_format: { type: "json_object" },
-        temperature: 0.1,
-        messages: [
-          { role: "system", content: STRUCTURED_PROMPT },
-          {
-            role: "user",
-            content: [
-              { type: "text", text: "Przeanalizuj to zdjęcie paragonu lub menu i wyodrębnij dane w formacie JSON." },
-              { type: "image_url", image_url: { url: `data:${mimeType};base64,${cleanBase64}` } }
-            ]
-          }
-        ]
-      })
-    });
-    if (!response.ok) return null;
-    const data = await response.json();
-    const rawAnswer = data.choices?.[0]?.message?.content;
-    if (rawAnswer) return JSON.parse(rawAnswer);
-  } catch (err) {
-    console.warn("AI Gateway Vision error:", err.message);
+  const models = [...new Set([
+    process.env.AI_GATEWAY_VISION_MODEL || null,
+    "google/gemini-3.5-flash-lite",
+    "google/gemini-flash-latest"
+  ].filter(Boolean))];
+
+  for (const model of models) {
+    try {
+      const response = await fetch("https://ai-gateway.vercel.sh/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${gatewayKey}`
+        },
+        body: JSON.stringify({
+          model,
+          response_format: { type: "json_object" },
+          temperature: 0.1,
+          messages: [
+            { role: "system", content: STRUCTURED_PROMPT },
+            {
+              role: "user",
+              content: [
+                { type: "text", text: "Przeanalizuj to zdjęcie paragonu lub menu i wyodrębnij dane w formacie JSON." },
+                { type: "image_url", image_url: { url: `data:${mimeType};base64,${cleanBase64}` } }
+              ]
+            }
+          ]
+        })
+      });
+      if (!response.ok) continue;
+      const data = await response.json();
+      const rawAnswer = data.choices?.[0]?.message?.content;
+      if (rawAnswer) return { data: JSON.parse(rawAnswer), model };
+    } catch (err) {
+      console.warn(`AI Gateway (${model}) Vision error:`, err.message);
+    }
   }
   return null;
 }
@@ -255,33 +336,50 @@ async function handler(req, res) {
     const providerPref = (process.env.AI_PROVIDER || "").toLowerCase();
     let result = null;
     let source = "unknown";
+    let modelUsed = null;
 
     // 1. Try Vercel AI Gateway if configured
     if (!result && process.env.AI_GATEWAY_API_KEY) {
-      result = await callVercelAiGateway(cleanBase64, mimeType);
-      if (result) source = "vercel-ai-gateway";
+      const gwHit = await callVercelAiGateway(cleanBase64, mimeType);
+      if (gwHit && gwHit.data) {
+        result = gwHit.data;
+        modelUsed = gwHit.model;
+        source = "vercel-ai-gateway";
+      }
     }
 
     // 2. Try preferred Gemini / OpenAI direct provider
     if (!result) {
       if (providerPref === "openai") {
         result = await callOpenAIVision(cleanBase64, mimeType);
-        if (result) source = "openai-vision";
-      } else {
-        result = await callGeminiVision(cleanBase64, mimeType);
         if (result) {
+          source = "openai-vision";
+          modelUsed = process.env.OPENAI_MODEL || "gpt-4o-mini";
+        }
+      } else {
+        const gemHit = await callGeminiVision(cleanBase64, mimeType);
+        if (gemHit && gemHit.data) {
+          result = gemHit.data;
+          modelUsed = gemHit.model;
           source = "gemini-vision";
         } else if (process.env.OPENAI_API_KEY) {
           result = await callOpenAIVision(cleanBase64, mimeType);
-          if (result) source = "openai-vision";
+          if (result) {
+            source = "openai-vision";
+            modelUsed = process.env.OPENAI_MODEL || "gpt-4o-mini";
+          }
         }
       }
     }
 
     // 3. Failover to Gemini if OpenAI failed
     if (!result && providerPref === "openai" && (process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY)) {
-      result = await callGeminiVision(cleanBase64, mimeType);
-      if (result) source = "gemini-vision";
+      const gemHit = await callGeminiVision(cleanBase64, mimeType);
+      if (gemHit && gemHit.data) {
+        result = gemHit.data;
+        modelUsed = gemHit.model;
+        source = "gemini-vision";
+      }
     }
 
     // 4. Never fabricate fake venue/price data -> let client run real local Polish OCR
@@ -315,6 +413,7 @@ async function handler(req, res) {
     return res.status(200).json({
       success: true,
       source,
+      modelUsed,
       data: sanitized
     });
 
@@ -329,6 +428,7 @@ async function handler(req, res) {
 
 module.exports = handler;
 module.exports.default = handler;
+module.exports.pickBestFlashModels = pickBestFlashModels;
 module.exports.config = {
   api: {
     bodyParser: {
