@@ -30110,6 +30110,53 @@ body.theme-light .pass-verify-meta-item {
   border-color: #e2e8f0 !important;
 }
 
+/* Opening Hours Field + Auto-Lookup Button in Add/Edit Bar Modal (v186) */
+.report-hours-field-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.report-hours-field-wrap .flighty-row-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.btn-lookup-hours {
+  flex-shrink: 0;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 9px;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  background: rgba(14, 165, 233, 0.16);
+  color: #7dd3fc;
+  font-size: 0.72rem;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.14s ease, background 0.16s ease, opacity 0.16s ease;
+}
+
+.btn-lookup-hours:hover {
+  background: rgba(14, 165, 233, 0.26);
+}
+
+.btn-lookup-hours:active {
+  transform: scale(0.95);
+}
+
+.btn-lookup-hours:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+body.theme-light .btn-lookup-hours {
+  background: #e0f2fe !important;
+  border-color: #7dd3fc !important;
+  color: #0369a1 !important;
+}
+
+
 
 
 

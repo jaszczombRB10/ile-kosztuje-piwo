@@ -5629,6 +5629,11 @@
       const hhInput = document.getElementById("report-happy-hour");
       if (hhInput) hhInput.value = venue.happy_hour || "";
 
+      const hoursInput = document.getElementById("report-hours");
+      if (hoursInput) hoursInput.value = venue.hours || "";
+      autoLookedUpCoords = null;
+      lastAutoHoursSignature = "";
+
       const nameInput = document.getElementById("report-name");
       if (nameInput) {
         nameInput.value = "";
@@ -5770,8 +5775,100 @@
       }
     };
 
+    let autoLookedUpCoords = null;
+    let lastAutoHoursSignature = "";
+
+    async function lookupVenueHoursFromWeb(name, address, city, lat = null, lng = null) {
+      if (!navigator.onLine) return null;
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 6500);
+      try {
+        const res = await fetch("/api/lookup-hours", {
+          method: "POST",
+          signal: controller.signal,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, address, city, lat, lng })
+        });
+        if (!res.ok) return null;
+        return await res.json();
+      } catch (e) {
+        return null;
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    function formatLookupSourceLabel(src) {
+      if (src === "google-maps") return "Google Maps";
+      if (src === "google-search-ai") return "Google Search";
+      if (src === "openstreetmap") return "OpenStreetMap";
+      return "sieć";
+    }
+
+    async function triggerManualOrAutoHoursLookup(silentIfNotFound = false) {
+      const nameVal = (document.getElementById("report-name")?.value || "").trim();
+      const addrVal = (document.getElementById("report-address")?.value || "").trim();
+      const hoursEl = document.getElementById("report-hours");
+      const btnLookup = document.getElementById("btn-lookup-hours");
+      if (!nameVal && !addrVal) {
+        if (!silentIfNotFound) showAppToast("Podaj nazwę lub adres 🏠", "Wpisz nazwę lokalu i adres, aby wyszukać godziny otwarcia.", "🕒", 3000);
+        return;
+      }
+      if (btnLookup) {
+        btnLookup.disabled = true;
+        btnLookup.textContent = "⏳...";
+      }
+      try {
+        const cityName = (typeof getCurrentCity === "function" && getCurrentCity()) ? getCurrentCity().name : "Warszawa";
+        const data = await lookupVenueHoursFromWeb(nameVal, addrVal, cityName);
+        if (data && typeof data.latitude === "number" && typeof data.longitude === "number") {
+          autoLookedUpCoords = [data.latitude, data.longitude];
+        }
+        if (data && data.found && data.hours && hoursEl) {
+          hoursEl.value = data.hours;
+          hoursEl.classList.add("field-ai-highlight");
+          setTimeout(() => hoursEl.classList.remove("field-ai-highlight"), 2500);
+          showAppToast(
+            `Znaleziono godziny (${formatLookupSourceLabel(data.source)}) 🕒`,
+            data.hours,
+            "✨",
+            3200
+          );
+        } else if (!silentIfNotFound) {
+          showAppToast("Nie znaleziono godzin w sieci 🔍", "Wpisz godziny ręcznie lub zostaw puste (ustawimy domyślne 16:00 - 02:00).", "🕒", 3500);
+        }
+      } finally {
+        if (btnLookup) {
+          btnLookup.disabled = false;
+          btnLookup.textContent = "🔍 Szukaj";
+        }
+      }
+    }
+
+    const btnLookupHours = document.getElementById("btn-lookup-hours");
+    if (btnLookupHours) {
+      btnLookupHours.addEventListener("click", () => triggerManualOrAutoHoursLookup(false));
+    }
+
+    const reportAddrBlurEl = document.getElementById("report-address");
+    if (reportAddrBlurEl) {
+      reportAddrBlurEl.addEventListener("blur", () => {
+        if (currentModalMode !== "add") return;
+        const nameVal = (document.getElementById("report-name")?.value || "").trim();
+        const addrVal = reportAddrBlurEl.value.trim();
+        const hoursEl = document.getElementById("report-hours");
+        if (!nameVal || addrVal.length < 4 || (hoursEl && hoursEl.value.trim())) return;
+        const sig = `${nameVal.toLowerCase()}|${addrVal.toLowerCase()}`;
+        if (sig === lastAutoHoursSignature) return;
+        lastAutoHoursSignature = sig;
+        triggerManualOrAutoHoursLookup(true);
+      });
+    }
+
     function openAddModal(autoScan = false) {
       currentEditVenue = null;
+      autoLookedUpCoords = null;
+      lastAutoHoursSignature = "";
       if (reportForm) reportForm.reset();
       resetPhotoUpload();
       if (addressMatchBox) addressMatchBox.innerHTML = "";
@@ -5853,6 +5950,11 @@
       const hhInput = document.getElementById("report-happy-hour");
       if (hhInput) hhInput.value = venue.happy_hour || "";
 
+      const hoursInput = document.getElementById("report-hours");
+      if (hoursInput) hoursInput.value = venue.hours || "";
+      autoLookedUpCoords = null;
+      lastAutoHoursSignature = "";
+
       if (drawer) drawer.classList.remove("open");
       if (baroModal) { baroModal.classList.remove("active"); baroModal.style.display = "none"; }
       if (window.__closePubCrawl) window.__closePubCrawl();
@@ -5896,6 +5998,8 @@
       if (addressMatchBox) addressMatchBox.innerHTML = "";
       currentModalMode = "add";
       currentEditVenue = null;
+      autoLookedUpCoords = null;
+      lastAutoHoursSignature = "";
     }
 
     window.__closeAddModal = closeModal;
@@ -5924,6 +6028,7 @@
       const shotPrice = parseFloat(document.getElementById("report-shot").value) || null;
       const isCraft = document.getElementById("report-craft").value === "true";
       const happyHour = document.getElementById("report-happy-hour").value.trim() || null;
+      let hoursVal = (document.getElementById("report-hours")?.value || "").trim();
 
       // Check if user attached a photo proof
       let uploadedPhotoUrl = null;
@@ -5991,6 +6096,7 @@
         if (shotPrice !== null) existing.shot_price_pln = shotPrice;
         existing.is_craft = isCraft;
         if (happyHour) existing.happy_hour = happyHour;
+        if (hoursVal) existing.hours = hoursVal;
         if (uploadedPhotoUrl) existing.photo_url = uploadedPhotoUrl;
         existing.last_updated = new Date().toISOString().split("T")[0];
         existing.votes_confirm = (existing.votes_confirm || 1) + 1;
@@ -6014,6 +6120,7 @@
         if (shotPrice !== null) existing.shot_price_pln = shotPrice;
         existing.is_craft = isCraft;
         if (happyHour) existing.happy_hour = happyHour;
+        if (hoursVal) existing.hours = hoursVal;
         if (uploadedPhotoUrl) existing.photo_url = uploadedPhotoUrl;
         existing.is_verified = true;
         existing.verified_by_community = true;
@@ -6035,6 +6142,7 @@
           existing.beer_price_pln = price;
           if (shotPrice !== null) existing.shot_price_pln = shotPrice;
           if (happyHour) existing.happy_hour = happyHour;
+          if (hoursVal) existing.hours = hoursVal;
           if (uploadedPhotoUrl) existing.photo_url = uploadedPhotoUrl;
           existing.is_verified = true;
           existing.verified_by_community = true;
@@ -6048,15 +6156,38 @@
           existing.votes_confirm = (existing.votes_confirm || 1) + 1;
           saveLocalVenue(existing);
         } else {
-          // Determine accurate coordinates based on district and address
+          // Determine accurate coordinates and opening hours (Google Maps / Gemini Search / OSM)
           const dTarget = DISTRICT_CENTERS[district] || DISTRICT_CENTERS["all"] || { coords: WARSAW_CENTER };
-          let venueLat = dTarget.coords[0] + (Math.random() - 0.5) * 0.005;
-          let venueLng = dTarget.coords[1] + (Math.random() - 0.5) * 0.005;
+          let venueLat = autoLookedUpCoords ? autoLookedUpCoords[0] : (dTarget.coords[0] + (Math.random() - 0.5) * 0.005);
+          let venueLng = autoLookedUpCoords ? autoLookedUpCoords[1] : (dTarget.coords[1] + (Math.random() - 0.5) * 0.005);
+          const rawAddr = document.getElementById("report-address").value.trim();
+          const cityName = (typeof getCurrentCity === "function" && getCurrentCity()) ? getCurrentCity().name : "Warszawa";
 
-          if (address && address.trim()) {
+          if (!hoursVal && navigator.onLine) {
+            const submitBtn = document.getElementById("report-submit-btn");
+            const prevBtnHtml = submitBtn ? submitBtn.innerHTML : "";
+            if (submitBtn) {
+              submitBtn.disabled = true;
+              submitBtn.innerHTML = "🔍 Szukam godzin otwarcia...";
+            }
+            const looked = await lookupVenueHoursFromWeb(name, rawAddr, cityName, autoLookedUpCoords ? venueLat : null, autoLookedUpCoords ? venueLng : null);
+            if (looked) {
+              if (looked.found && looked.hours) hoursVal = looked.hours;
+              if (!autoLookedUpCoords && typeof looked.latitude === "number" && typeof looked.longitude === "number") {
+                venueLat = looked.latitude;
+                venueLng = looked.longitude;
+              }
+            }
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.innerHTML = prevBtnHtml;
+            }
+          }
+
+          if (!autoLookedUpCoords && rawAddr) {
             try {
-              const cleanAddr = address.trim().replace(/^ul\.\s*/i, "");
-              const q = encodeURIComponent(`${cleanAddr}, ${getCurrentCity().name}`);
+              const cleanAddr = rawAddr.replace(/^ul\.\s*/i, "");
+              const q = encodeURIComponent(`${cleanAddr}, ${cityName}`);
               const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`, {
                 headers: { "Accept": "application/json" }
               });
@@ -6087,7 +6218,7 @@
             is_craft: isCraft,
             happy_hour: happyHour,
             photo_url: uploadedPhotoUrl,
-            hours: "16:00 - 02:00",
+            hours: hoursVal || "16:00 - 02:00",
             is_verified: true,
             verified_by_community: true,
             verified_by_receipt: currentOcrMetadata && currentOcrMetadata.is_valid_image ? true : false,

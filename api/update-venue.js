@@ -72,6 +72,7 @@ module.exports = async (req, res) => {
           beer_price_pln: price,
           shot_price_pln: cleanPayload.shot_price_pln !== undefined ? cleanPayload.shot_price_pln : targetVenue.shot_price_pln,
           happy_hour: cleanPayload.happy_hour !== undefined ? cleanPayload.happy_hour : targetVenue.happy_hour,
+          hours: cleanPayload.hours ? cleanPayload.hours : targetVenue.hours,
           photo_url: cleanPayload.photo_url || targetVenue.photo_url,
           is_verified: cleanPayload.is_verified !== undefined ? cleanPayload.is_verified : targetVenue.is_verified,
           votes_confirm: (targetVenue.votes_confirm || 0) + 1,

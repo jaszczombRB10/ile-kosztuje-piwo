@@ -100,7 +100,7 @@
   <script defer src="https://cloud.umami.is/script.js" data-website-id="auto" id="umami-analytics-script"></script>
 
   <!-- Custom Styles -->
-  <link rel="stylesheet" href="styles.css?v=185">
+  <link rel="stylesheet" href="styles.css?v=186">
 </head>
 <body>
 
@@ -1193,6 +1193,13 @@
                 <label class="flighty-row-label" for="report-happy-hour">⚡ Promka</label>
                 <div class="flighty-row-field">
                   <input type="text" id="report-happy-hour" class="flighty-row-input" placeholder="np. Pn-Śr 16:00-18:00 piwo 10 zł" />
+                </div>
+              </div>
+              <div class="flighty-edit-row">
+                <label class="flighty-row-label" for="report-hours">🕒 Godziny</label>
+                <div class="flighty-row-field report-hours-field-wrap">
+                  <input type="text" id="report-hours" class="flighty-row-input" placeholder="Auto (Google / OSM) lub np. 16:00 - 02:00" />
+                  <button type="button" id="btn-lookup-hours" class="btn-lookup-hours" title="Znajdź godziny otwarcia w Google Maps i OpenStreetMap">🔍 Szukaj</button>
                 </div>
               </div>
             </div>
@@ -4473,6 +4480,6 @@
   <script src="moderation.js"></script>
 
   <!-- Main Application Logic -->
-  <script src="app.js?v=185"></script>
+  <script src="app.js?v=186"></script>
 </body>
 </html>
