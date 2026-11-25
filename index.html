@@ -100,7 +100,7 @@
   <script defer src="https://cloud.umami.is/script.js" data-website-id="auto" id="umami-analytics-script"></script>
 
   <!-- Custom Styles -->
-  <link rel="stylesheet" href="styles.css?v=180">
+  <link rel="stylesheet" href="styles.css?v=181">
 </head>
 <body>
 
@@ -1604,6 +1604,15 @@
         <button type="button" id="btn-legend-done" class="flighty-edit-nav-btn save">Gotowe ✓</button>
       </div>
       <div class="flighty-edit-form legend-modal-body">
+        <button type="button" class="legend-tutorial-banner-btn" id="btn-replay-tutorial-legend">
+          <img src="icons/syrenka-hero.png" alt="Syrenka" class="legend-tutorial-avatar" width="44" height="44" />
+          <div class="legend-tutorial-copy">
+            <strong>🧜‍♀️ Przewodnik z Syrenką</strong>
+            <span>Zobacz krok po kroku, co robi każda funkcja aplikacji</span>
+          </div>
+          <span class="legend-tutorial-cta">Start →</span>
+        </button>
+
         <div class="flighty-edit-section">
           <div class="flighty-edit-sec-header">
             <span>01 · KOLORY CEN NA MAPIE (0.5L Z NALEWAKA)</span>
@@ -2520,6 +2529,10 @@
 
         <!-- Subtle, Minimalist Profile Footer (Regulamin & Wyloguj się) -->
         <div class="profile-footer-clean" style="margin:0;">
+          <button type="button" class="profile-footer-link" id="btn-profile-tutorial" title="Uruchom interaktywny przewodnik z Syrenką">
+            🧜‍♀️ Samouczek
+          </button>
+          <span class="profile-footer-dot" aria-hidden="true">·</span>
           <button type="button" class="profile-footer-link btn-open-legal-terms" id="btn-profile-legal" title="Regulamin serwisu, crowdsourcing i ochrona twórcy">
             📜 Regulamin & Crowdsourcing
           </button>
@@ -4370,6 +4383,37 @@
     </div>
   </div>
 
+  <!-- Interaktywny Samouczek / Przewodnik z Warszawską Syrenką z piwem -->
+  <div class="syrenka-tutorial-overlay" id="syrenka-tutorial-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="tutorial-step-title">
+    <div class="tutorial-spotlight" id="tutorial-spotlight" aria-hidden="true"></div>
+
+    <div class="tutorial-stage-card" id="tutorial-stage-card" data-target-dir="down">
+      <button type="button" class="tutorial-syrenka-mascot" id="tutorial-syrenka-btn" title="Kliknij Syrenkę, aby pominąć samouczek" aria-label="Kliknij Syrenkę, aby pominąć samouczek">
+        <div class="tutorial-syrenka-avatar-ring">
+          <img src="icons/syrenka-hero.png" alt="Warszawska Syrenka z piwem" width="68" height="68" />
+          <span class="tutorial-syrenka-beer-badge" aria-hidden="true">🍺</span>
+        </div>
+        <span class="tutorial-syrenka-skip-pill">✕ Pomiń</span>
+      </button>
+
+      <div class="tutorial-speech-bubble" id="tutorial-speech-bubble">
+        <div class="tutorial-bubble-top">
+          <span class="tutorial-eyebrow" id="tutorial-step-counter">SYRENKA OPROWADZA · 1/7</span>
+          <button type="button" class="tutorial-btn-skip-top" id="btn-tutorial-skip" aria-label="Pomiń przewodnik">Pomiń ✕</button>
+        </div>
+        <h3 class="tutorial-title" id="tutorial-step-title">Hej! Jestem Warszawska Syrenka 🧜‍♀️🍺</h3>
+        <p class="tutorial-desc" id="tutorial-step-desc">Pokażę Ci w 30 sekund, jak znaleźć najtańsze i otwarte teraz piwo w mieście. W każdej chwili kliknij we mnie, żeby pominąć!</p>
+        <div class="tutorial-bubble-footer">
+          <div class="tutorial-dots" id="tutorial-dots" role="tablist" aria-label="Kroki przewodnika"></div>
+          <div class="tutorial-nav-btns">
+            <button type="button" class="tutorial-btn-prev" id="btn-tutorial-prev" aria-label="Poprzedni krok">←</button>
+            <button type="button" class="tutorial-btn-next" id="btn-tutorial-next">Dalej →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Leaflet JS & MarkerCluster JS (Local) -->
   <script src="vendor/leaflet/leaflet.js"></script>
   <script src="vendor/leaflet/leaflet.markercluster.js"></script>
@@ -4382,6 +4426,6 @@
   <script src="moderation.js"></script>
 
   <!-- Main Application Logic -->
-  <script src="app.js?v=180"></script>
+  <script src="app.js?v=181"></script>
 </body>
 </html>

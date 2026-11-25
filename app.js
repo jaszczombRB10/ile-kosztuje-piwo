@@ -4412,6 +4412,14 @@
       return;
     }
 
+    // Direct hash to open Syrenka Tutorial
+    if (lower === "tutorial" || lower === "samouczek" || lower === "pomoc") {
+      if (typeof window.__openTutorial === "function") {
+        window.__openTutorial(true);
+      }
+      return;
+    }
+
     if (raw.startsWith("@")) {
       const username = raw.slice(1).trim();
       if (username && window.__openUserProfile) {
@@ -7213,6 +7221,11 @@
           localStorage.setItem("poilepiwko_terms_accepted", "true");
         } catch (e) {}
         if (ageModal) ageModal.classList.remove("active");
+        setTimeout(() => {
+          if (typeof window.__maybeAutoStartTutorial === "function") {
+            window.__maybeAutoStartTutorial();
+          }
+        }, 550);
       }
 
       if (btnAgeYes && ageModal) {
@@ -27579,6 +27592,403 @@
     });
   }
 
+  // Interactive App Walkthrough with Warszawska Syrenka z piwem (v181)
+  function initSyrenkaTutorial(hadInitialDeepLink = false) {
+    const TUTORIAL_STORAGE_KEY = "poilepiwko_tutorial_done_v1";
+    const overlay = document.getElementById("syrenka-tutorial-overlay");
+    const spotlight = document.getElementById("tutorial-spotlight");
+    const stageCard = document.getElementById("tutorial-stage-card");
+    const syrenkaBtn = document.getElementById("tutorial-syrenka-btn");
+    const btnSkipTop = document.getElementById("btn-tutorial-skip");
+    const btnPrev = document.getElementById("btn-tutorial-prev");
+    const btnNext = document.getElementById("btn-tutorial-next");
+    const stepCounterEl = document.getElementById("tutorial-step-counter");
+    const stepTitleEl = document.getElementById("tutorial-step-title");
+    const stepDescEl = document.getElementById("tutorial-step-desc");
+    const dotsEl = document.getElementById("tutorial-dots");
+
+    if (!overlay || !spotlight || !stageCard) return;
+
+    const steps = [
+      {
+        selectors: null,
+        isOverview: true,
+        preferPos: "below",
+        title: "Hej! Jestem Warszawska Syrenka 🧜‍♀️🍺",
+        desc: "Oprowadzę Cię po aplikacji w 30 sekund! Kółka na mapie to ceny lanego piwa (0.5L): zielone ≤12 zł, pomarańczowe 13–18 zł, czerwone 19+ zł. Kliknij bar, by zobaczyć szczegóły — albo kliknij we mnie, by pominąć!"
+      },
+      {
+        selectors: ["#btn-top-filter", "#btn-top-brand", "#btn-top-search"],
+        radius: 26,
+        preferPos: "below",
+        title: "Szukaj, filtruj i zmieniaj miasto 🔍",
+        desc: "U góry przełączysz miasto, wyszukasz konkretny lokal lub otworzysz dokładne filtry — np. kraft, piwo 0.0% albo zniżki z Kartą Pass."
+      },
+      {
+        selectors: ["#map-quick-pills .quick-hud-pill"],
+        radius: 22,
+        preferPos: "below",
+        title: "Na szybko: Otwarte, Tanie i Legenda ⚡",
+        desc: "Jednym kliknięciem pokażesz tylko otwarte teraz bary lub piwo do 12 zł. Pod przyciskiem „ℹ️ Legenda” zawsze sprawdzisz symbole i włączysz ten samouczek ponownie."
+      },
+      {
+        selectors: ["#nav-btn-ranking"],
+        radius: 18,
+        preferPos: "above",
+        title: "Ranking najtańszych lokali 🏆",
+        desc: "Wolisz wygodną listę zamiast mapy? Tutaj posortujesz wszystkie bary od najniższej ceny, najbliższej odległości, odwiedzonych lub ulubionych."
+      },
+      {
+        selectors: ["#nav-btn-discover"],
+        radius: 18,
+        preferPos: "above",
+        title: "Pub Crawl, Ruletka i Gry 🎲",
+        desc: "Centrum imprezowe! Zaplanujesz tu trasę Pub Crawl, zakręcisz Ruletką Barową, sprawdzisz Happy Hours, zagrasz z ekipą w Czółko lub Quiz i włączysz Bezpieczny Powrót SOS."
+      },
+      {
+        selectors: ["#nav-btn-action", "#nav-action-fab"],
+        radius: 28,
+        preferPos: "above",
+        title: "Działaj na żywo w barze! 📸",
+        desc: "Jesteś na miejscu? Kliknij środkową Syrenkę, aby wrzucić 24h BeReal z kuflem, potwierdzić cenę 1 kliknięciem albo zeskanować paragon przez Skaner AI."
+      },
+      {
+        selectors: ["#nav-btn-community", "#nav-btn-profile"],
+        radius: 18,
+        preferPos: "above",
+        title: "Ekipa na żywo i Paszport Piwny 🎖️",
+        desc: "W „Ekipie” widzisz znajomych w barach na żywo (24h), a w „Profilu” zbierasz pieczątki w Paszporcie Piwnym i odbierasz Kartę Pass (-10%). Na zdrowie!"
+      }
+    ];
+
+    let currentStepIdx = 0;
+    let isOpen = false;
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    function getUnionRect(selectors) {
+      if (!Array.isArray(selectors) || selectors.length === 0) return null;
+      let left = Infinity;
+      let top = Infinity;
+      let right = -Infinity;
+      let bottom = -Infinity;
+      let found = 0;
+
+      selectors.forEach(sel => {
+        document.querySelectorAll(sel).forEach(el => {
+          const r = el.getBoundingClientRect();
+          if (r.width > 0 && r.height > 0) {
+            left = Math.min(left, r.left);
+            top = Math.min(top, r.top);
+            right = Math.max(right, r.right);
+            bottom = Math.max(bottom, r.bottom);
+            found++;
+          }
+        });
+      });
+
+      if (!found) return null;
+      return { left, top, right, bottom, width: right - left, height: bottom - top };
+    }
+
+    function positionSpotlightAndCard() {
+      if (!isOpen) return;
+      const step = steps[currentStepIdx];
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+
+      let targetRect = null;
+      if (step.isOverview || !step.selectors) {
+        const w = Math.min(340, Math.max(220, vw - 44));
+        const h = Math.min(180, Math.max(106, Math.round(vh * 0.24)));
+        const top = Math.max(118, Math.round(vh * 0.17));
+        const left = Math.round((vw - w) / 2);
+        targetRect = { left, top, right: left + w, bottom: top + h, width: w, height: h };
+        spotlight.classList.add("is-map-overview");
+        spotlight.style.top = `${targetRect.top}px`;
+        spotlight.style.left = `${targetRect.left}px`;
+        spotlight.style.width = `${targetRect.width}px`;
+        spotlight.style.height = `${targetRect.height}px`;
+        spotlight.style.borderRadius = "24px";
+      } else {
+        spotlight.classList.remove("is-map-overview");
+        const raw = getUnionRect(step.selectors);
+        if (raw) {
+          const pad = 7;
+          targetRect = {
+            left: Math.max(4, raw.left - pad),
+            top: Math.max(4, raw.top - pad),
+            right: Math.min(vw - 4, raw.right + pad),
+            bottom: Math.min(vh - 4, raw.bottom + pad)
+          };
+          targetRect.width = Math.max(32, targetRect.right - targetRect.left);
+          targetRect.height = Math.max(32, targetRect.bottom - targetRect.top);
+          spotlight.style.top = `${targetRect.top}px`;
+          spotlight.style.left = `${targetRect.left}px`;
+          spotlight.style.width = `${targetRect.width}px`;
+          spotlight.style.height = `${targetRect.height}px`;
+          spotlight.style.borderRadius = `${step.radius || 18}px`;
+        } else {
+          const w = Math.min(300, vw - 40);
+          const h = 120;
+          targetRect = { left: (vw - w) / 2, top: vh * 0.28, width: w, height: h, right: (vw + w) / 2, bottom: vh * 0.28 + h };
+          spotlight.style.top = `${targetRect.top}px`;
+          spotlight.style.left = `${targetRect.left}px`;
+          spotlight.style.width = `${w}px`;
+          spotlight.style.height = `${h}px`;
+          spotlight.style.borderRadius = "20px";
+        }
+      }
+
+      // Measure stageCard height after content update to position without overlap
+      const cardRect = stageCard.getBoundingClientRect();
+      const cardHeight = cardRect.height || 205;
+      const gap = 16;
+      const centerY = targetRect.top + targetRect.height / 2;
+      const placeBelow = step.preferPos === "below"
+        ? (targetRect.bottom + gap + cardHeight <= vh - 12)
+        : (centerY < vh * 0.45 && targetRect.bottom + gap + cardHeight <= vh - 12);
+
+      let cardTop;
+      if (placeBelow) {
+        cardTop = targetRect.bottom + gap;
+      } else {
+        cardTop = targetRect.top - gap - cardHeight;
+      }
+      cardTop = Math.max(12, Math.min(cardTop, vh - cardHeight - 12));
+      stageCard.style.top = `${Math.round(cardTop)}px`;
+    }
+
+    function renderStep(idx) {
+      currentStepIdx = Math.max(0, Math.min(idx, steps.length - 1));
+      const step = steps[currentStepIdx];
+
+      if (stepCounterEl) {
+        stepCounterEl.textContent = `SYRENKA OPROWADZA · ${currentStepIdx + 1}/${steps.length}`;
+      }
+      if (stepTitleEl) stepTitleEl.textContent = step.title;
+      if (stepDescEl) stepDescEl.textContent = step.desc;
+
+      if (btnPrev) {
+        btnPrev.disabled = currentStepIdx === 0;
+      }
+      if (btnNext) {
+        btnNext.textContent = currentStepIdx === steps.length - 1 ? "Zaczynamy! 🍻" : "Dalej →";
+      }
+
+      if (dotsEl) {
+        dotsEl.innerHTML = steps.map((_, i) =>
+          `<button type="button" class="tutorial-dot${i === currentStepIdx ? " active" : ""}" data-tut-step="${i}" aria-label="Krok ${i + 1}"></button>`
+        ).join("");
+        dotsEl.querySelectorAll(".tutorial-dot").forEach(dot => {
+          dot.addEventListener("click", () => {
+            const targetIdx = parseInt(dot.getAttribute("data-tut-step"), 10);
+            if (!Number.isNaN(targetIdx)) {
+              if (window.poileHaptics) window.poileHaptics.tick();
+              renderStep(targetIdx);
+            }
+          });
+        });
+      }
+
+      requestAnimationFrame(() => {
+        positionSpotlightAndCard();
+      });
+    }
+
+    function finishTutorial(wasSkipped = false) {
+      if (!isOpen) return;
+      isOpen = false;
+      try {
+        localStorage.setItem(TUTORIAL_STORAGE_KEY, "true");
+      } catch (e) {}
+
+      overlay.classList.remove("active");
+      setTimeout(() => {
+        if (!isOpen) overlay.style.display = "none";
+      }, 240);
+
+      if (typeof ModalHistoryManager !== "undefined") {
+        ModalHistoryManager.pop("syrenka-tutorial-overlay");
+      }
+
+      if (window.poileHaptics) {
+        if (wasSkipped) window.poileHaptics.tick();
+        else if (window.poileHaptics.success) window.poileHaptics.success();
+      }
+
+      if (wasSkipped) {
+        showAppToast("Przewodnik pominięty 🧜‍♀️", "W każdej chwili włączysz go ponownie w Legendzie (ℹ️)", "🍺", 3200);
+      } else {
+        showAppToast("Wszystko jasne! Na zdrowie! 🍻", "Kliknij dowolny bar na mapie, aby zacząć.", "🧜‍♀️", 3400);
+      }
+    }
+
+    function startTutorial(force = false) {
+      const ageModal = document.getElementById("age-gate-modal");
+      if (ageModal && ageModal.classList.contains("active")) return;
+
+      if (!force) {
+        try {
+          if (localStorage.getItem(TUTORIAL_STORAGE_KEY) === "true") return;
+        } catch (e) {}
+      }
+
+      // Close other overlays so the map top HUD, quick pills, and bottom dock are clearly visible
+      if (typeof window.__closeRankingDrawer === "function") window.__closeRankingDrawer();
+      if (typeof window.__closeAllModalsAndSheets === "function") window.__closeAllModalsAndSheets();
+      if (typeof window.__clearBottomNavActive === "function") window.__clearBottomNavActive();
+      document.body.classList.remove("modal-open", "drawer-open");
+
+      isOpen = true;
+      overlay.style.display = "block";
+      renderStep(0);
+      requestAnimationFrame(() => {
+        overlay.classList.add("active");
+        positionSpotlightAndCard();
+      });
+
+      if (typeof ModalHistoryManager !== "undefined") {
+        ModalHistoryManager.push("syrenka-tutorial-overlay", () => finishTutorial(true));
+      }
+    }
+
+    function maybeAutoStartTutorial() {
+      if (isOpen) return;
+      try {
+        if (localStorage.getItem(TUTORIAL_STORAGE_KEY) === "true") return;
+      } catch (e) {}
+
+      const ageModal = document.getElementById("age-gate-modal");
+      if (ageModal && ageModal.classList.contains("active")) return;
+
+      const onboardingModal = document.getElementById("onboarding-username-modal");
+      if (onboardingModal && onboardingModal.classList.contains("active")) return;
+
+      const activeModal = document.querySelector(".modal-backdrop.active, .bottom-sheet-backdrop.active");
+      if (activeModal) return;
+
+      const venueSheet = document.getElementById("venue-sheet");
+      if (venueSheet && venueSheet.getAttribute("data-state") !== "closed" && venueSheet.style.display !== "none") return;
+
+      const drawer = document.getElementById("ranking-drawer");
+      if (drawer && drawer.classList.contains("open")) return;
+
+      startTutorial(false);
+    }
+
+    window.__openTutorial = startTutorial;
+    window.__closeTutorial = () => finishTutorial(true);
+    window.__maybeAutoStartTutorial = maybeAutoStartTutorial;
+
+    // Clicking the Syrenka mascot directly immediately skips the tutorial
+    if (syrenkaBtn) {
+      syrenkaBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        finishTutorial(true);
+      });
+    }
+
+    if (btnSkipTop) {
+      btnSkipTop.addEventListener("click", (e) => {
+        e.stopPropagation();
+        finishTutorial(true);
+      });
+    }
+
+    if (btnPrev) {
+      btnPrev.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (currentStepIdx > 0) {
+          if (window.poileHaptics) window.poileHaptics.tick();
+          renderStep(currentStepIdx - 1);
+        }
+      });
+    }
+
+    if (btnNext) {
+      btnNext.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (currentStepIdx >= steps.length - 1) {
+          finishTutorial(false);
+        } else {
+          if (window.poileHaptics) window.poileHaptics.tick();
+          renderStep(currentStepIdx + 1);
+        }
+      });
+    }
+
+    // Touch swipe navigation on speech bubble
+    const speechBubble = document.getElementById("tutorial-speech-bubble");
+    if (speechBubble) {
+      speechBubble.addEventListener("touchstart", (e) => {
+        if (e.touches && e.touches[0]) {
+          touchStartX = e.touches[0].clientX;
+          touchStartY = e.touches[0].clientY;
+        }
+      }, { passive: true });
+      speechBubble.addEventListener("touchend", (e) => {
+        if (!isOpen || !e.changedTouches || !e.changedTouches[0]) return;
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        const dy = e.changedTouches[0].clientY - touchStartY;
+        if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.4) {
+          if (dx < 0 && currentStepIdx < steps.length - 1) {
+            renderStep(currentStepIdx + 1);
+          } else if (dx > 0 && currentStepIdx > 0) {
+            renderStep(currentStepIdx - 1);
+          }
+        }
+      }, { passive: true });
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (!isOpen) return;
+      if (e.key === "Escape") {
+        finishTutorial(true);
+      } else if (e.key === "ArrowRight") {
+        if (currentStepIdx >= steps.length - 1) finishTutorial(false);
+        else renderStep(currentStepIdx + 1);
+      } else if (e.key === "ArrowLeft" && currentStepIdx > 0) {
+        renderStep(currentStepIdx - 1);
+      }
+    });
+
+    window.addEventListener("resize", () => {
+      if (isOpen) positionSpotlightAndCard();
+    });
+    window.addEventListener("orientationchange", () => {
+      if (isOpen) setTimeout(positionSpotlightAndCard, 120);
+    });
+
+    // Replay triggers in Legend & Profile
+    const btnReplayLegend = document.getElementById("btn-replay-tutorial-legend");
+    if (btnReplayLegend) {
+      btnReplayLegend.addEventListener("click", () => {
+        if (typeof window.__closeMapLegend === "function") window.__closeMapLegend();
+        setTimeout(() => startTutorial(true), 120);
+      });
+    }
+
+    const btnProfileTutorial = document.getElementById("btn-profile-tutorial");
+    if (btnProfileTutorial) {
+      btnProfileTutorial.addEventListener("click", () => {
+        if (typeof window.__closeMyProfile === "function") window.__closeMyProfile();
+        setTimeout(() => startTutorial(true), 120);
+      });
+    }
+
+    // Auto-start once for returning 18+ users who haven't seen the tutorial yet (when no deep-link is active)
+    if (!hadInitialDeepLink) {
+      try {
+        if (localStorage.getItem(TUTORIAL_STORAGE_KEY) !== "true") {
+          setTimeout(() => {
+            maybeAutoStartTutorial();
+          }, 1050);
+        }
+      } catch (e) {}
+    }
+  }
+
   // URL Action Router (PWA App Shortcuts: ?action=compass, ?action=roulette, etc.)
   function handleInitialUrlAction() {
     try {
@@ -27639,6 +28049,13 @@
               window.__openPassport();
             }
             break;
+          case "tutorial":
+          case "help":
+          case "samouczek":
+            if (typeof window.__openTutorial === "function") {
+              window.__openTutorial(true);
+            }
+            break;
           default:
             console.log("[Router] Unrecognized initial action:", action);
         }
@@ -27650,6 +28067,18 @@
 
   // Boot Application
   function boot() {
+    let hadInitialDeepLink = false;
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      hadInitialDeepLink = Boolean(
+        (window.location.hash && window.location.hash.length > 1) ||
+        sp.get("action") ||
+        sp.get("bar") ||
+        sp.get("venue") ||
+        sp.get("id")
+      );
+    } catch (e) {}
+
     if (typeof ModalHistoryManager !== "undefined") {
       ModalHistoryManager.init();
     }
@@ -27662,6 +28091,7 @@
     initUserGeolocation();
     initMobileModernization();
     initTimeContextEngine();
+    initSyrenkaTutorial(hadInitialDeepLink);
     handleInitialUrlAction();
 
     // Register Service Worker for PWA with automatic update detection
