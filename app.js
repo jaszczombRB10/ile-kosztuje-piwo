@@ -4425,6 +4425,14 @@
       return;
     }
 
+    // Direct hash to open Interactive PWA/TWA Install Guide
+    if (lower === "install" || lower === "zainstaluj" || lower === "aplikacja" || lower === "pwa") {
+      if (typeof window.__openIosInstall === "function") {
+        window.__openIosInstall();
+      }
+      return;
+    }
+
     if (raw.startsWith("@")) {
       const username = raw.slice(1).trim();
       if (username && window.__openUserProfile) {
@@ -7543,21 +7551,44 @@
     }
     initSecretModeratorAccess();
 
-    // PWA Installation (Android / Chrome & iOS Safari Guide)
+    // Interactive PWA / TWA Installation Guide (iPhone Safari & Android Chrome) (v187)
     function initPwaInstall() {
+      const INSTALL_GUIDE_DONE_KEY = "poilepiwko_install_guide_done_v1";
       const banner = document.getElementById("pwa-install-banner");
       const bannerDesc = document.getElementById("pwa-banner-desc");
       const btnInstall = document.getElementById("btn-pwa-install");
       const btnDismiss = document.getElementById("btn-pwa-dismiss");
       const iosModal = document.getElementById("pwa-ios-modal");
       const btnCloseIos = document.getElementById("btn-close-pwa-ios");
-      const btnAckIos = document.getElementById("btn-ack-pwa-ios");
       const btnDrawerPwa = document.getElementById("btn-drawer-pwa-install");
       const drawerPwaWrap = document.getElementById("drawer-pwa-wrap");
 
+      const tabIos = document.getElementById("pwa-tab-ios");
+      const tabAndroid = document.getElementById("pwa-tab-android");
+      const nonSafariWarn = document.getElementById("pwa-ios-nonsafari-warn");
+      const btnCopyLink = document.getElementById("btn-pwa-copy-link");
+      const nativeBox = document.getElementById("pwa-native-install-box");
+      const btnNativeOneClick = document.getElementById("btn-pwa-native-oneclick");
+      const osBadge = document.getElementById("pwa-os-badge");
+      const stageEl = document.getElementById("pwa-interactive-stage");
+      const stepEyebrow = document.getElementById("pwa-step-eyebrow");
+      const stepTitle = document.getElementById("pwa-step-title");
+      const stepDesc = document.getElementById("pwa-step-desc");
+      const stepDots = document.getElementById("pwa-step-dots");
+      const btnPrev = document.getElementById("btn-pwa-step-prev");
+      const btnNext = document.getElementById("btn-pwa-step-next");
+
       let deferredInstallPrompt = null;
       const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
-      const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+      const ua = navigator.userAgent || "";
+      const isIOS = /iphone|ipad|ipod/i.test(ua) && !window.MSStream;
+      const isAndroid = /android/i.test(ua);
+      const isIosNonSafari = isIOS && /CriOS|FxiOS|EdgiOS|OPiOS|FBAN|FBAV|Instagram|Line|MicroMessenger|TikTok/i.test(ua);
+
+      let currentOs = isAndroid ? "android" : "ios";
+      let currentStepIdx = 0;
+      let touchStartX = 0;
+      let touchStartY = 0;
 
       // If running inside standalone installed app, hide install options
       if (isStandalone) {
@@ -7566,108 +7597,380 @@
         return;
       }
 
-      function openIosModal() {
-        if (iosModal) {
-          const drawer = document.getElementById("ranking-drawer");
-          if (drawer) drawer.classList.remove("open");
+      const GUIDE_STEPS = {
+        ios: [
+          {
+            title: "Stuknij „Udostępnij” na dole Safari",
+            desc: "Na dolnym pasku Safari kliknij ikonę kwadratu ze strzałką w górę (w nowszym iOS najpierw „⋯”, a potem „Udostępnij”)."
+          },
+          {
+            title: "Wybierz „Do ekranu początkowego”",
+            desc: "Przewiń wysuniętą listę delikatnie w dół i kliknij „➕ Do ekranu początkowego” (Add to Home Screen)."
+          },
+          {
+            title: "Stuknij „Dodaj” i otwieraj jak apkę! 🍺",
+            desc: "Ikona poilepiwko wyląduje na Twoim pulpicie iPhone'a — bez pasków Safari, z szybkim startem w klubach i piwnicach!"
+          }
+        ],
+        android: [
+          {
+            title: "Stuknij menu „⋮” w prawym górnym rogu",
+            desc: "W przeglądarce Chrome lub Edge dotknij ikony trzech kropek (⋮) w prawym górnym rogu ekranu."
+          },
+          {
+            title: "Wybierz „Zainstaluj aplikację”",
+            desc: "Kliknij „📲 Zainstaluj aplikację” (lub „Dodaj do ekranu głównego”) w otwartym menu przeglądarki."
+          },
+          {
+            title: "Potwierdź „Zainstaluj” i gotowe! 🍺",
+            desc: "Po chwili poilepiwko zainstaluje się jako pełnoekranowa aplikacja TWA/PWA z ikoną na ekranie głównym Androida!"
+          }
+        ]
+      };
 
-          const isAndroid = /android/i.test(navigator.userAgent);
-          const modalTitle = document.querySelector("#pwa-ios-modal .modal-head h3");
-          const stepsContainer = document.querySelector(".pwa-ios-steps");
+      function renderPhoneMockup(os, stepIdx) {
+        const shareIconSvg = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>`;
+        const statusBar = `<div class="pwa-mock-statusbar"><span>21:37</span><span class="pwa-mock-island"></span><span>5G 🔋</span></div>`;
+        const mapPins = `
+          <div class="pwa-mock-mapbg">
+            <span class="pwa-mock-pin is-green" style="top:24px;left:22px;">11 zł</span>
+            <span class="pwa-mock-pin is-amber" style="top:54px;right:34px;">15 zł</span>
+            <span class="pwa-mock-pin is-green" style="bottom:38px;left:95px;">12 zł</span>
+          </div>
+        `;
 
-          const pointerHint = document.querySelector(".pwa-ios-pointer-hint");
-
-          if (isAndroid && stepsContainer) {
-            if (modalTitle) modalTitle.textContent = "📲 Jak zainstalować na Androidzie";
-            if (pointerHint) {
-              pointerHint.innerHTML = `
-                <div class="pwa-ios-arrow">↗</div>
-                <span>Ikona menu <strong>trzech kropek (⋮)</strong> znajduje się w prawym górnym rogu Twojej przeglądarki</span>
-              `;
-            }
-            stepsContainer.innerHTML = `
-              <div class="pwa-step-item">
-                <div class="pwa-step-badge">1</div>
-                <div class="pwa-step-desc">
-                  Stuknij ikonę menu <strong>trzech pionowych kropek (⋮)</strong> w prawym górnym rogu przeglądarki Chrome, Firefox lub Edge.
-                </div>
-              </div>
-              <div class="pwa-step-item">
-                <div class="pwa-step-badge">2</div>
-                <div class="pwa-step-desc">
-                  Wybierz z listy opcję:
-                  <div class="pwa-safari-add-pill" style="margin-top:6px;">
-                    <span class="pwa-plus-icon">📲</span>
-                    <strong>Zainstaluj aplikację</strong> lub <strong>Dodaj do ekranu głównego</strong>
-                  </div>
-                </div>
-              </div>
-              <div class="pwa-step-item">
-                <div class="pwa-step-badge">3</div>
-                <div class="pwa-step-desc">
-                  Kliknij <strong>Zainstaluj</strong>. Ikona <strong>poilepiwko</strong> pojawi się na Twoim pulpicie i uruchomi się na pełnym ekranie bez pasków przeglądarki!
-                </div>
-              </div>
-            `;
-          } else if (stepsContainer && !isAndroid) {
-            if (modalTitle) modalTitle.textContent = "📲 Jak zainstalować na iPhone";
-            if (pointerHint) {
-              pointerHint.innerHTML = `
-                <div class="pwa-ios-arrow">↓</div>
-                <span>Przycisk <strong>Udostępnij</strong> (kwadrat ze strzałką) znajduje się na dolnym pasku Twojego iPhone'a</span>
-              `;
-            }
-            stepsContainer.innerHTML = `
-              <div class="pwa-step-item">
-                <div class="pwa-step-badge">1</div>
-                <div class="pwa-step-desc">
-                  Na dolnym pasku przeglądarki <strong>Safari</strong> stuknij ikonę <strong>Udostępnij</strong>:
-                  <div class="pwa-safari-share-pill">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
-                      <polyline points="16 6 12 2 8 6"></polyline>
-                      <line x1="12" y1="2" x2="12" y2="15"></line>
-                    </svg>
-                    <span>Udostępnij (Kwadrat ze strzałką w górę)</span>
-                  </div>
-                </div>
-              </div>
-              <div class="pwa-step-item">
-                <div class="pwa-step-badge">2</div>
-                <div class="pwa-step-desc">
-                  Przewiń menu w dół i wybierz opcję:
-                  <div class="pwa-safari-add-pill">
-                    <span class="pwa-plus-icon">➕</span>
-                    <strong>Do ekranu początkowego (Add to Home Screen)</strong>
-                  </div>
-                </div>
-              </div>
-              <div class="pwa-step-item">
-                <div class="pwa-step-badge">3</div>
-                <div class="pwa-step-desc">
-                  Stuknij <strong>Dodaj</strong> w prawym górnym rogu. Aplikacja <strong>poilepiwko</strong> pojawi się na pulpicie i uruchamia się na pełnym ekranie bez pasków Safari!
+        if (os === "ios") {
+          if (stepIdx === 0) {
+            return `
+              <div class="pwa-phone-mockup">
+                ${statusBar}
+                ${mapPins}
+                <div class="pwa-mock-safari-bar">
+                  <span>‹ &nbsp; ›</span>
+                  <button type="button" class="pwa-hotspot-btn" data-pwa-hotspot="next" title="Kliknij, aby zobaczyć kolejny krok">${shareIconSvg}<span>Udostępnij</span></button>
+                  <span class="pwa-mock-url-pill">poilepiwko.pl</span>
                 </div>
               </div>
             `;
           }
+          if (stepIdx === 1) {
+            return `
+              <div class="pwa-phone-mockup">
+                ${statusBar}
+                ${mapPins}
+                <div class="pwa-mock-sheet">
+                  <div class="pwa-mock-sheet-head">
+                    <img src="icons/icon-192.png" alt="" />
+                    <span>poilepiwko.pl · Udostępnij</span>
+                  </div>
+                  <div class="pwa-mock-menu-row"><span>📋 Kopiuj link</span><span>›</span></div>
+                  <button type="button" class="pwa-mock-menu-row pwa-hotspot-btn" data-pwa-hotspot="next">
+                    <span>➕ Do ekranu początkowego</span>
+                    <span>Stuknij →</span>
+                  </button>
+                </div>
+              </div>
+            `;
+          }
+          return `
+            <div class="pwa-phone-mockup">
+              ${statusBar}
+              <div class="pwa-mock-homescreen">
+                <div class="pwa-mock-add-topbar">
+                  <span>Anuluj</span>
+                  <span style="color:#fff;">Ekran początkowy</span>
+                  <button type="button" class="pwa-hotspot-btn" data-pwa-hotspot="next" style="padding:3px 9px;font-size:0.68rem;">Dodaj ✓</button>
+                </div>
+                <div class="pwa-mock-grid">
+                  <div class="pwa-mock-dummy-app"></div>
+                  <button type="button" class="pwa-mock-hero-app" data-pwa-hotspot="next" style="background:none;border:none;padding:0;cursor:pointer;">
+                    <img src="icons/icon-192.png" alt="poilepiwko" />
+                    <span>poilepiwko</span>
+                  </button>
+                  <div class="pwa-mock-dummy-app"></div>
+                  <div class="pwa-mock-dummy-app"></div>
+                </div>
+              </div>
+            </div>
+          `;
+        }
 
-          iosModal.style.display = "flex";
-          iosModal.classList.add("active");
+        // Android mockups
+        const chromeTop = (highlightDots) => `
+          <div class="pwa-mock-chrome-bar">
+            <span class="pwa-mock-chrome-url">🔒 poilepiwko.pl</span>
+            ${highlightDots
+              ? `<button type="button" class="pwa-hotspot-btn" data-pwa-hotspot="next" style="padding:3px 9px;font-size:0.85rem;line-height:1;">⋮</button>`
+              : `<span style="color:#94a3b8;padding:0 6px;font-weight:900;">⋮</span>`
+            }
+          </div>
+        `;
+        if (stepIdx === 0) {
+          return `
+            <div class="pwa-phone-mockup">
+              ${statusBar}
+              ${chromeTop(true)}
+              ${mapPins}
+            </div>
+          `;
+        }
+        if (stepIdx === 1) {
+          return `
+            <div class="pwa-phone-mockup">
+              ${statusBar}
+              ${chromeTop(false)}
+              ${mapPins}
+              <div class="pwa-mock-android-menu">
+                <div class="pwa-mock-menu-row"><span>⭐ Dodaj do zakładek</span></div>
+                <button type="button" class="pwa-mock-menu-row pwa-hotspot-btn" data-pwa-hotspot="next">
+                  <span>📲 Zainstaluj aplikację</span>
+                  <span>→</span>
+                </button>
+                <div class="pwa-mock-menu-row"><span>⚙️ Ustawienia</span></div>
+              </div>
+            </div>
+          `;
+        }
+        return `
+          <div class="pwa-phone-mockup">
+            ${statusBar}
+            <div class="pwa-mock-homescreen">
+              <div class="pwa-mock-add-topbar">
+                <span>Chrome / TWA</span>
+                <button type="button" class="pwa-hotspot-btn" data-pwa-hotspot="next" style="padding:3px 9px;font-size:0.68rem;">Zainstaluj ✓</button>
+              </div>
+              <div class="pwa-mock-grid">
+                <div class="pwa-mock-dummy-app"></div>
+                <div class="pwa-mock-dummy-app"></div>
+                <button type="button" class="pwa-mock-hero-app" data-pwa-hotspot="next" style="background:none;border:none;padding:0;cursor:pointer;">
+                  <img src="icons/icon-192.png" alt="poilepiwko" />
+                  <span>poilepiwko</span>
+                </button>
+                <div class="pwa-mock-dummy-app"></div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      function renderInstallStep() {
+        const list = GUIDE_STEPS[currentOs] || GUIDE_STEPS.ios;
+        currentStepIdx = Math.max(0, Math.min(currentStepIdx, list.length - 1));
+        const step = list[currentStepIdx];
+
+        if (tabIos) {
+          tabIos.classList.toggle("active", currentOs === "ios");
+          tabIos.setAttribute("aria-selected", currentOs === "ios" ? "true" : "false");
+        }
+        if (tabAndroid) {
+          tabAndroid.classList.toggle("active", currentOs === "android");
+          tabAndroid.setAttribute("aria-selected", currentOs === "android" ? "true" : "false");
+        }
+        if (osBadge) osBadge.textContent = currentOs === "ios" ? "iOS" : "TWA";
+
+        if (nonSafariWarn) {
+          nonSafariWarn.style.display = (currentOs === "ios" && isIosNonSafari) ? "flex" : "none";
+        }
+        if (nativeBox) {
+          nativeBox.style.display = (currentOs === "android" && deferredInstallPrompt) ? "block" : "none";
+        }
+
+        if (stageEl) {
+          stageEl.innerHTML = renderPhoneMockup(currentOs, currentStepIdx);
+          stageEl.querySelectorAll('[data-pwa-hotspot="next"]').forEach(btn => {
+            btn.addEventListener("click", (e) => {
+              e.stopPropagation();
+              advanceOrFinishStep();
+            });
+          });
+        }
+
+        if (stepEyebrow) stepEyebrow.textContent = `KROK ${currentStepIdx + 1} Z ${list.length}`;
+        if (stepTitle) stepTitle.textContent = step.title;
+        if (stepDesc) stepDesc.textContent = step.desc;
+        if (btnPrev) btnPrev.disabled = currentStepIdx === 0;
+        if (btnNext) {
+          btnNext.textContent = currentStepIdx === list.length - 1
+            ? (currentOs === "android" && deferredInstallPrompt ? "Zainstaluj teraz ⚡" : "Gotowe, rozumiem! 📲")
+            : "Dalej →";
+        }
+
+        if (stepDots) {
+          stepDots.innerHTML = list.map((_, i) =>
+            `<button type="button" class="pwa-step-dot${i === currentStepIdx ? " active" : ""}" data-pwa-dot="${i}" aria-label="Krok ${i + 1}"></button>`
+          ).join("");
+          stepDots.querySelectorAll("[data-pwa-dot]").forEach(dot => {
+            dot.addEventListener("click", () => {
+              const targetIdx = parseInt(dot.getAttribute("data-pwa-dot"), 10);
+              if (!Number.isNaN(targetIdx)) {
+                if (window.poileHaptics) window.poileHaptics.tick();
+                currentStepIdx = targetIdx;
+                renderInstallStep();
+              }
+            });
+          });
         }
       }
 
+      function markGuideSeen() {
+        try {
+          localStorage.setItem(INSTALL_GUIDE_DONE_KEY, "true");
+        } catch (e) {}
+      }
+
       function closeIosModal() {
+        markGuideSeen();
         if (iosModal) {
           iosModal.classList.remove("active");
           iosModal.style.display = "none";
         }
+        if (typeof ModalHistoryManager !== "undefined") {
+          ModalHistoryManager.pop("pwa-ios-modal");
+        }
+        dismissBanner();
+      }
+
+      function triggerNativePromptOrClose() {
+        if (deferredInstallPrompt) {
+          const p = deferredInstallPrompt;
+          deferredInstallPrompt = null;
+          p.prompt();
+          p.userChoice.then((choice) => {
+            if (choice && choice.outcome === "accepted") {
+              if (banner) banner.style.display = "none";
+              if (drawerPwaWrap) drawerPwaWrap.style.display = "none";
+              showAppToast("Zainstalowano! 🎉", "Ikona poilepiwko pojawiła się na ekranie głównym.", "🍺", 3500);
+            }
+          }).catch(() => {});
+          closeIosModal();
+          return;
+        }
+        if (window.poileHaptics && window.poileHaptics.success) window.poileHaptics.success();
+        closeIosModal();
+        showAppToast(
+          currentOs === "ios" ? "Gotowe! Dodaj w Safari ↑" : "Gotowe! Zainstaluj z menu ⋮",
+          currentOs === "ios"
+            ? "Stuknij Udostępnij na dole Safari → Do ekranu początkowego."
+            : "Kliknij ⋮ w Chrome → Zainstaluj aplikację.",
+          "📲",
+          4200
+        );
+      }
+
+      function advanceOrFinishStep() {
+        const list = GUIDE_STEPS[currentOs] || GUIDE_STEPS.ios;
+        if (currentStepIdx < list.length - 1) {
+          if (window.poileHaptics) window.poileHaptics.tick();
+          currentStepIdx += 1;
+          renderInstallStep();
+        } else {
+          triggerNativePromptOrClose();
+        }
+      }
+
+      function openIosModal(preferredOs = null) {
+        if (!iosModal) return;
+        const drawer = document.getElementById("ranking-drawer");
+        if (drawer) drawer.classList.remove("open");
+
+        if (preferredOs === "ios" || preferredOs === "android") {
+          currentOs = preferredOs;
+        } else {
+          currentOs = isAndroid ? "android" : "ios";
+        }
+        currentStepIdx = 0;
+        renderInstallStep();
+
+        iosModal.style.display = "flex";
+        iosModal.classList.add("active");
+        if (typeof ModalHistoryManager !== "undefined") {
+          ModalHistoryManager.push("pwa-ios-modal", closeIosModal);
+        }
+      }
+
+      function maybeAutoOpenInstallGuide() {
+        if (isStandalone || !iosModal) return;
+        const isMobile = window.innerWidth <= 768 || isIOS || isAndroid;
+        if (!isMobile) return;
+        try {
+          if (localStorage.getItem(INSTALL_GUIDE_DONE_KEY) === "true") return;
+        } catch (e) {}
+
+        const ageModal = document.getElementById("age-gate-modal");
+        if (ageModal && ageModal.classList.contains("active")) return;
+        if (document.querySelector(".modal-backdrop.active, .bottom-sheet-backdrop.active")) return;
+        const tutorialOverlay = document.getElementById("syrenka-tutorial-overlay");
+        if (tutorialOverlay && tutorialOverlay.classList.contains("active")) return;
+
+        openIosModal();
       }
 
       window.__openIosInstall = openIosModal;
       window.__closeIosInstall = closeIosModal;
+      window.__maybeAutoOpenInstallGuide = maybeAutoOpenInstallGuide;
+
+      if (tabIos) {
+        tabIos.addEventListener("click", () => {
+          if (window.poileHaptics) window.poileHaptics.tick();
+          currentOs = "ios";
+          currentStepIdx = 0;
+          renderInstallStep();
+        });
+      }
+      if (tabAndroid) {
+        tabAndroid.addEventListener("click", () => {
+          if (window.poileHaptics) window.poileHaptics.tick();
+          currentOs = "android";
+          currentStepIdx = 0;
+          renderInstallStep();
+        });
+      }
+      if (btnPrev) {
+        btnPrev.addEventListener("click", () => {
+          if (currentStepIdx > 0) {
+            if (window.poileHaptics) window.poileHaptics.tick();
+            currentStepIdx -= 1;
+            renderInstallStep();
+          }
+        });
+      }
+      if (btnNext) {
+        btnNext.addEventListener("click", advanceOrFinishStep);
+      }
+      if (btnNativeOneClick) {
+        btnNativeOneClick.addEventListener("click", triggerNativePromptOrClose);
+      }
+      if (btnCopyLink) {
+        btnCopyLink.addEventListener("click", () => {
+          const cleanLink = window.location.origin + "/";
+          copyShareLink(cleanLink, "Otwórz Safari i wklej skopiowany link!");
+        });
+      }
+      if (stageEl) {
+        stageEl.addEventListener("touchstart", (e) => {
+          if (e.touches && e.touches[0]) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+          }
+        }, { passive: true });
+        stageEl.addEventListener("touchend", (e) => {
+          if (!e.changedTouches || !e.changedTouches[0]) return;
+          const dx = e.changedTouches[0].clientX - touchStartX;
+          const dy = e.changedTouches[0].clientY - touchStartY;
+          if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.4) {
+            const list = GUIDE_STEPS[currentOs] || GUIDE_STEPS.ios;
+            if (dx < 0 && currentStepIdx < list.length - 1) {
+              currentStepIdx++;
+              renderInstallStep();
+            } else if (dx > 0 && currentStepIdx > 0) {
+              currentStepIdx--;
+              renderInstallStep();
+            }
+          }
+        }, { passive: true });
+      }
 
       if (btnCloseIos) btnCloseIos.addEventListener("click", closeIosModal);
-      if (btnAckIos) btnAckIos.addEventListener("click", closeIosModal);
       if (iosModal) {
         iosModal.addEventListener("click", (e) => {
           if (e.target === iosModal) closeIosModal();
@@ -7697,64 +8000,47 @@
 
       function showInstallBanner() {
         if (isStandalone || isDismissedRecently() || !banner) return;
-
-        // Never show install prompt on desktop computers / laptops
-        const isMobile = window.innerWidth <= 640 || /iphone|ipad|ipod|android/i.test(navigator.userAgent);
+        const isMobile = window.innerWidth <= 768 || isIOS || isAndroid;
         if (!isMobile) return;
+        const ageModal = document.getElementById("age-gate-modal");
+        if (ageModal && ageModal.classList.contains("active")) return;
+        const tutorialOverlay = document.getElementById("syrenka-tutorial-overlay");
+        if (tutorialOverlay && tutorialOverlay.classList.contains("active")) return;
+        if (document.querySelector(".modal-backdrop.active, .bottom-sheet-backdrop.active")) return;
 
-        // Check if Age Gate is currently blocking the screen
-        const isAgeVerified = localStorage.getItem("age_verified_18") === "true";
-        if (!isAgeVerified) {
-          const ageYes = document.getElementById("btn-age-yes");
-          if (ageYes) {
-            ageYes.addEventListener("click", () => {
-              setTimeout(showInstallBanner, 2500);
-            }, { once: true });
-          }
-          return;
+        if (bannerDesc) {
+          bannerDesc.textContent = isIOS
+            ? "Zobacz jak dodać na ekran iPhone'a w 10 s!"
+            : "Zainstaluj aplikację na telefonie (TWA/PWA)!";
         }
-
-        if (isIOS) {
-          if (bannerDesc) bannerDesc.textContent = "Dodaj do ekranu początkowego Safari!";
-        } else {
-          if (bannerDesc) bannerDesc.textContent = "Szybki dostęp z pulpitu, bez pasków!";
-        }
-
         banner.style.display = "flex";
       }
+      window.__showInstallBannerFallback = showInstallBanner;
 
-      // Listen for Chrome / Android beforeinstallprompt on mobile (store quietly without console warning)
+      // Store Android/Chrome beforeinstallprompt silently without blocking tutorial
       window.addEventListener("beforeinstallprompt", (e) => {
         if (isStandalone) return;
+        e.preventDefault();
         deferredInstallPrompt = e;
-        const isMobile = window.innerWidth <= 640 || /iphone|ipad|ipod|android/i.test(navigator.userAgent);
-        if (isMobile) {
-          setTimeout(showInstallBanner, 1500);
+        if (iosModal && iosModal.classList.contains("active") && currentOs === "android") {
+          renderInstallStep();
         }
       });
 
-      // For mobile devices (e.g. iOS Safari & Android): trigger after short delay if not standalone
-      const isMobileDevice = window.innerWidth <= 640 || /iphone|ipad|ipod|android/i.test(navigator.userAgent);
+      // Fallback banner only for returning users who already finished tutorial & haven't installed yet
+      const isMobileDevice = window.innerWidth <= 768 || isIOS || isAndroid;
       if (isMobileDevice && !isStandalone) {
-        setTimeout(showInstallBanner, 3000);
+        try {
+          if (localStorage.getItem("poilepiwko_tutorial_done_v1") === "true" && localStorage.getItem(INSTALL_GUIDE_DONE_KEY) === "true") {
+            setTimeout(showInstallBanner, 4500);
+          }
+        } catch (e) {}
       }
 
-      // Action on floating banner install button
       if (btnInstall) {
         btnInstall.addEventListener("click", () => {
-          if (deferredInstallPrompt) {
-            deferredInstallPrompt.prompt();
-            deferredInstallPrompt.userChoice.then((choice) => {
-              if (choice.outcome === "accepted") {
-                if (banner) banner.style.display = "none";
-                if (drawerPwaWrap) drawerPwaWrap.style.display = "none";
-              }
-              deferredInstallPrompt = null;
-            });
-          } else {
-            openIosModal();
-            dismissBanner();
-          }
+          openIosModal();
+          if (banner) banner.style.display = "none";
         });
       }
 
@@ -7766,21 +8052,25 @@
         });
       }
 
-      // Action on persistent drawer install button
       if (btnDrawerPwa) {
         btnDrawerPwa.addEventListener("click", () => {
-          if (deferredInstallPrompt) {
-            deferredInstallPrompt.prompt();
-            deferredInstallPrompt.userChoice.then((choice) => {
-              if (choice.outcome === "accepted") {
-                if (banner) banner.style.display = "none";
-                if (drawerPwaWrap) drawerPwaWrap.style.display = "none";
-              }
-              deferredInstallPrompt = null;
-            });
-          } else {
-            openIosModal();
-          }
+          openIosModal();
+        });
+      }
+
+      // Legend & Profile triggers for Install Walkthrough
+      const btnInstallLegend = document.getElementById("btn-open-install-legend");
+      if (btnInstallLegend) {
+        btnInstallLegend.addEventListener("click", () => {
+          if (typeof window.__closeMapLegend === "function") window.__closeMapLegend();
+          setTimeout(() => openIosModal(), 120);
+        });
+      }
+      const btnProfileInstall = document.getElementById("btn-profile-install");
+      if (btnProfileInstall) {
+        btnProfileInstall.addEventListener("click", () => {
+          if (typeof window.__closeMyProfile === "function") window.__closeMyProfile();
+          setTimeout(() => openIosModal(), 120);
         });
       }
     }
@@ -28849,8 +29139,18 @@
 
       if (wasSkipped) {
         showAppToast("Przewodnik pominięty 🧜‍♀️", "W każdej chwili włączysz go ponownie w Legendzie (ℹ️)", "🍺", 3200);
+        setTimeout(() => {
+          if (typeof window.__showInstallBannerFallback === "function") {
+            window.__showInstallBannerFallback();
+          }
+        }, 1200);
       } else {
         showAppToast("Wszystko jasne! Na zdrowie! 🍻", "Kliknij dowolny bar na mapie, aby zacząć.", "🧜‍♀️", 3400);
+        setTimeout(() => {
+          if (typeof window.__maybeAutoOpenInstallGuide === "function") {
+            window.__maybeAutoOpenInstallGuide();
+          }
+        }, 550);
       }
     }
 
@@ -29084,6 +29384,13 @@
           case "samouczek":
             if (typeof window.__openTutorial === "function") {
               window.__openTutorial(true);
+            }
+            break;
+          case "install":
+          case "pwa":
+          case "zainstaluj":
+            if (typeof window.__openIosInstall === "function") {
+              window.__openIosInstall();
             }
             break;
           default:

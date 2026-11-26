@@ -30156,6 +30156,569 @@ body.theme-light .btn-lookup-hours {
   color: #0369a1 !important;
 }
 
+/* ============================================================================
+   INTERACTIVE PWA / TWA INSTALL WALKTHROUGH (IPHONE & ANDROID) (v187)
+   ============================================================================ */
+
+.is-standalone-app #btn-open-install-legend,
+.is-standalone-app #btn-profile-install,
+.is-standalone-app .profile-install-dot {
+  display: none !important;
+}
+
+.pwa-guide-card {
+  max-width: 440px;
+}
+
+.pwa-guide-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 11px !important;
+  padding: 12px 16px calc(22px + env(safe-area-inset-bottom, 16px)) 16px !important;
+}
+
+.pwa-platform-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  width: 100%;
+  padding: 4px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-sizing: border-box;
+}
+
+.pwa-platform-tab {
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.pwa-platform-tab.active {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+}
+
+.pwa-ios-nonsafari-warn {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  background: rgba(245, 158, 11, 0.14);
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  color: #fde68a;
+  font-size: 0.74rem;
+  line-height: 1.3;
+  text-align: left;
+}
+
+.pwa-copy-link-btn {
+  flex-shrink: 0;
+  border: none;
+  background: #f59e0b;
+  color: #0f172a;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.pwa-native-oneclick-btn {
+  width: 100%;
+  border: none;
+  border-radius: 13px;
+  padding: 11px 14px;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #022c22;
+  font-size: 0.85rem;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(34, 197, 94, 0.35);
+}
+
+.pwa-interactive-stage {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.pwa-phone-mockup {
+  position: relative;
+  width: 100%;
+  max-width: 300px;
+  height: 222px;
+  border-radius: 26px;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  background: radial-gradient(circle at 50% 35%, #111f1d 0%, #090d14 100%);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.65), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.pwa-mock-statusbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 14px 4px;
+  font-size: 0.64rem;
+  font-weight: 800;
+  color: #e2e8f0;
+  background: rgba(6, 10, 15, 0.72);
+  flex-shrink: 0;
+}
+
+.pwa-mock-island {
+  width: 58px;
+  height: 12px;
+  border-radius: 999px;
+  background: #020408;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pwa-mock-mapbg {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(148, 163, 184, 0.06) 1px, transparent 1px) 0 0 / 28px 28px,
+    linear-gradient(rgba(148, 163, 184, 0.06) 1px, transparent 1px) 0 0 / 28px 28px,
+    #0b1416;
+}
+
+.pwa-mock-pin {
+  position: absolute;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 900;
+  color: #ffffff;
+  border: 1.5px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.55);
+}
+
+.pwa-mock-pin.is-green { background: #16a34a; }
+.pwa-mock-pin.is-amber { background: #d97706; }
+
+/* Safari Bottom Toolbar (iPhone Step 1) */
+.pwa-mock-safari-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: rgba(15, 23, 42, 0.96);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  color: #64748b;
+  font-size: 0.72rem;
+}
+
+.pwa-mock-url-pill {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+/* Chrome Top Address Bar (Android Step 1) */
+.pwa-mock-chrome-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  background: rgba(15, 23, 42, 0.96);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.pwa-mock-chrome-url {
+  flex: 1;
+  text-align: left;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+  font-size: 0.64rem;
+  font-weight: 700;
+}
+
+/* Interactive Pulsing Hotspot Button inside Mockup */
+.pwa-hotspot-btn {
+  position: relative;
+  border: 2px solid #fbbf24;
+  background: rgba(245, 158, 11, 0.22);
+  color: #ffffff;
+  border-radius: 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 4px 8px;
+  font-weight: 800;
+  font-size: 0.7rem;
+  box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7), 0 4px 14px rgba(245, 158, 11, 0.45);
+  animation: pwaHotspotPulse 1.5s infinite;
+}
+
+.pwa-hotspot-btn:active {
+  transform: scale(0.94);
+}
+
+@keyframes pwaHotspotPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.72), 0 4px 14px rgba(245, 158, 11, 0.45);
+  }
+  70% {
+    box-shadow: 0 0 0 9px rgba(251, 191, 36, 0), 0 4px 14px rgba(245, 158, 11, 0.45);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0), 0 4px 14px rgba(245, 158, 11, 0.45);
+  }
+}
+
+/* Simulated Share Sheet / Chrome Menu Overlays */
+.pwa-mock-sheet {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  background: rgba(20, 26, 38, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 16px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.75);
+}
+
+.pwa-mock-sheet-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #e2e8f0;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pwa-mock-sheet-head img {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+}
+
+.pwa-mock-menu-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 9px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #94a3b8;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.pwa-mock-menu-row.pwa-hotspot-btn {
+  width: 100%;
+  box-sizing: border-box;
+  justify-content: space-between;
+  padding: 8px 10px;
+  font-size: 0.72rem;
+  color: #fef08a;
+}
+
+/* Android Top-Right Dropdown Menu */
+.pwa-mock-android-menu {
+  position: absolute;
+  top: 64px;
+  right: 10px;
+  width: 208px;
+  background: rgba(20, 26, 38, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 14px;
+  padding: 7px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.75);
+}
+
+/* Home Screen App Icon Preview (Step 3) */
+.pwa-mock-homescreen {
+  flex: 1;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: radial-gradient(circle at 50% 25%, rgba(245, 158, 11, 0.18), rgba(11, 18, 30, 0.95) 65%);
+}
+
+.pwa-mock-add-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #94a3b8;
+  background: rgba(15, 23, 42, 0.92);
+  padding: 6px 10px;
+  border-radius: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pwa-mock-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  align-items: center;
+  justify-items: center;
+  margin: auto 0;
+}
+
+.pwa-mock-dummy-app {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pwa-mock-hero-app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  animation: pwaIconBounce 1.8s ease-in-out infinite;
+}
+
+.pwa-mock-hero-app img {
+  width: 42px;
+  height: 42px;
+  border-radius: 11px;
+  border: 2px solid #22c55e;
+  box-shadow: 0 0 18px rgba(34, 197, 94, 0.55);
+}
+
+.pwa-mock-hero-app span {
+  font-size: 0.58rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+@keyframes pwaIconBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+/* Interactive Step Card Below Phone */
+.pwa-step-card {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 12px 14px;
+  text-align: left;
+}
+
+.pwa-step-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.pwa-step-eyebrow {
+  font-size: 0.64rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: #fbbf24;
+  text-transform: uppercase;
+}
+
+.pwa-step-tap-hint {
+  font-size: 0.64rem;
+  font-weight: 700;
+  color: #7dd3fc;
+}
+
+.pwa-step-title {
+  margin: 0 0 4px;
+  font-size: 0.96rem;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.25;
+}
+
+.pwa-step-desc {
+  margin: 0 0 11px;
+  font-size: 0.78rem;
+  line-height: 1.42;
+  color: #cbd5e1;
+}
+
+.pwa-step-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.pwa-step-dots {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pwa-step-dot {
+  width: 7px;
+  height: 7px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.35);
+  cursor: pointer;
+  transition: width 0.2s ease, background 0.2s ease;
+}
+
+.pwa-step-dot.active {
+  width: 20px;
+  background: #3b82f6;
+}
+
+.pwa-step-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pwa-step-btn-prev {
+  height: 33px;
+  min-width: 36px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.pwa-step-btn-prev:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.pwa-step-btn-next {
+  height: 33px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+}
+
+.pwa-benefits-strip {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.69rem;
+  font-weight: 700;
+  color: #86efac;
+  padding-top: 2px;
+}
+
+body.theme-light .pwa-platform-tabs {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+
+body.theme-light .pwa-platform-tab {
+  color: #475569 !important;
+}
+
+body.theme-light .pwa-platform-tab.active {
+  color: #ffffff !important;
+}
+
+body.theme-light .pwa-ios-nonsafari-warn {
+  background: #fef3c7 !important;
+  border-color: #f59e0b !important;
+  color: #92400e !important;
+}
+
+body.theme-light .pwa-step-card {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+body.theme-light .pwa-step-title {
+  color: #0f172a !important;
+}
+
+body.theme-light .pwa-step-desc {
+  color: #475569 !important;
+}
+
+body.theme-light .pwa-step-eyebrow {
+  color: #b45309 !important;
+}
+
+body.theme-light .pwa-step-tap-hint {
+  color: #0284c7 !important;
+}
+
+body.theme-light .pwa-step-btn-prev {
+  background: #e2e8f0 !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .pwa-benefits-strip {
+  color: #15803d !important;
+}
+
+@media (max-height: 700px), (max-width: 375px) {
+  .pwa-phone-mockup {
+    height: 196px;
+    max-width: 280px;
+  }
+  .pwa-step-card {
+    padding: 10px 12px;
+  }
+}
+
+
 
 
 
