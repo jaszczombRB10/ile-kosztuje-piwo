@@ -4,6 +4,23 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "eyJh
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const META_PREFIX = "__poile_meta_v1__:";
+const ALLOWED_AMENITIES = new Set([
+  "dart", "bilard", "pilkarzyki", "planszowki", "kregle", "karaoke", "sport", "ogrodek"
+]);
+
+function sanitizeAmenities(input) {
+  if (!Array.isArray(input)) return [];
+  const out = [];
+  const seen = new Set();
+  for (const item of input) {
+    const key = String(item || "").trim().toLowerCase();
+    if (ALLOWED_AMENITIES.has(key) && !seen.has(key)) {
+      seen.add(key);
+      out.push(key);
+    }
+  }
+  return out;
+}
 
 function getAdminHeaders(extra = {}) {
   return {
@@ -345,14 +362,16 @@ module.exports = async (req, res) => {
 
     const { venuePayload, reportPayload } = req.body || {};
 
-    if (!venuePayload || !venuePayload.name || (!venuePayload.hours_only && venuePayload.beer_price_pln === undefined)) {
+    const isMetaOnly = Boolean(venuePayload.hours_only || venuePayload.meta_only);
+
+    if (!venuePayload || !venuePayload.name || (!isMetaOnly && venuePayload.beer_price_pln === undefined)) {
       return res.status(400).json({ error: "Missing venuePayload or invalid price." });
     }
 
-    const price = venuePayload.hours_only
+    const price = isMetaOnly
       ? parseFloat(venuePayload.beer_price_pln || 0)
       : parseFloat(venuePayload.beer_price_pln);
-    if (!venuePayload.hours_only && (isNaN(price) || price <= 0)) {
+    if (!isMetaOnly && (isNaN(price) || price <= 0)) {
       return res.status(400).json({ error: "Invalid beer_price_pln value." });
     }
 
@@ -367,23 +386,29 @@ module.exports = async (req, res) => {
       name: cleanPayload.name
     });
 
-    if (cleanPayload.hours_only === true && targetVenue) {
-      const hoursRes = await fetch(`${SUPABASE_URL}/rest/v1/venues?id=eq.${encodeURIComponent(targetVenue.id)}`, {
+    if (isMetaOnly && targetVenue) {
+      const metaPatch = {};
+      if (cleanPayload.hours) metaPatch.hours = String(cleanPayload.hours);
+      if (cleanPayload.amenities !== undefined) {
+        metaPatch.amenities = sanitizeAmenities(cleanPayload.amenities);
+      }
+      if (Object.keys(metaPatch).length === 0) {
+        return res.status(200).json({ success: true, venue: targetVenue, report: null });
+      }
+      const metaRes = await fetch(`${SUPABASE_URL}/rest/v1/venues?id=eq.${encodeURIComponent(targetVenue.id)}`, {
         method: "PATCH",
         headers,
-        body: JSON.stringify({
-          hours: cleanPayload.hours ? String(cleanPayload.hours) : targetVenue.hours
-        })
+        body: JSON.stringify(metaPatch)
       });
-      if (!hoursRes.ok) {
-        const errText = await hoursRes.text();
-        console.error("[Update Venue API] Supabase hours-only error:", errText);
-        return res.status(500).json({ error: "Supabase hours update failed", details: errText });
+      if (!metaRes.ok) {
+        const errText = await metaRes.text();
+        console.error("[Update Venue API] Supabase meta-only error:", errText);
+        return res.status(500).json({ error: "Supabase meta update failed", details: errText });
       }
-      const hoursData = await hoursRes.json();
+      const metaData = await metaRes.json();
       return res.status(200).json({
         success: true,
-        venue: Array.isArray(hoursData) ? hoursData[0] : hoursData,
+        venue: Array.isArray(metaData) ? metaData[0] : metaData,
         report: null
       });
     }
@@ -397,6 +422,9 @@ module.exports = async (req, res) => {
         shot_price_pln: cleanPayload.shot_price_pln !== undefined ? cleanPayload.shot_price_pln : targetVenue.shot_price_pln,
         happy_hour: cleanPayload.happy_hour !== undefined ? cleanPayload.happy_hour : targetVenue.happy_hour,
         hours: cleanPayload.hours ? cleanPayload.hours : targetVenue.hours,
+        amenities: cleanPayload.amenities !== undefined
+          ? sanitizeAmenities(cleanPayload.amenities)
+          : (Array.isArray(targetVenue.amenities) ? targetVenue.amenities : []),
         is_verified: cleanPayload.is_verified !== undefined ? Boolean(cleanPayload.is_verified) : targetVenue.is_verified,
         votes_confirm: (targetVenue.votes_confirm || 0) + 1,
         last_updated: cleanPayload.last_updated
@@ -433,6 +461,7 @@ module.exports = async (req, res) => {
         is_craft: Boolean(cleanPayload.is_craft),
         happy_hour: cleanPayload.happy_hour || null,
         hours: cleanPayload.hours || "16:00 - 02:00",
+        amenities: sanitizeAmenities(cleanPayload.amenities),
         is_verified: cleanPayload.is_verified !== undefined ? Boolean(cleanPayload.is_verified) : false,
         votes_confirm: parseInt(cleanPayload.votes_confirm, 10) || 1,
         last_updated: cleanPayload.last_updated

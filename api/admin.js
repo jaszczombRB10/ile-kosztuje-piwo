@@ -123,6 +123,13 @@ module.exports = async (req, res) => {
       if (cleanUpdates.shot_price_pln !== undefined && cleanUpdates.shot_price_pln !== null) {
         cleanUpdates.shot_price_pln = parseFloat(cleanUpdates.shot_price_pln) || null;
       }
+      if (cleanUpdates.amenities !== undefined) {
+        const allowed = new Set(["dart", "bilard", "pilkarzyki", "planszowki", "kregle", "karaoke", "sport", "ogrodek"]);
+        const rawAm = Array.isArray(cleanUpdates.amenities) ? cleanUpdates.amenities : [];
+        cleanUpdates.amenities = Array.from(new Set(
+          rawAm.map(a => String(a || "").trim().toLowerCase()).filter(a => allowed.has(a))
+        ));
+      }
 
       const response = await fetch(`${SUPABASE_URL}/rest/v1/venues?id=eq.${encodeURIComponent(venueId)}`, {
         method: "PATCH",

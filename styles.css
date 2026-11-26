@@ -31454,6 +31454,146 @@ body.theme-light .venue-temp-closed-chip {
   color: #b45309 !important;
 }
 
+/* ============================================================================
+   VENUE AMENITIES (DART, BILARD, ETC.) - PICKER, CARD & FILTERS (v195)
+   ============================================================================ */
+
+.report-amenities-box {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.report-amenities-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #e2e8f0;
+  margin-bottom: 8px;
+  letter-spacing: 0.02em;
+}
+
+.report-amenities-label small {
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.report-amenities-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.report-amenity-chip {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 6px 11px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.report-amenity-chip:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.report-amenity-chip.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 0 10px var(--primary-glow);
+}
+
+.venue-amenities-card {
+  background: rgba(255, 255, 255, 0.045);
+  border: 0.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 10px 14px;
+  margin-top: 8px;
+}
+
+.venue-amenities-header {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: rgba(235, 235, 245, 0.5);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.venue-amenities-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.venue-amenity-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  padding: 5px 10px;
+}
+
+body.theme-light .report-amenities-box {
+  background: rgba(0, 0, 0, 0.025) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+body.theme-light .report-amenities-label {
+  color: #0f172a !important;
+}
+
+body.theme-light .report-amenities-label small {
+  color: #64748b !important;
+}
+
+body.theme-light .report-amenity-chip {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+body.theme-light .report-amenity-chip:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .report-amenity-chip.active {
+  background: #ea580c !important;
+  border-color: #ea580c !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(234, 88, 12, 0.3) !important;
+}
+
+body.theme-light .venue-amenities-card {
+  background: rgba(0, 0, 0, 0.035) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+body.theme-light .venue-amenities-header {
+  color: #64748b !important;
+}
+
+body.theme-light .venue-amenity-pill {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #1e293b !important;
+}
+
+
 
 
 

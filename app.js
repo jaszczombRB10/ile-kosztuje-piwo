@@ -327,6 +327,31 @@
   let clusterGroup = null;
   let cityMarkersGroup = null;
   let districtOverviewGroup = null;
+  const VENUE_AMENITY_META = {
+    dart: { icon: "🎯", label: "Dart" },
+    bilard: { icon: "🎱", label: "Bilard" },
+    pilkarzyki: { icon: "⚽", label: "Piłkarzyki" },
+    planszowki: { icon: "🎲", label: "Planszówki" },
+    kregle: { icon: "🎳", label: "Kręgle" },
+    karaoke: { icon: "🎤", label: "Karaoke" },
+    sport: { icon: "📺", label: "Mecze / TV" },
+    ogrodek: { icon: "🌿", label: "Ogródek" }
+  };
+
+  function normalizeVenueAmenities(raw) {
+    if (!Array.isArray(raw)) return [];
+    const seen = new Set();
+    const out = [];
+    for (const item of raw) {
+      const key = String(item || "").trim().toLowerCase();
+      if (Object.prototype.hasOwnProperty.call(VENUE_AMENITY_META, key) && !seen.has(key)) {
+        seen.add(key);
+        out.push(key);
+      }
+    }
+    return out;
+  }
+
   let currentFilter = "all";
   let filterState = {
     priceTier: "all",
@@ -336,7 +361,8 @@
     happyHourOnly: false,
     favoritesOnly: false,
     nonAlcoholicOnly: false,
-    passOnly: false
+    passOnly: false,
+    amenities: []
   };
   let currentDistrict = "all";
   let searchQuery = "";
@@ -2002,6 +2028,10 @@
       if (filterState.favoritesOnly && !isVenueFavorite(venue.id)) return false;
       if (filterState.nonAlcoholicOnly && !isNonAlcoholicVenue(venue)) return false;
       if (filterState.passOnly && !(venue.is_partner || venue.pass_partner)) return false;
+      if (Array.isArray(filterState.amenities) && filterState.amenities.length > 0) {
+        const vAm = normalizeVenueAmenities(venue.amenities);
+        if (!filterState.amenities.every(a => vAm.includes(a))) return false;
+      }
 
       return true;
     });
@@ -2016,6 +2046,7 @@
     if (filterState.favoritesOnly) count++;
     if (filterState.nonAlcoholicOnly) count++;
     if (filterState.passOnly) count++;
+    if (Array.isArray(filterState.amenities) && filterState.amenities.length > 0) count += filterState.amenities.length;
     if (currentDistrict !== "all") count++;
     return count;
   }
@@ -2056,12 +2087,13 @@
       happyHourOnly: false,
       favoritesOnly: false,
       nonAlcoholicOnly: false,
-      passOnly: false
+      passOnly: false,
+      amenities: []
     };
   }
 
   function syncQuickChipsWithFilterState() {
-    const isAllDefault = (filterState.priceTier === "all" && filterState.maxPrice === null && !filterState.openNow && !filterState.craftOnly && !filterState.happyHourOnly && !filterState.favoritesOnly && !filterState.nonAlcoholicOnly && !filterState.passOnly && currentDistrict === "all");
+    const isAllDefault = (filterState.priceTier === "all" && filterState.maxPrice === null && !filterState.openNow && !filterState.craftOnly && !filterState.happyHourOnly && !filterState.favoritesOnly && !filterState.nonAlcoholicOnly && !filterState.passOnly && (!filterState.amenities || filterState.amenities.length === 0) && currentDistrict === "all");
     if (isAllDefault) {
       currentFilter = "all";
     }
@@ -2089,6 +2121,10 @@
         isActive = filterState.nonAlcoholicOnly;
       } else if (f === "pass") {
         isActive = filterState.passOnly;
+      } else if (f === "amenity-dart") {
+        isActive = Array.isArray(filterState.amenities) && filterState.amenities.includes("dart");
+      } else if (f === "amenity-bilard") {
+        isActive = Array.isArray(filterState.amenities) && filterState.amenities.includes("bilard");
       }
       if (isActive) c.classList.add("active");
       else c.classList.remove("active");
@@ -2167,8 +2203,16 @@
       }
     }
 
+    // Amenity chips inside modal
+    const selectedAmenities = normalizeVenueAmenities(filterState.amenities);
+    document.querySelectorAll(".filter-amenity-chip").forEach(ch => {
+      const a = ch.getAttribute("data-amenity");
+      if (a && selectedAmenities.includes(a)) ch.classList.add("active");
+      else ch.classList.remove("active");
+    });
+
     // District chips inside modal
-    document.querySelectorAll(".filter-dist-chip").forEach(ch => {
+    document.querySelectorAll(".filter-dist-chip:not(.filter-amenity-chip)").forEach(ch => {
       const d = ch.getAttribute("data-dist");
       if (d === currentDistrict) ch.classList.add("active");
       else ch.classList.remove("active");
@@ -6005,8 +6049,24 @@
       });
     });
 
+    // Modal: Amenity chips (multi-select toggle)
+    document.querySelectorAll(".filter-amenity-chip").forEach(aChip => {
+      aChip.addEventListener("click", () => {
+        const a = aChip.getAttribute("data-amenity");
+        if (!a) return;
+        const cur = normalizeVenueAmenities(filterState.amenities);
+        if (cur.includes(a)) {
+          filterState.amenities = cur.filter(x => x !== a);
+        } else {
+          filterState.amenities = [...cur, a];
+        }
+        syncFilterModalUI();
+        syncQuickChipsWithFilterState();
+      });
+    });
+
     // Modal: District chips (tap active district to toggle off to all)
-    document.querySelectorAll(".filter-dist-chip").forEach(dChip => {
+    document.querySelectorAll(".filter-dist-chip:not(.filter-amenity-chip)").forEach(dChip => {
       dChip.addEventListener("click", () => {
         const d = dChip.getAttribute("data-dist");
         if (currentDistrict === d && d !== "all") {
@@ -6054,6 +6114,7 @@
         filterState.favoritesOnly = false;
         filterState.nonAlcoholicOnly = false;
         filterState.passOnly = false;
+        filterState.amenities = [];
 
         if (filterVal === "tier-low" || filterVal === "tier-mid" || filterVal === "tier-high") {
           filterState.priceTier = filterVal;
@@ -6069,6 +6130,10 @@
           filterState.nonAlcoholicOnly = true;
         } else if (filterVal === "pass") {
           filterState.passOnly = true;
+        } else if (filterVal === "amenity-dart") {
+          filterState.amenities = ["dart"];
+        } else if (filterVal === "amenity-bilard") {
+          filterState.amenities = ["bilard"];
         }
         currentFilter = filterVal;
         syncQuickChipsWithFilterState();
@@ -6745,12 +6810,40 @@
       });
     }
 
+    function getSelectedReportAmenities() {
+      const selected = [];
+      document.querySelectorAll("#report-amenities-picker .report-amenity-chip.active").forEach(btn => {
+        const key = btn.getAttribute("data-amenity");
+        if (key) selected.push(key);
+      });
+      return normalizeVenueAmenities(selected);
+    }
+
+    function setSelectedReportAmenities(rawList) {
+      const activeSet = new Set(normalizeVenueAmenities(rawList));
+      document.querySelectorAll("#report-amenities-picker .report-amenity-chip").forEach(btn => {
+        const key = btn.getAttribute("data-amenity");
+        const isActive = Boolean(key && activeSet.has(key));
+        btn.classList.toggle("active", isActive);
+        btn.setAttribute("aria-pressed", isActive ? "true" : "false");
+      });
+    }
+
+    document.querySelectorAll("#report-amenities-picker .report-amenity-chip").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const nextActive = !btn.classList.contains("active");
+        btn.classList.toggle("active", nextActive);
+        btn.setAttribute("aria-pressed", nextActive ? "true" : "false");
+      });
+    });
+
     function openAddModal(autoScan = false) {
       currentEditVenue = null;
       autoLookedUpCoords = null;
       lastAutoHoursSignature = "";
       if (reportForm) reportForm.reset();
       resetPhotoUpload();
+      setSelectedReportAmenities([]);
       if (addressMatchBox) addressMatchBox.innerHTML = "";
       setModalMode("add");
 
@@ -6832,6 +6925,7 @@
 
       const hoursInput = document.getElementById("report-hours");
       if (hoursInput) hoursInput.value = String(venue.hours || "").replace(/^TEMPORARILY_CLOSED\|?/i, "");
+      setSelectedReportAmenities(venue.amenities || []);
       autoLookedUpCoords = null;
       lastAutoHoursSignature = "";
 
@@ -6874,6 +6968,7 @@
         ModalHistoryManager.pop("report-modal");
       }
       resetPhotoUpload();
+      setSelectedReportAmenities([]);
       clearRenameTarget();
       if (addressMatchBox) addressMatchBox.innerHTML = "";
       currentModalMode = "add";
@@ -6909,6 +7004,7 @@
       const isCraft = document.getElementById("report-craft").value === "true";
       const happyHour = document.getElementById("report-happy-hour").value.trim() || null;
       let hoursVal = (document.getElementById("report-hours")?.value || "").trim();
+      const amenitiesVal = getSelectedReportAmenities();
 
       // Check if user attached a photo proof
       let uploadedPhotoUrl = null;
@@ -6953,7 +7049,9 @@
 
       let existing = null;
       let isNameChange = false;
-      let hoursOnlyEdit = false;
+      let metaOnlyEdit = false;
+      let metaChangedHours = false;
+      let metaChangedAmenities = false;
       let prevName = "";
 
       if (currentModalMode === "rename") {
@@ -6978,6 +7076,7 @@
         existing.is_craft = isCraft;
         if (happyHour) existing.happy_hour = happyHour;
         if (hoursVal) existing.hours = hoursVal;
+        existing.amenities = amenitiesVal;
         if (uploadedPhotoUrl) existing.photo_url = uploadedPhotoUrl;
         existing.last_updated = new Date().toISOString().split("T")[0];
         existing.votes_confirm = (existing.votes_confirm || 1) + 1;
@@ -6985,6 +7084,9 @@
       } else if (currentModalMode === "edit" && currentEditVenue) {
         existing = currentEditVenue;
         const origHoursNorm = String(existing.hours || "").replace(/^TEMPORARILY_CLOSED\|?/i, "").trim();
+        const origAmenities = normalizeVenueAmenities(existing.amenities);
+        const amenitiesChanged = JSON.stringify([...amenitiesVal].sort()) !== JSON.stringify([...origAmenities].sort());
+        const hoursChanged = Boolean(hoursVal) && hoursVal !== origHoursNorm;
         const prevShot = existing.shot_price_pln != null && existing.shot_price_pln !== "" ? Number(existing.shot_price_pln) : null;
         const shotUnchanged = (shotPrice === null && prevShot === null)
           || (shotPrice !== null && prevShot !== null && Math.abs(shotPrice - prevShot) < 0.001);
@@ -6994,7 +7096,7 @@
         const craftUnchanged = Boolean(isCraft) === Boolean(existing.is_craft);
         const hhUnchanged = (happyHour || null) === (existing.happy_hour || null);
         const noPhotoOrOcr = !uploadedPhotoUrl && !(currentOcrMetadata && currentOcrMetadata.is_valid_image);
-        const onlyHoursChanged =
+        const onlyMetaChanged =
           name === existing.name &&
           district === (existing.district || "") &&
           addrUnchanged &&
@@ -7004,12 +7106,14 @@
           craftUnchanged &&
           hhUnchanged &&
           noPhotoOrOcr &&
-          Boolean(hoursVal) &&
-          hoursVal !== origHoursNorm;
+          (hoursChanged || amenitiesChanged);
 
-        if (onlyHoursChanged) {
-          hoursOnlyEdit = true;
-          existing.hours = hoursVal;
+        if (onlyMetaChanged) {
+          metaOnlyEdit = true;
+          metaChangedHours = hoursChanged;
+          metaChangedAmenities = amenitiesChanged;
+          if (hoursChanged) existing.hours = hoursVal;
+          if (amenitiesChanged) existing.amenities = amenitiesVal;
           saveLocalVenue(existing);
         } else {
           if (name !== existing.name) {
@@ -7030,6 +7134,7 @@
           existing.is_craft = isCraft;
           if (happyHour) existing.happy_hour = happyHour;
           if (hoursVal) existing.hours = hoursVal;
+          existing.amenities = amenitiesVal;
           if (uploadedPhotoUrl) existing.photo_url = uploadedPhotoUrl;
           existing.is_verified = true;
           existing.verified_by_community = true;
@@ -7053,6 +7158,7 @@
           if (shotPrice !== null) existing.shot_price_pln = shotPrice;
           if (happyHour) existing.happy_hour = happyHour;
           if (hoursVal) existing.hours = hoursVal;
+          existing.amenities = amenitiesVal;
           if (uploadedPhotoUrl) existing.photo_url = uploadedPhotoUrl;
           existing.is_verified = true;
           existing.verified_by_community = true;
@@ -7129,6 +7235,7 @@
             happy_hour: happyHour,
             photo_url: uploadedPhotoUrl,
             hours: hoursVal || "16:00 - 02:00",
+            amenities: amenitiesVal,
             is_verified: true,
             verified_by_community: true,
             verified_by_receipt: currentOcrMetadata && currentOcrMetadata.is_valid_image ? true : false,
@@ -7143,39 +7250,51 @@
         }
       }
 
-      if (hoursOnlyEdit && existing) {
-        // Hours-only edit: update ONLY opening hours, keep price status/votes/last_updated untouched
+      if (metaOnlyEdit && existing) {
+        // Hours/amenities-only edit: keep price status/votes/last_updated untouched
         saveVenuesCache(allVenues);
-        const hoursOnlyPayload = {
+        const metaPayload = {
           id: existing.id,
           osm_id: existing.osm_id || existing.id,
           name: existing.name,
-          hours: existing.hours,
-          hours_only: true
+          meta_only: true
         };
-        const directHoursFallback = () => {
-          if (!supabaseClient || !PROOF_UUID_RE.test(String(existing.id))) return;
-          supabaseClient.from("venues").update({ hours: existing.hours }).eq("id", existing.id).then(({ error }) => {
-            if (error) console.warn("Supabase hours-only update note:", error);
+        const directUpdate = {};
+        if (metaChangedHours) {
+          metaPayload.hours = existing.hours;
+          if (!metaChangedAmenities) metaPayload.hours_only = true;
+          directUpdate.hours = existing.hours;
+        }
+        if (metaChangedAmenities) {
+          metaPayload.amenities = normalizeVenueAmenities(existing.amenities);
+          directUpdate.amenities = metaPayload.amenities;
+        }
+        const directMetaFallback = () => {
+          if (!supabaseClient || !PROOF_UUID_RE.test(String(existing.id)) || Object.keys(directUpdate).length === 0) return;
+          supabaseClient.from("venues").update(directUpdate).eq("id", existing.id).then(({ error }) => {
+            if (error) console.warn("Supabase meta-only update note:", error);
           });
         };
         if (navigator.onLine) {
           fetch("/api/update-venue", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ venuePayload: hoursOnlyPayload, reportPayload: null })
+            body: JSON.stringify({ venuePayload: metaPayload, reportPayload: null })
           }).then(res => {
-            if (!res.ok) directHoursFallback();
-          }).catch(() => directHoursFallback());
+            if (!res.ok) directMetaFallback();
+          }).catch(() => directMetaFallback());
         } else {
-          showMapToast("💾 Godziny zapisane lokalnie — zsynchronizuj po powrocie do sieci.");
+          showMapToast("💾 Zmiany zapisane lokalnie — zsynchronizuj po powrocie do sieci.");
         }
         resetPhotoUpload();
         closeModal();
         reportForm.reset();
         renderMarkers();
         window.__zoomToVenue(existing.id);
-        showMapToast(`🕒 Zaktualizowano godziny otwarcia: ${existing.name}`);
+        const metaToastLabel = (metaChangedHours && metaChangedAmenities)
+          ? "🕒 Zaktualizowano godziny i rozrywki"
+          : (metaChangedAmenities ? "🎮 Zaktualizowano rozrywki" : "🕒 Zaktualizowano godziny otwarcia");
+        showMapToast(`${metaToastLabel}: ${existing.name}`);
         return;
       }
 
@@ -7246,6 +7365,7 @@
         is_craft: existing.is_craft,
         happy_hour: existing.happy_hour,
         hours: existing.hours,
+        amenities: normalizeVenueAmenities(existing.amenities),
         photo_url: existing.photo_url || null,
         is_verified: existing.is_verified || false,
         verified_by_receipt: existing.verified_by_receipt || false,
@@ -7273,6 +7393,7 @@
           is_craft: existing.is_craft,
           happy_hour: existing.happy_hour,
           hours: existing.hours,
+          amenities: normalizeVenueAmenities(existing.amenities),
           is_verified: existing.is_verified || false,
           votes_confirm: existing.votes_confirm,
           last_updated: submissionIso
@@ -13045,6 +13166,7 @@
           filterState.favoritesOnly = false;
           filterState.nonAlcoholicOnly = false;
           filterState.passOnly = false;
+          filterState.amenities = [];
           currentFilter = "tier-low";
           if (typeof syncFilterModalUI === "function") syncFilterModalUI();
           if (typeof syncQuickChipsWithFilterState === "function") syncQuickChipsWithFilterState();
@@ -20383,6 +20505,7 @@
         filterState.favoritesOnly = false;
         filterState.nonAlcoholicOnly = false;
         filterState.passOnly = true;
+        filterState.amenities = [];
         currentFilter = "pass";
 
         syncQuickChipsWithFilterState();
@@ -27731,7 +27854,8 @@
               const mapped = {
                 ...v,
                 beer_price_pln: parseFloat(v.beer_price_pln),
-                shot_price_pln: v.shot_price_pln ? parseFloat(v.shot_price_pln) : null
+                shot_price_pln: v.shot_price_pln ? parseFloat(v.shot_price_pln) : null,
+                amenities: normalizeVenueAmenities(v.amenities)
               };
               const localMatch = localList.find(lv =>
                 (lv.id && mapped.id && String(lv.id) === String(mapped.id)) ||
@@ -28291,11 +28415,24 @@
       </div>
     `;
 
+    const venueAmenities = normalizeVenueAmenities(venue.amenities);
+    const amenitiesHtml = venueAmenities.length > 0 ? `
+      <div class="venue-amenities-card">
+        <div class="venue-amenities-header">🎮 ROZRYWKI W LOKALU</div>
+        <div class="venue-amenities-list">
+          ${venueAmenities.map(key => {
+            const m = VENUE_AMENITY_META[key];
+            return `<span class="venue-amenity-pill">${m.icon} ${escapeHtml(m.label)}</span>`;
+          }).join("")}
+        </div>
+      </div>
+    ` : "";
+
     // Proof Photos Wall Container (Ścianka zdjęć cenników i paragonów - sorted newest first)
     const initialProofPhotos = getLocalProofPhotosForVenue(venue);
     const proofWallHtml = `<div class="venue-proof-wall-section" id="venue-proof-wall"></div>`;
 
-    contentEl.innerHTML = closingWarningHtml + hhHtml + flightyTimelineHtml + actionButtonsHtml + bentoSpecsHtml + proofWallHtml;
+    contentEl.innerHTML = closingWarningHtml + hhHtml + flightyTimelineHtml + actionButtonsHtml + bentoSpecsHtml + amenitiesHtml + proofWallHtml;
 
     const proofWallEl = document.getElementById("venue-proof-wall");
     if (proofWallEl) {
