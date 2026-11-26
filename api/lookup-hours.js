@@ -519,7 +519,8 @@ async function lookupLegacyGooglePlaces(apiKey, textQuery, diagnostics) {
     const json = await res.json();
     const top = json && Array.isArray(json.results) ? json.results[0] : null;
     if (!top || !top.place_id) {
-      diagnostics.push(`places-legacy:${(json && json.status) || "empty"}`);
+      const legacyMsg = (json && json.error_message) ? String(json.error_message).replace(/[\r\n]+/g, " ").trim().slice(0, 140) : "";
+      diagnostics.push(`places-legacy:${(json && json.status) || "empty"}${legacyMsg ? ":" + legacyMsg : ""}`);
       return null;
     }
 
@@ -591,7 +592,18 @@ async function lookupGooglePlaces(name, address, city, diagnostics = []) {
     clearTimeout(timer);
 
     if (!res.ok) {
-      diagnostics.push(`places-new:${res.status}`);
+      let errMsg = "";
+      try {
+        const errText = await res.text();
+        try {
+          const errJson = JSON.parse(errText);
+          errMsg = String((errJson && errJson.error && errJson.error.message) || errText);
+        } catch (e) {
+          errMsg = errText;
+        }
+      } catch (e) {}
+      errMsg = errMsg.replace(/[\r\n]+/g, " ").trim().slice(0, 140);
+      diagnostics.push(`places-new:${res.status}${errMsg ? ":" + errMsg : ""}`);
       return await lookupLegacyGooglePlaces(apiKey, textQuery, diagnostics);
     }
 
