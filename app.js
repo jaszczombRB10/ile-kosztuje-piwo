@@ -1041,7 +1041,15 @@
   }
 
   // Check if venue is currently open based on hours
+  function isVenueTemporarilyClosed(venue) {
+    if (!venue) return false;
+    if (venue.temporarily_closed === true) return true;
+    return typeof venue.hours === "string" && /^TEMPORARILY_CLOSED\b/i.test(venue.hours.trim());
+  }
+  window.isVenueTemporarilyClosed = isVenueTemporarilyClosed;
+
   function isVenueOpen(venue, now = new Date()) {
+    if (isVenueTemporarilyClosed(venue)) return false;
     if (!venue.hours) return true;
     const hStr = venue.hours.toLowerCase().trim();
     if (hStr.includes("24/7") || hStr.includes("24h") || hStr.includes("całodobow")) return true;
@@ -1068,10 +1076,11 @@
       return curMinutes >= openMinutes && curMinutes <= closeMinutes;
     }
   }
+  window.isVenueOpen = isVenueOpen;
 
   // Moduł 3: Check if venue is closing within thresholdMinutes (e.g. 45 min)
   function getVenueClosingSoon(venue, now = new Date(), thresholdMinutes = 45) {
-    if (!venue || !venue.hours) return { closingSoon: false };
+    if (!venue || !venue.hours || isVenueTemporarilyClosed(venue)) return { closingSoon: false };
     const hStr = venue.hours.toLowerCase().trim();
     if (hStr.includes("24/7") || hStr.includes("24h") || hStr.includes("całodobow")) return { closingSoon: false };
 
@@ -1147,6 +1156,9 @@
   function formatDisplayHours(raw) {
     if (!raw) return "";
     let s = raw.trim();
+    if (/^TEMPORARILY_CLOSED\b/i.test(s)) {
+      return "Tymczasowo zamknięte";
+    }
     if (/^\d{1,2}\+$/.test(s)) {
       const h = s.replace("+", "");
       return `od ${h}:00`;
@@ -1297,9 +1309,12 @@
       }
     }
 
-    const statusBadge = open
-      ? `<span class="venue-status-badge open"><span class="status-dot"></span> Otwarte teraz</span>`
-      : `<span class="venue-status-badge closed"><span class="status-dot"></span> Zamknięte</span>`;
+    const isTempClosed = isVenueTemporarilyClosed(venue);
+    const statusBadge = isTempClosed
+      ? `<span class="venue-status-badge closed"><span class="status-dot"></span> ⏸️ Tymczasowo zamknięte</span>`
+      : (open
+        ? `<span class="venue-status-badge open"><span class="status-dot"></span> Otwarte teraz</span>`
+        : `<span class="venue-status-badge closed"><span class="status-dot"></span> Zamknięte</span>`);
 
     const proofUrl = venue.photo_url || venue.proof_image_url;
 
@@ -2907,6 +2922,7 @@
       }
 
       const openNow = isVenueOpen(venue, nowRender);
+      const tempClosed = isVenueTemporarilyClosed(venue);
       const priceNum = venue.beer_price_pln || 14;
       const tierCls = priceNum <= 12 ? "tier-low" : (priceNum <= 18 ? "tier-mid" : "tier-high");
 
@@ -2926,8 +2942,9 @@
           </div>
           <div class="ranked-info">
             <div class="ranked-name">
-              <span class="flighty-status-dot ${openNow ? 'is-open' : 'is-closed'}" title="${openNow ? 'Otwarte teraz' : 'Zamknięte teraz'}"></span>
+              <span class="flighty-status-dot ${openNow ? 'is-open' : 'is-closed'}" title="${tempClosed ? 'Tymczasowo zamknięte' : (openNow ? 'Otwarte teraz' : 'Zamknięte teraz')}"></span>
               ${escapeHtml(venue.name)}
+              ${tempClosed ? '<span class="venue-temp-closed-chip">⏸️ Tymczasowo zamknięte</span>' : ''}
               ${venue.old_name ? `<span style="font-size:0.73rem;font-weight:400;color:var(--text-muted);margin-left:4px;">(d. ${escapeHtml(venue.old_name)})</span>` : ''}
               ${hasProof ? '<span title="Posiada zdjęcie menu/paragonu" style="font-size:11px;margin-left:4px;">📸</span>' : ''}
               ${passChip}
@@ -6246,7 +6263,7 @@
       if (hhInput) hhInput.value = venue.happy_hour || "";
 
       const hoursInput = document.getElementById("report-hours");
-      if (hoursInput) hoursInput.value = venue.hours || "";
+      if (hoursInput) hoursInput.value = String(venue.hours || "").replace(/^TEMPORARILY_CLOSED\|?/i, "");
       autoLookedUpCoords = null;
       lastAutoHoursSignature = "";
 
@@ -6568,7 +6585,7 @@
       if (hhInput) hhInput.value = venue.happy_hour || "";
 
       const hoursInput = document.getElementById("report-hours");
-      if (hoursInput) hoursInput.value = venue.hours || "";
+      if (hoursInput) hoursInput.value = String(venue.hours || "").replace(/^TEMPORARILY_CLOSED\|?/i, "");
       autoLookedUpCoords = null;
       lastAutoHoursSignature = "";
 
@@ -27699,6 +27716,9 @@
     if (!hoursStr || typeof hoursStr !== "string") {
       return { open: "16:00", close: "02:00", display: "16:00 – 02:00" };
     }
+    if (/^TEMPORARILY_CLOSED\b/i.test(hoursStr.trim())) {
+      return { open: "--:--", close: "--:--", display: "Tymczasowo zamknięte", temporarilyClosed: true };
+    }
     const formatted = formatDisplayHours(hoursStr) || hoursStr;
     const dayIdx = new Date().getDay(); // 0=Nd, 1=Pn, 2=Wt, 3=Śr, 4=Czw, 5=Pt, 6=Sb
     const segments = formatted.split(/[;|]/).map(s => s.trim()).filter(Boolean);
@@ -27768,6 +27788,7 @@
     const tier = getPriceTier(price);
     const mapsUrl = buildGoogleMapsNavigationUrl(venue);
     const open = isVenueOpen(venue);
+    const isTempClosed = isVenueTemporarilyClosed(venue);
     const isFav = isVenueFavorite(venue.id);
     const isVisited = isVenueVisited(venue.id);
     const activeHh = getActiveHappyHour(venue);
@@ -27794,7 +27815,7 @@
       <div class="flighty-edit-topbar venue-sheet-topbar">
         <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-venue-sheet" aria-label="Zamknij kartę lokalu">← Mapa</button>
         <div class="flighty-edit-topbar-title">
-          <span class="flighty-edit-eyebrow">📍 ${escapeHtml(venue.district || curCityObj.name)} · ${open ? 'OTWARTE' : 'OD ' + escapeHtml(openTimeLabel)}</span>
+          <span class="flighty-edit-eyebrow">📍 ${escapeHtml(venue.district || curCityObj.name)} · ${isTempClosed ? '⏸️ PRZERWA' : (open ? 'OTWARTE' : 'OD ' + escapeHtml(openTimeLabel))}</span>
           <h2>${escapeHtml(venue.name)}</h2>
         </div>
         <button type="button" class="flighty-edit-nav-btn save" id="btn-share-venue-top" aria-label="Kopiuj bezpośredni link do lokalu" title="Kopiuj bezpośredni link">🔗 Link</button>
@@ -27803,8 +27824,8 @@
         <div class="flighty-sheet-topbar">
           <div class="flighty-callsign-row">
             <span class="flighty-callsign-badge">📍 ${escapeHtml(venue.district || curCityObj.name)}</span>
-            <span class="flighty-callsign-status ${open ? 'status-ontime' : 'status-scheduled'}">
-              ${open ? '● OTWARTE' : '🕒 OD ' + escapeHtml(openTimeLabel)}
+            <span class="flighty-callsign-status ${isTempClosed ? 'status-temp-closed' : (open ? 'status-ontime' : 'status-scheduled')}">
+              ${isTempClosed ? '⏸️ TYMCZASOWO ZAMKNIĘTE' : (open ? '● OTWARTE' : '🕒 OD ' + escapeHtml(openTimeLabel))}
             </span>
             ${distTelemetryPill}
           </div>
@@ -27831,7 +27852,7 @@
       </div>
     `;
 
-    // Flighty-Style Live Shift Progress Timeline Bar
+    // Flighty-Style Live Shift Progress Timeline Bar (or Temporarily Closed banner)
     let shiftProgressPct = open ? 58 : 0;
     let shiftStatusSub = open ? "Lokal obsługuje gości · Kurek otwarty" : `Oczekiwanie na otwarcie o ${openTimeLabel}`;
     try {
@@ -27855,7 +27876,17 @@
       }
     } catch (e) {}
 
-    const flightyTimelineHtml = `
+    const flightyTimelineHtml = isTempClosed
+      ? `
+      <div class="venue-temp-closed-banner">
+        <span class="temp-closed-icon">⏸️</span>
+        <div class="temp-closed-copy">
+          <strong>Lokal tymczasowo zamknięty</strong>
+          <span>Obecnie ma przerwę (np. remont lub sezon). Historia cen i zdjęć jest zachowana — wróci do otwartych po wznowieniu.</span>
+        </div>
+      </div>
+    `
+      : `
       <div class="flighty-timeline-card">
         <div class="flighty-tl-endpoints">
           <div class="flighty-tl-node">

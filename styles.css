@@ -31374,6 +31374,86 @@ body.theme-light #btn-venue-sheet-fav.venue-sheet-fav-heart-btn.is-fav {
   border-color: #fda4af !important;
 }
 
+/* Temporarily Closed Status & Banner (v193) */
+.flighty-callsign-status.status-temp-closed {
+  background: rgba(245, 158, 11, 0.16) !important;
+  border-color: rgba(245, 158, 11, 0.42) !important;
+  color: #fbbf24 !important;
+}
+
+.venue-temp-closed-banner {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 13px;
+  border-radius: 14px;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.32);
+}
+
+.venue-temp-closed-banner .temp-closed-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.venue-temp-closed-banner .temp-closed-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.venue-temp-closed-banner .temp-closed-copy strong {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #fde68a;
+}
+
+.venue-temp-closed-banner .temp-closed-copy span {
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: #cbd5e1;
+}
+
+.venue-temp-closed-chip {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.64rem;
+  font-weight: 800;
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.14);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: 999px;
+  padding: 2px 6px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+body.theme-light .flighty-callsign-status.status-temp-closed {
+  background: #fef3c7 !important;
+  border-color: #fcd34d !important;
+  color: #b45309 !important;
+}
+
+body.theme-light .venue-temp-closed-banner {
+  background: #fffbeb !important;
+  border-color: #fcd34d !important;
+}
+
+body.theme-light .venue-temp-closed-banner .temp-closed-copy strong {
+  color: #92400e !important;
+}
+
+body.theme-light .venue-temp-closed-banner .temp-closed-copy span {
+  color: #78350f !important;
+}
+
+body.theme-light .venue-temp-closed-chip {
+  background: #fef3c7 !important;
+  border-color: #fcd34d !important;
+  color: #b45309 !important;
+}
+
 
 
 

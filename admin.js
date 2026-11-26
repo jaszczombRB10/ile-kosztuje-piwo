@@ -246,9 +246,23 @@
     attachVenueActions(listEl);
   }
 
+  function isVenueTempClosed(v) {
+    return Boolean(v && typeof v.hours === "string" && /^TEMPORARILY_CLOSED\b/i.test(v.hours.trim()));
+  }
+
+  function buildTempClosedHours(prevHours) {
+    const cleanPrev = String(prevHours || "").replace(/^TEMPORARILY_CLOSED\|?/i, "").trim();
+    return "TEMPORARILY_CLOSED|" + (cleanPrev || "16:00 - 02:00");
+  }
+
+  function restoreHoursFromTempClosed(hoursStr) {
+    return String(hoursStr || "").replace(/^TEMPORARILY_CLOSED\|?/i, "").trim() || "16:00 - 02:00";
+  }
+
   function renderVenueCardHtml(v, isUnverifiedTab) {
     const isUserAdded = (v.id && String(v.id).startsWith("user-")) || (v.osm_id && String(v.osm_id).startsWith("user-"));
     const isVerified = v.is_verified === true;
+    const tempClosed = isVenueTempClosed(v);
 
     return `
       <div class="venue-card ${!isVerified ? 'unverified' : ''}" data-id="${v.id}">
@@ -258,6 +272,7 @@
             ${isVerified 
               ? `<span class="status-tag tag-verified">✓ Zweryfikowany</span>` 
               : `<span class="status-tag tag-unverified">⏳ Do weryfikacji</span>`}
+            ${tempClosed ? `<span class="status-tag tag-temp-closed">⏸️ Tymczasowo zamknięty</span>` : ''}
             ${isUserAdded ? `<span class="status-tag tag-user">👤 Dodany przez użytkownika</span>` : ''}
           </div>
           <div class="venue-sub">
@@ -281,6 +296,9 @@
           ` : ''}
           <button type="button" class="btn btn-secondary btn-act-edit" data-id="${v.id}">
             ✏️ Edytuj
+          </button>
+          <button type="button" class="btn ${tempClosed ? 'btn-green' : 'btn-amber'} btn-act-temp-close" data-id="${v.id}">
+            ${tempClosed ? '▶️ Otwórz ponownie' : '⏸️ Tymczasowo zamknięty'}
           </button>
           <button type="button" class="btn btn-red btn-act-delete" data-id="${v.id}" data-name="${escapeHtml(v.name)}">
             🗑️ Usuń
@@ -317,6 +335,28 @@
         const id = btn.getAttribute("data-id");
         const venue = allVenues.find(v => v.id === id);
         if (venue) openEditModal(venue);
+      });
+    });
+
+    // Toggle Temporarily Closed
+    container.querySelectorAll(".btn-act-temp-close").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const id = btn.getAttribute("data-id");
+        const venue = allVenues.find(v => v.id === id);
+        if (!venue) return;
+        const closedNow = isVenueTempClosed(venue);
+        const nextHours = closedNow ? restoreHoursFromTempClosed(venue.hours) : buildTempClosedHours(venue.hours);
+        btn.disabled = true;
+        btn.textContent = "Zapisywanie...";
+        try {
+          await callAdminApi("update-venue", { venueId: id, updates: { hours: nextHours } });
+          venue.hours = nextHours;
+          renderCurrentTab();
+        } catch (err) {
+          alert("Błąd zmiany statusu: " + err.message);
+          btn.disabled = false;
+          btn.textContent = closedNow ? "▶️ Otwórz ponownie" : "⏸️ Tymczasowo zamknięty";
+        }
       });
     });
 
