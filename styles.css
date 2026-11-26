@@ -31334,6 +31334,46 @@ body.theme-light .venue-proof-empty {
   border-color: #cbd5e1 !important;
 }
 
+/* Favorite Heart Button Next to Venue Name (v192) */
+.venue-sheet-fav-heart-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 0.92rem;
+  line-height: 1;
+  padding: 0;
+  margin-left: 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+  vertical-align: middle;
+  transition: transform 0.14s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.venue-sheet-fav-heart-btn.is-fav {
+  background: rgba(244, 63, 94, 0.18);
+  border-color: rgba(244, 63, 94, 0.45);
+}
+
+.venue-sheet-fav-heart-btn:active {
+  transform: scale(0.88);
+}
+
+body.theme-light #btn-venue-sheet-fav.venue-sheet-fav-heart-btn {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+body.theme-light #btn-venue-sheet-fav.venue-sheet-fav-heart-btn.is-fav {
+  background: #ffe4e6 !important;
+  border-color: #fda4af !important;
+}
+
 
 
 

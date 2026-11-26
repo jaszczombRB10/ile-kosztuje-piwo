@@ -27813,8 +27813,11 @@
         <div class="flighty-sheet-mainbar">
           <div class="venue-sheet-title-box">
             <h2 class="venue-sheet-name">
-              ${escapeHtml(venue.name)}
+              <span>${escapeHtml(venue.name)}</span>
               ${venue.is_verified ? '<span class="venue-badge-verified" title="Zweryfikowany lokal">✓</span>' : ''}
+              <button type="button" class="venue-sheet-fav-heart-btn ${isFav ? 'is-fav' : ''}" id="btn-venue-sheet-fav" aria-label="${isFav ? 'Usuń z ulubionych' : 'Dodaj do ulubionych'}" aria-pressed="${isFav ? 'true' : 'false'}" title="${isFav ? 'Usuń z ulubionych' : 'Dodaj do ulubionych'}">
+                ${isFav ? '❤️' : '🤍'}
+              </button>
               ${venue.old_name ? `<span class="venue-old-name">(d. ${escapeHtml(venue.old_name)})</span>` : ''}
             </h2>
             <div class="venue-sheet-address">📍 ${escapeHtml(venue.district || curCityObj.name)}${venue.address ? ' · ' + escapeHtml(venue.address) : ''}</div>
@@ -27933,27 +27936,11 @@
       </div>
     `;
 
-    // Badges & details
-    const chipsHtml = `
-      <div class="venue-chips-row flighty-venue-chips-row" style="margin-top:2px;">
-        <button type="button" class="venue-chip chip-passport-action" id="btn-venue-sheet-visited">
-          ${isVisited ? '🎖️ W Paszporcie ✓' : '🎖️ Wbij do Paszportu'}
-        </button>
-        <button type="button" class="venue-chip chip-fav-action" id="btn-venue-sheet-fav">
-          ${isFav ? '❤️ W ulubionych' : '🤍 Dodaj do ulubionych'}
-        </button>
-        ${venue.verified_by_receipt ? `<span class="venue-chip chip-receipt-ok" title="Cena zweryfikowana paragonem fiskalnym (${escapeHtml(venue.receipt_date || 'niedawno')})">🧾 Paragon ${escapeHtml(venue.receipt_date || 'OK')}</span>` : ''}
-        ${(venue.is_partner || venue.pass_partner) ? `<span class="venue-chip chip-pass" title="Lokal honoruje kartę poilepiwko Pass (-10%)">🎟️ Karta Pass (-10%)</span>` : ''}
-        ${venue.is_craft ? `<span class="venue-chip craft">⭐ Kraft / Multitap</span>` : ''}
-        ${hasZero ? `<span class="venue-chip zero">🌱 Piwo 0.0%</span>` : ''}
-      </div>
-    `;
-
     // Proof Photos Wall Container (Ścianka zdjęć cenników i paragonów - sorted newest first)
     const initialProofPhotos = getLocalProofPhotosForVenue(venue);
     const proofWallHtml = `<div class="venue-proof-wall-section" id="venue-proof-wall"></div>`;
 
-    contentEl.innerHTML = closingWarningHtml + hhHtml + flightyTimelineHtml + actionButtonsHtml + bentoSpecsHtml + chipsHtml + proofWallHtml;
+    contentEl.innerHTML = closingWarningHtml + hhHtml + flightyTimelineHtml + actionButtonsHtml + bentoSpecsHtml + proofWallHtml;
 
     const proofWallEl = document.getElementById("venue-proof-wall");
     if (proofWallEl) {
@@ -27970,10 +27957,18 @@
     // Attach listeners for venue sheet actions
     const btnFav = document.getElementById("btn-venue-sheet-fav");
     if (btnFav) {
-      btnFav.addEventListener("click", () => {
+      btnFav.addEventListener("click", (e) => {
+        if (e) e.stopPropagation();
         poileHaptics.tick();
-        toggleVenueFavorite(venue.id);
-        openVenueSheet(venue);
+        if (typeof window.__toggleFavorite === "function") {
+          window.__toggleFavorite(venue.id);
+        }
+        const nowFav = isVenueFavorite(venue.id);
+        btnFav.classList.toggle("is-fav", nowFav);
+        btnFav.textContent = nowFav ? "❤️" : "🤍";
+        btnFav.setAttribute("aria-pressed", nowFav ? "true" : "false");
+        btnFav.setAttribute("aria-label", nowFav ? "Usuń z ulubionych" : "Dodaj do ulubionych");
+        btnFav.setAttribute("title", nowFav ? "Usuń z ulubionych" : "Dodaj do ulubionych");
       });
     }
 
@@ -27985,15 +27980,6 @@
         if (typeof window.__openBerealCamera === "function") {
           window.__openBerealCamera(venue.id);
         }
-      });
-    }
-
-    const btnVisited = document.getElementById("btn-venue-sheet-visited");
-    if (btnVisited) {
-      btnVisited.addEventListener("click", () => {
-        poileHaptics.success();
-        toggleVisitedVenue(venue.id);
-        openVenueSheet(venue);
       });
     }
 
