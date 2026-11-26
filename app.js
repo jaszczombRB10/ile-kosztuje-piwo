@@ -1948,23 +1948,554 @@
     renderMarkers();
   }
 
-  // Lightbox Modal Handlers
-  window.__openLightbox = function (url, caption) {
-    const lbModal = document.getElementById("lightbox-modal");
-    const lbImg = document.getElementById("lightbox-img");
-    const lbCap = document.getElementById("lightbox-caption");
-    if (!lbModal || !lbImg) return;
+  // Lightbox Modal & Proof Photos Wall State (v188)
+  const PROOF_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const PROOF_META_PREFIX = "__poile_meta_v1__:";
+  const venueProofPhotosCache = new Map();
+  let lightboxState = { items: [], index: 0, venueName: "", zoomed: false };
 
-    lbImg.src = url;
-    if (lbCap) lbCap.textContent = caption || "";
+  function encodeClientReportMeta(rp = {}, vp = {}) {
+    let rawHh = typeof rp.happy_hour_info === "string" ? rp.happy_hour_info.trim() : "";
+    if (rawHh.startsWith(PROOF_META_PREFIX)) rawHh = "";
+    const meta = {};
+    if (rp.reported_by_name) meta.author = String(rp.reported_by_name).trim().slice(0, 60);
+    if (rp.reported_by_username) meta.username = String(rp.reported_by_username).trim().slice(0, 40);
+    if (rp.reported_by_avatar) meta.avatar = String(rp.reported_by_avatar).trim().slice(0, 200);
+    if (rp.verified_by_receipt) meta.verified_by_receipt = true;
+    if (rp.receipt_date) meta.receipt_date = String(rp.receipt_date).trim().slice(0, 32);
+    if (Number.isFinite(Number(rp.receipt_confidence))) meta.confidence = Math.round(Number(rp.receipt_confidence));
+    if (rawHh) meta.hh = rawHh.slice(0, 240);
+    const osmId = rp.venue_osm_id || vp.osm_id;
+    if (osmId && !PROOF_UUID_RE.test(String(osmId))) meta.osm_id = String(osmId).slice(0, 120);
+    const vName = rp.venue_name || vp.name;
+    if (vName) meta.venue_name = String(vName).slice(0, 120);
+    if (Object.keys(meta).length === 0) return rawHh || null;
+    return PROOF_META_PREFIX + JSON.stringify(meta);
+  }
+
+  function getCurrentPhotoAuthor() {
+    const profileObj = (typeof currentProfile !== "undefined" && currentProfile) ? currentProfile : null;
+    const userMeta = (typeof currentUser !== "undefined" && currentUser && currentUser.user_metadata) ? currentUser.user_metadata : null;
+    const rawUser = (profileObj && profileObj.username) || (userMeta && userMeta.username) || "";
+    const username = rawUser ? String(rawUser).replace(/^@/, "").trim() : null;
+    const rawDisplay = (profileObj && profileObj.display_name) || (userMeta && userMeta.display_name) || "";
+    const displayName = rawDisplay ? String(rawDisplay).trim() : null;
+    const avatar = (profileObj && profileObj.avatar_icon) ? String(profileObj.avatar_icon).trim() : "🍺";
+    const name = displayName || (username ? `@${username}` : "Społeczność");
+    return { name, username, avatar };
+  }
+
+  function formatProofAuthorLabel(item) {
+    if (!item) return "🍺 Społeczność";
+    const av = (item.reported_by_avatar && !String(item.reported_by_avatar).startsWith("http") && !String(item.reported_by_avatar).startsWith("data:"))
+      ? item.reported_by_avatar
+      : "🍺";
+    const uname = item.reported_by_username ? String(item.reported_by_username).replace(/^@/, "").trim() : "";
+    const dname = item.reported_by_name ? String(item.reported_by_name).trim() : "";
+    let who = "Społeczność";
+    if (dname && uname && dname.toLowerCase() !== uname.toLowerCase() && !dname.includes("@" + uname)) {
+      who = `${dname} (@${uname})`;
+    } else if (uname) {
+      who = `@${uname}`;
+    } else if (dname) {
+      who = dname;
+    }
+    return `${av} ${who}`;
+  }
+
+  function formatProofDatePL(rawDateStr) {
+    if (!rawDateStr || typeof rawDateStr !== "string") {
+      return { label: "Ostatnio", shortLabel: "Ostatnio", ts: 0 };
+    }
+    const trimmed = rawDateStr.trim();
+    const monthsShort = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru"];
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      const [y, m, d] = trimmed.split("-").map(Number);
+      const localMid = new Date(y, m - 1, d, 12, 0, 0);
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+      const dayStart = new Date(y, m - 1, d).getTime();
+      const diffDays = Math.round((todayStart - dayStart) / 86400000);
+      const full = `${d} ${monthsShort[(m - 1 + 12) % 12]} ${y}`;
+      if (diffDays === 0) return { label: `Dziś (${full})`, shortLabel: "Dziś", ts: localMid.getTime() };
+      if (diffDays === 1) return { label: `Wczoraj (${full})`, shortLabel: "Wczoraj", ts: localMid.getTime() };
+      return { label: full, shortLabel: `${d} ${monthsShort[(m - 1 + 12) % 12]}`, ts: localMid.getTime() };
+    }
+
+    const dt = new Date(trimmed);
+    if (isNaN(dt.getTime())) {
+      return { label: trimmed, shortLabel: trimmed, ts: 0 };
+    }
+    const now = new Date();
+    const hh = String(dt.getHours()).padStart(2, "0");
+    const mm = String(dt.getMinutes()).padStart(2, "0");
+    const timeStr = `${hh}:${mm}`;
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const itemDayStart = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate()).getTime();
+    const diffDays = Math.round((todayStart - itemDayStart) / 86400000);
+    const dNum = dt.getDate();
+    const mShort = monthsShort[dt.getMonth()];
+    const yNum = dt.getFullYear();
+
+    if (diffDays === 0) {
+      return { label: `Dziś, ${timeStr}`, shortLabel: `Dziś · ${timeStr}`, ts: dt.getTime() };
+    }
+    if (diffDays === 1) {
+      return { label: `Wczoraj, ${timeStr}`, shortLabel: `Wczoraj · ${timeStr}`, ts: dt.getTime() };
+    }
+    if (yNum === now.getFullYear()) {
+      return { label: `${dNum} ${mShort}, ${timeStr}`, shortLabel: `${dNum} ${mShort} · ${timeStr}`, ts: dt.getTime() };
+    }
+    return { label: `${dNum} ${mShort} ${yNum}, ${timeStr}`, shortLabel: `${dNum} ${mShort} ${yNum}`, ts: dt.getTime() };
+  }
+
+  function normalizeProofPhoto(raw, venue) {
+    if (!raw) return null;
+    if (typeof raw === "string") {
+      const u = raw.trim();
+      if (!u) return null;
+      return {
+        url: u,
+        created_at: (venue && (venue.last_verified_at || venue.last_updated || venue.receipt_date)) || null,
+        receipt_date: (venue && venue.receipt_date) || null,
+        reported_by_name: "Społeczność",
+        reported_by_username: null,
+        reported_by_avatar: "🍺",
+        reported_price_pln: venue && typeof venue.beer_price_pln === "number" ? venue.beer_price_pln : null,
+        reported_beer_name: (venue && venue.beer_name) || "Piwo z kranu",
+        verified_by_receipt: Boolean(venue && venue.verified_by_receipt),
+        venue_name: (venue && venue.name) || ""
+      };
+    }
+    const url = String(raw.url || raw.proof_image_url || raw.photo_url || "").trim();
+    if (!url) return null;
+    return {
+      id: raw.id || null,
+      venue_id: raw.venue_id || (venue && venue.id) || null,
+      url,
+      created_at: raw.created_at || raw.receipt_date || (venue && (venue.last_verified_at || venue.last_updated)) || null,
+      receipt_date: raw.receipt_date || null,
+      reported_by_name: raw.reported_by_name || raw.author || "Społeczność",
+      reported_by_username: raw.reported_by_username || raw.username || null,
+      reported_by_avatar: raw.reported_by_avatar || raw.avatar || "🍺",
+      reported_price_pln: raw.reported_price_pln != null && !isNaN(parseFloat(raw.reported_price_pln))
+        ? parseFloat(raw.reported_price_pln)
+        : (venue && typeof venue.beer_price_pln === "number" ? venue.beer_price_pln : null),
+      reported_beer_name: raw.reported_beer_name || (venue && venue.beer_name) || "Piwo z kranu",
+      verified_by_receipt: Boolean(raw.verified_by_receipt),
+      venue_name: raw.venue_name || (venue && venue.name) || "",
+      caption: raw.caption || null
+    };
+  }
+
+  function mergeAndSortProofPhotos(listA = [], listB = [], venue = null) {
+    const byUrl = new Map();
+    const combined = [...listA, ...listB];
+    combined.forEach(item => {
+      const norm = normalizeProofPhoto(item, venue);
+      if (!norm || !norm.url) return;
+      const existing = byUrl.get(norm.url);
+      if (!existing) {
+        byUrl.set(norm.url, norm);
+        return;
+      }
+      // Prefer fuller timestamp & explicit author over fallback metadata
+      const exTs = formatProofDatePL(existing.created_at).ts;
+      const nwTs = formatProofDatePL(norm.created_at).ts;
+      const hasMorePreciseTime = (s) => typeof s === "string" && s.includes("T");
+      const pickCreatedAt = (hasMorePreciseTime(norm.created_at) && !hasMorePreciseTime(existing.created_at))
+        ? norm.created_at
+        : (nwTs > exTs ? norm.created_at : existing.created_at);
+      const isGenericAuthor = (a) => !a || a === "Społeczność";
+      byUrl.set(norm.url, {
+        ...existing,
+        ...norm,
+        created_at: pickCreatedAt || existing.created_at || norm.created_at,
+        reported_by_name: !isGenericAuthor(norm.reported_by_name) ? norm.reported_by_name : existing.reported_by_name,
+        reported_by_username: norm.reported_by_username || existing.reported_by_username,
+        reported_by_avatar: norm.reported_by_avatar || existing.reported_by_avatar,
+        reported_price_pln: norm.reported_price_pln != null ? norm.reported_price_pln : existing.reported_price_pln,
+        verified_by_receipt: Boolean(existing.verified_by_receipt || norm.verified_by_receipt),
+        receipt_date: norm.receipt_date || existing.receipt_date
+      });
+    });
+
+    return Array.from(byUrl.values()).sort((a, b) => {
+      const ta = formatProofDatePL(a.created_at || a.receipt_date).ts;
+      const tb = formatProofDatePL(b.created_at || b.receipt_date).ts;
+      return tb - ta;
+    });
+  }
+
+  function getLocalProofPhotosForVenue(venue) {
+    if (!venue) return [];
+    const list = [];
+    if (Array.isArray(venue.proof_photos)) {
+      list.push(...venue.proof_photos);
+    }
+    try {
+      const localList = loadLocalUpdates();
+      const match = localList.find(v =>
+        (v.id && venue.id && String(v.id) === String(venue.id)) ||
+        (v.osm_id && venue.osm_id && String(v.osm_id) === String(venue.osm_id)) ||
+        (v.name && venue.name && v.name.toLowerCase() === venue.name.toLowerCase())
+      );
+      if (match) {
+        if (Array.isArray(match.proof_photos)) list.push(...match.proof_photos);
+        if (match.photo_url || match.proof_image_url) {
+          list.push({
+            url: match.photo_url || match.proof_image_url,
+            created_at: match.last_verified_at || match.last_updated || match.receipt_date || null,
+            receipt_date: match.receipt_date || null,
+            reported_price_pln: match.beer_price_pln,
+            reported_beer_name: match.beer_name,
+            verified_by_receipt: match.verified_by_receipt
+          });
+        }
+      }
+    } catch (e) {}
+
+    if (venue.photo_url || venue.proof_image_url) {
+      list.push({
+        url: venue.photo_url || venue.proof_image_url,
+        created_at: venue.last_verified_at || venue.last_updated || venue.receipt_date || null,
+        receipt_date: venue.receipt_date || null,
+        reported_price_pln: venue.beer_price_pln,
+        reported_beer_name: venue.beer_name,
+        verified_by_receipt: venue.verified_by_receipt
+      });
+    }
+    return mergeAndSortProofPhotos(list, [], venue);
+  }
+
+  function invalidateVenueProofCache(venue) {
+    if (!venue) return;
+    [venue.id, venue.osm_id, venue.name && venue.name.toLowerCase()].forEach(k => {
+      if (k) venueProofPhotosCache.delete(String(k));
+    });
+  }
+
+  async function fetchVenueProofPhotos(venue, forceRefresh = false) {
+    const localPhotos = getLocalProofPhotosForVenue(venue);
+    if (!venue || navigator.onLine === false) return localPhotos;
+
+    const cacheKey = String(venue.id || venue.osm_id || (venue.name || "").toLowerCase()).trim();
+    const cached = venueProofPhotosCache.get(cacheKey);
+    if (!forceRefresh && cached && (Date.now() - cached.fetchedAt < 60000)) {
+      return mergeAndSortProofPhotos(cached.photos, localPhotos, venue);
+    }
+
+    try {
+      const qs = new URLSearchParams({ action: "photos" });
+      if (venue.id) qs.set("venueId", String(venue.id));
+      if (venue.osm_id) qs.set("osmId", String(venue.osm_id));
+      if (venue.name) qs.set("name", String(venue.name));
+      const resp = await fetch(`/api/update-venue?${qs.toString()}`);
+      if (resp.ok) {
+        const data = await resp.json();
+        const cloudPhotos = Array.isArray(data && data.photos) ? data.photos : [];
+        venueProofPhotosCache.set(cacheKey, { fetchedAt: Date.now(), photos: cloudPhotos });
+        const merged = mergeAndSortProofPhotos(cloudPhotos, localPhotos, venue);
+        if (merged.length > 0 && !venue.photo_url) {
+          venue.photo_url = merged[0].url;
+        }
+        venue.photo_count = merged.length;
+        return merged;
+      }
+    } catch (e) {
+      console.warn("Proof gallery fetch note:", e);
+    }
+    return localPhotos;
+  }
+
+  async function hydrateVenueLatestPhotosFromCloud() {
+    if (navigator.onLine === false || !Array.isArray(allVenues) || allVenues.length === 0) return;
+    try {
+      const resp = await fetch("/api/update-venue?action=all-latest-photos");
+      if (!resp.ok) return;
+      const data = await resp.json();
+      if (!data || !data.success) return;
+      const byVenueId = data.byVenueId || {};
+      const byOsmId = data.byOsmId || {};
+      const byName = data.byName || {};
+      let updatedAny = false;
+      allVenues.forEach(v => {
+        const hit = byVenueId[String(v.id)] || (v.osm_id && byOsmId[String(v.osm_id)]) || (v.name && byName[v.name.toLowerCase()]);
+        if (hit && hit.url) {
+          if (!v.photo_url) {
+            v.photo_url = hit.url;
+            updatedAny = true;
+          }
+          v.photo_count = Math.max(v.photo_count || 0, hit.count || 1);
+          if (hit.verified_by_receipt && !v.verified_by_receipt) {
+            v.verified_by_receipt = true;
+            if (!v.is_verified) v.is_verified = true;
+            updatedAny = true;
+          }
+        }
+      });
+      if (updatedAny && typeof renderRanking === "function") {
+        try { renderRanking(); } catch (e) {}
+      }
+    } catch (e) {}
+  }
+
+  function renderVenueProofWall(containerEl, venue, photos = [], opts = {}) {
+    if (!containerEl || !venue) return;
+    const expanded = Boolean(opts.expanded);
+    const loading = Boolean(opts.loading);
+    const sorted = mergeAndSortProofPhotos(photos, [], venue);
+    const count = sorted.length;
+    const countWord = count === 1 ? "1 zdjęcie" : (count >= 2 && count <= 4 ? `${count} zdjęcia` : `${count} zdjęć`);
+
+    if (count === 0) {
+      containerEl.innerHTML = `
+        <div class="venue-proof-wall-head">
+          <div class="venue-proof-wall-title-wrap">
+            <h3 class="venue-proof-wall-title">📸 Cenniki i paragony</h3>
+          </div>
+          <button type="button" class="venue-proof-add-btn" id="btn-proof-wall-add">+ Dodaj</button>
+        </div>
+        <div class="venue-proof-empty">
+          <div class="venue-proof-empty-text">
+            <div class="venue-proof-empty-title">Brak jeszcze zdjęć z tego lokalu</div>
+            <div class="venue-proof-empty-sub">${loading ? "Sprawdzam chmurę społeczności…" : "Dodaj pierwsze zdjęcie karty menu lub paragonu!"}</div>
+          </div>
+          <button type="button" class="venue-proof-empty-cta" id="btn-proof-wall-empty-cta">📸 Dodaj</button>
+        </div>
+      `;
+    } else {
+      const hero = sorted[0];
+      const heroDate = formatProofDatePL(hero.created_at || hero.receipt_date);
+      const heroAuthor = formatProofAuthorLabel(hero);
+      const heroPrice = hero.reported_price_pln != null ? `${Number(hero.reported_price_pln).toFixed(2)} zł` : `${venue.beer_price_pln.toFixed(2)} zł`;
+      const maxInitialTiles = expanded ? sorted.length : Math.min(sorted.length, 5);
+      const rest = sorted.slice(1, maxInitialTiles);
+
+      const gridHtml = rest.length > 0 ? `
+        <div class="venue-proof-grid">
+          ${rest.map((item, relIdx) => {
+            const idx = relIdx + 1;
+            const d = formatProofDatePL(item.created_at || item.receipt_date);
+            const author = formatProofAuthorLabel(item);
+            const priceLabel = item.reported_price_pln != null ? `${Number(item.reported_price_pln).toFixed(2)} zł` : "";
+            return `
+              <button type="button" class="venue-proof-tile" data-proof-idx="${idx}" aria-label="Pokaż zdjęcie ${idx + 1} z ${escapeHtml(venue.name)}">
+                <div class="venue-proof-tile-media">
+                  <img src="${escapeHtml(item.url)}" alt="Cennik ${escapeHtml(venue.name)}" loading="lazy" />
+                  ${priceLabel ? `<span class="venue-proof-tile-price">${escapeHtml(priceLabel)}</span>` : ""}
+                </div>
+                <div class="venue-proof-tile-footer">
+                  <span class="venue-proof-tile-date">📅 ${escapeHtml(d.shortLabel)}</span>
+                  <span class="venue-proof-tile-author">${escapeHtml(author)}</span>
+                </div>
+              </button>
+            `;
+          }).join("")}
+        </div>
+      ` : "";
+
+      const expandBtnHtml = (sorted.length > 5 && !expanded)
+        ? `<button type="button" class="venue-proof-expand-btn" id="btn-proof-wall-expand">Pokaż wszystkie zdjęcia (${sorted.length}) ↓</button>`
+        : "";
+
+      containerEl.innerHTML = `
+        <div class="venue-proof-wall-head">
+          <div class="venue-proof-wall-title-wrap">
+            <h3 class="venue-proof-wall-title">📸 Cenniki i paragony</h3>
+            <span class="venue-proof-count-pill">${escapeHtml(countWord)}</span>
+            ${count >= 2 ? `<span class="venue-proof-sort-pill">Od najnowszych ↓</span>` : ""}
+          </div>
+          <button type="button" class="venue-proof-add-btn" id="btn-proof-wall-add">+ Dodaj</button>
+        </div>
+
+        <button type="button" class="venue-proof-featured-card" data-proof-idx="0" aria-label="Powiększ najnowsze zdjęcie z ${escapeHtml(venue.name)}">
+          <div class="venue-proof-featured-media">
+            <img src="${escapeHtml(hero.url)}" alt="${escapeHtml(venue.name)} - zdjęcie menu / paragonu" loading="lazy" />
+            <div class="venue-proof-media-badges">
+              <div class="venue-proof-badges-left">
+                ${count >= 2 ? `<span class="venue-proof-tag-newest">✨ NAJNOWSZE</span>` : ""}
+                ${hero.verified_by_receipt ? `<span class="venue-proof-tag-ai">🧾 Skan AI</span>` : ""}
+              </div>
+              <span class="venue-proof-tag-zoom">🔍 Powiększ</span>
+            </div>
+          </div>
+          <div class="venue-proof-featured-meta">
+            <div class="venue-proof-meta-left">
+              <div class="venue-proof-author-row">${escapeHtml(heroAuthor)}</div>
+              <div class="venue-proof-date-row">📅 ${escapeHtml(heroDate.label)}</div>
+            </div>
+            <span class="venue-proof-price-pill">${escapeHtml(heroPrice)}</span>
+          </div>
+        </button>
+
+        ${gridHtml}
+        ${expandBtnHtml}
+        ${loading && count > 0 ? `<div class="venue-proof-loading-hint">Sprawdzam nowsze zdjęcia…</div>` : ""}
+      `;
+    }
+
+    containerEl.querySelectorAll("[data-proof-idx]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const idx = parseInt(btn.getAttribute("data-proof-idx"), 10) || 0;
+        if (typeof poileHaptics !== "undefined" && poileHaptics.tick) poileHaptics.tick();
+        window.__openLightboxGallery(sorted, idx, venue.name);
+      });
+    });
+
+    const addBtn = containerEl.querySelector("#btn-proof-wall-add");
+    if (addBtn) {
+      addBtn.addEventListener("click", () => {
+        if (typeof poileHaptics !== "undefined" && poileHaptics.tick) poileHaptics.tick();
+        if (typeof window.__editVenuePrice === "function") {
+          window.__editVenuePrice(venue, true);
+        }
+      });
+    }
+
+    const emptyCta = containerEl.querySelector("#btn-proof-wall-empty-cta");
+    if (emptyCta) {
+      emptyCta.addEventListener("click", () => {
+        if (typeof poileHaptics !== "undefined" && poileHaptics.tick) poileHaptics.tick();
+        if (typeof window.__editVenuePrice === "function") {
+          window.__editVenuePrice(venue, true);
+        }
+      });
+    }
+
+    const expandBtn = containerEl.querySelector("#btn-proof-wall-expand");
+    if (expandBtn) {
+      expandBtn.addEventListener("click", () => {
+        if (typeof poileHaptics !== "undefined" && poileHaptics.tick) poileHaptics.tick();
+        renderVenueProofWall(containerEl, venue, sorted, { expanded: true, loading: false });
+      });
+    }
+  }
+
+  function renderLightboxCurrent() {
+    const lbImg = document.getElementById("lightbox-img");
+    const lbTitle = document.getElementById("lightbox-venue-title");
+    const lbCounter = document.getElementById("lightbox-counter");
+    const lbPrev = document.getElementById("btn-lightbox-prev");
+    const lbNext = document.getElementById("btn-lightbox-next");
+    const lbAuthor = document.getElementById("lightbox-author");
+    const lbDate = document.getElementById("lightbox-date");
+    const lbCap = document.getElementById("lightbox-caption");
+    const lbThumbs = document.getElementById("lightbox-thumbs");
+    const lbStage = document.getElementById("lightbox-stage");
+    const lbZoomBtn = document.getElementById("btn-lightbox-zoom");
+
+    const items = lightboxState.items || [];
+    const total = items.length;
+    if (total === 0 || !lbImg) return;
+    const idx = Math.max(0, Math.min(lightboxState.index, total - 1));
+    lightboxState.index = idx;
+    const item = items[idx];
+
+    lightboxState.zoomed = false;
+    if (lbStage) lbStage.classList.remove("is-zoomed");
+    if (lbZoomBtn) lbZoomBtn.classList.remove("is-active");
+
+    lbImg.src = item.url;
+    if (lbTitle) lbTitle.textContent = lightboxState.venueName || item.venue_name || "Cennik / paragon";
+    if (lbCounter) {
+      if (total > 1) {
+        lbCounter.style.display = "inline-flex";
+        lbCounter.textContent = `${idx + 1} / ${total}`;
+      } else {
+        lbCounter.style.display = "none";
+      }
+    }
+    if (lbPrev) lbPrev.style.display = total > 1 ? "flex" : "none";
+    if (lbNext) lbNext.style.display = total > 1 ? "flex" : "none";
+
+    if (lbAuthor) lbAuthor.textContent = `Dodał(a): ${formatProofAuthorLabel(item)}`;
+    if (lbDate) {
+      const d = formatProofDatePL(item.created_at || item.receipt_date);
+      lbDate.textContent = d.label ? `📅 ${d.label}` : "";
+    }
+    if (lbCap) {
+      const capParts = [];
+      if (item.caption) {
+        capParts.push(item.caption);
+      } else {
+        if (item.reported_price_pln != null) {
+          capParts.push(`🍺 ${Number(item.reported_price_pln).toFixed(2)} zł (${item.reported_beer_name || "Piwo 0.5L"})`);
+        } else if (item.reported_beer_name) {
+          capParts.push(`🍺 ${item.reported_beer_name}`);
+        }
+      }
+      if (item.verified_by_receipt) capParts.push("🧾 Skan AI");
+      if (item.receipt_date) capParts.push(`Paragon z ${item.receipt_date}`);
+      lbCap.textContent = capParts.join(" · ");
+    }
+
+    if (lbThumbs) {
+      if (total > 1) {
+        lbThumbs.style.display = "flex";
+        lbThumbs.innerHTML = items.map((it, i) => `
+          <button type="button" class="lightbox-thumb-btn ${i === idx ? "active" : ""}" data-lb-idx="${i}" aria-label="Zdjęcie ${i + 1}">
+            <img src="${escapeHtml(it.url)}" alt="Miniatura ${i + 1}" />
+          </button>
+        `).join("");
+        lbThumbs.querySelectorAll(".lightbox-thumb-btn").forEach(btn => {
+          btn.addEventListener("click", () => {
+            const nextIdx = parseInt(btn.getAttribute("data-lb-idx"), 10);
+            if (!isNaN(nextIdx)) {
+              lightboxState.index = nextIdx;
+              renderLightboxCurrent();
+            }
+          });
+        });
+      } else {
+        lbThumbs.style.display = "none";
+        lbThumbs.innerHTML = "";
+      }
+    }
+  }
+
+  window.__openLightboxGallery = function (items, startIndex = 0, venueName = "") {
+    const lbModal = document.getElementById("lightbox-modal");
+    if (!lbModal) return;
+    const normalized = (Array.isArray(items) ? items : [items])
+      .map(it => normalizeProofPhoto(it, venueName ? { name: venueName } : null))
+      .filter(Boolean);
+    if (normalized.length === 0) return;
+
+    const safeIdx = Math.max(0, Math.min(parseInt(startIndex, 10) || 0, normalized.length - 1));
+    lightboxState = {
+      items: normalized,
+      index: safeIdx,
+      venueName: venueName || normalized[safeIdx].venue_name || "Cennik / paragon",
+      zoomed: false
+    };
+    renderLightboxCurrent();
     lbModal.style.display = "flex";
+    if (typeof ModalHistoryManager !== "undefined") {
+      ModalHistoryManager.push("lightbox-modal", window.__closeLightbox);
+    }
+  };
+
+  // Lightbox Modal Handlers (Backwards-compatible single-photo wrapper)
+  window.__openLightbox = function (url, caption) {
+    if (!url) return;
+    window.__openLightboxGallery([{ url, caption }], 0, caption || "Cennik / paragon");
   };
 
   window.__closeLightbox = function () {
     const lbModal = document.getElementById("lightbox-modal");
     const lbImg = document.getElementById("lightbox-img");
+    const lbStage = document.getElementById("lightbox-stage");
+    const lbZoomBtn = document.getElementById("btn-lightbox-zoom");
+    const wasOpen = lbModal && lbModal.style.display && lbModal.style.display !== "none";
     if (lbModal) lbModal.style.display = "none";
     if (lbImg) lbImg.src = "";
+    if (lbStage) lbStage.classList.remove("is-zoomed");
+    if (lbZoomBtn) lbZoomBtn.classList.remove("is-active");
+    lightboxState = { items: [], index: 0, venueName: "", zoomed: false };
+    if (wasOpen && typeof ModalHistoryManager !== "undefined") {
+      ModalHistoryManager.pop("lightbox-modal");
+    }
   };
 
   // Client-Side Image Compression using HTML Canvas
@@ -5407,20 +5938,97 @@
       });
     }
 
-    // Feature C: Lightbox Modal Events
+    // Feature C: Lightbox Gallery Modal Events
     const btnCloseLightbox = document.getElementById("btn-close-lightbox");
     const lightboxModal = document.getElementById("lightbox-modal");
+    const btnLightboxPrev = document.getElementById("btn-lightbox-prev");
+    const btnLightboxNext = document.getElementById("btn-lightbox-next");
+    const btnLightboxZoom = document.getElementById("btn-lightbox-zoom");
+    const lightboxStage = document.getElementById("lightbox-stage");
+    const lightboxImg = document.getElementById("lightbox-img");
+
+    function stepLightbox(delta) {
+      if (!lightboxState.items || lightboxState.items.length <= 1) return;
+      const total = lightboxState.items.length;
+      lightboxState.index = (lightboxState.index + delta + total) % total;
+      renderLightboxCurrent();
+    }
+
+    function toggleLightboxZoom() {
+      if (!lightboxStage) return;
+      lightboxState.zoomed = !lightboxState.zoomed;
+      lightboxStage.classList.toggle("is-zoomed", lightboxState.zoomed);
+      if (btnLightboxZoom) btnLightboxZoom.classList.toggle("is-active", lightboxState.zoomed);
+    }
+
     if (btnCloseLightbox) {
       btnCloseLightbox.addEventListener("click", window.__closeLightbox);
     }
+    if (btnLightboxPrev) {
+      btnLightboxPrev.addEventListener("click", (e) => {
+        e.stopPropagation();
+        stepLightbox(-1);
+      });
+    }
+    if (btnLightboxNext) {
+      btnLightboxNext.addEventListener("click", (e) => {
+        e.stopPropagation();
+        stepLightbox(1);
+      });
+    }
+    if (btnLightboxZoom) {
+      btnLightboxZoom.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleLightboxZoom();
+      });
+    }
+    if (lightboxImg) {
+      lightboxImg.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleLightboxZoom();
+      });
+    }
+    if (lightboxStage) {
+      let lbTouchStartX = 0;
+      let lbTouchStartY = 0;
+      lightboxStage.addEventListener("touchstart", (e) => {
+        if (!e.touches || !e.touches[0]) return;
+        lbTouchStartX = e.touches[0].clientX;
+        lbTouchStartY = e.touches[0].clientY;
+      }, { passive: true });
+      lightboxStage.addEventListener("touchend", (e) => {
+        if (lightboxState.zoomed || !lightboxState.items || lightboxState.items.length <= 1) return;
+        if (!e.changedTouches || !e.changedTouches[0]) return;
+        const dx = e.changedTouches[0].clientX - lbTouchStartX;
+        const dy = e.changedTouches[0].clientY - lbTouchStartY;
+        if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+          stepLightbox(dx > 0 ? -1 : 1);
+        }
+      }, { passive: true });
+    }
     if (lightboxModal) {
       lightboxModal.addEventListener("click", (e) => {
-        if (e.target === lightboxModal) window.__closeLightbox();
+        if (e.target === lightboxModal || e.target === lightboxStage) window.__closeLightbox();
       });
     }
 
-    // Close Modals on ESC Key
+    // Close Modals on ESC Key (& Lightbox gallery arrows)
     document.addEventListener("keydown", (e) => {
+      const lbOpen = lightboxModal && lightboxModal.style.display && lightboxModal.style.display !== "none";
+      if (lbOpen) {
+        if (e.key === "Escape") {
+          window.__closeLightbox();
+          return;
+        }
+        if (e.key === "ArrowLeft") {
+          stepLightbox(-1);
+          return;
+        }
+        if (e.key === "ArrowRight") {
+          stepLightbox(1);
+          return;
+        }
+      }
       if (e.key === "Escape") {
         if (window.__closeVenueSheet) window.__closeVenueSheet();
         window.__closeLightbox();
@@ -6249,11 +6857,39 @@
         saveLocalVenue(existing);
       }
 
+      const submissionIso = new Date().toISOString();
+      const photoAuthor = getCurrentPhotoAuthor();
+
+      if (uploadedPhotoUrl) {
+        const newPhotoEntry = normalizeProofPhoto({
+          proof_image_url: uploadedPhotoUrl,
+          created_at: submissionIso,
+          receipt_date: existing.receipt_date || null,
+          reported_by_name: photoAuthor.name,
+          reported_by_username: photoAuthor.username,
+          reported_by_avatar: photoAuthor.avatar,
+          reported_price_pln: price,
+          reported_beer_name: beerName,
+          verified_by_receipt: Boolean(existing.verified_by_receipt || (currentOcrMetadata && currentOcrMetadata.is_valid_image)),
+          venue_name: existing.name
+        }, existing);
+        existing.photo_url = uploadedPhotoUrl;
+        existing.proof_photos = mergeAndSortProofPhotos([newPhotoEntry], existing.proof_photos || [], existing);
+        existing.photo_count = existing.proof_photos.length;
+        saveLocalVenue(existing);
+        invalidateVenueProofCache(existing);
+      }
+
       const reportPayload = {
+        venue_osm_id: existing.osm_id || existing.id,
+        venue_name: existing.name,
         reported_beer_name: beerName,
         reported_price_pln: price,
         reported_shot_pln: shotPrice,
         happy_hour_info: isNameChange ? `Zmiana nazwy z "${prevName}" na "${name}". ${happyHour || ''}` : happyHour,
+        reported_by_name: photoAuthor.name,
+        reported_by_username: photoAuthor.username,
+        reported_by_avatar: photoAuthor.avatar,
         verified_by_receipt: existing.verified_by_receipt || false,
         receipt_date: existing.receipt_date || null,
         receipt_confidence: existing.receipt_confidence || null
@@ -6266,7 +6902,8 @@
       }
 
       const venuePayload = {
-        osm_id: existing.id,
+        id: existing.id,
+        osm_id: existing.osm_id || existing.id,
         name: existing.name,
         slug: existing.slug,
         district: existing.district,
@@ -6285,10 +6922,46 @@
         receipt_date: existing.receipt_date || null,
         receipt_confidence: existing.receipt_confidence || null,
         votes_confirm: existing.votes_confirm,
-        last_updated: new Date().toISOString()
+        last_updated: submissionIso
       };
 
       saveVenuesCache(allVenues);
+
+      const syncDirectSupabaseFallback = () => {
+        if (!supabaseClient) return;
+        const dbVenue = {
+          osm_id: (existing.osm_id && !PROOF_UUID_RE.test(String(existing.osm_id))) ? existing.osm_id : String(existing.id),
+          name: existing.name,
+          slug: existing.slug,
+          district: existing.district,
+          address: existing.address,
+          latitude: existing.latitude,
+          longitude: existing.longitude,
+          beer_name: existing.beer_name,
+          beer_price_pln: existing.beer_price_pln,
+          shot_price_pln: existing.shot_price_pln,
+          is_craft: existing.is_craft,
+          happy_hour: existing.happy_hour,
+          hours: existing.hours,
+          is_verified: existing.is_verified || false,
+          votes_confirm: existing.votes_confirm,
+          last_updated: submissionIso
+        };
+        supabaseClient.from("venues").upsert(dbVenue).then(({ error }) => {
+          if (error) console.warn("Supabase upsert note:", error);
+        });
+        const dbReport = {
+          venue_id: PROOF_UUID_RE.test(String(existing.id)) ? existing.id : null,
+          reported_beer_name: beerName || "Piwo z kranu",
+          reported_price_pln: price,
+          reported_shot_pln: shotPrice,
+          proof_image_url: uploadedPhotoUrl || null,
+          happy_hour_info: encodeClientReportMeta(reportPayload, venuePayload)
+        };
+        supabaseClient.from("price_reports").insert(dbReport).then(({ error }) => {
+          if (error) console.warn("Supabase report log note:", error);
+        });
+      };
 
       // If offline in cellar/Pawilony, queue for background sync when connection restores
       if (!navigator.onLine) {
@@ -6299,32 +6972,38 @@
         });
         showMapToast(`💾 Zapisano w trybie offline! Zsynchronizujemy po powrocie do sieci.`);
       } else {
-        // 1. Cloud sync via Vercel Serverless Function (Admin Service Role - always succeeds across all users)
+        // Cloud sync via Vercel Serverless Function (Admin Service Role — handles venues + price_reports cleanly)
         fetch("/api/update-venue", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ venuePayload, reportPayload })
-        }).then(res => {
-          if (res.ok) console.log("✓ Cloud sync via /api/update-venue succeeded!");
-        }).catch(e => console.warn("API update-venue note:", e));
-
-        // 2. Direct client-side Supabase sync
-        if (supabaseClient) {
-          supabaseClient
-            .from("venues")
-            .upsert(venuePayload)
-            .then(({ error }) => {
-              if (error) console.warn("Supabase upsert note:", error);
-              else console.log("Venue updated in Supabase cloud!");
-            });
-
-          supabaseClient
-            .from("price_reports")
-            .insert(reportPayload)
-            .then(({ error }) => {
-              if (error) console.warn("Supabase report log note:", error);
-            });
-        }
+        }).then(async res => {
+          if (res.ok) {
+            console.log("✓ Cloud sync via /api/update-venue succeeded!");
+            invalidateVenueProofCache(existing);
+            try {
+              const json = await res.json();
+              if (json && json.venue && json.venue.id) {
+                existing.supabase_id = json.venue.id;
+              }
+            } catch (e) {}
+            if (activeOpenVenueId === existing.id) {
+              const wallEl = document.getElementById("venue-proof-wall");
+              if (wallEl) {
+                fetchVenueProofPhotos(existing, true).then(merged => {
+                  const curWall = document.getElementById("venue-proof-wall");
+                  if (activeOpenVenueId === existing.id && curWall) {
+                    renderVenueProofWall(curWall, existing, merged, { loading: false });
+                  }
+                });
+              }
+            }
+          } else {
+            syncDirectSupabaseFallback();
+          }
+        }).catch(() => {
+          syncDirectSupabaseFallback();
+        });
       }
 
       const isEditMode = currentModalMode === "edit";
@@ -26595,21 +27274,27 @@
           syncedIds.push(item.id);
         } else if (item.type === "update_venue") {
           if (item.payload) {
+            let apiOk = false;
             try {
-              await fetch("/api/update-venue", {
+              const apiRes = await fetch("/api/update-venue", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(item.payload)
               });
+              apiOk = apiRes.ok;
             } catch (e) {}
 
-            if (supabaseClient) {
-              if (item.payload.venuePayload) {
-                await supabaseClient.from("venues").upsert(item.payload.venuePayload);
-              }
-              if (item.payload.reportPayload) {
-                await supabaseClient.from("price_reports").insert(item.payload.reportPayload);
-              }
+            if (!apiOk && supabaseClient && item.payload.reportPayload) {
+              const rp = item.payload.reportPayload;
+              const vp = item.payload.venuePayload || {};
+              await supabaseClient.from("price_reports").insert({
+                venue_id: (vp.id && PROOF_UUID_RE.test(String(vp.id))) ? vp.id : null,
+                reported_beer_name: rp.reported_beer_name || vp.beer_name || "Piwo z kranu",
+                reported_price_pln: rp.reported_price_pln || vp.beer_price_pln || 15,
+                reported_shot_pln: rp.reported_shot_pln || null,
+                proof_image_url: rp.proof_image_url || null,
+                happy_hour_info: encodeClientReportMeta(rp, vp)
+              });
             }
           }
           syncedIds.push(item.id);
@@ -26709,13 +27394,34 @@
           .order("beer_price_pln", { ascending: true });
         if (error) throw error;
         if (data && data.length > 0) {
+          const localList = loadLocalUpdates();
           allVenues = data
             .filter(v => v.id !== "user-1789053780065" && v.osm_id !== "user-1789053780065" && !(v.name && v.name.toLowerCase() === "bog"))
-            .map(v => ({
-              ...v,
-              beer_price_pln: parseFloat(v.beer_price_pln),
-              shot_price_pln: v.shot_price_pln ? parseFloat(v.shot_price_pln) : null
-            }));
+            .map(v => {
+              const mapped = {
+                ...v,
+                beer_price_pln: parseFloat(v.beer_price_pln),
+                shot_price_pln: v.shot_price_pln ? parseFloat(v.shot_price_pln) : null
+              };
+              const localMatch = localList.find(lv =>
+                (lv.id && mapped.id && String(lv.id) === String(mapped.id)) ||
+                (lv.osm_id && mapped.osm_id && String(lv.osm_id) === String(mapped.osm_id)) ||
+                (lv.name && mapped.name && lv.name.toLowerCase() === mapped.name.toLowerCase())
+              );
+              if (localMatch) {
+                if (Array.isArray(localMatch.proof_photos) && localMatch.proof_photos.length > 0) {
+                  mapped.proof_photos = mergeAndSortProofPhotos(localMatch.proof_photos, [], mapped);
+                }
+                if (localMatch.photo_url && !mapped.photo_url) {
+                  mapped.photo_url = localMatch.photo_url;
+                }
+                if (localMatch.verified_by_receipt && !mapped.verified_by_receipt) {
+                  mapped.verified_by_receipt = true;
+                  mapped.receipt_date = localMatch.receipt_date || mapped.receipt_date || null;
+                }
+              }
+              return mapped;
+            });
           ensurePartnerVenues(allVenues);
           saveVenuesCache(allVenues);
           console.log(`[Modul 5] Loaded ${allVenues.length} fresh venues directly from Supabase & cached!`);
@@ -26727,6 +27433,7 @@
           updateFavoriteCounters();
           renderMarkers();
           if (window.__refreshCompassTargets) window.__refreshCompassTargets();
+          hydrateVenueLatestPhotosFromCloud();
           setTimeout(checkUrlHash, 250);
           return;
         }
@@ -27282,19 +27989,23 @@
       </div>
     `;
 
-    // Photo / proof badge if available
-    let proofHtml = "";
-    if (proofUrl) {
-      proofHtml = `
-        <div style="margin-top:4px;">
-          <button type="button" class="venue-proof-badge" style="width:100%; justify-content:center; padding:7px 12px; border-radius:10px;" onclick="window.__openLightbox('${escapeHtml(proofUrl)}', '${escapeHtml(venue.name)} - menu / paragon')">
-            📸 Pokaż zdjęcie karty menu / paragonu
-          </button>
-        </div>
-      `;
-    }
+    // Proof Photos Wall Container (Ścianka zdjęć cenników i paragonów - sorted newest first)
+    const initialProofPhotos = getLocalProofPhotosForVenue(venue);
+    const proofWallHtml = `<div class="venue-proof-wall-section" id="venue-proof-wall"></div>`;
 
-    contentEl.innerHTML = closingWarningHtml + hhHtml + flightyTimelineHtml + actionButtonsHtml + verifyCardHtml + bentoSpecsHtml + chipsHtml + proofHtml;
+    contentEl.innerHTML = closingWarningHtml + hhHtml + flightyTimelineHtml + actionButtonsHtml + verifyCardHtml + bentoSpecsHtml + chipsHtml + proofWallHtml;
+
+    const proofWallEl = document.getElementById("venue-proof-wall");
+    if (proofWallEl) {
+      renderVenueProofWall(proofWallEl, venue, initialProofPhotos, { loading: navigator.onLine !== false });
+      const targetVenueId = venue.id;
+      fetchVenueProofPhotos(venue).then(merged => {
+        const liveWallEl = document.getElementById("venue-proof-wall");
+        if (activeOpenVenueId === targetVenueId && liveWallEl) {
+          renderVenueProofWall(liveWallEl, venue, merged, { loading: false });
+        }
+      });
+    }
 
     // Attach listeners for venue sheet actions
     const btnScanAi = document.getElementById(`btn-waze-scan-${venue.id}`);

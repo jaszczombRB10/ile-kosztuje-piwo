@@ -100,7 +100,7 @@
   <script defer src="https://cloud.umami.is/script.js" data-website-id="auto" id="umami-analytics-script"></script>
 
   <!-- Custom Styles -->
-  <link rel="stylesheet" href="styles.css?v=187">
+  <link rel="stylesheet" href="styles.css?v=188">
 </head>
 <body>
 
@@ -3602,12 +3602,36 @@
     </div>
   </div>
 
-  <!-- Lightbox Modal for Photo Proofs -->
-  <div id="lightbox-modal" class="lightbox-backdrop" style="display:none;">
+  <!-- Lightbox Modal for Photo Proofs Gallery -->
+  <div id="lightbox-modal" class="lightbox-backdrop" style="display:none;" role="dialog" aria-modal="true" aria-label="Galeria zdjęć cennika i paragonów">
     <div class="lightbox-container">
-      <button type="button" class="lightbox-close" id="btn-close-lightbox">✕</button>
-      <img id="lightbox-img" src="" alt="Zdjęcie menu / paragonu" />
-      <div id="lightbox-caption" class="lightbox-caption"></div>
+      <div class="lightbox-topbar">
+        <div class="lightbox-topbar-title">
+          <span class="lightbox-venue-name" id="lightbox-venue-title">Cennik / paragon</span>
+          <span class="lightbox-counter" id="lightbox-counter" style="display:none;">1 / 1</span>
+        </div>
+        <div class="lightbox-topbar-actions">
+          <button type="button" class="lightbox-action-btn" id="btn-lightbox-zoom" aria-label="Przybliż zdjęcie" title="Przybliż / Dopasuj">🔍</button>
+          <button type="button" class="lightbox-close" id="btn-close-lightbox" aria-label="Zamknij podgląd">✕</button>
+        </div>
+      </div>
+
+      <div class="lightbox-stage" id="lightbox-stage">
+        <button type="button" class="lightbox-nav-btn lightbox-nav-prev" id="btn-lightbox-prev" aria-label="Poprzednie zdjęcie" style="display:none;">‹</button>
+        <img id="lightbox-img" src="" alt="Zdjęcie menu / paragonu" />
+        <button type="button" class="lightbox-nav-btn lightbox-nav-next" id="btn-lightbox-next" aria-label="Następne zdjęcie" style="display:none;">›</button>
+      </div>
+
+      <div class="lightbox-footer">
+        <div class="lightbox-meta-card" id="lightbox-meta-card">
+          <div class="lightbox-meta-row">
+            <span class="lightbox-meta-author" id="lightbox-author"></span>
+            <span class="lightbox-meta-date" id="lightbox-date"></span>
+          </div>
+          <div class="lightbox-meta-sub" id="lightbox-caption"></div>
+        </div>
+        <div class="lightbox-thumbs" id="lightbox-thumbs" style="display:none;"></div>
+      </div>
     </div>
   </div>
 
@@ -4485,6 +4509,6 @@
   <script src="moderation.js"></script>
 
   <!-- Main Application Logic -->
-  <script src="app.js?v=187"></script>
+  <script src="app.js?v=188"></script>
 </body>
 </html>
