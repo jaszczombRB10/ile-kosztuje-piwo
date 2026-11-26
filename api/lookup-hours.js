@@ -561,7 +561,19 @@ async function lookupLegacyGooglePlaces(apiKey, textQuery, diagnostics) {
   }
 }
 
-async function lookupGooglePlaces(name, address, city, diagnostics = []) {
+function distanceMeters(aLat, aLng, bLat, bLng) {
+  const toRad = (deg) => (deg * Math.PI) / 180;
+  const R = 6371000;
+  const dLat = toRad(bLat - aLat);
+  const dLng = toRad(bLng - aLng);
+  const sinDLat = Math.sin(dLat / 2);
+  const sinDLng = Math.sin(dLng / 2);
+  const a = sinDLat * sinDLat
+    + Math.cos(toRad(aLat)) * Math.cos(toRad(bLat)) * sinDLng * sinDLng;
+  return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+async function lookupGooglePlaces(name, address, city, diagnostics = [], lat = null, lng = null) {
   const apiKey = process.env.GOOGLE_MAPS_API_KEY
     || process.env.GOOGLE_PLACES_API_KEY
     || process.env.GOOGLE_API_KEY
@@ -571,7 +583,22 @@ async function lookupGooglePlaces(name, address, city, diagnostics = []) {
     return null;
   }
 
+  const hasCoords = typeof lat === "number" && Number.isFinite(lat)
+    && typeof lng === "number" && Number.isFinite(lng);
   const textQuery = [name, address, city, "Polska"].filter(Boolean).join(", ");
+  const requestBody = {
+    textQuery,
+    languageCode: "pl",
+    maxResultCount: 3
+  };
+  if (hasCoords) {
+    requestBody.locationBias = {
+      circle: {
+        center: { latitude: lat, longitude: lng },
+        radius: 500.0
+      }
+    };
+  }
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 5000);
@@ -581,13 +608,9 @@ async function lookupGooglePlaces(name, address, city, diagnostics = []) {
       headers: {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": apiKey,
-        "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.location,places.regularOpeningHours,places.currentOpeningHours"
+        "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.location,places.businessStatus,places.regularOpeningHours,places.currentOpeningHours"
       },
-      body: JSON.stringify({
-        textQuery,
-        languageCode: "pl",
-        maxResultCount: 3
-      })
+      body: JSON.stringify(requestBody)
     });
     clearTimeout(timer);
 
@@ -622,11 +645,18 @@ async function lookupGooglePlaces(name, address, city, diagnostics = []) {
     for (const p of places) {
       const pName = normalizeTextForMatch((p.displayName && p.displayName.text) || "");
       const pHours = extractPlaceHours(p);
+      const pLoc = p.location || {};
       let score = 0;
       if (pHours) score += 10;
       if (normTarget && pName) {
         if (pName === normTarget) score += 20;
         else if (pName.includes(normTarget) || normTarget.includes(pName)) score += 12;
+      }
+      if (hasCoords && typeof pLoc.latitude === "number" && typeof pLoc.longitude === "number") {
+        const dist = distanceMeters(lat, lng, pLoc.latitude, pLoc.longitude);
+        if (dist <= 150) score += 15;
+        else if (dist <= 400) score += 8;
+        else if (dist > 2000) score -= 15;
       }
       if (score > bestScore) {
         bestScore = score;
@@ -636,9 +666,10 @@ async function lookupGooglePlaces(name, address, city, diagnostics = []) {
     }
 
     const loc = bestPlace.location || {};
+    const bestStatus = bestPlace.businessStatus || null;
     diagnostics.push(`places-new:200:${bestHours ? "found" : "no-hours"}`);
 
-    if (!bestHours && (typeof loc.latitude !== "number" || typeof loc.longitude !== "number")) {
+    if (!bestHours && !bestStatus && (typeof loc.latitude !== "number" || typeof loc.longitude !== "number")) {
       return null;
     }
 
@@ -648,7 +679,8 @@ async function lookupGooglePlaces(name, address, city, diagnostics = []) {
       source: bestHours ? "google-maps" : null,
       latitude: typeof loc.latitude === "number" ? loc.latitude : null,
       longitude: typeof loc.longitude === "number" ? loc.longitude : null,
-      matchedName: (bestPlace.displayName && bestPlace.displayName.text) || null
+      matchedName: (bestPlace.displayName && bestPlace.displayName.text) || null,
+      businessStatus: bestStatus
     };
   } catch (err) {
     diagnostics.push(`places-new:${err.name === "AbortError" ? "timeout" : "err"}`);
@@ -1046,6 +1078,7 @@ async function handler(req, res) {
     const city = String(body.city || "Warszawa").trim();
     const lat = typeof body.lat === "number" ? body.lat : null;
     const lng = typeof body.lng === "number" ? body.lng : null;
+    const googleOnly = body.googleOnly === true;
     const includeDebug = body.debug === true;
     const diagnostics = [];
 
@@ -1056,14 +1089,16 @@ async function handler(req, res) {
     let finalLat = lat;
     let finalLng = lng;
     let matchedName = null;
+    let businessStatus = null;
 
     // 1. Google Maps Places API (freshest opening hours if key configured)
-    const googleRes = await lookupGooglePlaces(name, address, city, diagnostics);
+    const googleRes = await lookupGooglePlaces(name, address, city, diagnostics, lat, lng);
     if (googleRes) {
       if (typeof googleRes.latitude === "number" && typeof googleRes.longitude === "number") {
         finalLat = googleRes.latitude;
         finalLng = googleRes.longitude;
       }
+      businessStatus = googleRes.businessStatus || null;
       if (googleRes.found && googleRes.hours) {
         const payload = {
           success: true,
@@ -1072,12 +1107,28 @@ async function handler(req, res) {
           source: googleRes.source,
           latitude: finalLat,
           longitude: finalLng,
-          matchedName: googleRes.matchedName
+          matchedName: googleRes.matchedName,
+          businessStatus
         };
         if (includeDebug) payload.debug = diagnostics;
         return res.status(200).json(payload);
       }
       matchedName = googleRes.matchedName;
+    }
+
+    if (googleOnly) {
+      const payload = {
+        success: true,
+        found: false,
+        hours: null,
+        source: null,
+        latitude: finalLat,
+        longitude: finalLng,
+        matchedName,
+        businessStatus
+      };
+      if (includeDebug) payload.debug = diagnostics;
+      return res.status(200).json(payload);
     }
 
     // Run OSM lookup in parallel with sequential Gemini Google grounding
@@ -1110,7 +1161,8 @@ async function handler(req, res) {
         modelUsed: geminiGoogleRes.modelUsed || null,
         latitude: finalLat,
         longitude: finalLng,
-        matchedName: matchedName || (osmRes && osmRes.matchedName) || geminiGoogleRes.matchedName
+        matchedName: matchedName || (osmRes && osmRes.matchedName) || geminiGoogleRes.matchedName,
+        businessStatus
       };
       if (geminiGoogleRes.mapsUrl) payload.mapsUrl = geminiGoogleRes.mapsUrl;
       if (includeDebug) payload.debug = diagnostics;
@@ -1126,7 +1178,8 @@ async function handler(req, res) {
         source: osmRes.source,
         latitude: finalLat,
         longitude: finalLng,
-        matchedName: osmRes.matchedName || matchedName
+        matchedName: osmRes.matchedName || matchedName,
+        businessStatus
       };
       if (includeDebug) payload.debug = diagnostics;
       return res.status(200).json(payload);
@@ -1143,7 +1196,8 @@ async function handler(req, res) {
           source: "venue-website",
           latitude: finalLat,
           longitude: finalLng,
-          matchedName: osmRes.matchedName || matchedName
+          matchedName: osmRes.matchedName || matchedName,
+          businessStatus
         };
         if (includeDebug) payload.debug = diagnostics;
         return res.status(200).json(payload);
@@ -1158,7 +1212,8 @@ async function handler(req, res) {
       source: null,
       latitude: finalLat,
       longitude: finalLng,
-      matchedName: (osmRes && osmRes.matchedName) || matchedName
+      matchedName: (osmRes && osmRes.matchedName) || matchedName,
+      businessStatus
     };
     if (includeDebug) fallbackPayload.debug = diagnostics;
     return res.status(200).json(fallbackPayload);

@@ -345,18 +345,20 @@ module.exports = async (req, res) => {
 
     const { venuePayload, reportPayload } = req.body || {};
 
-    if (!venuePayload || !venuePayload.name || venuePayload.beer_price_pln === undefined) {
+    if (!venuePayload || !venuePayload.name || (!venuePayload.hours_only && venuePayload.beer_price_pln === undefined)) {
       return res.status(400).json({ error: "Missing venuePayload or invalid price." });
     }
 
-    const price = parseFloat(venuePayload.beer_price_pln);
-    if (isNaN(price) || price <= 0) {
+    const price = venuePayload.hours_only
+      ? parseFloat(venuePayload.beer_price_pln || 0)
+      : parseFloat(venuePayload.beer_price_pln);
+    if (!venuePayload.hours_only && (isNaN(price) || price <= 0)) {
       return res.status(400).json({ error: "Invalid beer_price_pln value." });
     }
 
     const cleanPayload = { ...venuePayload };
     delete cleanPayload.geom;
-    cleanPayload.beer_price_pln = price;
+    if (!isNaN(price) && price > 0) cleanPayload.beer_price_pln = price;
     cleanPayload.last_updated = new Date().toISOString();
 
     const targetVenue = await resolveVenueRecord(headers, {
@@ -364,6 +366,27 @@ module.exports = async (req, res) => {
       osmId: cleanPayload.osm_id,
       name: cleanPayload.name
     });
+
+    if (cleanPayload.hours_only === true && targetVenue) {
+      const hoursRes = await fetch(`${SUPABASE_URL}/rest/v1/venues?id=eq.${encodeURIComponent(targetVenue.id)}`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({
+          hours: cleanPayload.hours ? String(cleanPayload.hours) : targetVenue.hours
+        })
+      });
+      if (!hoursRes.ok) {
+        const errText = await hoursRes.text();
+        console.error("[Update Venue API] Supabase hours-only error:", errText);
+        return res.status(500).json({ error: "Supabase hours update failed", details: errText });
+      }
+      const hoursData = await hoursRes.json();
+      return res.status(200).json({
+        success: true,
+        venue: Array.isArray(hoursData) ? hoursData[0] : hoursData,
+        report: null
+      });
+    }
 
     let saveRes;
     if (targetVenue) {

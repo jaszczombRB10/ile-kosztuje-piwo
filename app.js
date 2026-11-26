@@ -1041,6 +1041,297 @@
   }
 
   // Check if venue is currently open based on hours
+  function normalizeHoursWeekdayToken(tok) {
+    const clean = tok
+      .toLowerCase()
+      .replace(/ł/g, "l")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+    const map = {
+      mo: 0, pn: 0, pon: 0, poniedzialek: 0,
+      tu: 1, wt: 1, wtorek: 1,
+      we: 2, sr: 2, sroda: 2,
+      th: 3, cz: 3, czw: 3, czwartek: 3,
+      fr: 4, pt: 4, pia: 4, piatek: 4,
+      sa: 5, sb: 5, sob: 5, sobota: 5,
+      su: 6, nd: 6, niedz: 6, niedziela: 6
+    };
+    return Object.prototype.hasOwnProperty.call(map, clean) ? map[clean] : -1;
+  }
+
+  function parseDaySpecToIndices(prefix) {
+    if (!prefix || !prefix.trim()) return [];
+    const cleaned = prefix
+      .toLowerCase()
+      .replace(/ł/g, "l")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/:/g, " ");
+    const indices = [];
+    const parts = cleaned.split(/[,&+/]+/);
+    for (const part of parts) {
+      const trimmed = part.trim();
+      if (!trimmed) continue;
+      const rangeMatch = trimmed.match(/^([a-z]+)\s*-\s*([a-z]+)$/);
+      if (rangeMatch) {
+        const start = normalizeHoursWeekdayToken(rangeMatch[1]);
+        const end = normalizeHoursWeekdayToken(rangeMatch[2]);
+        if (start >= 0 && end >= 0) {
+          let cur = start;
+          for (let step = 0; step < 7; step++) {
+            indices.push(cur);
+            if (cur === end) break;
+            cur = (cur + 1) % 7;
+          }
+          continue;
+        }
+      }
+      const tokens = trimmed.split(/\s+/);
+      for (const tok of tokens) {
+        const idx = normalizeHoursWeekdayToken(tok);
+        if (idx >= 0) indices.push(idx);
+      }
+    }
+    return Array.from(new Set(indices));
+  }
+
+  function parseWeeklySchedule(hoursStr) {
+    if (!hoursStr || typeof hoursStr !== "string") {
+      return { days: Array(7).fill(null), hasDayRules: false, hasAnyTime: false, is24_7: false, isTempClosed: false };
+    }
+    const raw = hoursStr.trim();
+    if (!raw) {
+      return { days: Array(7).fill(null), hasDayRules: false, hasAnyTime: false, is24_7: false, isTempClosed: false };
+    }
+    if (/^TEMPORARILY_CLOSED\b/i.test(raw)) {
+      return { days: Array(7).fill([]), hasDayRules: true, hasAnyTime: false, is24_7: false, isTempClosed: true };
+    }
+    const normAll = raw
+      .replace(/[–—]/g, "-")
+      .replace(/ł/g, "l")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+
+    if (normAll.includes("24/7") || normAll.includes("24h") || normAll.includes("calodobow")) {
+      const fullDay = [{ open: "00:00", close: "24:00", openMin: 0, closeMin: 1440, crossesMidnight: false }];
+      return {
+        days: Array.from({ length: 7 }, () => fullDay.slice()),
+        hasDayRules: false,
+        hasAnyTime: true,
+        is24_7: true,
+        isTempClosed: false
+      };
+    }
+
+    const prepared = normAll.replace(/(\d{1,2}:\d{2}|off|nieczynne|zamkniete|closed)\s*,\s*(?=[a-z])/g, "$1; ");
+    const segments = prepared.split(/[;|]/).map(s => s.trim()).filter(Boolean);
+
+    const days = Array(7).fill(null);
+    const bareRanges = [];
+    let hasDayRules = false;
+    let hasAnyTime = false;
+
+    for (const seg of segments) {
+      const offMatch = /\b(off|nieczynne|zamkniete|closed)\b/.test(seg);
+      const timeRegex = /(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/g;
+      const segRanges = [];
+      let firstTimeIdx = -1;
+      let tm;
+      while ((tm = timeRegex.exec(seg)) !== null) {
+        if (firstTimeIdx === -1) firstTimeIdx = tm.index;
+        const oH = parseInt(tm[1], 10);
+        const oM = parseInt(tm[2], 10);
+        const cH = parseInt(tm[3], 10);
+        const cM = parseInt(tm[4], 10);
+        if (oH > 23 || oM > 59 || cH > 24 || cM > 59) continue;
+        const openMin = oH * 60 + oM;
+        const closeMinRaw = cH * 60 + cM;
+        const isFull24 = openMin === 0 && closeMinRaw === 1440;
+        const crossesMidnight = !isFull24 && closeMinRaw <= openMin;
+        const closeMin = closeMinRaw;
+        const openStr = `${String(oH).padStart(2, "0")}:${String(oM).padStart(2, "0")}`;
+        const closeStr = `${String(cH).padStart(2, "0")}:${String(cM).padStart(2, "0")}`;
+        segRanges.push({ open: openStr, close: closeStr, openMin, closeMin, crossesMidnight });
+      }
+
+      const prefix = firstTimeIdx >= 0
+        ? seg.slice(0, firstTimeIdx)
+        : seg.replace(/\b(off|nieczynne|zamkniete|closed)\b/g, " ");
+      const dayIndices = parseDaySpecToIndices(prefix);
+
+      if (dayIndices.length > 0) {
+        hasDayRules = true;
+        if (segRanges.length > 0) {
+          hasAnyTime = true;
+          for (const d of dayIndices) days[d] = segRanges;
+        } else if (offMatch) {
+          hasAnyTime = true;
+          for (const d of dayIndices) days[d] = [];
+        }
+      } else if (segRanges.length > 0) {
+        hasAnyTime = true;
+        bareRanges.push(...segRanges);
+      }
+    }
+
+    if (!hasDayRules && bareRanges.length > 0) {
+      for (let d = 0; d < 7; d++) {
+        days[d] = bareRanges;
+      }
+    }
+
+    const isAll24 = days.some(list => Array.isArray(list) && list.some(r => r.openMin === 0 && r.closeMin === 1440));
+    return { days, hasDayRules, hasAnyTime, is24_7: isAll24 && !hasDayRules, isTempClosed: false };
+  }
+
+  function getActiveOpenRange(hoursStr, now = new Date()) {
+    const parsed = parseWeeklySchedule(hoursStr);
+    if (parsed.isTempClosed) {
+      return {
+        isOpen: false,
+        temporarilyClosed: true,
+        closedToday: true,
+        is24h: false,
+        fromPreviousDay: false,
+        open: "--:--",
+        close: "--:--",
+        display: "Tymczasowo zamknięte",
+        openMin: null,
+        closeMin: null,
+        endMinAdjusted: null,
+        hasUnparseableHours: false
+      };
+    }
+    if (parsed.is24_7) {
+      return {
+        isOpen: true,
+        temporarilyClosed: false,
+        closedToday: false,
+        is24h: true,
+        fromPreviousDay: false,
+        open: "00:00",
+        close: "24:00",
+        display: "Całodobowo (24/7)",
+        openMin: 0,
+        closeMin: 1440,
+        endMinAdjusted: 1440,
+        hasUnparseableHours: false
+      };
+    }
+    if (!parsed.hasAnyTime) {
+      return {
+        isOpen: true,
+        temporarilyClosed: false,
+        closedToday: false,
+        is24h: false,
+        fromPreviousDay: false,
+        open: "16:00",
+        close: "02:00",
+        display: "16:00 – 02:00",
+        openMin: null,
+        closeMin: null,
+        endMinAdjusted: null,
+        hasUnparseableHours: true
+      };
+    }
+
+    const monIdx = (now.getDay() + 6) % 7;
+    const prevIdx = (monIdx + 6) % 7;
+    const curMin = now.getHours() * 60 + now.getMinutes();
+
+    const prevRanges = parsed.days[prevIdx] || [];
+    for (const r of prevRanges) {
+      if (r.crossesMidnight && curMin < r.closeMin) {
+        return {
+          isOpen: true,
+          temporarilyClosed: false,
+          closedToday: false,
+          is24h: false,
+          fromPreviousDay: true,
+          open: r.open,
+          close: r.close,
+          display: `${r.open} – ${r.close}`,
+          openMin: r.openMin,
+          closeMin: r.closeMin,
+          endMinAdjusted: r.closeMin,
+          hasUnparseableHours: false
+        };
+      }
+    }
+
+    const todayRaw = parsed.days[monIdx];
+    const todayRanges = Array.isArray(todayRaw) ? todayRaw : [];
+    for (const r of todayRanges) {
+      if (r.openMin === 0 && r.closeMin === 1440) {
+        return {
+          isOpen: true,
+          temporarilyClosed: false,
+          closedToday: false,
+          is24h: true,
+          fromPreviousDay: false,
+          open: "00:00",
+          close: "24:00",
+          display: "Całodobowo (24/7)",
+          openMin: 0,
+          closeMin: 1440,
+          endMinAdjusted: 1440,
+          hasUnparseableHours: false
+        };
+      }
+      const endAdj = r.crossesMidnight ? r.closeMin + 1440 : r.closeMin;
+      if (curMin >= r.openMin && curMin < endAdj) {
+        return {
+          isOpen: true,
+          temporarilyClosed: false,
+          closedToday: false,
+          is24h: false,
+          fromPreviousDay: false,
+          open: r.open,
+          close: r.close,
+          display: `${r.open} – ${r.close}`,
+          openMin: r.openMin,
+          closeMin: r.closeMin,
+          endMinAdjusted: endAdj,
+          hasUnparseableHours: false
+        };
+      }
+    }
+
+    if (todayRanges.length === 0) {
+      return {
+        isOpen: false,
+        temporarilyClosed: false,
+        closedToday: true,
+        is24h: false,
+        fromPreviousDay: false,
+        open: "--:--",
+        close: "--:--",
+        display: "Nieczynne dzisiaj",
+        openMin: null,
+        closeMin: null,
+        endMinAdjusted: null,
+        hasUnparseableHours: false
+      };
+    }
+
+    const nextRange = todayRanges.find(r => curMin < r.openMin) || todayRanges[0];
+    return {
+      isOpen: false,
+      temporarilyClosed: false,
+      closedToday: false,
+      is24h: false,
+      fromPreviousDay: false,
+      open: nextRange.open,
+      close: nextRange.close,
+      display: `${nextRange.open} – ${nextRange.close}`,
+      openMin: nextRange.openMin,
+      closeMin: nextRange.closeMin,
+      endMinAdjusted: nextRange.crossesMidnight ? nextRange.closeMin + 1440 : nextRange.closeMin,
+      hasUnparseableHours: false
+    };
+  }
+
   function isVenueTemporarilyClosed(venue) {
     if (!venue) return false;
     if (venue.temporarily_closed === true) return true;
@@ -1051,68 +1342,23 @@
   function isVenueOpen(venue, now = new Date()) {
     if (isVenueTemporarilyClosed(venue)) return false;
     if (!venue.hours) return true;
-    const hStr = venue.hours.toLowerCase().trim();
-    if (hStr.includes("24/7") || hStr.includes("24h") || hStr.includes("całodobow")) return true;
-
-    const match = hStr.match(/(\d{1,2}):(\d{2})\s*[-–]\s*(\d{1,2}):(\d{2})/);
-    if (!match) return true;
-
-    const openHour = parseInt(match[1], 10);
-    const openMin = parseInt(match[2], 10);
-    const closeHour = parseInt(match[3], 10);
-    const closeMin = parseInt(match[4], 10);
-
-    const curMinutes = now.getHours() * 60 + now.getMinutes();
-    const openMinutes = openHour * 60 + openMin;
-    let closeMinutes = closeHour * 60 + closeMin;
-
-    if (closeMinutes <= openMinutes) {
-      // Crosses midnight (e.g. 16:00 - 02:00)
-      if (curMinutes < (closeHour * 60 + closeMin)) {
-        return true;
-      }
-      return curMinutes >= openMinutes;
-    } else {
-      return curMinutes >= openMinutes && curMinutes <= closeMinutes;
-    }
+    return getActiveOpenRange(venue.hours, now).isOpen;
   }
   window.isVenueOpen = isVenueOpen;
 
   // Moduł 3: Check if venue is closing within thresholdMinutes (e.g. 45 min)
   function getVenueClosingSoon(venue, now = new Date(), thresholdMinutes = 45) {
     if (!venue || !venue.hours || isVenueTemporarilyClosed(venue)) return { closingSoon: false };
-    const hStr = venue.hours.toLowerCase().trim();
-    if (hStr.includes("24/7") || hStr.includes("24h") || hStr.includes("całodobow")) return { closingSoon: false };
-
-    const match = hStr.match(/(\d{1,2}):(\d{2})\s*[-–]\s*(\d{1,2}):(\d{2})/);
-    if (!match) return { closingSoon: false };
-
-    if (!isVenueOpen(venue, now)) return { closingSoon: false };
-
-    const openHour = parseInt(match[1], 10);
-    const openMin = parseInt(match[2], 10);
-    const closeHour = parseInt(match[3], 10);
-    const closeMin = parseInt(match[4], 10);
-
-    const curMinutes = now.getHours() * 60 + now.getMinutes();
-    const openMinutes = openHour * 60 + openMin;
-    let closeMinutes = closeHour * 60 + closeMin;
-
-    let minutesLeft = 0;
-    if (closeMinutes <= openMinutes) {
-      // Crosses midnight (e.g. 16:00 - 02:00)
-      if (curMinutes < closeMinutes) {
-        minutesLeft = closeMinutes - curMinutes;
-      } else {
-        minutesLeft = (24 * 60 - curMinutes) + closeMinutes;
-      }
-    } else {
-      minutesLeft = closeMinutes - curMinutes;
+    const active = getActiveOpenRange(venue.hours, now);
+    if (!active.isOpen || active.is24h || active.hasUnparseableHours || active.endMinAdjusted === null) {
+      return { closingSoon: false };
     }
 
+    const curMinutes = now.getHours() * 60 + now.getMinutes();
+    const minutesLeft = active.endMinAdjusted - curMinutes;
+
     if (minutesLeft > 0 && minutesLeft <= thresholdMinutes) {
-      const closeTimeStr = `${String(closeHour).padStart(2, "0")}:${String(closeMin).padStart(2, "0")}`;
-      return { closingSoon: true, minutesLeft, closeTimeStr };
+      return { closingSoon: true, minutesLeft, closeTimeStr: active.close };
     }
     return { closingSoon: false, minutesLeft };
   }
@@ -6707,6 +6953,7 @@
 
       let existing = null;
       let isNameChange = false;
+      let hoursOnlyEdit = false;
       let prevName = "";
 
       if (currentModalMode === "rename") {
@@ -6737,36 +6984,65 @@
         saveLocalVenue(existing);
       } else if (currentModalMode === "edit" && currentEditVenue) {
         existing = currentEditVenue;
-        if (name !== existing.name) {
-          prevName = existing.name;
-          isNameChange = true;
-          if (!existing.old_name) {
-            existing.old_name = prevName;
+        const origHoursNorm = String(existing.hours || "").replace(/^TEMPORARILY_CLOSED\|?/i, "").trim();
+        const prevShot = existing.shot_price_pln != null && existing.shot_price_pln !== "" ? Number(existing.shot_price_pln) : null;
+        const shotUnchanged = (shotPrice === null && prevShot === null)
+          || (shotPrice !== null && prevShot !== null && Math.abs(shotPrice - prevShot) < 0.001);
+        const priceUnchanged = Math.abs(price - Number(existing.beer_price_pln || 0)) < 0.001;
+        const addrUnchanged = address === (existing.address || district || "");
+        const beerUnchanged = beerName === (existing.beer_name || "Piwo z kranu");
+        const craftUnchanged = Boolean(isCraft) === Boolean(existing.is_craft);
+        const hhUnchanged = (happyHour || null) === (existing.happy_hour || null);
+        const noPhotoOrOcr = !uploadedPhotoUrl && !(currentOcrMetadata && currentOcrMetadata.is_valid_image);
+        const onlyHoursChanged =
+          name === existing.name &&
+          district === (existing.district || "") &&
+          addrUnchanged &&
+          beerUnchanged &&
+          priceUnchanged &&
+          shotUnchanged &&
+          craftUnchanged &&
+          hhUnchanged &&
+          noPhotoOrOcr &&
+          Boolean(hoursVal) &&
+          hoursVal !== origHoursNorm;
+
+        if (onlyHoursChanged) {
+          hoursOnlyEdit = true;
+          existing.hours = hoursVal;
+          saveLocalVenue(existing);
+        } else {
+          if (name !== existing.name) {
+            prevName = existing.name;
+            isNameChange = true;
+            if (!existing.old_name) {
+              existing.old_name = prevName;
+            }
+            existing.name = name;
+            existing.slug = name.toLowerCase().replace(/[^a-z0-9]/g, "-");
           }
-          existing.name = name;
-          existing.slug = name.toLowerCase().replace(/[^a-z0-9]/g, "-");
+          existing.district = district;
+          existing.address = address;
+          const prevPrice = existing.beer_price_pln;
+          existing.beer_name = beerName;
+          existing.beer_price_pln = price;
+          if (shotPrice !== null) existing.shot_price_pln = shotPrice;
+          existing.is_craft = isCraft;
+          if (happyHour) existing.happy_hour = happyHour;
+          if (hoursVal) existing.hours = hoursVal;
+          if (uploadedPhotoUrl) existing.photo_url = uploadedPhotoUrl;
+          existing.is_verified = true;
+          existing.verified_by_community = true;
+          if (price !== prevPrice && !(currentOcrMetadata && currentOcrMetadata.is_valid_image)) {
+            existing.verified_by_receipt = false;
+            existing.receipt_date = null;
+          }
+          const nowIso = new Date().toISOString();
+          existing.last_updated = nowIso.split("T")[0];
+          existing.last_verified_at = nowIso;
+          existing.votes_confirm = (existing.votes_confirm || 1) + 1;
+          saveLocalVenue(existing);
         }
-        existing.district = district;
-        existing.address = address;
-        const prevPrice = existing.beer_price_pln;
-        existing.beer_name = beerName;
-        existing.beer_price_pln = price;
-        if (shotPrice !== null) existing.shot_price_pln = shotPrice;
-        existing.is_craft = isCraft;
-        if (happyHour) existing.happy_hour = happyHour;
-        if (hoursVal) existing.hours = hoursVal;
-        if (uploadedPhotoUrl) existing.photo_url = uploadedPhotoUrl;
-        existing.is_verified = true;
-        existing.verified_by_community = true;
-        if (price !== prevPrice && !(currentOcrMetadata && currentOcrMetadata.is_valid_image)) {
-          existing.verified_by_receipt = false;
-          existing.receipt_date = null;
-        }
-        const nowIso = new Date().toISOString();
-        existing.last_updated = nowIso.split("T")[0];
-        existing.last_verified_at = nowIso;
-        existing.votes_confirm = (existing.votes_confirm || 1) + 1;
-        saveLocalVenue(existing);
       } else {
         // Mode "add"
         existing = allVenues.find(v => v.name.toLowerCase() === name.toLowerCase());
@@ -6865,6 +7141,42 @@
           saveLocalVenue(newVenue);
           existing = newVenue;
         }
+      }
+
+      if (hoursOnlyEdit && existing) {
+        // Hours-only edit: update ONLY opening hours, keep price status/votes/last_updated untouched
+        saveVenuesCache(allVenues);
+        const hoursOnlyPayload = {
+          id: existing.id,
+          osm_id: existing.osm_id || existing.id,
+          name: existing.name,
+          hours: existing.hours,
+          hours_only: true
+        };
+        const directHoursFallback = () => {
+          if (!supabaseClient || !PROOF_UUID_RE.test(String(existing.id))) return;
+          supabaseClient.from("venues").update({ hours: existing.hours }).eq("id", existing.id).then(({ error }) => {
+            if (error) console.warn("Supabase hours-only update note:", error);
+          });
+        };
+        if (navigator.onLine) {
+          fetch("/api/update-venue", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ venuePayload: hoursOnlyPayload, reportPayload: null })
+          }).then(res => {
+            if (!res.ok) directHoursFallback();
+          }).catch(() => directHoursFallback());
+        } else {
+          showMapToast("💾 Godziny zapisane lokalnie — zsynchronizuj po powrocie do sieci.");
+        }
+        resetPhotoUpload();
+        closeModal();
+        reportForm.reset();
+        renderMarkers();
+        window.__zoomToVenue(existing.id);
+        showMapToast(`🕒 Zaktualizowano godziny otwarcia: ${existing.name}`);
+        return;
       }
 
       if (currentOcrMetadata && currentOcrMetadata.is_valid_image && Number(currentOcrMetadata.cheapest_beer_05l_pln) > 0) {
@@ -27719,6 +28031,16 @@
     if (/^TEMPORARILY_CLOSED\b/i.test(hoursStr.trim())) {
       return { open: "--:--", close: "--:--", display: "Tymczasowo zamknięte", temporarilyClosed: true };
     }
+    const activeRange = getActiveOpenRange(hoursStr);
+    if (!activeRange.hasUnparseableHours) {
+      return {
+        open: activeRange.open,
+        close: activeRange.close,
+        display: activeRange.display,
+        closedToday: activeRange.closedToday,
+        is24h: activeRange.is24h
+      };
+    }
     const formatted = formatDisplayHours(hoursStr) || hoursStr;
     const dayIdx = new Date().getDay(); // 0=Nd, 1=Pn, 2=Wt, 3=Śr, 4=Czw, 5=Pt, 6=Sb
     const segments = formatted.split(/[;|]/).map(s => s.trim()).filter(Boolean);
@@ -27798,6 +28120,8 @@
     const todayRange = getTodayHoursRange(venue.hours);
     const openTimeLabel = todayRange.open;
     const closeTimeLabel = todayRange.close;
+    const closedToday = !isTempClosed && !open && todayRange.closedToday === true;
+    const closedStatusLabel = closedToday ? 'DZIŚ NIECZYNNE' : 'OD ' + openTimeLabel;
 
     const curCityObj = getCurrentCity();
 
@@ -27815,7 +28139,7 @@
       <div class="flighty-edit-topbar venue-sheet-topbar">
         <button type="button" class="flighty-edit-nav-btn cancel" id="btn-close-venue-sheet" aria-label="Zamknij kartę lokalu">← Mapa</button>
         <div class="flighty-edit-topbar-title">
-          <span class="flighty-edit-eyebrow">📍 ${escapeHtml(venue.district || curCityObj.name)} · ${isTempClosed ? '⏸️ PRZERWA' : (open ? 'OTWARTE' : 'OD ' + escapeHtml(openTimeLabel))}</span>
+          <span class="flighty-edit-eyebrow">📍 ${escapeHtml(venue.district || curCityObj.name)} · ${isTempClosed ? '⏸️ PRZERWA' : (open ? 'OTWARTE' : escapeHtml(closedStatusLabel))}</span>
           <h2>${escapeHtml(venue.name)}</h2>
         </div>
         <button type="button" class="flighty-edit-nav-btn save" id="btn-share-venue-top" aria-label="Kopiuj bezpośredni link do lokalu" title="Kopiuj bezpośredni link">🔗 Link</button>
@@ -27825,7 +28149,7 @@
           <div class="flighty-callsign-row">
             <span class="flighty-callsign-badge">📍 ${escapeHtml(venue.district || curCityObj.name)}</span>
             <span class="flighty-callsign-status ${isTempClosed ? 'status-temp-closed' : (open ? 'status-ontime' : 'status-scheduled')}">
-              ${isTempClosed ? '⏸️ TYMCZASOWO ZAMKNIĘTE' : (open ? '● OTWARTE' : '🕒 OD ' + escapeHtml(openTimeLabel))}
+              ${isTempClosed ? '⏸️ TYMCZASOWO ZAMKNIĘTE' : (open ? '● OTWARTE' : (closedToday ? '🚫 DZIŚ NIECZYNNE' : '🕒 OD ' + escapeHtml(openTimeLabel)))}
             </span>
             ${distTelemetryPill}
           </div>
@@ -27854,7 +28178,7 @@
 
     // Flighty-Style Live Shift Progress Timeline Bar (or Temporarily Closed banner)
     let shiftProgressPct = open ? 58 : 0;
-    let shiftStatusSub = open ? "Lokal obsługuje gości · Kurek otwarty" : `Oczekiwanie na otwarcie o ${openTimeLabel}`;
+    let shiftStatusSub = open ? "Lokal obsługuje gości · Kurek otwarty" : (closedToday ? "Dziś nieczynne" : `Oczekiwanie na otwarcie o ${openTimeLabel}`);
     try {
       const nowD = new Date();
       const curMins = nowD.getHours() * 60 + nowD.getMinutes();
