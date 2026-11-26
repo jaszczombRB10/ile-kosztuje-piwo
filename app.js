@@ -6417,6 +6417,7 @@
     function formatLookupSourceLabel(src) {
       if (src === "google-maps" || src === "google-maps-ai") return "Google Maps";
       if (src === "google-search-ai") return "Google Search";
+      if (src === "venue-website") return "strona lokalu";
       if (src === "openstreetmap") return "OpenStreetMap";
       return "sieć";
     }

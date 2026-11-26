@@ -1,5 +1,5 @@
 // Vercel Serverless Function: Venue Opening Hours Auto-Lookup
-// Priority: 1. Google Maps Places API -> 2. Gemini Google Maps & Search Grounding -> 3. OpenStreetMap (Nominatim + Overpass)
+// Priority: 1. Google Maps Places API -> 2. Gemini Google Search & Maps Grounding -> 3. OpenStreetMap + Venue Website JSON-LD/HTML
 
 const DAY_CODES = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 const ORDERED_WEEK = [1, 2, 3, 4, 5, 6, 0]; // Mon -> Sun
@@ -69,7 +69,6 @@ function expandDaySpec(specRaw) {
     return [6, 0];
   }
 
-  // Replace raw dash punctuation before normalize stripped it
   const dashNormalized = String(specRaw || "")
     .replace(/[łŁ]/g, "l")
     .normalize("NFD")
@@ -143,7 +142,6 @@ function extractTimeRangesFromTail(tailRaw) {
     return ranges.join(",");
   }
 
-  // Open-ended start time ("16:00+", "od 16:00")
   const openOnlyMatch = normalizedTail.match(/(?:\bod\s+)?(\d{1,2})[:.](\d{2})\s*\+/i)
     || normalizedTail.match(/\bod\s+(\d{1,2})[:.](\d{2})\b/i);
   if (openOnlyMatch && isValidTimePair(openOnlyMatch[1], openOnlyMatch[2], false)) {
@@ -185,7 +183,6 @@ function compressScheduleMapToOsm(byDay, includeMissingAsOff = false) {
     return out.length <= 220 ? out : null;
   }
 
-  // Preserve partial or full day entries parsed from text without inventing "off" for unmentioned days
   if (byDay.size === 7) {
     const values = new Set(byDay.values());
     if (values.size === 1) {
@@ -239,11 +236,9 @@ function parseFlexibleHoursToOsm(raw) {
 
   if (!text) return null;
 
-  // Reject pure refusals / "BRAK" unless a real weekday schedule follows
   const looksLikeRefusal = /(nie uda[łl]o|brak danych|brak informacji|nie znaleziono|nie jestem w stanie|nie mam dost[eę]pu|przykro mi|niestety\s+nie|unable to find|no opening hours|unavailable)/i.test(text);
   if (/^\s*brak\s*[.!]?\s*$/i.test(text)) return null;
 
-  // Split into lines first, then split multiple inline day clauses on each line
   const rawLines = text.split(/[\r\n;]+/).map(s => s.trim()).filter(Boolean);
   const inlineSplitRe = new RegExp(`,\\s*(?=${DAY_KEYWORD_ALTERNATION}\\b)`, "i");
   const segments = [];
@@ -283,7 +278,6 @@ function parseFlexibleHoursToOsm(raw) {
     return "24/7";
   }
 
-  // Fallback for single compact schedule without day names (e.g. "16:00 - 02:00", "14.00 do 23.00", "od 16:00")
   const flatSingle = text.replace(/\s+/g, " ").trim();
   if (flatSingle.length <= 220) {
     const tailRange = extractTimeRangesFromTail(flatSingle);
@@ -330,6 +324,155 @@ function formatGooglePeriodsToOsm(periods = []) {
   }
 
   return compressScheduleMapToOsm(byDay, true);
+}
+
+function normalizeSchemaTime(t) {
+  if (!t || typeof t !== "string") return null;
+  const m = t.trim().match(/^(\d{1,2})[:.](\d{2})(?::\d{2})?$/);
+  if (!m) return null;
+  if (!isValidTimePair(m[1], m[2], true)) return null;
+  return `${pad2(parseInt(m[1], 10))}:${m[2]}`;
+}
+
+function parseOpeningHoursSpecificationList(specs) {
+  const arr = Array.isArray(specs) ? specs : [specs];
+  const byDay = new Map();
+  for (const item of arr) {
+    if (!item || typeof item !== "object") continue;
+    const opens = normalizeSchemaTime(item.opens);
+    const closes = normalizeSchemaTime(item.closes);
+    if (!opens || !closes) continue;
+    const range = `${opens}-${closes}`;
+    const rawDays = Array.isArray(item.dayOfWeek) ? item.dayOfWeek : [item.dayOfWeek];
+    for (const rawD of rawDays) {
+      if (!rawD) continue;
+      const tailToken = String(rawD).split("/").pop().trim();
+      const days = expandDaySpec(tailToken);
+      for (const d of days) {
+        if (byDay.has(d)) {
+          const prev = byDay.get(d);
+          if (!prev.includes(range)) {
+            byDay.set(d, `${prev},${range}`);
+          }
+        } else {
+          byDay.set(d, range);
+        }
+      }
+    }
+  }
+  return compressScheduleMapToOsm(byDay, false);
+}
+
+function collectJsonLdNodes(node, out = []) {
+  if (!node || typeof node !== "object") return out;
+  if (Array.isArray(node)) {
+    for (const item of node) collectJsonLdNodes(item, out);
+    return out;
+  }
+  out.push(node);
+  if (Array.isArray(node["@graph"])) {
+    collectJsonLdNodes(node["@graph"], out);
+  }
+  return out;
+}
+
+function extractHoursFromHtml(html) {
+  if (!html || typeof html !== "string") return null;
+
+  // 1. Check Schema.org JSON-LD blocks first
+  const ldRegex = /<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
+  let match;
+  while ((match = ldRegex.exec(html)) !== null) {
+    const rawJson = (match[1] || "").trim();
+    if (!rawJson) continue;
+    try {
+      const parsed = JSON.parse(rawJson);
+      const nodes = collectJsonLdNodes(parsed);
+      for (const node of nodes) {
+        if (node.openingHours) {
+          const rawOh = Array.isArray(node.openingHours)
+            ? node.openingHours.join("\n")
+            : String(node.openingHours);
+          const osm = parseFlexibleHoursToOsm(rawOh);
+          if (osm) return osm;
+        }
+        if (node.openingHoursSpecification) {
+          const osmSpec = parseOpeningHoursSpecificationList(node.openingHoursSpecification);
+          if (osmSpec) return osmSpec;
+        }
+      }
+    } catch (e) {
+      // Ignore malformed JSON-LD block and try next
+    }
+  }
+
+  // 2. Plain text scan around "godziny otwarcia" / "opening hours" / "czynne"
+  const plainText = html
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<\/(?:p|div|li|tr|h[1-6]|section|article)>/gi, "\n")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&ndash;|&mdash;/gi, "-")
+    .replace(/[ \t]+/g, " ");
+
+  const kwRegex = /\b(?:godziny\s+otwarcia|godziny\s+pracy|opening\s+hours|czynne|otwarte)\b/gi;
+  let kwMatch;
+  while ((kwMatch = kwRegex.exec(plainText)) !== null) {
+    const startIdx = kwMatch.index + kwMatch[0].length;
+    const windowSlice = plainText.slice(startIdx, startIdx + 300).replace(/^[\s:–—-]+/, "");
+    const candidateLines = windowSlice.split("\n").map(l => l.trim()).filter(Boolean).slice(0, 8).join("\n");
+    const parsed = parseFlexibleHoursToOsm(candidateLines);
+    if (parsed) return parsed;
+  }
+
+  return null;
+}
+
+async function lookupWebsiteOpeningHours(websiteUrl, diagnostics = []) {
+  if (!websiteUrl || typeof websiteUrl !== "string") return null;
+  let cleanUrl = websiteUrl.trim();
+  if (!/^https?:\/\//i.test(cleanUrl)) return null;
+
+  try {
+    const parsedUrl = new URL(cleanUrl);
+    const host = (parsedUrl.hostname || "").toLowerCase();
+    if (!host || host === "localhost" || host === "127.0.0.1" || host.endsWith(".local")) {
+      return null;
+    }
+    if (/^(?:10\.|192\.168\.|172\.(?:1[6-9]|2\d|3[01])\.)/.test(host)) {
+      return null;
+    }
+  } catch (e) {
+    return null;
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 3000);
+  try {
+    const res = await fetch(cleanUrl, {
+      method: "GET",
+      signal: controller.signal,
+      headers: {
+        "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+        "User-Agent": "poilepiwko.pl/1.0 (https://www.poilepiwko.pl)"
+      }
+    });
+    clearTimeout(timer);
+    if (!res.ok) {
+      diagnostics.push(`website:${res.status}`);
+      return null;
+    }
+    const rawHtml = (await res.text()).slice(0, 300 * 1024);
+    const extracted = extractHoursFromHtml(rawHtml);
+    diagnostics.push(`website:200:${extracted ? "found" : "miss"}`);
+    return extracted;
+  } catch (err) {
+    clearTimeout(timer);
+    diagnostics.push(`website:${err.name === "AbortError" ? "timeout" : "err"}`);
+    return null;
+  }
 }
 
 function getCityDefaultCoords(city, lat, lng) {
@@ -418,7 +561,10 @@ async function lookupLegacyGooglePlaces(apiKey, textQuery, diagnostics) {
 }
 
 async function lookupGooglePlaces(name, address, city, diagnostics = []) {
-  const apiKey = process.env.GOOGLE_MAPS_API_KEY || process.env.GOOGLE_PLACES_API_KEY;
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY
+    || process.env.GOOGLE_PLACES_API_KEY
+    || process.env.GOOGLE_API_KEY
+    || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   if (!apiKey) {
     diagnostics.push("places:no-key");
     return null;
@@ -501,7 +647,7 @@ async function lookupGooglePlaces(name, address, city, diagnostics = []) {
 async function discoverFlashModelsForHours(geminiKey, excludeSet = new Set()) {
   const now = Date.now();
   if (cachedHoursFlashModels && (now - cachedHoursModelsAt) < MODEL_DISCOVERY_TTL_MS) {
-    return cachedHoursFlashModels.filter(id => !excludeSet.has(id)).slice(0, 3);
+    return cachedHoursFlashModels.filter(id => !excludeSet.has(id)).slice(0, 4);
   }
   try {
     const controller = new AbortController();
@@ -525,17 +671,17 @@ async function discoverFlashModelsForHours(geminiKey, excludeSet = new Set()) {
       const major = verMatch ? parseInt(verMatch[1], 10) : 0;
       const minor = (verMatch && verMatch[2]) ? parseInt(verMatch[2], 10) : 0;
       const scoreVer = major * 100 + minor;
-      const isFullFlash = /flash-lite/i.test(id) ? 0 : 1;
+      const isLite = /flash-lite/i.test(id) ? 1 : 0;
       const isStable = /(preview|exp)/i.test(id) ? 0 : 1;
-      candidates.push({ id, scoreVer, isFullFlash, isStable });
+      candidates.push({ id, scoreVer, isLite, isStable });
     }
-    candidates.sort((a, b) => (b.scoreVer - a.scoreVer) || (b.isFullFlash - a.isFullFlash) || (b.isStable - a.isStable));
+    candidates.sort((a, b) => (b.scoreVer - a.scoreVer) || (b.isLite - a.isLite) || (b.isStable - a.isStable));
     const ranked = candidates.map(c => c.id);
     if (ranked.length > 0) {
       cachedHoursFlashModels = ranked;
       cachedHoursModelsAt = now;
     }
-    return ranked.filter(id => !excludeSet.has(id)).slice(0, 3);
+    return ranked.filter(id => !excludeSet.has(id)).slice(0, 4);
   } catch (e) {
     return [];
   }
@@ -547,7 +693,7 @@ async function invokeGeminiGroundingCall({
   toolType,
   prompt,
   refCoords,
-  timeoutMs = 7500,
+  timeoutMs = 7000,
   diagnostics = []
 }) {
   const label = toolType === "googleMaps" ? "gemini-maps" : "gemini-search";
@@ -580,8 +726,19 @@ async function invokeGeminiGroundingCall({
     clearTimeout(timer);
 
     if (!res.ok) {
-      diagnostics.push(`${label}(${model}):${res.status}`);
-      return { httpStatus: res.status, hours: null };
+      let shortMsg = "";
+      try {
+        const errText = await res.text();
+        try {
+          const errJson = JSON.parse(errText);
+          shortMsg = String((errJson && errJson.error && errJson.error.message) || errText);
+        } catch (e) {
+          shortMsg = errText;
+        }
+      } catch (e) {}
+      shortMsg = shortMsg.replace(/[\r\n]+/g, " ").trim().slice(0, 70);
+      diagnostics.push(`${label}(${model}):${res.status}${shortMsg ? ":" + shortMsg : ""}`);
+      return { httpStatus: res.status, hours: null, rawAnswer: "" };
     }
 
     const data = await res.json();
@@ -602,22 +759,25 @@ async function invokeGeminiGroundingCall({
     }
 
     const parsedHours = parseFlexibleHoursToOsm(answer);
-    diagnostics.push(`${label}(${model}):200:${parsedHours ? "found" : "miss"}`);
-
     if (!parsedHours) {
-      return { httpStatus: 200, hours: null, mapsUrl };
+      const snippet = answer.replace(/[\r\n]+/g, " ").trim().slice(0, 50);
+      diagnostics.push(`${label}(${model}):200:miss(${snippet})`);
+      return { httpStatus: 200, hours: null, mapsUrl, rawAnswer: answer };
     }
 
+    diagnostics.push(`${label}(${model}):200:found`);
     return {
       httpStatus: 200,
       hours: parsedHours,
       source: toolType === "googleMaps" ? "google-maps-ai" : "google-search-ai",
-      mapsUrl
+      modelUsed: model,
+      mapsUrl,
+      rawAnswer: answer
     };
   } catch (err) {
     clearTimeout(timer);
     diagnostics.push(`${label}(${model}):${err.name === "AbortError" ? "timeout" : "err"}`);
-    return { httpStatus: 0, hours: null };
+    return { httpStatus: 0, hours: null, rawAnswer: "" };
   }
 }
 
@@ -629,13 +789,6 @@ async function lookupViaGeminiGoogle(name, address, city, lat, lng, diagnostics 
   }
 
   const refCoords = getCityDefaultCoords(city, lat, lng);
-  const promptMaps = `Znajdź na Google Maps dokładne godziny otwarcia lokalu "${name}" pod adresem "${address || ""}" (${city || "Warszawa"}, Polska).
-Podaj godziny otwarcia w najkrótszym możliwym formacie (zero zbędnego opisu):
-- Codziennie tak samo: HH:MM - HH:MM (np. 16:00 - 02:00)
-- Różne dni: osobne linie dla dni tygodnia (np. Pn-Czw 12:00-22:00; Pt-Sb 12:00-23:00; Nd nieczynne) lub pełna lista Pn-Nd
-- Całodobowy: 24/7
-- Jeśli nie ma żadnych informacji o godzinach otwarcia: BRAK`;
-
   const promptSearch = `Wyszukaj w Google i wizytówce Google Maps oficjalne godziny otwarcia lokalu "${name}", adres "${address || ""}", miasto "${city || "Warszawa"}, Polska".
 Zwróć godziny w czystym formacie (bez komentarzy):
 - Jeśli codziennie te same godziny: 16:00 - 02:00
@@ -643,108 +796,74 @@ Zwróć godziny w czystym formacie (bez komentarzy):
 - Jeśli całodobowy: 24/7
 - Jeśli nie można ustalić: BRAK`;
 
-  const modelOrder = [...new Set([
+  const promptMaps = `Znajdź na Google Maps dokładne godziny otwarcia lokalu "${name}" pod adresem "${address || ""}" (${city || "Warszawa"}, Polska).
+Podaj godziny otwarcia w najkrótszym możliwym formacie (zero zbędnego opisu):
+- Codziennie tak samo: HH:MM - HH:MM (np. 16:00 - 02:00)
+- Różne dni: osobne linie dla dni tygodnia (np. Pn-Czw 12:00-22:00; Pt-Sb 12:00-23:00; Nd nieczynne) lub pełna lista Pn-Nd
+- Całodobowy: 24/7
+- Jeśli nie ma żadnych informacji o godzinach otwarcia: BRAK`;
+
+  const seed = [
     process.env.GEMINI_MODEL || null,
-    "gemini-flash-latest",
-    "gemini-2.5-flash",
     "gemini-flash-lite-latest"
-  ].filter(Boolean))];
+  ].filter(Boolean);
+  const seedSet = new Set(seed);
+  const discovered = await discoverFlashModelsForHours(geminiKey, seedSet);
+  const candidates = [...new Set([
+    ...seed,
+    ...discovered,
+    "gemini-flash-latest"
+  ])].slice(0, 4);
 
-  const primaryModel = modelOrder[0];
-
-  // Run Google Maps Grounding + Google Search Grounding in parallel on primary model
-  const [mapsSettled, searchSettled] = await Promise.allSettled([
-    invokeGeminiGroundingCall({
-      model: primaryModel,
-      geminiKey,
-      toolType: "googleMaps",
-      prompt: promptMaps,
-      refCoords,
-      timeoutMs: 7500,
-      diagnostics
-    }),
-    invokeGeminiGroundingCall({
-      model: primaryModel,
+  for (const model of candidates) {
+    const searchRes = await invokeGeminiGroundingCall({
+      model,
       geminiKey,
       toolType: "googleSearch",
       prompt: promptSearch,
       refCoords,
-      timeoutMs: 7500,
+      timeoutMs: 7000,
       diagnostics
-    })
-  ]);
+    });
 
-  const mapsRes = mapsSettled.status === "fulfilled" ? mapsSettled.value : null;
-  const searchRes = searchSettled.status === "fulfilled" ? searchSettled.value : null;
+    if (searchRes.hours) {
+      return {
+        found: true,
+        hours: searchRes.hours,
+        source: searchRes.source,
+        modelUsed: model,
+        latitude: null,
+        longitude: null,
+        matchedName: name,
+        mapsUrl: searchRes.mapsUrl || null
+      };
+    }
 
-  if (mapsRes && mapsRes.hours) {
-    return {
-      found: true,
-      hours: mapsRes.hours,
-      source: mapsRes.source,
-      latitude: null,
-      longitude: null,
-      matchedName: name,
-      mapsUrl: mapsRes.mapsUrl || null
-    };
-  }
-  if (searchRes && searchRes.hours) {
-    return {
-      found: true,
-      hours: searchRes.hours,
-      source: searchRes.source,
-      latitude: null,
-      longitude: null,
-      matchedName: name,
-      mapsUrl: searchRes.mapsUrl || null
-    };
-  }
-
-  // Fallback pass on next Flash model (never stop on first BRAK)
-  const triedSet = new Set([primaryModel]);
-  let fallbackModels = modelOrder.filter(m => !triedSet.has(m));
-  if (fallbackModels.length === 0) {
-    fallbackModels = await discoverFlashModelsForHours(geminiKey, triedSet);
-  }
-  const fallbackModel = fallbackModels[0];
-  if (fallbackModel) {
-    const shouldRetryMaps = mapsRes && (mapsRes.httpStatus === 400 || mapsRes.httpStatus === 404);
-    const fbCalls = [
-      invokeGeminiGroundingCall({
-        model: fallbackModel,
+    if (searchRes.httpStatus === 200) {
+      const mapsRes = await invokeGeminiGroundingCall({
+        model,
         geminiKey,
-        toolType: "googleSearch",
-        prompt: promptSearch,
+        toolType: "googleMaps",
+        prompt: promptMaps,
         refCoords,
         timeoutMs: 6500,
         diagnostics
-      })
-    ];
-    if (shouldRetryMaps) {
-      fbCalls.unshift(
-        invokeGeminiGroundingCall({
-          model: fallbackModel,
-          geminiKey,
-          toolType: "googleMaps",
-          prompt: promptMaps,
-          refCoords,
-          timeoutMs: 6500,
-          diagnostics
-        })
-      );
-    }
-    const fbResults = await Promise.allSettled(fbCalls);
-    for (const r of fbResults) {
-      if (r.status === "fulfilled" && r.value && r.value.hours) {
+      });
+      if (mapsRes.hours) {
         return {
           found: true,
-          hours: r.value.hours,
-          source: r.value.source,
+          hours: mapsRes.hours,
+          source: mapsRes.source,
+          modelUsed: model,
           latitude: null,
           longitude: null,
           matchedName: name,
-          mapsUrl: r.value.mapsUrl || null
+          mapsUrl: mapsRes.mapsUrl || null
         };
+      }
+      // Clean 200 BRAK from a working model -> no need to burn quota on other models
+      if (/brak/i.test(searchRes.rawAnswer || "") && mapsRes.httpStatus === 200 && /brak/i.test(mapsRes.rawAnswer || "")) {
+        break;
       }
     }
   }
@@ -774,12 +893,12 @@ async function fetchNominatim(query) {
   }
 }
 
-async function lookupOverpassHours(lat, lng, targetName) {
+async function lookupOverpassPoiData(lat, lng, targetName) {
   if (typeof lat !== "number" || typeof lng !== "number") return null;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 4000);
   try {
-    const q = `[out:json][timeout:4];(node["opening_hours"](around:160,${lat},${lng});way["opening_hours"](around:160,${lat},${lng}););out tags center 25;`;
+    const q = `[out:json][timeout:4];(node["name"](around:180,${lat},${lng});way["name"](around:180,${lat},${lng}););out tags center 30;`;
     const res = await fetch("https://overpass-api.de/api/interpreter", {
       method: "POST",
       signal: controller.signal,
@@ -791,30 +910,39 @@ async function lookupOverpassHours(lat, lng, targetName) {
     const elements = Array.isArray(data && data.elements) ? data.elements : [];
     const normTarget = normalizeTextForMatch(targetName);
 
-    let best = null;
+    let bestHoursMatch = null;
+    let bestWebsiteMatch = null;
     for (const el of elements) {
       const tags = el.tags || {};
-      if (!tags.opening_hours) continue;
       const elName = normalizeTextForMatch(tags.name || "");
-      if (normTarget && elName && (elName.includes(normTarget) || normTarget.includes(elName))) {
-        best = el;
-        break;
+      const nameMatches = !normTarget || (elName && (elName.includes(normTarget) || normTarget.includes(elName)));
+      if (!nameMatches) continue;
+      if (tags.opening_hours && !bestHoursMatch) {
+        bestHoursMatch = el;
       }
+      if ((tags.website || tags["contact:website"]) && !bestWebsiteMatch) {
+        bestWebsiteMatch = el;
+      }
+      if (bestHoursMatch && bestWebsiteMatch) break;
     }
 
-    if (!best && elements.length === 1 && elements[0].tags && /pub|bar|biergarten|restaurant|cafe|nightclub/.test(elements[0].tags.amenity || "")) {
-      best = elements[0];
+    if (!bestHoursMatch && elements.length === 1 && elements[0].tags && elements[0].tags.opening_hours
+      && /pub|bar|biergarten|restaurant|cafe|nightclub/.test(elements[0].tags.amenity || "")) {
+      bestHoursMatch = elements[0];
     }
 
-    if (best && best.tags && best.tags.opening_hours) {
-      return {
-        hours: parseFlexibleHoursToOsm(best.tags.opening_hours) || best.tags.opening_hours.trim(),
-        matchedName: best.tags.name || null,
-        latitude: typeof best.lat === "number" ? best.lat : (best.center ? best.center.lat : null),
-        longitude: typeof best.lon === "number" ? best.lon : (best.center ? best.center.lon : null)
-      };
-    }
-    return null;
+    const picked = bestHoursMatch || bestWebsiteMatch;
+    if (!picked || !picked.tags) return null;
+
+    return {
+      hours: picked.tags.opening_hours
+        ? (parseFlexibleHoursToOsm(picked.tags.opening_hours) || picked.tags.opening_hours.trim())
+        : null,
+      website: picked.tags.website || picked.tags["contact:website"] || null,
+      matchedName: picked.tags.name || null,
+      latitude: typeof picked.lat === "number" ? picked.lat : (picked.center ? picked.center.lat : null),
+      longitude: typeof picked.lon === "number" ? picked.lon : (picked.center ? picked.center.lon : null)
+    };
   } catch (e) {
     return null;
   } finally {
@@ -826,6 +954,7 @@ async function lookupOpenStreetMap(name, address, city, lat, lng) {
   let foundLat = typeof lat === "number" ? lat : null;
   let foundLng = typeof lng === "number" ? lng : null;
   let osmHours = null;
+  let websiteUrl = null;
   let matchedName = null;
 
   const queries = [];
@@ -844,22 +973,29 @@ async function lookupOpenStreetMap(name, address, city, lat, lng) {
         foundLat = hitLat;
         foundLng = hitLng;
       }
-      const oh = hit.extratags && hit.extratags.opening_hours;
+      const ex = hit.extratags || {};
+      const oh = ex.opening_hours;
+      const ws = ex.website || ex["contact:website"] || null;
       const hitName = normalizeTextForMatch(hit.name || (hit.display_name || "").split(",")[0]);
-      if (oh && (!normTarget || !hitName || hitName.includes(normTarget) || normTarget.includes(hitName))) {
-        osmHours = parseFlexibleHoursToOsm(oh) || oh.trim();
-        matchedName = hit.name || null;
-        break;
+      const nameMatches = !normTarget || !hitName || hitName.includes(normTarget) || normTarget.includes(hitName);
+      if (nameMatches) {
+        if (ws && !websiteUrl) websiteUrl = ws;
+        if (oh) {
+          osmHours = parseFlexibleHoursToOsm(oh) || oh.trim();
+          matchedName = hit.name || null;
+          break;
+        }
       }
     }
     if (osmHours) break;
   }
 
   if (!osmHours && foundLat !== null && foundLng !== null) {
-    const ov = await lookupOverpassHours(foundLat, foundLng, name);
-    if (ov && ov.hours) {
-      osmHours = ov.hours;
-      matchedName = ov.matchedName || matchedName;
+    const ov = await lookupOverpassPoiData(foundLat, foundLng, name);
+    if (ov) {
+      if (ov.hours) osmHours = ov.hours;
+      if (ov.website && !websiteUrl) websiteUrl = ov.website;
+      if (ov.matchedName) matchedName = ov.matchedName;
       if (typeof ov.latitude === "number" && typeof ov.longitude === "number") {
         foundLat = ov.latitude;
         foundLng = ov.longitude;
@@ -871,6 +1007,7 @@ async function lookupOpenStreetMap(name, address, city, lat, lng) {
     found: Boolean(osmHours),
     hours: osmHours,
     source: osmHours ? "openstreetmap" : null,
+    websiteUrl,
     latitude: foundLat,
     longitude: foundLng,
     matchedName
@@ -931,11 +1068,12 @@ async function handler(req, res) {
       matchedName = googleRes.matchedName;
     }
 
-    // Run OSM lookup in parallel with Tier 2 Gemini Google Maps + Google Search Grounding
+    // Run OSM lookup in parallel with sequential Gemini Google grounding
     const osmPromise = lookupOpenStreetMap(name, address, city, finalLat, finalLng).catch(() => ({
       found: false,
       hours: null,
       source: null,
+      websiteUrl: null,
       latitude: finalLat,
       longitude: finalLng,
       matchedName: null
@@ -957,6 +1095,7 @@ async function handler(req, res) {
         found: true,
         hours: geminiGoogleRes.hours,
         source: geminiGoogleRes.source,
+        modelUsed: geminiGoogleRes.modelUsed || null,
         latitude: finalLat,
         longitude: finalLng,
         matchedName: matchedName || (osmRes && osmRes.matchedName) || geminiGoogleRes.matchedName
@@ -966,17 +1105,45 @@ async function handler(req, res) {
       return res.status(200).json(payload);
     }
 
-    if (osmRes && osmRes.found) {
+    if (osmRes && osmRes.found && osmRes.hours) {
       diagnostics.push("osm:found");
-    } else {
-      diagnostics.push("osm:miss");
+      const payload = {
+        success: true,
+        found: true,
+        hours: osmRes.hours,
+        source: osmRes.source,
+        latitude: finalLat,
+        longitude: finalLng,
+        matchedName: osmRes.matchedName || matchedName
+      };
+      if (includeDebug) payload.debug = diagnostics;
+      return res.status(200).json(payload);
     }
 
+    // 3b. If OSM has no hours tag but provides venue website URL, scrape JSON-LD/HTML hours
+    if (osmRes && osmRes.websiteUrl) {
+      const websiteHours = await lookupWebsiteOpeningHours(osmRes.websiteUrl, diagnostics);
+      if (websiteHours) {
+        const payload = {
+          success: true,
+          found: true,
+          hours: websiteHours,
+          source: "venue-website",
+          latitude: finalLat,
+          longitude: finalLng,
+          matchedName: osmRes.matchedName || matchedName
+        };
+        if (includeDebug) payload.debug = diagnostics;
+        return res.status(200).json(payload);
+      }
+    }
+
+    diagnostics.push("osm:miss");
     const fallbackPayload = {
       success: true,
-      found: Boolean(osmRes && osmRes.found),
-      hours: (osmRes && osmRes.hours) || null,
-      source: (osmRes && osmRes.source) || null,
+      found: false,
+      hours: null,
+      source: null,
       latitude: finalLat,
       longitude: finalLng,
       matchedName: (osmRes && osmRes.matchedName) || matchedName
@@ -993,4 +1160,5 @@ module.exports = handler;
 module.exports.default = handler;
 module.exports.formatGooglePeriodsToOsm = formatGooglePeriodsToOsm;
 module.exports.parseFlexibleHoursToOsm = parseFlexibleHoursToOsm;
+module.exports.extractHoursFromHtml = extractHoursFromHtml;
 module.exports.sanitizeHoursString = sanitizeHoursString;
