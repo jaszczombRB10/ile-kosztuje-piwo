@@ -27901,39 +27901,6 @@
       `;
     }
 
-    // 1-Click Price Verification Card
-    const verifyCardHtml = `
-      <div class="waze-verify-card flighty-waze-verify-card" id="waze-card-${venue.id}">
-        <div class="flighty-waze-head">
-          <span class="flighty-waze-eyebrow">⚡ WERYFIKACJA CENY · 1 KLIK (+PKT DO PASZPORTU)</span>
-          <span class="flighty-waze-question">Czy lane (0.5L) kosztuje <strong id="waze-price-display-${venue.id}">${price.toFixed(2)} zł</strong>?</span>
-        </div>
-        <div class="waze-actions-row flighty-waze-actions" id="waze-actions-row-${venue.id}">
-          <button type="button" class="btn-waze-confirm flighty-waze-btn-yes" id="btn-waze-yes-${venue.id}">
-            👍 Aktualna
-          </button>
-          <button type="button" class="btn-waze-change flighty-waze-btn-change" id="btn-waze-change-${venue.id}">
-            👎 Nieaktualna / Zmień
-          </button>
-          <button type="button" class="btn-waze-scan flighty-waze-btn-scan" id="btn-waze-scan-${venue.id}">
-            🧾 Skaner AI
-          </button>
-        </div>
-        <div class="waze-quick-price-selector" id="waze-selector-${venue.id}" style="display:none; margin-top:6px;">
-          <div class="flighty-waze-selector-lbl">Dotknij aktualną cenę za 0.5L z kranu:</div>
-          <button type="button" class="btn-price-tile" data-price="10">10 zł</button>
-          <button type="button" class="btn-price-tile" data-price="12">12 zł</button>
-          <button type="button" class="btn-price-tile" data-price="13">13 zł</button>
-          <button type="button" class="btn-price-tile" data-price="14">14 zł</button>
-          <button type="button" class="btn-price-tile" data-price="15">15 zł</button>
-          <button type="button" class="btn-price-tile" data-price="16">16 zł</button>
-          <button type="button" class="btn-price-tile" data-price="18">18 zł</button>
-          <button type="button" class="btn-price-tile" data-price="20">20 zł</button>
-          <button type="button" class="btn-price-tile btn-price-other" data-price="other">Inna...</button>
-        </div>
-      </div>
-    `;
-
     // Flighty Action buttons row (Check-in = Piwny BeReal in this bar!)
     const actionButtonsHtml = `
       <div class="venue-sheet-actions">
@@ -27956,17 +27923,9 @@
       </div>
     `;
 
-    // Flighty Grouped Bento Telemetry Grid (No duplicate hours)
+    // Compact price status telemetry tile (beer price & brand shown in header)
     const bentoSpecsHtml = `
       <div class="apple-venue-specs-grid">
-        <div class="apple-spec-tile">
-          <span class="spec-label">🍺 Z KRANU (0.5L)</span>
-          <strong class="spec-val">${escapeHtml(venue.beer_name || "Piwo lane")}</strong>
-        </div>
-        <div class="apple-spec-tile">
-          <span class="spec-label">🥃 SHOT (40ML)</span>
-          <strong class="spec-val">${venue.shot_price_pln ? venue.shot_price_pln.toFixed(2) + ' zł' : 'W lokalu'}</strong>
-        </div>
         <div class="apple-spec-tile" style="grid-column: 1 / -1; display: flex; flex-direction: row; align-items: center; justify-content: space-between; padding: 10px 14px;">
           <span class="spec-label" style="margin: 0;">🛡️ STATUS CENY</span>
           <strong class="spec-val" id="venue-spec-status-${venue.id}" style="margin: 0;">${venue.verified_by_receipt ? '🧾 Skan AI (menu/paragon)' : (venue.is_verified ? '✓ Zweryfikowana (bez paragonu)' : '📊 Orientacyjna')}</strong>
@@ -27994,7 +27953,7 @@
     const initialProofPhotos = getLocalProofPhotosForVenue(venue);
     const proofWallHtml = `<div class="venue-proof-wall-section" id="venue-proof-wall"></div>`;
 
-    contentEl.innerHTML = closingWarningHtml + hhHtml + flightyTimelineHtml + actionButtonsHtml + verifyCardHtml + bentoSpecsHtml + chipsHtml + proofWallHtml;
+    contentEl.innerHTML = closingWarningHtml + hhHtml + flightyTimelineHtml + actionButtonsHtml + bentoSpecsHtml + chipsHtml + proofWallHtml;
 
     const proofWallEl = document.getElementById("venue-proof-wall");
     if (proofWallEl) {
@@ -28009,199 +27968,6 @@
     }
 
     // Attach listeners for venue sheet actions
-    const btnScanAi = document.getElementById(`btn-waze-scan-${venue.id}`);
-    if (btnScanAi) {
-      btnScanAi.addEventListener("click", () => {
-        poileHaptics.tick();
-        if (typeof window.__editVenuePrice === "function") {
-          window.__editVenuePrice(venue, true);
-        }
-      });
-    }
-
-    const btnYes = document.getElementById(`btn-waze-yes-${venue.id}`);
-    const wazeCard = document.getElementById(`waze-card-${venue.id}`);
-    if (btnYes) {
-      btnYes.addEventListener("click", () => {
-        poileHaptics.success();
-        recordNightLogVisit(venue);
-        const nowIso = new Date().toISOString();
-        venue.is_verified = true;
-        venue.verified_by_community = true;
-        venue.last_updated = nowIso;
-        venue.last_verified_at = nowIso;
-        venue.votes_confirm = (typeof venue.votes_confirm === "number" ? venue.votes_confirm : 1) + 1;
-
-        // Save locally
-        const localUpdates = loadLocalUpdates();
-        const existingIdx = localUpdates.findIndex(v => v.id === venue.id);
-        if (existingIdx !== -1) {
-          localUpdates[existingIdx] = Object.assign({}, localUpdates[existingIdx], venue);
-        } else {
-          localUpdates.push(venue);
-        }
-        saveLocalUpdates(localUpdates);
-        saveVenuesCache(allVenues);
-
-        // Update status tile in DOM immediately
-        const specStatusEl = document.getElementById(`venue-spec-status-${venue.id}`);
-        if (specStatusEl) {
-          specStatusEl.textContent = venue.verified_by_receipt ? "🧾 Skan AI (menu/paragon)" : "✓ Zweryfikowana (bez paragonu)";
-        }
-
-        // Persist to backend or queue offline
-        const confirmPayload = {
-          venuePayload: {
-            osm_id: venue.id,
-            name: venue.name,
-            slug: venue.slug,
-            district: venue.district,
-            address: venue.address,
-            latitude: venue.latitude,
-            longitude: venue.longitude,
-            beer_name: venue.beer_name || "Piwo z kranu",
-            beer_price_pln: venue.beer_price_pln,
-            shot_price_pln: venue.shot_price_pln,
-            is_craft: venue.is_craft,
-            happy_hour: venue.happy_hour,
-            hours: venue.hours,
-            is_verified: true,
-            votes_confirm: venue.votes_confirm,
-            last_updated: nowIso
-          },
-          reportPayload: {
-            reported_beer_name: venue.beer_name || "Piwo z kranu",
-            reported_price_pln: venue.beer_price_pln,
-            happy_hour_info: "Potwierdzenie ceny z karty lokalu (👍 Aktualna)"
-          }
-        };
-
-        if (!navigator.onLine) {
-          queueOfflineAction({
-            type: "update_venue",
-            venueId: venue.id,
-            payload: confirmPayload
-          });
-        } else {
-          try {
-            fetch("/api/update-venue", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(confirmPayload)
-            }).catch(() => {});
-          } catch (e) {}
-        }
-
-        showAppToast("Cena potwierdzona! +10 pkt ✓", `Dziękujemy za potwierdzenie ceny w ${venue.name}.`, "🍺", 4000);
-        btnYes.style.background = "#15803d";
-        btnYes.innerHTML = "✓ Potwierdzono";
-        btnYes.disabled = true;
-        if (wazeCard) wazeCard.classList.add("confirmed");
-        awardPassportPoints(10);
-      });
-    }
-
-    const btnChange = document.getElementById(`btn-waze-change-${venue.id}`);
-    const wazeSelector = document.getElementById(`waze-selector-${venue.id}`);
-    if (btnChange && wazeSelector) {
-      btnChange.addEventListener("click", () => {
-        poileHaptics.tick();
-        const isOpen = wazeSelector.style.display !== "none";
-        wazeSelector.style.display = isOpen ? "none" : "flex";
-      });
-
-      wazeSelector.querySelectorAll(".btn-price-tile").forEach(tile => {
-        tile.addEventListener("click", () => {
-          const pVal = tile.getAttribute("data-price");
-          if (pVal === "other") {
-            if (typeof window.__editVenuePrice === "function") {
-              window.__editVenuePrice(venue);
-            } else if (typeof openAddModal === "function") {
-              closeVenueSheet();
-              openAddModal();
-              const nameInput = document.getElementById("report-name");
-              if (nameInput) nameInput.value = venue.name;
-            }
-          } else {
-            const newPrice = parseFloat(pVal);
-            const nowIso = new Date().toISOString();
-            venue.beer_price_pln = newPrice;
-            venue.is_verified = true;
-            venue.verified_by_community = true;
-            venue.last_updated = nowIso;
-            venue.last_verified_at = nowIso;
-            venue.votes_confirm = (typeof venue.votes_confirm === "number" ? venue.votes_confirm : 1) + 1;
-
-            // Save locally
-            const localUpdates = loadLocalUpdates();
-            const existingIdx = localUpdates.findIndex(v => v.id === venue.id);
-            if (existingIdx !== -1) {
-              localUpdates[existingIdx] = Object.assign({}, localUpdates[existingIdx], venue);
-            } else {
-              localUpdates.push(venue);
-            }
-            saveLocalUpdates(localUpdates);
-            saveVenuesCache(allVenues);
-
-            const updatePayload = {
-              venuePayload: {
-                osm_id: venue.id,
-                name: venue.name,
-                slug: venue.slug,
-                district: venue.district,
-                address: venue.address,
-                latitude: venue.latitude,
-                longitude: venue.longitude,
-                beer_name: venue.beer_name || "Piwo z kranu",
-                beer_price_pln: newPrice,
-                shot_price_pln: venue.shot_price_pln,
-                is_craft: venue.is_craft,
-                happy_hour: venue.happy_hour,
-                hours: venue.hours,
-                is_verified: true,
-                votes_confirm: venue.votes_confirm,
-                last_updated: nowIso
-              },
-              reportPayload: {
-                reported_beer_name: venue.beer_name || "Piwo z kranu",
-                reported_price_pln: newPrice,
-                happy_hour_info: "Szybka aktualizacja ceny z karty lokalu"
-              }
-            };
-
-            // Send to backend or queue offline
-            if (!navigator.onLine) {
-              queueOfflineAction({
-                type: "update_venue",
-                venueId: venue.id,
-                payload: updatePayload
-              });
-              showMapToast(`💾 Zapisano cenę offline (${venue.name})!`);
-            } else {
-              try {
-                fetch("/api/update-venue", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify(updatePayload)
-                }).catch(() => {});
-              } catch (e) {}
-            }
-
-            poileHaptics.success();
-            awardPassportPoints(15);
-            showAppToast("Cena zaktualizowana! +15 pkt ✓", `Nowa cena piwa w ${venue.name}: ${newPrice.toFixed(2)} zł 🍻`, "🍺", 4500);
-
-            // Re-render sheet header and map
-            openVenueSheet(venue);
-            renderMarkers();
-            if (typeof renderMapBottomSheetVenues === "function") {
-              renderMapBottomSheetVenues(cachedFilteredVenues);
-            }
-          }
-        });
-      });
-    }
-
     const btnFav = document.getElementById("btn-venue-sheet-fav");
     if (btnFav) {
       btnFav.addEventListener("click", () => {
