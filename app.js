@@ -6397,7 +6397,7 @@
     async function lookupVenueHoursFromWeb(name, address, city, lat = null, lng = null) {
       if (!navigator.onLine) return null;
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 6500);
+      const timer = setTimeout(() => controller.abort(), 16000);
       try {
         const res = await fetch("/api/lookup-hours", {
           method: "POST",
@@ -6415,7 +6415,7 @@
     }
 
     function formatLookupSourceLabel(src) {
-      if (src === "google-maps") return "Google Maps";
+      if (src === "google-maps" || src === "google-maps-ai") return "Google Maps";
       if (src === "google-search-ai") return "Google Search";
       if (src === "openstreetmap") return "OpenStreetMap";
       return "sieć";
